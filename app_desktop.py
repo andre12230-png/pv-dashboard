@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QButtonGroup,
     QComboBox,
     QDialog,
+    QFileDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -41,7 +42,9 @@ from PySide6.QtWidgets import (
 import avis
 import calculations as calc
 import data_loaders as dl
+import mise_a_jour
 import reglages
+import sauvegarde_externe
 from app_data import AppData
 from fenetre_reglages import FenetreReglages
 from gui_theme import LIGHT, mpl_style, qss_for
@@ -130,7 +133,7 @@ LOG_PATH = BASE_DIR / "pv-dashboard.log"
 # config.yaml et ajoutee au titre de la fenetre. Ecrite en dur, elle
 # affichait "6 kWc" a tout le monde, quelle que soit l'installation suivie.
 APP_NAME = "Gestion Photovoltaique"
-APP_VERSION = "1.34.6"
+APP_VERSION = "1.35.0"
 
 
 TAILLE_MAX_LOG = 1_000_000  # 1 Mo
@@ -712,9 +715,24 @@ class MainWindow(QMainWindow):
             self.nav_buttons[key] = btn
             v.addWidget(btn)
 
+        # Trois actions, pas des pages : hors du groupe de navigation, elles
+        # ne restent jamais « enfoncees ». Sauvegarde externe : les backups/
+        # restent sur le meme disque que les donnees. Mise a jour : repris
+        # de Pecule, sans aucun acces reseau.
+        self.sauvegarde_btn = self._bouton_menu("💾 Sauvegarde externe")
+        self.sauvegarde_btn.setToolTip(
+            "Copier vos relevés et vos réglages sur une clé USB ou un disque")
+        self.sauvegarde_btn.clicked.connect(self._sauvegarder_externe)
+        v.addWidget(self.sauvegarde_btn)
+
+        self.maj_btn = self._bouton_menu("🔄 Mise à jour")
+        self.maj_btn.setToolTip(
+            "Voir s'il existe une version plus récente (dans votre navigateur)")
+        self.maj_btn.clicked.connect(self._ouvrir_mise_a_jour)
+        v.addWidget(self.maj_btn)
+
         # « Votre avis » (repris de Pecule), comme dans Pecule : un bouton de
-        # la derniere section. Une action, pas une page : hors du groupe de
-        # navigation, il ne reste jamais « enfonce ».
+        # la derniere section.
         self.avis_btn = self._bouton_menu("💬 Votre avis")
         self.avis_btn.setToolTip(
             "Signaler un problème ou proposer une idée "
@@ -790,6 +808,39 @@ class MainWindow(QMainWindow):
     def _ouvrir_avis(self) -> None:
         """Ouvre la fenetre « Votre avis » (questionnaire en ligne)."""
         avis.AvisDialog(APP_VERSION, self).exec()
+
+    def _ouvrir_mise_a_jour(self) -> None:
+        """Ouvre la fenetre « Mise à jour » (liens vers la derniere version)."""
+        mise_a_jour.MiseAJourDialog(APP_VERSION, self).exec()
+
+    # Dernier dossier choisi pour la sauvegarde externe, propose la fois
+    # suivante (preferences de l'application, pas les donnees).
+    CLE_DESTINATION_SAUVEGARDE = "sauvegarde/destination"
+
+    def _sauvegarder_externe(self) -> None:
+        """Copie les donnees sur une cle USB ou un disque choisi par
+        l'utilisateur. La copie et sa verification : sauvegarde_externe.py."""
+        depart = str(self.settings.value(self.CLE_DESTINATION_SAUVEGARDE, "")
+                     or "")
+        choisi = QFileDialog.getExistingDirectory(
+            self, "Choisissez la clé USB ou le disque où sauvegarder", depart)
+        if not choisi:
+            return                      # l'utilisateur a renonce
+        fichiers = [self.data.releves_path, CONFIG_PATH, CONFIG_LOCAL_PATH]
+        try:
+            cible, copies = sauvegarde_externe.sauvegarder(
+                fichiers, Path(choisi), BASE_DIR, "Gestion Photovoltaïque",
+                APP_VERSION)
+        except sauvegarde_externe.SauvegardeImpossible as e:
+            QMessageBox.warning(self, "Sauvegarde impossible", str(e))
+            return
+        self.settings.setValue(self.CLE_DESTINATION_SAUVEGARDE, choisi)
+        liste = "\n".join(f"  • {nom}" for nom in copies)
+        QMessageBox.information(
+            self, "Sauvegarde terminée",
+            f"{len(copies)} fichiers copiés et vérifiés dans :\n{cible}\n\n"
+            f"{liste}\n\nPour la remettre en service un jour, suivez le "
+            "fichier LISEZMOI.txt placé à côté.")
 
     def inviter_a_donner_son_avis(self) -> None:
         """L'unique invitation, deux semaines apres le premier lancement.
