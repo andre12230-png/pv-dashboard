@@ -27,6 +27,12 @@ Pas besoin d'etre informaticien, ni d'installer Python :
    bord indique les premiers pas : decrire votre installation, puis importer
    vos releves.
 
+Vous preferez une version **portable**, sans installation ? Prenez le fichier
+`.zip` sur la [page des versions](https://github.com/andre12230-png/pv-dashboard/releases/latest)
+(rubrique *Assets*) : decompressez-le ou vous voulez (gardez tout le dossier
+ensemble), puis double-cliquez `pv-dashboard\pv-dashboard.exe`. Vos donnees
+vont, la aussi, dans votre dossier personnel (`%LOCALAPPDATA%\pv-dashboard`).
+
 Vos donnees restent sur votre ordinateur : l'application ne contacte aucun
 serveur. Pour la desinstaller : Parametres Windows > Applications. Vos donnees
 sont conservees.
