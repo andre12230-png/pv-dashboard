@@ -256,10 +256,20 @@ de vos relevés, à trois endroits :</p>
 <p>Les copies quotidiennes échappent à la rotation des 15 : vous pouvez donc
 revenir plusieurs semaines en arrière. Pour restaurer, fermez l'application et
 recopiez le fichier voulu sur <code>Relevés-pv.csv</code>.</p>
+<p><b>Sur une clé USB ou un disque externe.</b> Toutes ces copies restent sur
+le même disque que vos données : si ce disque lâche, elles partent avec lui.
+Le bouton <b>💾 Sauvegarde externe</b>, en bas du menu de gauche, copie vos
+relevés et vos réglages sur le support de votre choix, dans un dossier daté,
+et vérifie chaque copie. Un fichier <code>LISEZMOI.txt</code>, déposé à côté,
+explique comment la remettre en service. Faites-le de temps en temps, par
+exemple après chaque import mensuel.</p>
 
 <h3 style="color:#b45309">Bon à savoir</h3>
 <p>Toutes les données restent sur votre ordinateur. Après chaque enregistrement, les
 calculs et graphiques sont recalculés automatiquement.</p>
+<p>L'application ne se connecte jamais à Internet. Pour savoir si une version
+plus récente existe, cliquez sur <b>🔄 Mise à jour</b> : la page de la dernière
+version s'ouvre dans votre navigateur.</p>
 """
 
 GLOSSAIRE_HTML = """
