@@ -1,0 +1,143 @@
+# =====================================================================
+# Configuration de l'installation photovoltaique - MODELE
+# =====================================================================
+# Ce fichier est un EXEMPLE : les valeurs ci-dessous sont inventees.
+# Remplacez-les par celles de votre installation et de vos contrats
+# (elles se lisent sur vos factures), puis relancez l'application.
+#
+# Les totaux de vos factures et les chemins propres a votre machine vont,
+# eux, dans config-local.yaml (voir config-local.exemple.yaml).
+# =====================================================================
+installation:
+  puissance_kwc: 3.0                   # puissance crete des panneaux
+  cout_total_eur: 9000.0               # cout total, pose comprise
+  date_mise_en_service: "2024-01-01"
+  date_debut_contrat_oa: "2024-01-01"  # debut de l'annee OA 1
+
+# =====================================================================
+# Contrat EDF OA - Vente du surplus
+# =====================================================================
+oa:
+  type: "surplus"                # "surplus" ou "totale"
+  # Prix d'achat du surplus injecte, en euros HT par kWh. Fixe par votre
+  # contrat et garanti sur toute sa duree (voir vos factures EDF OA).
+  prix_kwh_eur: 0.10
+  prime_autoconsommation:
+    montant_par_kwc: 300.0       # EUR / kWc
+    duree_annees: 5              # repartie sur 5 ans (1 an pour les contrats recents)
+  duree_contrat_annees: 20
+  # L'annee OA commence a installation.date_debut_contrat_oa et dure un an.
+
+# =====================================================================
+# Tarifs achat electricite reseau
+# =====================================================================
+tarifs_reseau:
+  # Contrat a prix unique (option Base) AVANT le passage en heures pleines /
+  # heures creuses. FACULTATIF : supprimez ou laissez en commentaire si vous
+  # avez toujours ete en heures creuses.
+  #
+  # bleu_base:
+  #   abonnement_par_periode:     # abonnement TTC par mois
+  #     - { debut: "2024-01-01", fin: "2024-12-31", montant: 15.00 }
+  #   prix_kwh_par_periode:       # prix du kWh TTC
+  #     - { debut: "2024-01-01", fin: "2024-12-31", prix: 0.2000 }
+
+  # Date a laquelle on passe du prix unique (bleu_base ci-dessus) aux heures
+  # pleines / heures creuses (grille ci-dessous).
+  #
+  # Qui a toujours ete en heures creuses met sa date de mise en service ; qui
+  # est encore en prix unique met une date future. Sans cette ligne,
+  # l'application prend le 01/01/2026.
+  bascule_hphc: "2024-01-01"
+
+  # Votre contrat actuel, en heures pleines / heures creuses.
+  # (Cette section s'appelait autrefois "octopus_hphc" : un ancien
+  # config.yaml qui porte encore ce nom reste lu sans changement.)
+  contrat_hphc:
+    # Nom de votre fournisseur, tel qu'il s'affiche. "nom" est le nom court,
+    # celui du menu de gauche (place comptee) ; "offre" est le libelle
+    # complet des titres et des cartes. Le bouton de comparaison du menu
+    # s'appellera "<nom> vs EDF". Sans eux : "Mon contrat".
+    #
+    # Vous etes chez EDF ? Ecrivez nom: "EDF". Le bouton de comparaison
+    # disparait alors du menu : comparer EDF a EDF n'aurait pas de sens.
+    nom: "Mon fournisseur"
+    offre: "Mon offre HP/HC"
+    # Grille par periodes : les fournisseurs revisent leurs prix en cours de
+    # contrat. Il faut garder chaque ancienne grille, sinon les nouveaux prix
+    # seraient appliques retroactivement aux mois precedents.
+    # "fin" vide (ou null) = periode encore en cours.
+    #
+    # Valeurs TTC (toutes taxes comprises), lues sur la fiche tarifaire de
+    # votre offre, ligne de la puissance de votre compteur (en kVA).
+    periodes:
+      - { debut: "2024-01-01", fin: null,
+          abonnement: 20.00, prix_hp: 0.2200, prix_hc: 0.1600 }
+    plages_hc:
+      # Plages d'heures creuses au format "HH:MM-HH:MM" (heure locale),
+      # indiquees sur votre facture ou votre espace client.
+      - "22:00-06:00"
+    # Part des kWh autoconsommes qui seraient factures en heures creuses
+    # s'il fallait les acheter. L'autoconsommation a lieu en journee : seule
+    # une plage d'heures creuses l'apres-midi en capte une partie. Mettez 0
+    # si toutes vos heures creuses sont la nuit. Sert a valoriser l'economie
+    # d'autoconsommation.
+    part_hc_autoconso: 0.0
+
+  # Reference de la vue de comparaison : ce qu'aurait coute le Tarif Bleu
+  # d'EDF (tarif reglemente, le meme pour tous), en option Base et en option
+  # Heures Pleines / Heures Creuses, compteur 9 kVA. A adapter a la
+  # puissance de votre compteur. L'abonnement est identique en Base et en
+  # HP/HC.
+  #
+  # EDF revise ses tarifs reglementes au 1er fevrier et au 1er aout : ajoutez
+  # une periode a chaque revision. Prix sur particulier.edf.fr, guide "prix
+  # du kWh d'electricite" -- EDF les publie en CENTIMES : 19,85 cts = 0,1985.
+  # "fin" vide (ou null) = periode en cours. Avant la premiere periode, c'est
+  # elle qui sert.
+  comparaison_edf:
+    nom: "EDF"
+    offre: "EDF Tarif Bleu"
+    periodes:
+      - { debut: "2026-01-01", fin: "2026-01-31", abonnement: 19.56,
+          prix_base: 0.1952, prix_hp: 0.2081, prix_hc: 0.1635 }
+      - { debut: "2026-02-01", fin: "2026-07-31", abonnement: 19.56,
+          prix_base: 0.1927, prix_hp: 0.2065, prix_hc: 0.1579 }
+      - { debut: "2026-08-01", fin: null, abonnement: 19.88,
+          prix_base: 0.1985, prix_hp: 0.2142, prix_hc: 0.1589 }
+
+# =====================================================================
+# TVA sur l'autoconsommation - livraison a soi-meme (LASM)
+# =====================================================================
+# FACULTATIF. Ne concerne que les producteurs assujettis a la TVA ; sans
+# cette section, la vue TVA reste en veille.
+#
+# Les ventes a EDF OA sont autoliquidees (art. 283-2 quinquies du CGI) :
+# c'est EDF qui declare leur TVA, le producteur n'en collecte aucune, et la
+# prime de surplus est hors champ. En revanche, l'electricite qu'on produit
+# et qu'on consomme soi-meme est une "livraison a soi-meme" taxable
+# (art. 257-II-1-1°), a porter ligne 5A de la declaration annuelle CA12 /
+# 3517-S.
+#
+# Base imposable = kWh autoconsommes x prix d'achat hors taxes d'une
+# electricite similaire (art. 266-1-c), c'est-a-dire VOTRE PROPRE tarif :
+# part fourniture + acheminement HT, plus l'accise sur l'electricite.
+# Hors TVA et HORS ABONNEMENT (l'abonnement n'est pas un prix au kWh).
+# Valeurs a relire sur vos factures, a completer a chaque evolution
+# tarifaire. La derniere periode a "fin" vide : elle reste en cours.
+#
+# tva_lasm:
+#   taux: 0.20                 # taux normal applicable a l'electricite
+#   periodes:
+#     # prix_ht = energie + acheminement HT, en EUR/kWh ;
+#     # accise = accise sur l'electricite, en EUR/kWh.
+#     - { debut: "2024-01-01", fin: null, prix_ht: 0.1500, accise: 0.0300 }
+
+# =====================================================================
+# Sources de donnees
+# =====================================================================
+# CSV des releves journaliers : Date, Prod_Jour, Inj_Jour,
+# Conso_reseau_Jour, Conso_HC, Conso_HP. Cree vide au premier lancement,
+# puis rempli par la vue "Saisie quotidienne" ou par les imports.
+sources:
+  releves_csv: "Releves-pv.csv"

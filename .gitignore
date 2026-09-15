@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environnements virtuels
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Config locale Claude Code (specifique a la machine, ne pas versionner)
+.claude/settings.local.json
+.claude/launch.json
+
+# Logs applicatifs
+pv-dashboard.log
+*.log
+
+# Données personnelles / factures (ne JAMAIS committer)
+Releves-pv.csv
+factures/
+# Configuration personnelle : totaux lus sur MES factures (recalages) et
+# chemins propres a MA machine. config-local.exemple.yaml, lui, est versionne.
+config-local.yaml
+# Montants de TVA reellement deposes par l'auteur : test personnel, jamais
+# publie (voir tests/test_tva_lasm.py).
+tests/test_tva_deposee.py
+
+# Sauvegardes et fichiers temporaires d'ecriture
+*.bak
+*.tmp
+# Copies horodatees du CSV : ce sont les memes donnees personnelles
+backups/
+
+# PyInstaller - l'executable et ses dossiers de travail. Tout se regenere
+# avec Construire-Exe.bat ; dist/pv-dashboard/ est meme efface et recree a
+# chaque construction.
+build/
+dist/
+*.spec
+*.exe
+# Installeurs fabriques par faire_installeur.py (se regenerent)
+distribution/
+
+# Node.js - dependances installees (se regenerent avec `npm install`)
+node_modules/
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Carnet de bord de l'auteur : ses seances de travail et le detail de SON
+# installation. Il reste sur son disque (et dans l'archive privee du depot),
+# jamais dans le depot public.
+JOURNAL.md

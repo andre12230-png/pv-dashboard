@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestion Photovoltaïque — suivi d'une installation solaire en autoconsommation (Windows, gratuit)</title>
+<meta name="description" content="Application gratuite et en français pour suivre une installation photovoltaïque en autoconsommation avec vente du surplus à EDF OA : production, autoconsommation, injection, économies, remboursement de l'installation. Windows 10/11. Données 100 % locales. Open source (MIT).">
+<!-- Aperçu lors du partage (réseaux sociaux, forums, messageries) : une
+     couverture 1200x630, le format que ces services attendent. -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:site_name" content="Gestion Photovoltaïque">
+<meta property="og:url" content="https://andre12230-png.github.io/pv-dashboard/">
+<meta property="og:title" content="Gestion Photovoltaïque — suivi d'une installation solaire (Windows, gratuit)">
+<meta property="og:description" content="Suivez votre production solaire, votre autoconsommation et la revente du surplus à EDF OA. Gratuit, en français, données 100 % locales, open source (MIT).">
+<meta property="og:image" content="https://andre12230-png.github.io/pv-dashboard/media/partage_1200x630.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Gestion Photovoltaïque — suivez votre production solaire, votre autoconsommation et la revente du surplus à EDF OA.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Gestion Photovoltaïque — suivi d'une installation solaire (Windows, gratuit)">
+<meta name="twitter:description" content="Production, autoconsommation, revente EDF OA, remboursement de l'installation. Gratuit, en français, données 100 % locales.">
+<meta name="twitter:image" content="https://andre12230-png.github.io/pv-dashboard/media/partage_1200x630.png">
+<link rel="canonical" href="https://andre12230-png.github.io/pv-dashboard/">
+
+<!-- Données structurées Schema.org. softwareVersion suit chaque publication. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Gestion Photovoltaïque",
+  "alternateName": "pv-dashboard",
+  "url": "https://andre12230-png.github.io/pv-dashboard/",
+  "sameAs": ["https://github.com/andre12230-png/pv-dashboard"],
+  "description": "Application de bureau gratuite et en français pour suivre une installation photovoltaïque en autoconsommation avec vente du surplus à EDF OA : production, autoconsommation, injection, consommation réseau, économies, revenus de l'obligation d'achat, remboursement de l'installation, comparaison avec le Tarif Bleu d'EDF. Données stockées localement, sans compte ni cloud.",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Windows 10, Windows 11",
+  "softwareVersion": "1.34.6",
+  "inLanguage": "fr-FR",
+  "isAccessibleForFree": true,
+  "license": "https://opensource.org/licenses/MIT",
+  "downloadUrl": "https://github.com/andre12230-png/pv-dashboard/releases/latest/download/pv-dashboard-Setup.exe",
+  "installUrl": "https://github.com/andre12230-png/pv-dashboard/releases/latest/download/pv-dashboard-Setup.exe",
+  "softwareRequirements": "Windows 10/11 64 bits.",
+  "author": {"@type": "Person", "name": "andre12230-png", "url": "https://github.com/andre12230-png"},
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR", "availability": "https://schema.org/InStock"},
+  "screenshot": [
+    "https://andre12230-png.github.io/pv-dashboard/media/capture_1_tableau_de_bord.png",
+    "https://andre12230-png.github.io/pv-dashboard/media/capture_2_synthese.png",
+    "https://andre12230-png.github.io/pv-dashboard/media/capture_3_repartition.png",
+    "https://andre12230-png.github.io/pv-dashboard/media/capture_4_statistiques.png"
+  ],
+  "featureList": [
+    "Tableau de bord : autoproduction, production, bilan financier",
+    "Import des relevés Enedis, du fournisseur et de l'onduleur (toutes marques)",
+    "Revenus de la vente du surplus à EDF OA, année OA par année OA",
+    "Économies d'autoconsommation et remboursement de l'installation",
+    "Diagramme de circulation de l'énergie",
+    "Comparaison avec l'année précédente et avec le Tarif Bleu d'EDF",
+    "TVA sur l'autoconsommation pour les producteurs assujettis",
+    "Sauvegardes automatiques",
+    "Données 100 % locales, sans compte ni cloud"
+  ]
+}
+</script>
+<style>
+  :root{
+    --brun:#92400e; --ambre:#b45309; --or:#d97706; --vert:#15803d; --fond:#fbf8f3;
+    --txt:#222; --gris:#5b6573; --carte:#ffffff; --bord:#eadfcf;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+       color:var(--txt);background:var(--fond);line-height:1.6}
+  a{color:var(--ambre)}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px}
+
+  header{background:linear-gradient(135deg,var(--brun),var(--or));color:#fff;
+         padding:54px 0 46px;text-align:center}
+  header h1{margin:0;font-size:2.4rem;letter-spacing:.5px}
+  header .sub{font-size:1.15rem;opacity:.97;margin:10px auto 0;max-width:640px}
+  .badges{margin:18px 0 26px}
+  .badges img{height:20px;margin:0 3px;vertical-align:middle}
+
+  .btn{display:inline-block;background:#fff;color:var(--brun);font-weight:700;
+       font-size:1.15rem;padding:14px 28px;border-radius:10px;text-decoration:none;
+       box-shadow:0 4px 14px rgba(0,0,0,.18);transition:transform .1s}
+  .btn:hover{transform:translateY(-2px)}
+  .btn small{display:block;font-weight:400;font-size:.8rem;color:var(--gris);margin-top:2px}
+  .src{display:inline-block;margin-top:14px;color:#fff3dc;font-size:.95rem}
+
+  .chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:34px 0}
+  .chip{background:var(--carte);border:1px solid var(--bord);border-radius:30px;
+        padding:8px 16px;font-size:.95rem;font-weight:600}
+
+  section{padding:8px 0 10px}
+  h2{color:var(--brun);border-bottom:2px solid var(--bord);padding-bottom:6px;margin-top:36px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:18px}
+  .card{background:var(--carte);border:1px solid var(--bord);border-radius:12px;padding:16px 18px}
+  .card h3{margin:0 0 6px;color:var(--ambre);font-size:1.05rem}
+  .card p{margin:0;color:var(--gris);font-size:.95rem}
+
+  ol.steps{padding-left:22px}
+  ol.steps li{margin-bottom:8px}
+  code{background:#f3ece1;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace}
+  .warn{background:#fff8e6;border-left:4px solid #e8c77b;padding:12px 16px;border-radius:6px;margin:14px 0}
+  .capture{display:block;width:100%;max-width:100%;height:auto;margin:14px 0;
+           border:1px solid var(--bord);border-radius:8px;background:#fff}
+  .apercu img{width:100%;border:1px solid var(--bord);border-radius:8px}
+
+  footer{text-align:center;color:var(--gris);font-size:.9rem;padding:30px 0 40px;margin-top:30px;
+         border-top:1px solid var(--bord)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>☀️ Gestion Photovoltaïque</h1>
+    <p class="sub">Suivez votre installation solaire en autoconsommation : ce qu'elle produit,
+    ce que vous consommez, ce que vous vendez à EDF OA, et quand elle sera remboursée.</p>
+    <div class="badges">
+      <img src="https://badgen.net/github/assets-dl/andre12230-png/pv-dashboard?label=t%C3%A9l%C3%A9chargements&amp;color=green" alt="Téléchargements">
+      <img src="https://badgen.net/github/release/andre12230-png/pv-dashboard/stable?label=version&amp;color=blue" alt="Version">
+      <img src="https://badgen.net/github/license/andre12230-png/pv-dashboard" alt="Licence MIT">
+    </div>
+    <div>
+      <a class="btn" href="https://github.com/andre12230-png/pv-dashboard/releases/latest/download/pv-dashboard-Setup.exe">
+        ⬇ Télécharger pour Windows
+        <small>installeur pv-dashboard-Setup.exe — Windows 10/11 (64 bits)</small>
+      </a>
+    </div>
+    <a class="src" href="https://github.com/andre12230-png/pv-dashboard/releases/latest">Nouveautés de la dernière version →</a><br>
+    <a class="src" href="https://github.com/andre12230-png/pv-dashboard">Voir le code source sur GitHub →</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="chips">
+    <span class="chip">💶 100 % gratuit</span>
+    <span class="chip">🇫🇷 En français</span>
+    <span class="chip">🖥️ Windows 10/11 (64 bits)</span>
+    <span class="chip">🔒 Données 100 % locales</span>
+    <span class="chip">📖 Open source (MIT)</span>
+  </div>
+
+  <section class="apercu">
+    <h2>Aperçu</h2>
+    <img src="media/capture_1_tableau_de_bord.png"
+         alt="Tableau de bord — autoproduction, production du mois, où va votre soleil, bilan financier et remboursement de l'installation"
+         style="box-shadow:0 6px 18px rgba(0,0,0,.10);border-radius:10px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px">
+      <img src="media/capture_2_synthese.png" alt="Synthèse financière — ventes, prime, économies, facture et remboursement de l'installation">
+      <img src="media/capture_3_repartition.png" alt="Répartition de l'énergie — diagramme de circulation entre production, réseau et consommation">
+      <img src="media/capture_4_statistiques.png" alt="Statistiques — production par année et par mois, rendement en kWh par kWc">
+    </div>
+    <p style="text-align:center;color:var(--gris);font-size:.85rem;margin-top:8px">Captures avec des données d'exemple.</p>
+  </section>
+
+  <section>
+    <h2>À quoi ça sert ?</h2>
+    <p>Vous avez des panneaux solaires, vous consommez une partie de ce qu'ils produisent et
+    vendez le reste à EDF OA. Les chiffres sont éparpillés : l'application de l'onduleur,
+    l'espace Enedis, les factures du fournisseur, l'autofacturation annuelle d'EDF OA.
+    Gestion Photovoltaïque les rassemble jour par jour et en tire ce que vous voulez vraiment
+    savoir — sans abonnement, sans compte en ligne, et sans qu'aucune donnée ne quitte votre
+    ordinateur.</p>
+    <div class="grid">
+      <div class="card"><h3>🏠 Tableau de bord</h3><p>La part de votre consommation qui vient du soleil, la production du mois comparée à l'an passé, et le bilan en euros.</p></div>
+      <div class="card"><h3>📥 Imports sans ressaisie</h3><p>Relevés Enedis (injection, consommation), suivi de consommation du fournisseur et export de l'onduleur — quelle que soit sa marque. Saisie à la main possible.</p></div>
+      <div class="card"><h3>💶 Vente à EDF OA</h3><p>Les revenus du surplus injecté et la prime à l'autoconsommation, année de contrat par année de contrat.</p></div>
+      <div class="card"><h3>🐷 Économies</h3><p>Ce que l'électricité autoconsommée vous a évité d'acheter, au prix de votre propre contrat, heures pleines et creuses comprises.</p></div>
+      <div class="card"><h3>🏡 Remboursement</h3><p>Ce que l'installation vous a déjà rapporté face à ce qu'elle a coûté, et l'année où elle sera remboursée au rythme actuel.</p></div>
+      <div class="card"><h3>🔀 Circulation de l'énergie</h3><p>Un diagramme montre d'où vient et où va chaque kWh : autoconsommé, vendu, acheté au réseau.</p></div>
+      <div class="card"><h3>🔁 Comparaisons</h3><p>Une période face à la même un an plus tôt, et votre fournisseur face au Tarif Bleu d'EDF, en option Base et heures creuses.</p></div>
+      <div class="card"><h3>🧾 TVA autoconsommation</h3><p>Pour les producteurs assujettis à la TVA : la base de la livraison à soi-même, année par année. Invisible pour les autres.</p></div>
+      <div class="card"><h3>💾 Sauvegardes</h3><p>Chaque enregistrement garde les versions précédentes de vos relevés : une erreur se rattrape.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Installation</h2>
+    <ol class="steps">
+      <li><a href="https://github.com/andre12230-png/pv-dashboard/releases/latest/download/pv-dashboard-Setup.exe">Téléchargez l'installeur <code>pv-dashboard-Setup.exe</code></a>.</li>
+      <li><b>Double-cliquez dessus</b> et suivez l'assistant — aucun mot de passe administrateur n'est demandé.</li>
+      <li>Lancez <b>Gestion Photovoltaïque</b> depuis le <b>menu Démarrer</b>.</li>
+    </ol>
+    <p>Aucune installation de Python n'est nécessaire. <b>Configuration requise :</b> Windows 10 ou 11 (64 bits).</p>
+    <p><b>Pour mettre à jour</b>, fermez l'application et lancez simplement le nouvel installeur :
+    il remplace le programme sans toucher à vos données, rangées à part.</p>
+    <div class="warn">
+      <p style="margin-top:0">⚠️ <b>Au premier lancement, Windows affiche un avertissement.</b>
+      C'est normal, et voici comment le passer :</p>
+      <img src="media/smartscreen.png" class="capture"
+           alt="Étape 1 : cliquer sur « Informations complémentaires » dans la fenêtre « Windows a protégé votre ordinateur ». Étape 2 : cliquer sur le bouton « Exécuter quand même ».">
+      <p style="margin-bottom:0">Ce message ne veut pas dire que le logiciel est dangereux. Il apparaît
+      parce que l'application n'est pas <b>signée numériquement</b> : un certificat de signature coûte
+      plusieurs centaines d'euros par an, difficile à justifier pour un logiciel gratuit. Windows prévient
+      donc qu'il ne connaît pas l'éditeur — pas que le fichier pose problème. Le code source est
+      entièrement <a href="https://github.com/andre12230-png/pv-dashboard">consultable sur GitHub</a>.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Premiers pas</h2>
+    <ol class="steps">
+      <li><b>Décrivez votre installation</b> dans la fenêtre <b>Mes réglages</b>, qui s'ouvre au premier
+      lancement : puissance des panneaux, coût, dates, prix de rachat EDF OA, fournisseur et ses prix.
+      Tout se lit sur vos factures et votre contrat.</li>
+      <li><b>Faites entrer vos relevés</b> : onglet <b>Saisie quotidienne</b>, boutons <b>Importer…</b>.
+      L'injection et la consommation se téléchargent dans votre espace Enedis (compteur Linky),
+      la production dans l'application de votre onduleur.</li>
+      <li>C'est tout : le tableau de bord se remplit. La <b>Notice</b>, dans l'application, explique
+      chaque écran et chaque terme.</li>
+    </ol>
+  </section>
+
+  <section id="avis">
+    <h2>Un problème ? Une idée ?</h2>
+    <p>Installation qui bloque, relevé qui ne s'importe pas, fonction qui manque : dites-le
+    dans le <a href="https://forms.cloud.microsoft/r/2B6NBcZUhe"><b>questionnaire en ligne</b></a>.
+    Il prend deux minutes, ne demande aucun compte, et aucune réponse n'y est obligatoire.
+    <b>N'y indiquez ni adresse ni numéro de compteur.</b></p>
+    <p>Vous avez un compte GitHub ? Vous pouvez aussi
+    <a href="https://github.com/andre12230-png/pv-dashboard/issues">ouvrir un ticket</a>.</p>
+  </section>
+
+  <section>
+    <h2>Confidentialité</h2>
+    <p>Toutes vos données restent <b>sur votre ordinateur</b>, dans votre dossier personnel
+    (<code>%LOCALAPPDATA%\pv-dashboard</code>, accessible par le raccourci <b>Dossier des données</b>
+    du menu Démarrer) : vos relevés, vos réglages et leurs sauvegardes. <b>Rien n'est envoyé en
+    ligne :</b> l'application ne fait aucun accès réseau, ne crée aucun compte et ne se connecte
+    ni à Enedis, ni à votre fournisseur, ni à votre onduleur — c'est vous qui lui donnez les
+    fichiers. Le bouton « Votre avis » se contente d'ouvrir le questionnaire dans votre navigateur.</p>
+    <p>Une désinstallation laisse vos données en place ; pour tout effacer, supprimez ce dossier.</p>
+  </section>
+
+</div>
+
+<footer>
+  Gestion Photovoltaïque — logiciel libre sous licence MIT ·
+  <a href="https://github.com/andre12230-png/pv-dashboard">Code source</a> ·
+  <a href="https://github.com/andre12230-png/pv-dashboard/releases/latest">Téléchargements</a> ·
+  <a href="https://forms.cloud.microsoft/r/2B6NBcZUhe">Votre avis</a>
+</footer>
+
+<!-- Analyse de fréquentation respectueuse de la vie privée (sans cookie,
+     GoatCounter). Même compteur que Pécule, par choix de l'auteur : les
+     visites de cette page y apparaissent sous leur propre chemin
+     (/pv-dashboard/), séparées de celles de Pécule. -->
+<script data-goatcounter="https://pecule.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+
+</body>
+</html>

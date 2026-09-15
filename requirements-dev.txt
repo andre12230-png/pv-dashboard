@@ -1,0 +1,9 @@
+# Dependances de developpement (tests, linting). Ne sont PAS requises
+# pour faire tourner l'app : pip install -r requirements.txt suffit.
+# Pour les tests : pip install -r requirements-dev.txt
+
+pytest>=7.0
+ruff>=0.4
+
+# Fabrication de l'executable Windows (Construire-Exe.bat)
+pyinstaller>=6.0
