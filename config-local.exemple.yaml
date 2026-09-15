@@ -1,0 +1,52 @@
+# =====================================================================
+# config-local.yaml - MODELE
+# =====================================================================
+# Recopiez ce fichier sous le nom "config-local.yaml" (sans ".exemple")
+# pour l'activer, puis relancez l'application.
+#
+# A quoi il sert
+# --------------
+# Il complete config.yaml : ce qu'on ecrit ici remplace, section par
+# section, ce que dit l'autre. On y met ce qui n'appartient qu'a VOTRE
+# installation, et qui ne doit donc jamais partir avec le programme :
+#
+#   - les totaux releves sur vos factures, qui servent a recaler les
+#     releves journaliers ;
+#   - les chemins de fichiers propres a votre machine.
+#
+# Il est facultatif. Sans lui, l'application fonctionne : elle ne fait
+# simplement aucun recalage et affiche vos releves tels que saisis.
+#
+# ATTENTION : ne recopiez jamais les recalages de quelqu'un d'autre. Ils
+# reecrivent les donnees journalieres pour retomber sur le total d'une
+# facture. Avec les factures d'un autre foyer, vos chiffres deviennent
+# faux sans que rien ne le signale.
+# =====================================================================
+sources:
+
+  # Jours dont la consommation saisie n'est pas fiable (panne de compteur,
+  # valeurs interpolees...). Ils sont traites comme n'ayant pas de releve.
+  # conso_reseau_douteuse:
+  #   - { debut: "2025-03-10", fin: "2025-03-14", motif: "panne Linky" }
+
+  # Consommations saisies arrondies au kWh entier : le total de chaque
+  # tranche est repris de la facture, l'ecart reparti sur ses jours.
+  # conso_reseau_recalee:
+  #   - { debut: "2025-01-01", fin: "2025-03-31", total_kwh: 1200,
+  #       source: "facture du 01/04/2025, index 10000 -> 11200" }
+
+  # Periodes dont le detail quotidien n'existe plus chez Enedis (36 mois
+  # glissants) : seul le total de la facture est connu, l'app le repartit.
+  # conso_reseau_facturee:
+  #   - { debut: "2024-01-01", fin: "2024-03-31", total_kwh: 900,
+  #       source: "facture du 01/04/2024" }
+
+  # Injection reellement payee par EDF OA (index annuel du compteur de
+  # production). L'annee en cours, pas encore facturee, n'y figure pas.
+  # injection_facturee:
+  #   - { debut: "2024-01-01", fin: "2024-12-31", total_kwh: 3000,
+  #       source: "autofacturation EDF OA" }
+
+  # Fichier de l'application "recharges-ve", lu seulement, pour afficher la
+  # part du soutirage qui part dans la voiture. Chemin absolu ou relatif.
+  # recharges_ve_json: "C:/Mes donnees/recharges-ve/recharges.json"

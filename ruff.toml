@@ -1,0 +1,15 @@
+# Config ruff minimale. Lancer : py -m ruff check .
+line-length = 100
+target-version = "py310"
+
+[lint]
+# E/W = pycodestyle, F = pyflakes (imports morts, variables inutilisees),
+# B = bugbear (pieges courants), I = tri des imports
+select = ["E", "F", "W", "B", "I"]
+
+[lint.per-file-ignores]
+# matplotlib.use("QtAgg") doit s'executer AVANT l'import de pyplot,
+# d'ou des imports apres du code au niveau module.
+"app_desktop.py" = ["E402"]
+# Le smoke force QT_QPA_PLATFORM avant d'importer Qt.
+"smoke_desktop.py" = ["E402"]
