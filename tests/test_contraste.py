@@ -98,3 +98,50 @@ def test_cadre_de_carte_visible(cadre, fond):
     assert rapport >= 1.4, (
         f"{cadre} {LIGHT[cadre]} sur {fond} {LIGHT[fond]} : "
         f"{rapport:.2f} pour 1, moins que 1,4")
+
+
+# ── Le thème clair tient, quel que soit le réglage de Windows ───────────────
+#
+# Ajouté le 16/09/2026, après le défaut trouvé dans Pécule : celui-ci partait
+# de la palette du SYSTÈME et n'y remplaçait que les fonds. Sur un poste réglé
+# en mode sombre, Qt fournit des textes blancs, qui se retrouvaient sur du
+# crème — illisibles.
+#
+# pv-dashboard échappe à ce piège pour une raison précise : sa feuille de style
+# pose une règle universelle qui impose le fond ET la couleur du texte à tout
+# widget, sans rien emprunter au système. Ces deux tests verrouillent ce
+# choix : sans eux, alléger la règle ferait revenir le défaut en silence.
+
+import re                                        # noqa: E402
+
+from gui_theme import qss_for                    # noqa: E402
+
+
+def _bloc(qss: str, selecteur: str) -> str:
+    """Contenu des accolades qui suivent un sélecteur de la feuille de style."""
+    trouve = re.search(re.escape(selecteur) + r"\s*\{([^}]*)\}", qss)
+    return trouve.group(1) if trouve else ""
+
+
+def test_la_regle_universelle_impose_le_fond_ET_le_texte():
+    """`QWidget { background: … ; color: … }` — les deux, pas seulement le
+    fond : c'est ce qui protège d'un Windows en mode sombre."""
+    bloc = _bloc(qss_for(LIGHT), "QWidget")
+    assert bloc, "la règle universelle QWidget a disparu de la feuille de style"
+    assert "background:" in bloc, "la règle QWidget n'impose plus le fond"
+    assert "color:" in bloc, (
+        "la règle QWidget n'impose plus la couleur du texte : sur un poste en "
+        "mode sombre, Windows la mettrait en blanc sur ces fonds clairs")
+
+
+def test_la_regle_universelle_ecrit_sombre_sur_clair():
+    """Et dans le bon sens : fond clair, texte sombre, lisible."""
+    assert _luminance(LIGHT["bg_app"]) > _luminance(LIGHT["text_primary"])
+    assert contraste(LIGHT["text_primary"], LIGHT["bg_app"]) >= 4.5
+
+
+def test_pas_de_theme_sombre():
+    """Un seul thème, le clair (décision du 14/09/2026)."""
+    import gui_theme
+    assert not hasattr(gui_theme, "DARK"), (
+        "un thème sombre est réapparu dans gui_theme.py")
