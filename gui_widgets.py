@@ -8,7 +8,7 @@ from typing import Iterable
 
 import matplotlib
 from PySide6.QtCore import QRectF, Qt
-from PySide6.QtGui import QColor, QFont, QPainter, QPen
+from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -289,44 +289,76 @@ class BarreRepartition(QWidget):
     """Barre horizontale en plusieurs segments proportionnels, chacun portant
     son libelle. `segments` : liste de (libelle, valeur, couleur).
 
-    Un segment trop etroit pour son texte le tait : le libelle complet reste
-    lisible dans la ligne de legende que la vue place dessous.
+    Le libelle peut etre un texte, ou une liste de textes du plus long au plus
+    court : la barre ecrit le plus long qui tient dans le segment (fenetre en
+    moitie d'ecran, petit segment). Si aucun ne tient, le segment se tait : le
+    detail reste lisible dans la ligne de legende que la vue place dessous.
     """
 
     ECART = 2  # pixels entre deux segments, couleur du fond
+    MARGE = 10  # pixels de marge a gauche et a droite du texte
 
-    def __init__(self, segments: list[tuple[str, float, str]],
+    def __init__(self, segments: list[tuple[str | list[str], float, str]],
                  hauteur: int = 28, parent: QWidget | None = None):
         super().__init__(parent)
-        self.segments = [(lib, max(0.0, float(v)), QColor(c))
-                         for lib, v, c in segments]
+        # Chaque libelle devient un tuple de variantes, meme s'il n'y en a qu'une
+        self.segments = [
+            ((lib,) if isinstance(lib, str) else tuple(lib),
+             max(0.0, float(v)), QColor(c))
+            for lib, v, c in segments]
         self.setFixedHeight(hauteur)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
-    def paintEvent(self, event) -> None:  # noqa: N802 (nom impose par Qt)
-        total = sum(v for _, v, _ in self.segments)
-        if total <= 0:
-            return
-        p = QPainter(self)
-        p.setRenderHint(QPainter.Antialiasing)
+    @staticmethod
+    def _police() -> QFont:
         f = QFont()
         f.setPixelSize(12)
         f.setBold(True)
-        p.setFont(f)
+        return f
+
+    def _geometrie(self) -> list[tuple[float, float, str, QColor]]:
+        """Pour chaque segment non vide : position, largeur, texte choisi
+        (vide si rien ne tient) et couleur."""
+        total = sum(v for _, v, _ in self.segments)
+        if total <= 0:
+            return []
+        mesure = QFontMetrics(self._police())
         visibles = [s for s in self.segments if s[1] > 0]
         utile = float(self.width()) - self.ECART * (len(visibles) - 1)
-        h = float(self.height())
         x = 0.0
-        for lib, v, couleur in visibles:
+        resultat = []
+        for libelles, v, couleur in visibles:
             largeur = utile * v / total
+            place = largeur - 2 * self.MARGE
+            # Le plus long des libelles qui tient, sinon rien
+            texte = next((lib for lib in libelles
+                          if mesure.horizontalAdvance(lib) <= place), "")
+            resultat.append((x, largeur, texte, couleur))
+            x += largeur + self.ECART
+        return resultat
+
+    def libelles_affiches(self) -> list[str]:
+        """Les textes ecrits dans la barre a sa largeur actuelle (pour les
+        tests)."""
+        return [texte for _, _, texte, _ in self._geometrie()]
+
+    def paintEvent(self, event) -> None:  # noqa: N802 (nom impose par Qt)
+        geometrie = self._geometrie()
+        if not geometrie:
+            return
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setFont(self._police())
+        h = float(self.height())
+        for x, largeur, texte, couleur in geometrie:
             p.setPen(Qt.NoPen)
             p.setBrush(couleur)
             p.drawRoundedRect(QRectF(x, 0, largeur, h), 5, 5)
-            zone = QRectF(x + 10, 0, largeur - 20, h)
-            if p.fontMetrics().horizontalAdvance(lib) <= zone.width():
+            if texte:
+                zone = QRectF(x + self.MARGE, 0,
+                              largeur - 2 * self.MARGE, h)
                 p.setPen(_texte_lisible_sur(couleur))
-                p.drawText(zone, Qt.AlignVCenter | Qt.AlignLeft, lib)
-            x += largeur + self.ECART
+                p.drawText(zone, Qt.AlignVCenter | Qt.AlignLeft, texte)
         p.end()
 
 
