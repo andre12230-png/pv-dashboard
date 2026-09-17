@@ -140,12 +140,30 @@ def test_la_part_du_vehicule_se_voit(qapp):
     carte = vue._carte_repartition(121.3, 178.7, 186.7, 308.0, 40.4, 59.6,
                                    39.4, 67.8, 8.75)
     barre_origine = carte.findChildren(BarreRepartition)[1]
-    assert [lib.split(" ")[0] for lib, _, _ in barre_origine.segments] == \
+    assert [libs[0].split(" ")[0] for libs, _, _ in barre_origine.segments] == \
         ["☀️", "🏠", "🚗"]
     assert barre_origine.segments[1][1] == pytest.approx(186.7 - 67.8)
     textes = " ".join(lbl.text() for lbl in carte.findChildren(QLabel))
     assert "🚗 Recharge du véhicule : 67,8 kWh" in textes
     assert "8,75 €" in textes
+
+
+# 985 px : la barre d'une fenetre de 1280 px (moitie de l'ecran de l'auteur)
+@pytest.mark.parametrize("largeur", [985, 650, 450])
+def test_le_vehicule_garde_un_libelle_en_moitie_d_ecran(qapp, largeur):
+    """Fenetre en moitie d'ecran : le morceau « vehicule » (19 % de la barre)
+    etait trop etroit pour « Reseau, vehicule 67,8 kWh » et restait muet
+    (remarque de l'auteur, 17/09/2026). Il prend alors un libelle plus court."""
+    vue = _vue(_serie("2026-09-01", "2026-09-16", 20.0))
+    carte = vue._carte_repartition(147.0, 216.2, 214.9, 361.9, 40.5, 59.5,
+                                   40.6, 67.8, 8.75)
+    barre = carte.findChildren(BarreRepartition)[1]
+    barre.resize(largeur, barre.height())
+    affiches = barre.libelles_affiches()
+    assert all(affiches), affiches
+    # A 450 px, seule l'icone tient avec la police des tests (sans ecran)
+    if largeur >= 650:
+        assert "67,8" in affiches[2]
 
 
 def test_sans_recharge_rien_ne_change(qapp):

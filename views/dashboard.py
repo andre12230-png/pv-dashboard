@@ -285,9 +285,13 @@ class DashboardView(BaseView):
             return lbl
 
         v.addWidget(titre("Où va votre soleil"))
+        # Chaque morceau de barre a des libelles de secours, du plus long au
+        # plus court : la barre ecrit le plus long qui tient (moitie d'ecran)
         v.addWidget(BarreRepartition([
-            (f"Consommé {fmt_kwh(auto)}", auto, CC["autoconso"]),
-            (f"Vendu à EDF OA {fmt_kwh(inj)}", inj, CC["injection"]),
+            ([f"Consommé {fmt_kwh(auto)}", fmt_kwh(auto)],
+             auto, CC["autoconso"]),
+            ([f"Vendu à EDF OA {fmt_kwh(inj)}", f"Vendu {fmt_kwh(inj)}",
+              fmt_kwh(inj)], inj, CC["injection"]),
         ]))
         v.addWidget(legende(f"{fmt_pct(ratio_ac)} consommé sur place · "
                             f"{fmt_pct(ratio_inj)} vendu"))
@@ -297,14 +301,22 @@ class DashboardView(BaseView):
         if avec_ve:
             maison = max(sout - ve, 0.0)
             segments = [
-                (f"☀️ Soleil {fmt_kwh(auto)}", auto, CC["production"]),
-                (f"🏠 Réseau, maison {fmt_kwh(maison)}", maison, CC["soutirage"]),
-                (f"🚗 Réseau, véhicule {fmt_kwh(ve)}", ve, self.theme["info"]),
+                ([f"☀️ Soleil {fmt_kwh(auto)}", f"☀️ {fmt_kwh(auto)}", "☀️"],
+                 auto, CC["production"]),
+                ([f"🏠 Réseau, maison {fmt_kwh(maison)}",
+                  f"🏠 Maison {fmt_kwh(maison)}", f"🏠 {fmt_kwh(maison)}",
+                  "🏠"], maison, CC["soutirage"]),
+                ([f"🚗 Réseau, véhicule {fmt_kwh(ve)}",
+                  f"🚗 Véhicule {fmt_kwh(ve)}", f"🚗 {fmt_kwh(ve)}",
+                  f"🚗 {fmt_kwh(ve).removesuffix(' kWh')}", "🚗"],
+                 ve, self.theme["info"]),
             ]
         else:
             segments = [
-                (f"Soleil {fmt_kwh(auto)}", auto, CC["production"]),
-                (f"Réseau {fmt_kwh(sout)}", sout, CC["soutirage"]),
+                ([f"Soleil {fmt_kwh(auto)}", fmt_kwh(auto)],
+                 auto, CC["production"]),
+                ([f"Réseau {fmt_kwh(sout)}", fmt_kwh(sout)],
+                 sout, CC["soutirage"]),
             ]
         v.addWidget(BarreRepartition(segments))
         v.addWidget(legende(

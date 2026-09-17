@@ -133,7 +133,7 @@ LOG_PATH = BASE_DIR / "pv-dashboard.log"
 # config.yaml et ajoutee au titre de la fenetre. Ecrite en dur, elle
 # affichait "6 kWc" a tout le monde, quelle que soit l'installation suivie.
 APP_NAME = "Gestion Photovoltaique"
-APP_VERSION = "1.35.0"
+APP_VERSION = "1.35.1"
 
 
 TAILLE_MAX_LOG = 1_000_000  # 1 Mo
