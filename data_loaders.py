@@ -825,13 +825,21 @@ def _charger_openpyxl():
     return openpyxl
 
 
-def _index_d_une_feuille(ws) -> dict[str, dict[str, str]] | None:
+def _index_d_une_feuille(ws, production: bool = False
+                         ) -> dict[str, dict[str, str]] | None:
     """
     Lit une feuille d'export d'index Enedis.
+
+    `production` : cette feuille porte les index de production, c'est-a-dire
+    l'energie INJECTEE au reseau (le compteur ne mesure que le surplus qui
+    sort). Son en-tete est le meme que celui de la consommation : seul le nom
+    de la feuille les distingue, d'ou ce drapeau -- sans lui, des kWh injectes
+    seraient ranges en soutirage.
 
     Retourne {colonne_cible: {date: kWh}} converti en consommations, ou None
     si cette feuille n'est pas un export d'index (en-tetes absents).
     """
+    total = "Inj_Jour" if production else "Conso_réseau_Jour"
     colonnes: dict[int, str] = {}
     col_date = -1
     index: dict[str, dict[str, float]] = {}
@@ -848,16 +856,16 @@ def _index_d_une_feuille(ws) -> dict[str, dict[str, str]] | None:
                     continue
                 nom = _normalise_entete(valeur)
                 if nom in _ENTETES_INDEX_TOTAL:
-                    trouves[i] = "Conso_réseau_Jour"
-                elif nom in _ENTETES_HP:
+                    trouves[i] = total
+                elif nom in _ENTETES_HP and not production:
                     trouves[i] = "Conso_HP"
-                elif nom in _ENTETES_HC:
+                elif nom in _ENTETES_HC and not production:
                     trouves[i] = "Conso_HC"
                 elif date_ici < 0 and nom.startswith("date"):
                     date_ici = i
             # L'index totalisateur est la signature du format : sans lui, ce
             # classeur est un autre export (conso/production), pas celui-ci.
-            if date_ici >= 0 and "Conso_réseau_Jour" in trouves.values():
+            if date_ici >= 0 and total in trouves.values():
                 colonnes, col_date = trouves, date_ici
             continue
 
@@ -882,21 +890,29 @@ def _index_d_une_feuille(ws) -> dict[str, dict[str, str]] | None:
 def parse_enedis_index_xlsx(path: str) -> dict[str, dict[str, str]] | None:
     """
     Lit un export d'index quotidiens d'Enedis et le convertit en
-    consommations journalieres.
+    consommations journalieres. Chez un producteur, le classeur porte aussi
+    une feuille d'index de production : elle donne l'injection.
 
     Retourne None si le classeur n'est pas de ce type : l'appelant passe
     alors au lecteur du classeur conso/production habituel.
     """
     openpyxl = _charger_openpyxl()
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    resultat: dict[str, dict[str, str]] = {}
+    reconnu = False
     try:
+        # Un producteur a deux feuilles : la consommation (avec le detail
+        # HP/HC) et la production, c'est-a-dire l'injection. On prend les
+        # deux, chacune dans sa colonne.
         for nom in wb.sheetnames:
-            trouve = _index_d_une_feuille(wb[nom])
-            if trouve is not None:
-                return trouve
+            trouve = _index_d_une_feuille(wb[nom], "prod" in nom.lower())
+            if trouve is None:
+                continue  # feuille de garde, ou autre chose
+            reconnu = True
+            resultat.update(trouve)
     finally:
         wb.close()
-    return None
+    return resultat if reconnu else None
 
 
 # Feuilles reconnues dans le classeur Excel Enedis. Pour un producteur,

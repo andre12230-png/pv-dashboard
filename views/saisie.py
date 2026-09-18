@@ -101,10 +101,10 @@ class SaisieView(BaseView):
         btn_importer.setToolTip(
             "Ce que votre compteur a échangé avec le réseau.\n\n"
             "Classeur Excel Enedis (conso réseau + injection),\n"
-            "export d'index quotidiens Enedis (avec le détail\n"
-            "heures creuses / pleines), CSV 'suivi_conso' de\n"
-            "votre fournisseur, ou tout export CSV\n"
-            "« date + valeur » d'une seule grandeur.")
+            "export d'index quotidiens Enedis (conso, détail\n"
+            "heures creuses / pleines ET injection), CSV\n"
+            "'suivi_conso' de votre fournisseur, ou tout export\n"
+            "CSV « date + valeur » d'une seule grandeur.")
         btn_importer.clicked.connect(self._importer_enedis)
 
         btn_enphase = QPushButton("Importer la production...")

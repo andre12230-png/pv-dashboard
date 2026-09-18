@@ -170,6 +170,12 @@ celles du <b>calendrier fournisseur</b> (« Heures Pleines (en kWh) »,
 « Heures Creuses (en kWh) ») ; celles du calendrier distributeur, en saison
 basse ou haute, découpent la même énergie autrement et sont ignorées. Un jour
 sans relevé laisse un trou plutôt qu'une valeur double.</p>
+<p>Si vous produisez, ce même fichier contient <b>en plus</b> une feuille
+d'index de production : l'application y lit votre <b>injection</b>. Un seul
+téléchargement remplit alors quatre colonnes — consommation réseau, heures
+creuses, heures pleines et injection. Pour l'obtenir : espace client Enedis,
+<b>Ma consommation ▸ Suivre ma consommation</b>, choisir <b>Index (kWh)</b>
+dans le menu de droite, puis <b>Télécharger le .xlsx</b>.</p>
 <p><b>Le détail heures creuses / heures pleines</b> demande deux colonnes
 nommées, l'une pour les heures creuses, l'autre pour les heures pleines.
 Plusieurs libellés sont acceptés : <code>Consommation HC (kWh)</code> et
