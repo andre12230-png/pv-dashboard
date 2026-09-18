@@ -665,13 +665,13 @@ _ENTETES_CONSO = (
 )
 _ENTETES_HC = (
     "consommation hc (kwh)", "consommation hc", "conso hc (kwh)", "conso hc",
-    "hc (kwh)", "hc",
+    "hc (kwh)", "hc", "heures creuses (en kwh)",
     "heures creuses (kwh)", "heures creuses",
     "consommation heures creuses (kwh)", "consommation heures creuses",
 )
 _ENTETES_HP = (
     "consommation hp (kwh)", "consommation hp", "conso hp (kwh)", "conso hp",
-    "hp (kwh)", "hp",
+    "hp (kwh)", "hp", "heures pleines (en kwh)",
     "heures pleines (kwh)", "heures pleines",
     "consommation heures pleines (kwh)", "consommation heures pleines",
 )
@@ -746,6 +746,157 @@ def parse_octopus_suivi_conso(texte: str) -> dict[str, dict[str, str]] | None:
                 resultat.setdefault(cible, {})[jour] = _fmt_kwh_fr(valeur)
 
     return resultat or None
+
+
+# ----------------------------------------------------------------------
+# Index de compteur -> consommations journalieres
+# ----------------------------------------------------------------------
+
+def _en_date(jour: str) -> _date:
+    """'05/03/2026' -> date(2026, 3, 5)."""
+    d, m, y = (int(x) for x in jour.split("/"))
+    return _date(y, m, d)
+
+
+def consommation_depuis_index(index: dict[str, float]) -> dict[str, str]:
+    """
+    Convertit des index de compteur (des cumuls) en consommations par jour.
+
+    `index` : {date 'DD/MM/YYYY': index en kWh}. Un index ne fait que monter :
+    la consommation d'une journee est la difference entre deux releves qui se
+    suivent. L'index releve un matin cloturant la journee precedente, la
+    difference entre le 02/01 et le 01/01 est rangee au 01/01.
+
+    Deux cas sont ecartes plutot que devines :
+    - un releve manquant (les deux dates ne se suivent pas d'un jour) : la
+      difference couvrirait plusieurs journees, et rien ne dit comment la
+      repartir. On laisse le trou ;
+    - un index qui recule (compteur remplace, retour a zero) : la difference
+      serait negative.
+
+    Retourne {date: valeur kWh en chaine FR}, prete pour merge_import.
+    """
+    resultat: dict[str, str] = {}
+    jours = sorted(index, key=_en_date)
+    # strict=False : la deuxieme liste a un element de moins, c'est voulu.
+    for precedent, suivant in zip(jours, jours[1:], strict=False):
+        if (_en_date(suivant) - _en_date(precedent)).days != 1:
+            continue
+        ecart = index[suivant] - index[precedent]
+        if ecart < 0:
+            continue
+        resultat[precedent] = _fmt_kwh_fr(ecart)
+    return resultat
+
+
+# ----------------------------------------------------------------------
+# Export d'index quotidiens d'Enedis (.xlsx)
+# ----------------------------------------------------------------------
+
+# Telecharge dans l'espace client Enedis ("Export_<PRM>_Index_<periode>.xlsx").
+# C'est le seul relevé du GESTIONNAIRE DE RESEAU qui donne les heures creuses
+# et pleines : il est donc disponible a tout foyer francais, quel que soit son
+# fournisseur. Mais il ne donne pas des consommations : ce sont les index du
+# compteur, des cumuls -- d'ou consommation_depuis_index ci-dessus.
+#
+# Forme du fichier (relevee sur un vrai export, 18/09/2026) : quelques lignes
+# de metadonnees, puis une ligne d'en-tetes "Date du tele-releve | Index
+# totalisateur (en kWh) | Heures Pleines (en kWh) | Heures Creuses (en kWh) |
+# Non parametre... | Heures Pleines Saison Basse (en kWh) | ...". Les colonnes
+# HP/HC utiles sont celles du CALENDRIER FOURNISSEUR (l'offre de l'abonne) ;
+# celles du CALENDRIER DISTRIBUTEUR, en saison basse / haute, decoupent la
+# meme energie autrement : les confondre doublerait la consommation. D'ou une
+# comparaison par EGALITE des libelles, jamais un "contient".
+_ENTETES_INDEX_TOTAL = (
+    "index totalisateur (en kwh)", "index totalisateur (kwh)",
+    "index totalisateur",
+)
+
+
+def _charger_openpyxl():
+    """Importe openpyxl, avec un message lisible s'il manque."""
+    try:
+        import openpyxl
+    except ImportError as exc:
+        raise ValueError(
+            "La lecture d'un fichier Excel demande le module 'openpyxl' "
+            "(installez-le avec : py -m pip install openpyxl)."
+        ) from exc
+    return openpyxl
+
+
+def _index_d_une_feuille(ws) -> dict[str, dict[str, str]] | None:
+    """
+    Lit une feuille d'export d'index Enedis.
+
+    Retourne {colonne_cible: {date: kWh}} converti en consommations, ou None
+    si cette feuille n'est pas un export d'index (en-tetes absents).
+    """
+    colonnes: dict[int, str] = {}
+    col_date = -1
+    index: dict[str, dict[str, float]] = {}
+
+    for row in ws.iter_rows(values_only=True):
+        cellules = list(row)
+
+        if not colonnes:
+            # Tant que l'en-tete n'est pas trouve, tout est metadonnees.
+            trouves: dict[int, str] = {}
+            date_ici = -1
+            for i, valeur in enumerate(cellules):
+                if not isinstance(valeur, str):
+                    continue
+                nom = _normalise_entete(valeur)
+                if nom in _ENTETES_INDEX_TOTAL:
+                    trouves[i] = "Conso_réseau_Jour"
+                elif nom in _ENTETES_HP:
+                    trouves[i] = "Conso_HP"
+                elif nom in _ENTETES_HC:
+                    trouves[i] = "Conso_HC"
+                elif date_ici < 0 and nom.startswith("date"):
+                    date_ici = i
+            # L'index totalisateur est la signature du format : sans lui, ce
+            # classeur est un autre export (conso/production), pas celui-ci.
+            if date_ici >= 0 and "Conso_réseau_Jour" in trouves.values():
+                colonnes, col_date = trouves, date_ici
+            continue
+
+        if col_date >= len(cellules):
+            continue
+        jour = _cellule_date(cellules[col_date])
+        if jour is None:
+            continue  # ligne vide, ou pied de tableau
+        for i, cible in colonnes.items():
+            if i >= len(cellules):
+                continue
+            valeur = _cellule_nombre(cellules[i])
+            if valeur is not None:  # 'NA' et '-' : donnee indisponible
+                index.setdefault(cible, {})[jour] = valeur
+
+    if not colonnes:
+        return None
+    return {cible: consommation_depuis_index(valeurs)
+            for cible, valeurs in index.items()}
+
+
+def parse_enedis_index_xlsx(path: str) -> dict[str, dict[str, str]] | None:
+    """
+    Lit un export d'index quotidiens d'Enedis et le convertit en
+    consommations journalieres.
+
+    Retourne None si le classeur n'est pas de ce type : l'appelant passe
+    alors au lecteur du classeur conso/production habituel.
+    """
+    openpyxl = _charger_openpyxl()
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    try:
+        for nom in wb.sheetnames:
+            trouve = _index_d_une_feuille(wb[nom])
+            if trouve is not None:
+                return trouve
+    finally:
+        wb.close()
+    return None
 
 
 # Feuilles reconnues dans le classeur Excel Enedis. Pour un producteur,
@@ -846,7 +997,8 @@ def parse_enedis_xlsx(path: str) -> dict[str, dict[str, str]]:
 def parse_enedis_fichier(path: str) -> dict[str, dict[str, str]]:
     """
     Point d'entree de l'import d'un releve du reseau, trois formats acceptes :
-    - .xlsx : le classeur officiel d'Enedis (feuilles conso + production) ;
+    - .xlsx : le classeur officiel d'Enedis (feuilles conso + production),
+      ou son export d'index quotidiens (converti en consommations) ;
     - .csv "suivi de consommation" d'Octopus : conso + detail HC/HP ;
     - .csv simple : une seule grandeur (conso ou injection).
 
@@ -856,6 +1008,9 @@ def parse_enedis_fichier(path: str) -> dict[str, dict[str, str]]:
     Retourne {colonne_cible: {date 'DD/MM/YYYY': valeur kWh en chaine FR}}.
     """
     if path.lower().endswith((".xlsx", ".xlsm")):
+        index = parse_enedis_index_xlsx(path)
+        if index is not None:
+            return index
         return parse_enedis_xlsx(path)
     texte = _lire_texte(path)
     suivi = parse_octopus_suivi_conso(texte)
