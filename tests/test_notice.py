@@ -37,3 +37,9 @@ def test_la_notice_donne_le_format_hphc():
     assert "Consommation HC (kWh)" in NOTICE_HTML
     assert "Consommation HP (kWh)" in NOTICE_HTML
     assert "Date;Consommation (kWh);Consommation HC (kWh)" in NOTICE_HTML
+
+def test_la_notice_parle_de_l_export_d_index_enedis():
+    """L'index n'est pas une consommation : si la notice ne le dit pas,
+    personne ne comprend pourquoi ce fichier-la marche."""
+    assert "index quotidiens" in NOTICE_HTML
+    assert "calendrier fournisseur" in NOTICE_HTML

@@ -492,6 +492,145 @@ def test_import_hphc_une_seule_des_deux_colonnes_le_dit(tmp_path):
         dl.parse_enedis_fichier(str(p))
 
 
+# --- Index de compteur -> consommations journalieres -------------------
+#
+# Le releve d'index d'Enedis (celui de l'espace client, avec HP et HC) donne
+# l'etat du compteur, pas la consommation : il faut soustraire deux jours qui
+# se suivent. Avis de Denis Blomme, 18/09/2026.
+def test_index_donne_la_conso_du_jour_precedent():
+    # L'index releve le 2 au matin clot la journee du 1er.
+    index = {"01/01/2025": 100.0, "02/01/2025": 112.5, "03/01/2025": 120.0}
+    assert dl.consommation_depuis_index(index) == {
+        "01/01/2025": "12,5",
+        "02/01/2025": "7,5",
+    }
+
+
+def test_index_saute_un_jour_manquant():
+    # Sans le releve du 2, la difference 3 - 1 couvrirait deux journees :
+    # on ne devine pas comment la repartir, on laisse le trou.
+    index = {"01/01/2025": 100.0, "03/01/2025": 130.0, "04/01/2025": 140.0}
+    assert dl.consommation_depuis_index(index) == {"03/01/2025": "10"}
+
+
+def test_index_ignore_un_compteur_qui_recule():
+    # Changement de compteur : l'index repart de zero, la difference serait
+    # negative. On ne fabrique pas une consommation a partir de ca.
+    index = {"01/01/2025": 5000.0, "02/01/2025": 12.0, "03/01/2025": 25.0}
+    assert dl.consommation_depuis_index(index) == {"02/01/2025": "13"}
+
+
+def test_index_dans_le_desordre_est_trie():
+    index = {"03/01/2025": 120.0, "01/01/2025": 100.0, "02/01/2025": 112.5}
+    assert dl.consommation_depuis_index(index) == {
+        "01/01/2025": "12,5",
+        "02/01/2025": "7,5",
+    }
+
+
+def test_index_un_seul_releve_ne_donne_rien():
+    assert dl.consommation_depuis_index({"01/01/2025": 100.0}) == {}
+
+
+def test_index_passe_un_changement_de_mois():
+    index = {"31/01/2025": 100.0, "01/02/2025": 108.25}
+    assert dl.consommation_depuis_index(index) == {"31/01/2025": "8,25"}
+
+
+# --- Export d'index quotidiens d'Enedis (.xlsx) ------------------------
+#
+# Forme relevee sur un vrai export (18/09/2026) : colonne A vide, une ligne
+# d'en-tetes ou la date s'appelle "Date du tele-releve", des index en kWh, et
+# DEUX jeux de postes horaires -- le calendrier FOURNISSEUR (celui de l'offre
+# de l'abonne, "Heures Pleines (en kWh)") et le calendrier DISTRIBUTEUR
+# ("Heures Pleines Saison Basse (en kWh)"...). Seul le premier nous interesse.
+def _classeur_index(chemin, avec_hphc=True, lignes=None):
+    """Fabrique un faux export d'index Enedis, a la forme du vrai."""
+    openpyxl = pytest.importorskip("openpyxl")
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Index_Cons_Calendriers_1"
+    ws["B5"] = "Export de donnees d'index quotidien"
+    ws["B8"] = "Point Reference Mesure (PRM) : "
+    ws["D16"] = "CALENDRIER FOURNISSEUR"
+    ws["N16"] = "CALENDRIER DISTRIBUTEUR"
+    ws["B17"] = "Date du tele-releve"
+    ws["C17"] = "Index totalisateur (en kWh)"
+    if avec_hphc:
+        ws["D17"] = "Heures Pleines (en kWh)"
+        ws["E17"] = "Heures Creuses (en kWh)"
+    ws["F17"] = "Non parametre"
+    ws["N17"] = "Heures Pleines Saison Basse (en kWh)"
+    ws["O17"] = "Heures Creuses Saison Basse (en kWh)"
+    if lignes is None:
+        lignes = [
+            ("01/01/2025", 100.0, 60.0, 40.0),
+            ("02/01/2025", 112.5, 67.0, 45.5),
+            ("03/01/2025", 120.0, 70.0, 50.0),
+        ]
+    for i, (jour, total, hp, hc) in enumerate(lignes, start=18):
+        ws[f"B{i}"] = jour
+        ws[f"C{i}"] = total
+        if avec_hphc:
+            ws[f"D{i}"] = hp
+            ws[f"E{i}"] = hc
+        ws[f"F{i}"] = "-"
+        ws[f"N{i}"] = 999.0   # piege : le calendrier distributeur
+        ws[f"O{i}"] = 888.0
+    wb.save(chemin)
+    return chemin
+
+
+def test_index_enedis_xlsx_donne_les_trois_colonnes(tmp_path):
+    p = _classeur_index(str(tmp_path / "Export_Index.xlsx"))
+    assert dl.parse_enedis_fichier(p) == {
+        "Conso_réseau_Jour": {"01/01/2025": "12,5", "02/01/2025": "7,5"},
+        "Conso_HP": {"01/01/2025": "7", "02/01/2025": "3"},
+        "Conso_HC": {"01/01/2025": "5,5", "02/01/2025": "4,5"},
+    }
+
+
+def test_index_enedis_xlsx_ignore_le_calendrier_distributeur(tmp_path):
+    # "Heures Pleines Saison Basse" ne doit jamais etre pris pour "Heures
+    # Pleines" : la comparaison des en-tetes est une egalite, pas un "contient".
+    p = _classeur_index(str(tmp_path / "Export_Index.xlsx"))
+    imports = dl.parse_enedis_fichier(p)
+    assert imports["Conso_HP"]["01/01/2025"] == "7"     # 67 - 60
+    assert "0" not in imports["Conso_HP"].values()      # 999 - 999 = 0
+
+
+def test_index_enedis_xlsx_compteur_sans_hphc(tmp_path):
+    # Un compteur en tarif Base n'a que l'index totalisateur : on importe la
+    # consommation totale, et rien d'autre.
+    p = _classeur_index(str(tmp_path / "Export_Index.xlsx"), avec_hphc=False)
+    assert dl.parse_enedis_fichier(p) == {
+        "Conso_réseau_Jour": {"01/01/2025": "12,5", "02/01/2025": "7,5"},
+    }
+
+
+def test_index_enedis_xlsx_jour_manquant_laisse_un_trou(tmp_path):
+    lignes = [
+        ("01/01/2025", 100.0, 60.0, 40.0),
+        ("03/01/2025", 130.0, 78.0, 52.0),   # le 02 manque
+        ("04/01/2025", 140.0, 84.0, 56.0),
+    ]
+    p = _classeur_index(str(tmp_path / "Export_Index.xlsx"), lignes=lignes)
+    imports = dl.parse_enedis_fichier(p)
+    assert imports["Conso_réseau_Jour"] == {"03/01/2025": "10"}
+
+
+def test_index_enedis_xlsx_saute_les_jours_indisponibles(tmp_path):
+    # Enedis ecrit "NA" quand la donnee manque : ce n'est pas un nombre, la
+    # journee est ignoree comme si la ligne n'existait pas.
+    lignes = [
+        ("01/01/2025", 100.0, 60.0, 40.0),
+        ("02/01/2025", "NA", "NA", "NA"),
+        ("03/01/2025", 120.0, 70.0, 50.0),
+    ]
+    p = _classeur_index(str(tmp_path / "Export_Index.xlsx"), lignes=lignes)
+    assert dl.parse_enedis_fichier(p)["Conso_réseau_Jour"] == {}
+
+
 def test_parse_enedis_csv_simple_reste_gere(tmp_path):
     # Sans colonnes HC/HP nommees, le parseur generique reprend la main.
     p = tmp_path / "enedis.csv"
