@@ -43,3 +43,9 @@ def test_la_notice_parle_de_l_export_d_index_enedis():
     personne ne comprend pourquoi ce fichier-la marche."""
     assert "index quotidiens" in NOTICE_HTML
     assert "calendrier fournisseur" in NOTICE_HTML
+
+def test_la_notice_renvoie_les_recalages_vers_la_fenetre():
+    """Demande d'un utilisateur (18/09/2026) : ne plus imposer le Bloc-notes.
+    Si la notice ne le dit pas, la fenetre ne sert a rien."""
+    assert "Recalages sur mes factures" in NOTICE_HTML
+    assert "Injection payée par EDF OA" in NOTICE_HTML
