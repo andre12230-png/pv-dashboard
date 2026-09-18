@@ -68,12 +68,18 @@ def colored_label(text: str, color: str, weight: int = 700, size: int = 13) -> Q
 
 class KpiCard(QFrame):
     """Carte KPI : libelle, grande valeur, sous-texte.
-    Variant : credit/debit/primary/warm/info/neutral."""
+    Variant : credit/debit/primary/warm/info/neutral.
+
+    `aide` : texte d'infobulle, pour ce qu'un sous-titre de trois mots ne peut
+    pas dire. Une carte sans infobulle se comporte comme avant.
+    """
 
     def __init__(self, label: str, value: str, sub: str = "", variant: str = "neutral",
-                 parent: QWidget | None = None):
+                 parent: QWidget | None = None, aide: str = ""):
         super().__init__(parent)
         self.setObjectName("KpiCard")
+        if aide:
+            self.setToolTip(aide)
         _apply_props(self, role="kpi", variant=variant)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.setMinimumHeight(90)

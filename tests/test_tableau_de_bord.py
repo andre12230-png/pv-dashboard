@@ -6,6 +6,8 @@ le badge de comparaison, qui doit compter comme l'onglet Comparaison N vs N-1.
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 import pandas as pd
 import pytest
 
@@ -180,3 +182,59 @@ def test_pas_de_badge_sans_annee_precedente(qapp):
     vue = _vue(df)
     assert vue._badge_n1(df, "month-2026-09", 156.0) is None
     assert vue._badge_n1(df, "all", 156.0) is None
+
+# -----------------------------------------------------------------------------
+# Le bilan financier s'explique tout seul
+# -----------------------------------------------------------------------------
+#
+# Question d'un utilisateur (18/09/2026) : « le dernier chiffre veut dire
+# quoi ? Que l'on a depense en realite cette somme sur l'annee ? » Sa lecture
+# etait juste, mais le sous-titre donnait la formule sans dire ce que le
+# resultat signifie -- ni que les economies ne sont pas de l'argent recu.
+
+
+def _cartes_du_bilan(revenu, eco, cout):
+    """Refait les quatre cartes comme le tableau de bord, sans la vue."""
+    from gui_widgets import KpiCard
+    from views._helpers import fmt_eur
+    bilan = revenu + eco - cout
+    return KpiCard(
+        "⚖️ Bilan net", fmt_eur(bilan, signed=True),
+        ("ce que l'électricité vous coûte encore" if bilan < 0
+         else "ce que le solaire vous rapporte, net"),
+        "credit" if bilan >= 0 else "debit",
+        aide=f"sorti de votre poche {fmt_eur(cout - revenu)}")
+
+
+def test_la_carte_porte_une_infobulle(qapp):
+    from gui_widgets import KpiCard
+    carte = KpiCard("Essai", "12 €", "sous-titre", "credit", aide="explication")
+    assert carte.toolTip() == "explication"
+
+
+def test_une_carte_sans_infobulle_reste_muette(qapp):
+    from gui_widgets import KpiCard
+    assert KpiCard("Essai", "12 €").toolTip() == ""
+
+
+def test_le_sous_titre_du_bilan_suit_le_signe(qapp):
+    # Bilan negatif : l'electricite coute encore quelque chose.
+    negatif = _cartes_du_bilan(revenu=932.08, eco=667.30, cout=1785.34)
+    assert negatif.sub.text() == "ce que l'électricité vous coûte encore"
+    # Bilan positif : le solaire rapporte plus qu'il n'en coute.
+    positif = _cartes_du_bilan(revenu=2000.0, eco=700.0, cout=1500.0)
+    assert positif.sub.text() == "ce que le solaire vous rapporte, net"
+
+
+def test_le_tableau_de_bord_explique_ses_quatre_montants():
+    """Les quatre cartes du bilan portent toutes une infobulle, et celle des
+    economies dit qu'elles ne sont pas encaissees."""
+    source = (Path(__file__).resolve().parents[1]
+              / "views" / "dashboard.py").read_text(encoding="utf-8")
+    debut = source.index("Bilan financier de la période")
+    fin = source.index("]))", debut)
+    bloc = source[debut:fin]
+    assert bloc.count("aide=") == 4, "une carte du bilan n'explique rien"
+    assert "pas de l'argent reçu" in bloc
+    assert "sorti de votre poche" in bloc
+
