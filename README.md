@@ -78,7 +78,8 @@ l'application **le cree vide** et s'ouvre dessus. Trois etapes ensuite :
    toujours dans `config.yaml` avec le Bloc-notes.
 2. **Faire entrer les releves** : onglet **Saisie quotidienne**, boutons
    **Importer...**, ou saisie a la main.
-3. **Declarer ses factures**, facultatif : voir `config-local.yaml`
+3. **Declarer ses factures**, facultatif : fenetre **Mes reglages**, section
+   **Recalages sur mes factures** (ou directement `config-local.yaml`)
    ci-dessous.
 
 Une configuration incomplete n'affiche plus un message de programmeur mais
@@ -270,19 +271,32 @@ charge un releve quotidien de ce que le compteur a echange avec le reseau.
 **Aucune obligation d'etre chez les memes fournisseurs que l'auteur** : tout
 export "date + valeur" passe (voir plus bas). Les trois sources habituelles :
 
-- **chez Enedis** (mon-compte-particulier.enedis.fr), le **classeur Excel**
-  officiel (`..._Export_energie_Consommation-Production_....xlsx`) : les
-  feuilles Consommation et Production sont importees d'un coup (la
-  "production" Enedis = l'injection au reseau) ;
-- **chez Octopus** (espace client), le **CSV "suivi de consommation"**
-  (`suivi_conso_....csv`) : conso reseau **et detail heures creuses / heures
-  pleines**, absent du classeur Excel. Malgre le numero de PRM dans son nom,
-  ce fichier vient du fournisseur et non d'Enedis : il est d'ailleurs le seul
-  a porter des colonnes en euros, qu'Enedis ne connait pas. L'app les ignore ;
+- **chez Enedis** (mon-compte-particulier.enedis.fr), l'**export d'index
+  quotidiens** (`Export_<PRM>_Index_<periode>.xlsx`) : c'est le plus complet,
+  et il est disponible **quel que soit votre fournisseur**. Il ne contient pas
+  des consommations mais les **index du compteur** — l'application fait les
+  soustractions elle-meme et en tire la conso reseau **et le detail heures
+  creuses / heures pleines**. Si vous injectez, sa feuille d'index de
+  production donne en plus votre **injection** : un seul fichier remplit
+  quatre colonnes. Pour l'obtenir : *Ma consommation > Suivre ma
+  consommation*, choisir **Index (kWh)** dans le menu de droite, puis
+  *Telecharger le .xlsx* ;
+- **chez Enedis** toujours, le **classeur Excel** officiel
+  (`..._Export_energie_Consommation-Production_....xlsx`) : les feuilles
+  Consommation et Production sont importees d'un coup (la "production" Enedis
+  = l'injection au reseau), mais **sans** le detail HC/HP ;
+- **chez votre fournisseur**, le **CSV "suivi de consommation"**
+  (`suivi_conso_....csv` chez Octopus) : conso reseau **et detail heures
+  creuses / heures pleines**. Malgre le numero de PRM dans son nom, ce fichier
+  vient du fournisseur et non d'Enedis : il est d'ailleurs le seul a porter
+  des colonnes en euros, qu'Enedis ne connait pas. L'app les ignore ;
 - ou un **export CSV** d'une seule grandeur.
 
-Les deux premiers se completent : le classeur pour l'injection, le
-"suivi de consommation" pour le detail HC/HP.
+Vous pouvez aussi **fabriquer vous-meme** un CSV avec le detail HC/HP : une
+colonne date en premier, puis deux colonnes nommees `Consommation HC (kWh)`
+et `Consommation HP (kWh)` -- ou simplement `HC` et `HP`, ou encore
+`Heures creuses` et `Heures pleines`. Les deux doivent etre presentes ; avec
+une seule, l'application refuse et dit laquelle manque.
 
 Le format est detecte automatiquement (lignes d'en-tete ignorees, dates
 ISO ou FR, valeurs en Wh ou kWh, jours "NA" ignores). Fusion **sans
