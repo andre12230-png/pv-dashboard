@@ -544,7 +544,8 @@ def test_index_passe_un_changement_de_mois():
 # DEUX jeux de postes horaires -- le calendrier FOURNISSEUR (celui de l'offre
 # de l'abonne, "Heures Pleines (en kWh)") et le calendrier DISTRIBUTEUR
 # ("Heures Pleines Saison Basse (en kWh)"...). Seul le premier nous interesse.
-def _classeur_index(chemin, avec_hphc=True, lignes=None):
+def _classeur_index(chemin, avec_hphc=True, lignes=None,
+                    avec_production=False):
     """Fabrique un faux export d'index Enedis, a la forme du vrai."""
     openpyxl = pytest.importorskip("openpyxl")
     wb = openpyxl.Workbook()
@@ -577,8 +578,46 @@ def _classeur_index(chemin, avec_hphc=True, lignes=None):
         ws[f"F{i}"] = "-"
         ws[f"N{i}"] = 999.0   # piege : le calendrier distributeur
         ws[f"O{i}"] = 888.0
+    if avec_production:
+        # Chez un producteur, l'export porte une 2e feuille : l'index de
+        # production, c'est-a-dire l'energie injectee au reseau. Elle a le
+        # MEME en-tete "Index totalisateur (en kWh)" que la consommation :
+        # seul le nom de la feuille les distingue.
+        wp = wb.create_sheet("Index_Prod")
+        wp["B17"] = "Date du tele-releve"
+        wp["C17"] = "Index totalisateur (en kWh)"
+        for i, (jour, _t, _hp, _hc) in enumerate(lignes, start=18):
+            wp[f"B{i}"] = jour
+        wp["C18"], wp["C19"], wp["C20"] = 500.0, 530.0, 545.0
     wb.save(chemin)
     return chemin
+
+
+def test_index_enedis_xlsx_lit_aussi_l_injection(tmp_path):
+    # La feuille de production donne l'injection, sans se melanger a la
+    # consommation : les deux portent le meme libelle d'en-tete.
+    p = _classeur_index(str(tmp_path / "Export_Index.xlsx"), avec_production=True)
+    imports = dl.parse_enedis_fichier(p)
+    assert imports["Inj_Jour"] == {"01/01/2025": "30", "02/01/2025": "15"}
+    assert imports["Conso_réseau_Jour"] == {
+        "01/01/2025": "12,5", "02/01/2025": "7,5",
+    }
+
+
+def test_index_enedis_xlsx_production_seule_ne_devient_pas_conso(tmp_path):
+    # Le piege : une feuille de production lue comme de la consommation
+    # rangerait des kWh injectes dans le soutirage.
+    openpyxl = pytest.importorskip("openpyxl")
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Index_Prod"
+    ws["B17"] = "Date du tele-releve"
+    ws["C17"] = "Index totalisateur (en kWh)"
+    ws["B18"], ws["C18"] = "01/01/2025", 500.0
+    ws["B19"], ws["C19"] = "02/01/2025", 530.0
+    chemin = str(tmp_path / "Export_Index_Prod.xlsx")
+    wb.save(chemin)
+    assert dl.parse_enedis_fichier(chemin) == {"Inj_Jour": {"01/01/2025": "30"}}
 
 
 def test_index_enedis_xlsx_donne_les_trois_colonnes(tmp_path):
