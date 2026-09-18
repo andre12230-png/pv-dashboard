@@ -119,6 +119,16 @@ def _nombre(x) -> str:
     return repr(float(x))
 
 
+def _nombre_kwh(x) -> str:
+    """Un total en kWh : 1497 reste 1497, 641.07 garde ses decimales.
+
+    _nombre() rendrait « 1497.0 » -- juste, mais il salirait un fichier ou
+    l'utilisateur a tout ecrit en entiers.
+    """
+    valeur = float(x)
+    return str(int(valeur)) if valeur == int(valeur) else repr(valeur)
+
+
 def _texte_date(d) -> str:
     return _chaine(_date(d).isoformat())
 
@@ -461,6 +471,198 @@ def controler(v: dict) -> None:
         raise ReglagesRefuses(
             "Heures creuses : écrivez chaque plage sous la forme "
             "22:00-06:00, et séparez-les par un point-virgule.") from exc
+
+
+# ----------------------------------------------------------------------
+# Recalages sur factures (config-local.yaml)
+# ----------------------------------------------------------------------
+#
+# Ces quatre sections REECRIVENT les releves journaliers pour retomber sur le
+# total d'une facture. Elles vivent dans config-local.yaml, qui n'est jamais
+# livre avec le programme : les factures d'un foyer fausseraient les chiffres
+# d'un autre, en silence. Un utilisateur a demande le 18/09/2026 de pouvoir
+# les saisir sans ouvrir le Bloc-notes -- d'ou ce qui suit.
+#
+# Meme prudence que pour config.yaml : on remplace les seules lignes
+# concernees, on relit le resultat avant d'ecrire, on garde une copie datee.
+
+# cle YAML -> (libelle, champ chiffre). Le champ vaut None quand la section
+# ne porte pas de total : les jours douteux n'ont qu'un motif.
+SORTES_RECALAGE = {
+    "conso_reseau_douteuse": ("Jours douteux", None),
+    "conso_reseau_recalee": ("Conso recalée sur facture", "total_kwh"),
+    "conso_reseau_facturee": ("Conso connue par la facture", "total_kwh"),
+    "injection_facturee": ("Injection payée par EDF OA", "total_kwh"),
+}
+
+
+def recalages_vides() -> dict:
+    """Le dictionnaire des quatre sortes, toutes vides."""
+    return {cle: [] for cle in SORTES_RECALAGE}
+
+
+def lire_recalages(cfg: dict) -> dict:
+    """Les recalages de config-local.yaml, dates normalisees en date()."""
+    sources = (cfg or {}).get("sources") or {}
+    lus = recalages_vides()
+    for cle, (_libelle, champ) in SORTES_RECALAGE.items():
+        for p in sources.get(cle) or []:
+            periode = {"debut": _date(p["debut"]), "fin": _date(p["fin"])}
+            if champ:
+                periode[champ] = float(p.get(champ) or 0)
+                periode["source"] = str(p.get("source") or "")
+            else:
+                periode["motif"] = str(p.get("motif") or "")
+            lus[cle].append(periode)
+    return lus
+
+
+def _texte_recalage(ind: int, cle: str, p: dict) -> list:
+    """Une periode de recalage, a la forme du modele livre."""
+    debut, fin = _texte_date(p["debut"]), _texte_date(p["fin"])
+    champ = SORTES_RECALAGE[cle][1]
+    if champ is None:
+        return [f"{' ' * ind}- {{ debut: {debut}, fin: {fin}, "
+                f"motif: {_chaine(p.get('motif', ''))} }}"]
+    return [
+        f"{' ' * ind}- {{ debut: {debut}, fin: {fin}, "
+        f"{champ}: {_nombre_kwh(p[champ])},",
+        f"{' ' * (ind + 4)}source: {_chaine(p.get('source', ''))} }}",
+    ]
+
+
+def _remplacer_periodes(lignes: list, k: int, textes: list) -> None:
+    """Remplace les elements d'une liste ecrite sur plusieurs lignes.
+
+    Les commentaires du bloc restent ou ils sont ; seules les lignes de
+    donnees sont refaites. Une liste videe s'ecrit « cle: [] ».
+    """
+    fin = _fin_bloc(lignes, k)
+    utiles = [j for j in range(k + 1, fin) if _utile(lignes[j])]
+    position = utiles[0] if utiles else fin
+    for j in reversed(utiles):
+        del lignes[j]
+    m = _SCALAIRE.match(lignes[k])
+    # m.group(1) va jusqu'aux espaces qui suivent le « : » -- il n'y en a
+    # aucun quand la cle finit la ligne, d'ou l'espace remis a la main :
+    # « injection_facturee:[] » ne serait pas du YAML.
+    debut_ligne = m.group(1).rstrip()
+    if not textes:
+        lignes[k] = f"{debut_ligne} []{m.group(3) or ''}"
+        return
+    lignes[k] = f"{debut_ligne}{m.group(3) or ''}".rstrip()
+    for n, ligne in enumerate(textes):
+        lignes.insert(position + n, ligne)
+
+
+def appliquer_recalages(texte: str, recalages: dict) -> str:
+    """Le texte de config-local.yaml, avec les seuls recalages remplaces."""
+    nl = "\r\n" if "\r\n" in texte else "\n"
+    fin_de_ligne = texte.endswith(("\n", "\r"))
+    lignes = texte.splitlines()
+
+    anciens = lire_recalages(yaml.safe_load(texte) or {})
+
+    if _cle(lignes, ["sources"]) is None:
+        raise ReglagesRefuses(
+            "config-local.yaml ne contient pas de section « sources » : "
+            "partez du modèle livré, config-local.exemple.yaml.")
+
+    for cle in SORTES_RECALAGE:
+        if anciens[cle] == recalages[cle]:
+            continue
+        ks = _cle(lignes, ["sources"])   # les indices bougent a chaque passe
+        ind = _indent(lignes[ks]) + 4
+        textes = []
+        for periode in recalages[cle]:
+            textes.extend(_texte_recalage(ind, cle, periode))
+        k = _cle(lignes, ["sources", cle])
+        if k is None:
+            # Cette sorte n'est pas encore dans le fichier : on l'ajoute a la
+            # fin de la section, avec ses periodes.
+            fin = _fin_bloc(lignes, ks)
+            nouvelles = [f"{' ' * (ind - 2)}{cle}:"] + textes
+            for n, ligne in enumerate(nouvelles):
+                lignes.insert(fin + n, ligne)
+        elif recalages[cle][:len(anciens[cle])] == anciens[cle]:
+            # Cas courant : on ajoute une periode a la suite. Les anciennes ne
+            # sont PAS reecrites -- elles portent la mise en forme de celui
+            # qui les a saisies (source sur plusieurs lignes, commentaires),
+            # et rien ne justifie d'y toucher.
+            ajoutees = []
+            for periode in recalages[cle][len(anciens[cle]):]:
+                ajoutees.extend(_texte_recalage(ind, cle, periode))
+            fin = _fin_bloc(lignes, k)
+            for n, ligne in enumerate(ajoutees):
+                lignes.insert(fin + n, ligne)
+        else:
+            _remplacer_periodes(lignes, k, textes)
+
+    return nl.join(lignes) + (nl if fin_de_ligne else "")
+
+
+def controler_recalages(recalages: dict) -> None:
+    """Refuse une periode impossible, avec un message clair."""
+    for cle, (libelle, champ) in SORTES_RECALAGE.items():
+        for p in recalages.get(cle) or []:
+            if _date(p["fin"]) < _date(p["debut"]):
+                raise ReglagesRefuses(
+                    f"{libelle} : la date de fin doit être après celle de "
+                    "début.")
+            if champ and float(p.get(champ) or 0) < 0:
+                raise ReglagesRefuses(
+                    f"{libelle} : un total en kWh ne peut pas être négatif.")
+
+
+# Fichier cree quand il n'existe pas encore : le strict necessaire, le modele
+# livre restant la reference commentee.
+_LOCAL_NEUF = (
+    "# Ce fichier complete config.yaml. Il n'appartient qu'a CETTE\n"
+    "# installation : ne le recopiez jamais ailleurs, ses totaux de factures\n"
+    "# reecrivent les releves journaliers.\n"
+    "#\n"
+    "# Ecrit par la fenetre « Mes reglages ». Le modele commente livre a cote,\n"
+    "# config-local.exemple.yaml, montre tout ce qu'on peut y mettre.\n"
+    "sources:\n"
+)
+
+
+def enregistrer_recalages(chemin, recalages: dict, dossier_sauvegardes) -> bool:
+    """Ecrit les recalages dans config-local.yaml, qu'il existe ou non.
+
+    Rend False s'il n'y avait rien a changer. Leve ReglagesRefuses sans avoir
+    rien ecrit si le resultat ne se relit pas comme attendu.
+    """
+    controler_recalages(recalages)
+    chemin = Path(chemin)
+    existait = chemin.exists()
+    texte = chemin.read_text(encoding="utf-8") if existait else _LOCAL_NEUF
+    nouveau = appliquer_recalages(texte, recalages)
+    if nouveau == texte:
+        return False
+
+    # La preuve : relu, le texte doit rendre exactement ce qu'on voulait.
+    try:
+        relu = yaml.safe_load(nouveau)
+    except yaml.YAMLError:
+        relu = None
+    if relu is None or lire_recalages(relu) != recalages:
+        raise ReglagesRefuses(
+            "Les recalages n'ont pas été enregistrés : config-local.yaml a "
+            "une forme que la fenetre ne sait pas modifier sans risque. Rien "
+            "n'a été changé. Modifiez-le avec le Bloc-notes.")
+
+    if existait:
+        dossier_sauvegardes = Path(dossier_sauvegardes)
+        dossier_sauvegardes.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(chemin, dossier_sauvegardes /
+                     ("config-local_avant-reglages_"
+                      f"{datetime.now():%Y%m%d-%H%M%S}.yaml"))
+    temporaire = chemin.with_name(chemin.name + ".tmp")
+    with open(temporaire, "w", encoding="utf-8", newline="") as fh:
+        fh.write(nouveau)
+    os.replace(temporaire, chemin)
+    return True
 
 
 # ----------------------------------------------------------------------
