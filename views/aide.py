@@ -365,7 +365,13 @@ installée (kWh/kWc/an). Référence en France : 900 à 1200.</p>
 <p><b>Économie d'autoconsommation</b> — argent économisé en consommant sa
 propre production au lieu de l'acheter au réseau.</p>
 <p><b>Bilan net</b> — recettes + économies − dépenses réseau (électricité
-consommée + abonnement).</p>
+consommée + abonnement). Autrement dit : <b>ce que l'électricité vous coûte
+encore</b>, une fois compté tout ce que le solaire vous rapporte ou vous
+évite. Il passe au vert le jour où elle ne vous coûte plus rien.<br>
+Attention à ne pas le confondre avec ce qui sort réellement de votre poche :
+les économies ne sont pas encaissées. L'argent déboursé sur la période, c'est
+l'achat au réseau moins la vente à EDF OA. Les infobulles des quatre cartes du
+tableau de bord donnent le détail, vos chiffres à l'appui.</p>
 <p><b>Abonnement</b> — part fixe de la facture d'électricité, payée chaque
 mois quelle que soit la consommation. Comptée dans les dépenses réseau.</p>
 <p><b>Amortissement</b> — moment où les gains cumulés égalent le coût de

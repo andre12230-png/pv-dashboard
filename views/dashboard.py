@@ -93,16 +93,46 @@ class DashboardView(BaseView):
 
         self.layout_inner.addWidget(SectionTitle("Bilan financier de la période"))
         # Une icone par montant, comme les emojis du bandeau de gauche.
+        #
+        # Les infobulles disent ce qu'un sous-titre de trois mots ne peut pas :
+        # un utilisateur a demande (18/09/2026) ce que voulait dire le bilan
+        # net, et s'il representait ce qu'il avait « depense en realite ». Sa
+        # lecture etait juste, mais la formule seule ne le disait pas -- et
+        # surtout, rien ne signalait que les economies ne sont pas encaissees.
+        deboursé = cout - revenu
         self.layout_inner.addLayout(grid_row([
             KpiCard("💶 Vente à EDF OA", fmt_eur(revenu, signed=True),
-                    f"à {fmt_prix_kwh(self.data.oa.prix_kwh)}", "credit"),
+                    f"à {fmt_prix_kwh(self.data.oa.prix_kwh)}", "credit",
+                    aide="Ce qu'EDF OA vous verse pour le surplus injecté sur "
+                         "la période.\n\nLe prix du kWh se règle dans "
+                         "« Mes réglages » : tout le bilan en dépend."),
             KpiCard("🐷 Économies", fmt_eur(eco, signed=True),
-                    "kWh du soleil, non achetés", "credit"),
+                    "kWh du soleil, non achetés", "credit",
+                    aide="Ce que vous n'avez PAS payé, en consommant votre "
+                         "propre production au lieu de l'acheter.\n\n"
+                         "Attention : ce n'est pas de l'argent reçu, mais une "
+                         "dépense évitée."),
             KpiCard("🔌 Achat au réseau", fmt_eur(-cout, signed=True),
-                    "électricité + abonnement", "debit"),
+                    "électricité + abonnement", "debit",
+                    aide="Ce que votre fournisseur vous facture sur la "
+                         "période : l'électricité soutirée et la part fixe de "
+                         "l'abonnement.\n\nC'est le montant à comparer à vos "
+                         "factures, à condition qu'elles couvrent la même "
+                         "période que celle affichée en haut."),
             KpiCard("⚖️ Bilan net", fmt_eur(bilan, signed=True),
-                    "vente + économies − achat",
-                    "credit" if bilan >= 0 else "debit"),
+                    ("ce que l'électricité vous coûte encore" if bilan < 0
+                     else "ce que le solaire vous rapporte, net"),
+                    "credit" if bilan >= 0 else "debit",
+                    aide=(
+                        f"{fmt_eur(revenu)} de vente + {fmt_eur(eco)} "
+                        f"d'économies − {fmt_eur(cout)} d'achat au réseau "
+                        f"= {fmt_eur(bilan, signed=True)}.\n\n"
+                        "Les économies n'étant pas encaissées, ce qui est "
+                        f"réellement sorti de votre poche sur la période est "
+                        f"{fmt_eur(deboursé)} : {fmt_eur(cout)} payés au "
+                        f"fournisseur, {fmt_eur(revenu)} reçus d'EDF OA.\n\n"
+                        "Sans l'installation, vous auriez payé "
+                        f"{fmt_eur(cout + eco)}.")),
         ]))
 
         # Jours dont une grandeur n'a jamais ete relevee : l'app la reconstitue,
