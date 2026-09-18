@@ -159,6 +159,17 @@ virgule ou tabulation. La seule exigence est que l'en-tête dise de quelle
 grandeur il s'agit — un mot comme « consommation », « injection » ou
 « production » — car l'application refuse de deviner dans quelle colonne
 ranger vos chiffres.</p>
+<p><b>Le détail heures creuses / heures pleines sans passer par votre
+fournisseur.</b> Dans votre espace client <b>Enedis</b>, l'export des
+<b>index quotidiens</b> (un fichier <code>Export_…_Index_….xlsx</code>)
+contient ce détail pour tout le monde, quel que soit le fournisseur. Attention,
+ce fichier ne donne pas des consommations mais des <b>index</b> : l'état du
+compteur, qui ne fait que monter. L'application s'en charge — elle soustrait
+chaque jour du précédent et range le résultat. Les colonnes utilisées sont
+celles du <b>calendrier fournisseur</b> (« Heures Pleines (en kWh) »,
+« Heures Creuses (en kWh) ») ; celles du calendrier distributeur, en saison
+basse ou haute, découpent la même énergie autrement et sont ignorées. Un jour
+sans relevé laisse un trou plutôt qu'une valeur double.</p>
 <p><b>Le détail heures creuses / heures pleines</b> demande deux colonnes
 nommées, l'une pour les heures creuses, l'autre pour les heures pleines.
 Plusieurs libellés sont acceptés : <code>Consommation HC (kWh)</code> et
