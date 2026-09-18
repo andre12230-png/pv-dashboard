@@ -101,9 +101,10 @@ class SaisieView(BaseView):
         btn_importer.setToolTip(
             "Ce que votre compteur a échangé avec le réseau.\n\n"
             "Classeur Excel Enedis (conso réseau + injection),\n"
-            "CSV 'suivi_conso' de votre fournisseur (conso +\n"
-            "détail heures creuses / pleines), ou tout export\n"
-            "CSV « date + valeur » d'une seule grandeur.")
+            "export d'index quotidiens Enedis (avec le détail\n"
+            "heures creuses / pleines), CSV 'suivi_conso' de\n"
+            "votre fournisseur, ou tout export CSV\n"
+            "« date + valeur » d'une seule grandeur.")
         btn_importer.clicked.connect(self._importer_enedis)
 
         btn_enphase = QPushButton("Importer la production...")
@@ -252,11 +253,12 @@ class SaisieView(BaseView):
         self._set_status("Données rechargees depuis le disque.", ok=True)
 
     def _importer_enedis(self) -> None:
-        """Importe un releve du reseau dans le CSV. Trois fichiers passent :
+        """Importe un releve du reseau dans le CSV. Quatre fichiers passent :
         le classeur Excel Enedis (feuilles conso + production importees d'un
-        coup), le CSV "suivi de consommation" telecharge chez Octopus
-        (conso + detail heures creuses / pleines) ou un export CSV d'une
-        seule grandeur.
+        coup), son export d'index quotidiens (les index du compteur, avec le
+        detail heures creuses / pleines, convertis en consommations), le CSV
+        "suivi de consommation" telecharge chez Octopus (conso + meme detail)
+        ou un export CSV d'une seule grandeur.
 
         Le "suivi_conso" ne vient pas d'Enedis malgre son nom de fichier :
         c'est l'espace client Octopus qui le fournit, avec les euros.
