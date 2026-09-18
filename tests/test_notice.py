@@ -28,3 +28,12 @@ def test_chaque_rubrique_commence_par_son_titre():
     for titre, corps in AideView._decouper(NOTICE_HTML):
         assert corps.startswith("<h3")
         assert titre
+
+def test_la_notice_donne_le_format_hphc():
+    """Avis du 18/09/2026 : personne ne devinait les en-tetes a ecrire.
+
+    La notice doit montrer les libelles acceptes ET un exemple de ligne.
+    """
+    assert "Consommation HC (kWh)" in NOTICE_HTML
+    assert "Consommation HP (kWh)" in NOTICE_HTML
+    assert "Date;Consommation (kWh);Consommation HC (kWh)" in NOTICE_HTML

@@ -433,6 +433,65 @@ def test_parse_octopus_suivi_conso_ignore_les_euros(tmp_path):
     assert imports["Conso_réseau_Jour"]["01/07/2026"] != "0,62"
 
 
+# Avis recu le 18/09/2026 : "ca me met tout dans Conso Reseau mais rien dans
+# HC ou HP". L'utilisateur avait bati son fichier a la main, avec des en-tetes
+# simples que seul le CSV consolide reconnaissait : l'import les accepte aussi.
+def test_import_hphc_entetes_simples(tmp_path):
+    p = tmp_path / "a_la_main.csv"
+    p.write_text("Date;HC;HP\n01/09/2026;5,1;7,2\n02/09/2026;4,9;6,9\n",
+                 encoding="utf-8")
+    assert dl.parse_enedis_fichier(str(p)) == {
+        "Conso_HC": {"01/09/2026": "5,1", "02/09/2026": "4,9"},
+        "Conso_HP": {"01/09/2026": "7,2", "02/09/2026": "6,9"},
+    }
+
+
+def test_import_hphc_entetes_en_francais(tmp_path):
+    p = tmp_path / "fournisseur.csv"
+    p.write_text(
+        "Date;Consommation (kWh);Heures creuses (kWh);Heures pleines (kWh)\n"
+        "01/09/2026;12,3;5,1;7,2\n",
+        encoding="utf-8")
+    assert dl.parse_enedis_fichier(str(p)) == {
+        "Conso_réseau_Jour": {"01/09/2026": "12,3"},
+        "Conso_HC": {"01/09/2026": "5,1"},
+        "Conso_HP": {"01/09/2026": "7,2"},
+    }
+
+
+def test_import_hphc_accepte_le_soulignement_et_la_casse(tmp_path):
+    p = tmp_path / "variantes.csv"
+    p.write_text("Jour;CONSO_HC;conso_hp\n01/09/2026;5,1;7,2\n",
+                 encoding="utf-8")
+    assert dl.parse_enedis_fichier(str(p)) == {
+        "Conso_HC": {"01/09/2026": "5,1"},
+        "Conso_HP": {"01/09/2026": "7,2"},
+    }
+
+
+def test_import_hphc_ne_confond_pas_les_euros(tmp_path):
+    # Piege du fichier Octopus : les memes libelles existent en euros.
+    p = tmp_path / "euros.csv"
+    p.write_text(
+        "Date;Consommation HC (kWh);Consommation HP (kWh);"
+        "Consommation HC (euros);Consommation HP (euros)\n"
+        "01/09/2026;5,1;7,2;0,8;1,9\n",
+        encoding="utf-8")
+    assert dl.parse_enedis_fichier(str(p)) == {
+        "Conso_HC": {"01/09/2026": "5,1"},
+        "Conso_HP": {"01/09/2026": "7,2"},
+    }
+
+
+def test_import_hphc_une_seule_des_deux_colonnes_le_dit(tmp_path):
+    # Avec HC seule, l'application refuse et nomme la colonne manquante,
+    # plutot que de ranger ces kWh en consommation reseau sans rien dire.
+    p = tmp_path / "hc_seule.csv"
+    p.write_text("Date;HC\n01/09/2026;5,1\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="Colonne HP"):
+        dl.parse_enedis_fichier(str(p))
+
+
 def test_parse_enedis_csv_simple_reste_gere(tmp_path):
     # Sans colonnes HC/HP nommees, le parseur generique reprend la main.
     p = tmp_path / "enedis.csv"
