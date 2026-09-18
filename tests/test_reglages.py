@@ -283,3 +283,237 @@ def test_la_fenetre_reste_ouverte_si_l_enregistrement_est_refuse(qapp, monkeypat
     fenetre._on_enregistrer()
     assert messages == ["non"]
     assert fenetre.result() == 0
+
+# ======================================================================
+# Les recalages sur factures (config-local.yaml)
+# ======================================================================
+#
+# Demande d'un utilisateur (18/09/2026) : pouvoir dire a l'application ce
+# qu'EDF OA a REELLEMENT paye, sans ouvrir le Bloc-notes. Ces sections
+# reecrivent les releves journaliers : l'ecriture doit etre aussi prudente
+# que celle de config.yaml.
+
+LOCAL = """# Mon fichier local
+sources:
+
+  # Injection reellement payee par EDF OA
+  injection_facturee:
+    - { debut: "2024-01-01", fin: "2024-12-31", total_kwh: 3000,
+        source: "autofacturation EDF OA" }
+
+  recharges_ve_json: "F:/Recharge VE/recharges.json"
+"""
+
+
+def test_lire_les_recalages_d_une_config():
+    cfg = yaml.safe_load(LOCAL)
+    lus = rg.lire_recalages(cfg)
+    assert lus["injection_facturee"] == [
+        {"debut": date(2024, 1, 1), "fin": date(2024, 12, 31),
+         "total_kwh": 3000.0, "source": "autofacturation EDF OA"},
+    ]
+    # Les autres sortes existent, vides.
+    assert lus["conso_reseau_facturee"] == []
+    assert lus["conso_reseau_douteuse"] == []
+
+
+def test_ajouter_une_periode_facturee():
+    cfg = yaml.safe_load(LOCAL)
+    recalages = rg.lire_recalages(cfg)
+    recalages["injection_facturee"].append(
+        {"debut": date(2025, 1, 1), "fin": date(2025, 12, 31),
+         "total_kwh": 3210.5, "source": "autofacturation 2025"})
+    neuf = rg.appliquer_recalages(LOCAL, recalages)
+    relu = yaml.safe_load(neuf)
+    assert len(relu["sources"]["injection_facturee"]) == 2
+    assert relu["sources"]["injection_facturee"][1]["total_kwh"] == 3210.5
+    # Ce qui n'est pas un recalage n'est pas touche.
+    assert relu["sources"]["recharges_ve_json"] == "F:/Recharge VE/recharges.json"
+    assert "# Mon fichier local" in neuf
+    assert "# Injection reellement payee par EDF OA" in neuf
+
+
+# Le fichier d'un utilisateur de longue date : des totaux en entiers, et une
+# source trop longue pour tenir sur une ligne. Ajouter une periode ne doit
+# rien y changer -- ces lignes representent des heures de relevé de factures.
+LOCAL_SOIGNE = """\
+sources:
+
+  injection_facturee:
+    - { debut: "2022-04-29", fin: "2022-06-27", total_kwh: 1497,
+        source: "avant contrat OA : index du compteur au
+                 28/06/2022 (facture AF232803078110)" }
+    - { debut: "2022-06-28", fin: "2023-06-27", total_kwh: 4731,
+        source: "autofacturation" }
+"""
+
+
+def test_ajouter_ne_reecrit_pas_les_periodes_existantes():
+    recalages = rg.lire_recalages(yaml.safe_load(LOCAL_SOIGNE))
+    recalages["injection_facturee"].append(
+        {"debut": date(2023, 6, 28), "fin": date(2024, 6, 27),
+         "total_kwh": 4306, "source": "autofacturation"})
+    neuf = rg.appliquer_recalages(LOCAL_SOIGNE, recalages)
+    # Tout l'ancien texte est encore la, mot pour mot.
+    assert LOCAL_SOIGNE.rstrip() in neuf
+    assert "total_kwh: 1497," in neuf and "total_kwh: 1497.0" not in neuf
+    assert rg.lire_recalages(yaml.safe_load(neuf)) == recalages
+
+
+def test_un_total_entier_reste_entier():
+    recalages = rg.recalages_vides()
+    recalages["injection_facturee"].append(
+        {"debut": date(2025, 1, 1), "fin": date(2025, 12, 31),
+         "total_kwh": 3000, "source": ""})
+    neuf = rg.appliquer_recalages("sources:\n", recalages)
+    assert "total_kwh: 3000," in neuf
+    # Une decimale, elle, est gardee.
+    recalages["injection_facturee"][0]["total_kwh"] = 641.07
+    assert "total_kwh: 641.07," in rg.appliquer_recalages("sources:\n", recalages)
+
+
+def test_une_sorte_absente_est_ajoutee():
+    cfg = yaml.safe_load(LOCAL)
+    recalages = rg.lire_recalages(cfg)
+    recalages["conso_reseau_douteuse"].append(
+        {"debut": date(2025, 3, 10), "fin": date(2025, 3, 14),
+         "motif": "panne Linky"})
+    relu = yaml.safe_load(rg.appliquer_recalages(LOCAL, recalages))
+    # Les dates s'ecrivent entre guillemets, comme dans le modele livre :
+    # YAML les rend donc en chaines, que lire_recalages renormalise.
+    assert rg.lire_recalages(relu)["conso_reseau_douteuse"] == [
+        {"debut": date(2025, 3, 10), "fin": date(2025, 3, 14),
+         "motif": "panne Linky"},
+    ]
+
+
+def test_tout_retirer_laisse_une_liste_vide():
+    cfg = yaml.safe_load(LOCAL)
+    recalages = rg.lire_recalages(cfg)
+    recalages["injection_facturee"].clear()
+    relu = yaml.safe_load(rg.appliquer_recalages(LOCAL, recalages))
+    assert relu["sources"]["injection_facturee"] == []
+
+
+def test_sans_changement_le_fichier_local_est_identique():
+    cfg = yaml.safe_load(LOCAL)
+    assert rg.appliquer_recalages(LOCAL, rg.lire_recalages(cfg)) == LOCAL
+
+
+def test_enregistrer_cree_le_fichier_s_il_manque(tmp_path):
+    chemin = tmp_path / "config-local.yaml"
+    recalages = rg.recalages_vides()
+    recalages["injection_facturee"].append(
+        {"debut": date(2025, 1, 1), "fin": date(2025, 12, 31),
+         "total_kwh": 3000, "source": "autofacturation EDF OA"})
+    assert rg.enregistrer_recalages(chemin, recalages, tmp_path / "backups")
+    relu = yaml.safe_load(chemin.read_text(encoding="utf-8"))
+    assert relu["sources"]["injection_facturee"][0]["total_kwh"] == 3000
+
+
+def test_enregistrer_sauvegarde_avant_d_ecrire(tmp_path):
+    chemin = tmp_path / "config-local.yaml"
+    chemin.write_text(LOCAL, encoding="utf-8")
+    sauvegardes = tmp_path / "backups"
+    recalages = rg.lire_recalages(yaml.safe_load(LOCAL))
+    recalages["injection_facturee"][0]["total_kwh"] = 3100
+    assert rg.enregistrer_recalages(chemin, recalages, sauvegardes)
+    copies = list(sauvegardes.glob("config-local_avant-reglages_*.yaml"))
+    assert len(copies) == 1
+    assert copies[0].read_text(encoding="utf-8") == LOCAL
+
+
+def test_enregistrer_ne_fait_rien_si_rien_ne_change(tmp_path):
+    chemin = tmp_path / "config-local.yaml"
+    chemin.write_text(LOCAL, encoding="utf-8")
+    recalages = rg.lire_recalages(yaml.safe_load(LOCAL))
+    assert rg.enregistrer_recalages(chemin, recalages, tmp_path / "b") is False
+    assert chemin.read_text(encoding="utf-8") == LOCAL
+
+
+def test_une_periode_a_l_envers_est_refusee(tmp_path):
+    recalages = rg.recalages_vides()
+    recalages["injection_facturee"].append(
+        {"debut": date(2025, 12, 31), "fin": date(2025, 1, 1),
+         "total_kwh": 3000, "source": ""})
+    with pytest.raises(rg.ReglagesRefuses, match="après"):
+        rg.enregistrer_recalages(tmp_path / "c.yaml", recalages, tmp_path / "b")
+
+
+def test_un_total_negatif_est_refuse(tmp_path):
+    recalages = rg.recalages_vides()
+    recalages["conso_reseau_facturee"].append(
+        {"debut": date(2025, 1, 1), "fin": date(2025, 12, 31),
+         "total_kwh": -5, "source": ""})
+    with pytest.raises(rg.ReglagesRefuses):
+        rg.enregistrer_recalages(tmp_path / "c.yaml", recalages, tmp_path / "b")
+
+# ======================================================================
+# La fenetre : les recalages saisis ressortent tels quels
+# ======================================================================
+
+VALEURS_FENETRE = {
+    "puissance_kwc": 6.0, "cout_total_eur": 15000,
+    "date_mise_en_service": date(2022, 5, 2),
+    "date_debut_contrat_oa": date(2022, 7, 1),
+    "prix_oa": 0.1003, "prime_par_kwc": 380.0, "prime_duree": 5,
+    "nom": "Octopus", "offre": "Octopus Go", "abonnement": 20.16,
+    "prix_hp": 0.2213, "prix_hc": 0.129, "prix_depuis": date(2026, 8, 1),
+    "plages_hc": ["22:00-06:00"],
+}
+
+
+@pytest.fixture
+def fenetre():
+    """Une fenetre Mes reglages, sans jamais l'afficher a l'ecran."""
+    pytest.importorskip("PySide6")
+    from PySide6.QtWidgets import QApplication
+
+    from fenetre_reglages import FenetreReglages
+
+    app = QApplication.instance() or QApplication([])
+
+    def construire(recalages):
+        return FenetreReglages(dict(VALEURS_FENETRE), lambda v: None, None,
+                               recalages=recalages,
+                               enregistrer_recalages=lambda r: None)
+
+    yield construire
+    app.processEvents()
+
+
+def test_la_fenetre_rend_les_recalages_qu_on_lui_donne(fenetre):
+    donnes = rg.recalages_vides()
+    donnes["injection_facturee"].append(
+        {"debut": date(2024, 7, 1), "fin": date(2025, 6, 30),
+         "total_kwh": 3210.5, "source": "autofacturation EDF OA"})
+    donnes["conso_reseau_douteuse"].append(
+        {"debut": date(2025, 3, 10), "fin": date(2025, 3, 14),
+         "motif": "panne Linky"})
+    assert fenetre(donnes).recalages() == donnes
+
+
+def test_sans_recalage_la_fenetre_n_en_invente_pas(fenetre):
+    assert fenetre(rg.recalages_vides()) .recalages() == rg.recalages_vides()
+
+
+def test_les_jours_douteux_n_ont_pas_de_total(fenetre):
+    """Leur case kWh est grisee : un jour ecarte n'a pas de total."""
+    donnes = rg.recalages_vides()
+    donnes["conso_reseau_douteuse"].append(
+        {"debut": date(2025, 3, 10), "fin": date(2025, 3, 14), "motif": "x"})
+    f = fenetre(donnes)
+    ligne = f._lignes.itemAt(0).widget()
+    assert not ligne.total.isEnabled()
+    assert "total_kwh" not in f.recalages()["conso_reseau_douteuse"][0]
+
+
+def test_une_ligne_retiree_disparait_des_recalages(fenetre):
+    donnes = rg.recalages_vides()
+    donnes["injection_facturee"].append(
+        {"debut": date(2024, 7, 1), "fin": date(2025, 6, 30),
+         "total_kwh": 3210.5, "source": ""})
+    f = fenetre(donnes)
+    f._retirer_ligne(f._lignes.itemAt(0).widget())
+    assert f.recalages() == rg.recalages_vides()
+

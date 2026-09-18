@@ -774,10 +774,19 @@ class MainWindow(QMainWindow):
 
     def _ouvrir_reglages(self) -> None:
         """Ouvre la fenetre « Mes reglages » ; si elle enregistre, recharge."""
-        fenetre = FenetreReglages(reglages.lire_reglages(self.data.cfg),
-                                  self._enregistrer_reglages, self)
+        fenetre = FenetreReglages(
+            reglages.lire_reglages(self.data.cfg),
+            self._enregistrer_reglages, self,
+            recalages=reglages.lire_recalages(self.data.cfg),
+            enregistrer_recalages=self._enregistrer_recalages)
         if fenetre.exec() == QDialog.Accepted:
             self._recharger_fenetre()
+
+    @staticmethod
+    def _enregistrer_recalages(recalages: dict) -> None:
+        """Ecrit les recalages sur factures dans config-local.yaml."""
+        reglages.enregistrer_recalages(CONFIG_LOCAL_PATH, recalages,
+                                       BASE_DIR / "backups")
 
     @staticmethod
     def _enregistrer_reglages(valeurs: dict) -> None:

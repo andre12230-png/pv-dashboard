@@ -9,6 +9,7 @@ from datetime import date
 
 from PySide6.QtCore import QDate, QLocale, Qt
 from PySide6.QtWidgets import (
+    QComboBox,
     QDateEdit,
     QDialog,
     QDoubleSpinBox,
@@ -25,7 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from reglages import ReglagesRefuses
+from reglages import SORTES_RECALAGE, ReglagesRefuses, recalages_vides
 
 TITRE = "Mes réglages"
 FRANCAIS = QLocale(QLocale.French, QLocale.France)
@@ -58,16 +59,88 @@ def _en_date(case: QDateEdit) -> date:
     return date(d.year(), d.month(), d.day())
 
 
+class LigneRecalage(QWidget):
+    """Une periode de recalage : sa sorte, ses dates, son total, sa source.
+
+    Les jours douteux n'ont pas de total en kWh -- leur case se grise, et le
+    texte devient un motif (« panne Linky ») plutot qu'une reference de
+    facture.
+    """
+
+    def __init__(self, cle: str, periode: dict, retirer):
+        super().__init__()
+        ligne = QHBoxLayout(self)
+        ligne.setContentsMargins(0, 0, 0, 0)
+        ligne.setSpacing(6)
+
+        self.sorte = QComboBox()
+        for k, (libelle, _champ) in SORTES_RECALAGE.items():
+            self.sorte.addItem(libelle, k)
+        self.sorte.setCurrentIndex(list(SORTES_RECALAGE).index(cle))
+        self.sorte.setMinimumWidth(200)
+        self.sorte.currentIndexChanged.connect(self._sorte_changee)
+
+        self.debut = _date(periode.get("debut") or date.today())
+        self.fin = _date(periode.get("fin") or date.today())
+        for case in (self.debut, self.fin):
+            case.setMinimumWidth(110)
+        self.total = _nombre(float(periode.get("total_kwh") or 0), 1, " kWh",
+                             1_000_000)
+        # Assez large pour « 999999,9 kWh » : tronque, un total ne se relit
+        # pas, et c'est justement le chiffre qu'on vient verifier.
+        self.total.setMinimumWidth(130)
+        self.source = QLineEdit(str(periode.get("source")
+                                    or periode.get("motif") or ""))
+        self.source.setMinimumWidth(130)
+        # Sans cela, un texte plus long que la case s'affiche par sa fin :
+        # on croit le debut perdu.
+        self.source.setCursorPosition(0)
+
+        bouton = QPushButton("✕")
+        bouton.setFixedWidth(30)
+        bouton.setToolTip("Retirer cette ligne")
+        bouton.clicked.connect(lambda: retirer(self))
+
+        for case in (self.sorte, self.debut, self.fin, self.total,
+                     self.source, bouton):
+            ligne.addWidget(case)
+        self._sorte_changee()
+
+    def _sorte_changee(self) -> None:
+        champ = SORTES_RECALAGE[self.sorte.currentData()][1]
+        self.total.setEnabled(champ is not None)
+        self.source.setPlaceholderText(
+            "d'où vient ce total (facture du…)" if champ
+            else "pourquoi ces jours sont douteux")
+
+    def valeurs(self) -> tuple:
+        """(cle de la sorte, periode) au format de reglages.lire_recalages."""
+        cle = self.sorte.currentData()
+        periode = {"debut": _en_date(self.debut), "fin": _en_date(self.fin)}
+        champ = SORTES_RECALAGE[cle][1]
+        if champ:
+            periode[champ] = round(self.total.value(), 1)
+            periode["source"] = self.source.text().strip()
+        else:
+            periode["motif"] = self.source.text().strip()
+        return cle, periode
+
+
 class FenetreReglages(QDialog):
     """enregistrer(valeurs) ecrit les reglages ; s'il leve une erreur, la
     fenetre reste ouverte et l'affiche."""
 
-    def __init__(self, valeurs: dict, enregistrer, parent=None):
+    def __init__(self, valeurs: dict, enregistrer, parent=None,
+                 recalages: dict | None = None, enregistrer_recalages=None):
         super().__init__(parent)
         self._enregistrer = enregistrer
+        self._enregistrer_recalages = enregistrer_recalages
         self.setWindowTitle(TITRE)
         self.setMinimumWidth(620)
-        self.resize(660, 760)
+        # Plus large quand les recalages sont la : leur rangee compte six
+        # cases, et une fenetre trop etroite ferait apparaitre une barre de
+        # defilement horizontale.
+        self.resize(830, 820) if enregistrer_recalages else self.resize(660, 760)
 
         corps = QWidget()
         v = QVBoxLayout(corps)
@@ -137,6 +210,10 @@ class FenetreReglages(QDialog):
            "<br><br>"
            "<b>Vos prix ont changé ?</b> Indiquez la date du changement : "
            "les anciens prix restent appliqués aux mois d'avant."))
+
+        # --- Recalages sur factures -------------------------------------
+        if enregistrer_recalages is not None:
+            v.addWidget(self._groupe_recalages(recalages or recalages_vides()))
         v.addStretch(1)
 
         defilement = QScrollArea()
@@ -157,6 +234,80 @@ class FenetreReglages(QDialog):
         tout = QVBoxLayout(self)
         tout.addWidget(defilement, stretch=1)
         tout.addLayout(boutons)
+
+    def _groupe_recalages(self, recalages: dict) -> QGroupBox:
+        """Le tableau des recalages : une ligne par periode, plus un bouton."""
+        groupe = QGroupBox("Recalages sur mes factures")
+        dehors = QVBoxLayout(groupe)
+
+        note = QLabel(
+            "Facultatif, et à manier avec soin. Ces lignes <b>réécrivent vos "
+            "relevés</b> pour retomber sur le total d'une facture : l'écart "
+            "est réparti sur les jours de la période.<br><br>"
+            "<b>Injection payée par EDF OA</b> : le total en kWh de "
+            "votre autofacturation — pas le montant en euros. C'est ce que le "
+            "compteur a compté, qui diffère un peu de ce qu'annonce "
+            "l'onduleur.<br>"
+            "<b>Conso recalée sur facture</b> : quand vos relevés sont arrondis "
+            "et que la facture donne le vrai total.<br>"
+            "<b>Conso connue par la facture</b> : périodes dont "
+            "le détail quotidien n'existe plus chez Enedis (36 mois).<br>"
+            "<b>Jours douteux</b> : ils sont traités comme s'ils n'avaient "
+            "pas de relevé.<br><br>"
+            "Ces réglages n'appartiennent qu'à votre installation : ils "
+            "s'écrivent dans <code>config-local.yaml</code>, qui ne part "
+            "jamais avec le programme.")
+        note.setTextFormat(Qt.RichText)
+        note.setWordWrap(True)
+        note.setStyleSheet("color: #64748b; font-size: 11px;")
+        dehors.addWidget(note)
+
+        entetes = QHBoxLayout()
+        entetes.setSpacing(6)
+        for titre, largeur in (("Ce qu'on recale", 200), ("Du", 110),
+                               ("Au", 110), ("Total", 130),
+                               ("D'où ça vient", 130), ("", 30)):
+            case = QLabel(titre)
+            case.setMinimumWidth(largeur)
+            case.setStyleSheet("color: #64748b; font-size: 11px;")
+            entetes.addWidget(case)
+        dehors.addLayout(entetes)
+
+        self._lignes = QVBoxLayout()
+        self._lignes.setSpacing(4)
+        dehors.addLayout(self._lignes)
+        for cle in SORTES_RECALAGE:
+            for periode in recalages.get(cle) or []:
+                self._ajouter_ligne(cle, periode)
+
+        ajouter = QPushButton("+ Ajouter une ligne")
+        ajouter.clicked.connect(lambda: self._ajouter_ligne())
+        barre = QHBoxLayout()
+        barre.addWidget(ajouter)
+        barre.addStretch(1)
+        dehors.addLayout(barre)
+        return groupe
+
+    def _ajouter_ligne(self, cle: str = "injection_facturee",
+                       periode: dict | None = None) -> None:
+        ligne = LigneRecalage(cle, periode or {}, self._retirer_ligne)
+        self._lignes.addWidget(ligne)
+
+    def _retirer_ligne(self, ligne: LigneRecalage) -> None:
+        self._lignes.removeWidget(ligne)
+        ligne.setParent(None)
+        ligne.deleteLater()
+
+    def recalages(self) -> dict:
+        """Les recalages tels que saisis, au format de lire_recalages."""
+        tous = recalages_vides()
+        for i in range(self._lignes.count()):
+            ligne = self._lignes.itemAt(i).widget()
+            if ligne is None:
+                continue
+            cle, periode = ligne.valeurs()
+            tous[cle].append(periode)
+        return tous
 
     def _groupe(self, titre: str, champs, aide: str) -> QGroupBox:
         groupe = QGroupBox(titre)
@@ -196,6 +347,11 @@ class FenetreReglages(QDialog):
     def _on_enregistrer(self) -> None:
         try:
             self._enregistrer(self.valeurs())
+            # Les recalages vivent dans un autre fichier : on les ecrit
+            # ensuite, et une erreur ici laisse la fenetre ouverte sans
+            # annuler ce qui vient d'etre enregistre dans config.yaml.
+            if self._enregistrer_recalages is not None:
+                self._enregistrer_recalages(self.recalages())
         except (ReglagesRefuses, OSError) as exc:
             QMessageBox.warning(self, TITRE, str(exc))
             return

@@ -46,12 +46,21 @@ les boutons <b>Importer…</b> chargent d'un coup un fichier téléchargé chez
 votre gestionnaire de réseau, votre fournisseur ou votre onduleur. À défaut,
 la saisie à la main marche aussi bien.</p>
 <p><b>3. Vos factures, si vous les avez.</b> Les totaux d'une facture sont
-plus justes que la somme des relevés quotidiens. On peut les déclarer dans un
-second fichier, <code>config-local.yaml</code> — un modèle commenté
-(<code>config-local.exemple.yaml</code>) est fourni à côté. Ce fichier est
-facultatif, et il ne quitte jamais votre ordinateur : ce sont vos factures.
-<b>N'y recopiez jamais celles de quelqu'un d'autre</b>, vos relevés seraient
-réécrits pour retomber sur des totaux qui ne sont pas les vôtres.</p>
+plus justes que la somme des relevés quotidiens. Ils se déclarent dans
+<b>Modifier mes réglages</b>, section <b>Recalages sur mes factures</b> :
+choisissez ce que vous recalez, la période, le total en kWh, et d'où il
+vient. L'écart est réparti sur les jours de la période.</p>
+<p>Le cas le plus utile pour un producteur : <b>Injection payée par EDF OA</b>.
+EDF OA paie sur l'index du compteur, qui diffère un peu de ce qu'annonce
+l'onduleur — donner le total en kWh de votre autofacturation (pas le montant
+en euros) met l'application d'accord avec ce que vous avez réellement touché.</p>
+<p>Ces totaux s'écrivent dans <code>config-local.yaml</code>, à côté de
+<code>config.yaml</code> — un modèle commenté
+(<code>config-local.exemple.yaml</code>) est fourni si vous préférez
+l'écrire vous-même. Ce fichier est facultatif, et il ne quitte jamais votre
+ordinateur : ce sont vos factures. <b>N'y recopiez jamais celles de quelqu'un
+d'autre</b>, vos relevés seraient réécrits pour retomber sur des totaux qui ne
+sont pas les vôtres.</p>
 
 <h3 style="color:#b45309">Les vues (menu de gauche)</h3>
 <p><b>Tableau de bord</b> — vue d'ensemble de la période choisie : la part de
