@@ -159,6 +159,21 @@ virgule ou tabulation. La seule exigence est que l'en-tête dise de quelle
 grandeur il s'agit — un mot comme « consommation », « injection » ou
 « production » — car l'application refuse de deviner dans quelle colonne
 ranger vos chiffres.</p>
+<p><b>Le détail heures creuses / heures pleines</b> demande deux colonnes
+nommées, l'une pour les heures creuses, l'autre pour les heures pleines.
+Plusieurs libellés sont acceptés : <code>Consommation HC (kWh)</code> et
+<code>Consommation HP (kWh)</code> (ceux d'Octopus), <code>Heures creuses</code>
+et <code>Heures pleines</code>, ou simplement <code>HC</code> et
+<code>HP</code>. La date reste en <b>première colonne</b>, le séparateur est le
+point-virgule, et une colonne de consommation totale est facultative :</p>
+<pre>Date;Consommation (kWh);Consommation HC (kWh);Consommation HP (kWh)
+01/09/2026;12,3;5,1;7,2
+02/09/2026;11,8;4,9;6,9</pre>
+<p>Si le fichier ne porte <b>qu'une</b> des deux colonnes, l'application le dit
+et n'importe rien, plutôt que de laisser ces kWh grossir la consommation réseau
+sans prévenir. Et pour quelques jours seulement, les colonnes <b>Conso HC</b> et
+<b>Conso HP</b> se remplissent aussi à la main dans le tableau de l'onglet
+Saisie quotidienne.</p>
 <p>L'import ne crée <b>jamais de doublon</b> : les jours nouveaux sont ajoutés,
 les dates déjà présentes sont mises à jour (seule la colonne concernée est
 remplacée — votre production n'est jamais touchée). Un récapitulatif

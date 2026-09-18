@@ -642,13 +642,44 @@ def parse_enedis_csv_texte(texte: str) -> tuple[str, dict[str, str]]:
 # depuis l'espace client OCTOPUS -- et non chez Enedis, malgre le numero de
 # PRM dans son nom : c'est le fournisseur qui l'edite, lui seul connaissant
 # les prix (le fichier porte des colonnes en euros, qu'on ignore ici).
-# C'est le seul releve qui donne le detail HC/HP jour par jour ; le classeur
-# .xlsx d'Enedis ne contient que le total. Les libelles sont compares en
-# minuscules.
+# C'etait longtemps le seul releve qui donnait le detail HC/HP jour par jour
+# (le classeur .xlsx d'Enedis ne contient que le total) ; d'autres fournisseurs
+# nomment ces colonnes autrement, et un utilisateur qui recopie ses chiffres a
+# la main ecrit simplement "HC" et "HP". On accepte donc plusieurs libelles
+# par colonne.
+#
+# La comparaison reste une EGALITE, apres normalisation : jamais un "contient",
+# sinon "consommation hc (euros)" passerait pour des kWh.
+
+
+def _normalise_entete(nom: str) -> str:
+    """'  CONSO_HC ' -> 'conso hc' (minuscules, soulignements = espaces)."""
+    return " ".join(nom.replace("_", " ").lower().split())
+
+
+_ENTETES_CONSO = (
+    "consommation (kwh)", "consommation", "conso (kwh)", "conso",
+    "consommation totale (kwh)", "consommation totale",
+    "consommation reseau (kwh)", "consommation réseau (kwh)",
+    "conso reseau jour", "conso réseau jour", "conso reseau", "conso réseau",
+)
+_ENTETES_HC = (
+    "consommation hc (kwh)", "consommation hc", "conso hc (kwh)", "conso hc",
+    "hc (kwh)", "hc",
+    "heures creuses (kwh)", "heures creuses",
+    "consommation heures creuses (kwh)", "consommation heures creuses",
+)
+_ENTETES_HP = (
+    "consommation hp (kwh)", "consommation hp", "conso hp (kwh)", "conso hp",
+    "hp (kwh)", "hp",
+    "heures pleines (kwh)", "heures pleines",
+    "consommation heures pleines (kwh)", "consommation heures pleines",
+)
+
 _COLONNES_SUIVI_CONSO = {
-    "consommation (kwh)": "Conso_réseau_Jour",
-    "consommation hc (kwh)": "Conso_HC",
-    "consommation hp (kwh)": "Conso_HP",
+    **{e: "Conso_réseau_Jour" for e in _ENTETES_CONSO},
+    **{e: "Conso_HC" for e in _ENTETES_HC},
+    **{e: "Conso_HP" for e in _ENTETES_HP},
 }
 
 
@@ -657,9 +688,15 @@ def parse_octopus_suivi_conso(texte: str) -> dict[str, dict[str, str]] | None:
     Lit le "suivi de consommation" d'Octopus : une ligne par jour, avec des
     colonnes nommees dont le detail heures creuses / heures pleines.
 
+    Les libelles acceptes pour chaque colonne sont listes dans _ENTETES_HC,
+    _ENTETES_HP et _ENTETES_CONSO : le fichier d'Octopus, mais aussi des
+    en-tetes simples ("HC", "HP", "Heures creuses"...) pour qui recopie ses
+    chiffres a la main ou vient d'un autre fournisseur.
+
     Retourne {colonne_cible: {date 'DD/MM/YYYY': valeur kWh en chaine FR}},
-    ou None si l'en-tete attendu est absent (le fichier releve alors du
-    parseur generique parse_enedis_csv).
+    ou None si aucune colonne HC/HP n'est reconnue (le fichier releve alors
+    du parseur generique parse_enedis_csv). Leve ValueError si une seule des
+    deux colonnes est presente.
     """
     entetes: dict[int, str] | None = None
     resultat: dict[str, dict[str, str]] = {}
@@ -671,14 +708,31 @@ def parse_octopus_suivi_conso(texte: str) -> dict[str, dict[str, str]] | None:
 
         if entetes is None:
             trouves = {
-                i: _COLONNES_SUIVI_CONSO[nom.lower()]
+                i: _COLONNES_SUIVI_CONSO[_normalise_entete(nom)]
                 for i, nom in enumerate(cellules)
-                if nom.lower() in _COLONNES_SUIVI_CONSO
+                if _normalise_entete(nom) in _COLONNES_SUIVI_CONSO
             }
+            cibles = set(trouves.values())
             # Sans le detail HC/HP, ce n'est pas ce format : on laisse la
             # main au parseur generique.
-            if {"Conso_HC", "Conso_HP"} <= set(trouves.values()):
+            if {"Conso_HC", "Conso_HP"} <= cibles:
                 entetes = trouves
+            elif cibles & {"Conso_HC", "Conso_HP"}:
+                # Une seule des deux : le dire, plutot que de laisser le
+                # lecteur generique ranger ces kWh en consommation reseau.
+                if "Conso_HC" in cibles:
+                    presente, manquante = "creuses", "pleines"
+                    colonne_manquante = "HP"
+                else:
+                    presente, manquante = "pleines", "creuses"
+                    colonne_manquante = "HC"
+                raise ValueError(
+                    f"Colonne {colonne_manquante} introuvable : ce fichier "
+                    f"donne les heures {presente}, mais pas les heures "
+                    f"{manquante}. Pour importer le detail, il faut les deux "
+                    "colonnes, nommees par exemple 'Consommation HC (kWh)' "
+                    "et 'Consommation HP (kWh)', ou simplement 'HC' et 'HP'."
+                )
             continue
 
         jour = _parse_date_any(cellules[0])
