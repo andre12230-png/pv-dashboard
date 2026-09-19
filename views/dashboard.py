@@ -34,8 +34,8 @@ from views._helpers import (
     fmt_prix_kwh,
     fraicheur_donnees,
     libelle_periode,
+    notes_donnees,
     periode_precedente,
-    phrase_en_attente,
 )
 from views.comparaison import date_limite_n1
 
@@ -136,60 +136,15 @@ class DashboardView(BaseView):
                         f"{fmt_eur(cout + eco)}.")),
         ]))
 
-        # Jours dont une grandeur n'a jamais ete relevee : l'app la reconstitue,
-        # et le dit ici pour qu'on ne prenne pas ces chiffres pour des mesures.
-        notes = []
-        # Journees mises de cote faute de releves reseau : elles ne sont plus
-        # dans df, donc on les lit sur les donnees. Les nommer evite qu'on les
-        # croie perdues -- c'est la premiere reaction (retour du 19/09/2026).
-        texte = phrase_en_attente(getattr(self.data, "jours_en_attente", []))
-        if texte:
-            notes.append(f"ℹ {texte}")
-        if "releve_incomplet" in df.columns:
-            n_inc = int((df["releve_incomplet"] > 0).sum())
-            if n_inc:
-                notes.append(
-                    f"ℹ {n_inc} jour(s) sans relevé d'injection Enedis sur la "
-                    "période : injection et autoconso y sont estimées d'après "
-                    "vos ratios mensuels observés."
-                )
-        if "injection_recalee" in df.columns:
-            n_inj = int((df["injection_recalee"] > 0).sum())
-            if n_inj:
-                notes.append(
-                    f"ℹ {n_inj} jour(s) de la période sont recalés sur les "
-                    "factures EDF OA : le total vendu de chaque année OA est "
-                    "celui qui a été payé, au kWh près. Le détail quotidien, "
-                    "lui, reste approché."
-                )
-        if "conso_recalee" in df.columns:
-            n_recale = int((df["conso_recalee"] > 0).sum())
-            if n_recale:
-                notes.append(
-                    f"ℹ {n_recale} jour(s) de la période ont été saisis arrondis "
-                    "au kWh entier : ils sont recalés sur le total des factures "
-                    "EDF, exact. Le total est donc juste, le détail quotidien "
-                    "approché à environ 1 kWh près."
-                )
-        if "conso_absente" in df.columns:
-            n_conso = int((df["conso_absente"] > 0).sum())
-            if n_conso:
-                kwh = df.loc[df["conso_absente"] > 0, "soutirage_kwh"].sum()
-                notes.append(
-                    f"ℹ {n_conso} jour(s) sans relevé de consommation "
-                    f"exploitable sur la période ({fmt_kwh(kwh)}) : données "
-                    "absentes chez Enedis (36 mois glissants), ou valeurs "
-                    "interpolées pendant une panne du compteur. Le "
-                    "total de la facture EDF correspondante est réparti sur "
-                    "ces jours — le total de la période est juste, pas le "
-                    "détail quotidien."
-                )
-        for texte in notes:
-            note = QLabel(texte)
-            note.setWordWrap(True)
-            note.setStyleSheet(
-                f"color: {self.theme['text_muted']}; font-size: 11px;")
-            self.layout_inner.addWidget(note)
+        # Remarques sur les chiffres ci-dessus : ce qui est reconstitue, et ce
+        # qui n'est pas encore arrive. Chacune nomme SA grandeur avant de
+        # donner son nombre de jours -- empilees et toutes commencees par un
+        # chiffre, elles se lisaient comme un seul decompte (19/09/2026).
+        # Le detail va en infobulle : la ligne doit se lire d'un coup d'oeil.
+        notes = notes_donnees(
+            df, getattr(self.data, "jours_en_attente", []))
+        if notes:
+            self.layout_inner.addWidget(self._carte_remarques(notes))
 
         # Etape 2 (groupe B de l'audit) : ou en est le remboursement de
         # l'installation, puis la production au fil des jours, a la place de
@@ -420,6 +375,34 @@ class DashboardView(BaseView):
             f"color: {couleur}; background: {fond}; font-size: 11px; "
             f"padding: 6px 10px; border-radius: 6px;")
         return lbl
+
+    def _carte_remarques(self, notes) -> QFrame:
+        """Les remarques sur les chiffres : une grandeur par ligne.
+
+        L'intitule en gras dit de quoi on parle AVANT le nombre de jours,
+        et l'explication complete passe en infobulle, comme sur les cartes du
+        bilan. Un intitule de section les rassemble : ce sont des precisions,
+        pas des erreurs -- lues en vrac, elles inquietent.
+        """
+        boite = QFrame()
+        v = QVBoxLayout(boite)
+        v.setContentsMargins(0, 4, 0, 0)
+        v.setSpacing(3)
+
+        chapeau = QLabel("À savoir sur ces chiffres")
+        chapeau.setStyleSheet(
+            f"color: {self.theme['text_muted']}; font-size: 11px; "
+            "font-weight: 600;")
+        v.addWidget(chapeau)
+
+        for titre, resume, aide in notes:
+            ligne = QLabel(f"• <b>{titre}</b> — {resume}")
+            ligne.setWordWrap(True)
+            ligne.setToolTip(aide)
+            ligne.setStyleSheet(
+                f"color: {self.theme['text_muted']}; font-size: 11px;")
+            v.addWidget(ligne)
+        return boite
 
     def _carte_remboursement(self) -> QFrame | None:
         """Ou en est le remboursement de l'installation. Depuis la mise en

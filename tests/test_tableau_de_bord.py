@@ -237,3 +237,73 @@ def test_le_tableau_de_bord_explique_ses_quatre_montants():
     assert bloc.count("aide=") == 4, "une carte du bilan n'explique rien"
     assert "pas de l'argent reçu" in bloc
     assert "sorti de votre poche" in bloc
+
+# -----------------------------------------------------------------------------
+# Les remarques sous le bilan : une grandeur par ligne
+# -----------------------------------------------------------------------------
+#
+# Empilees, elles se lisaient comme un seul decompte : un utilisateur a pris
+# « 2 jour(s) sans releve de consommation » pour des jours sans injection, et
+# en a tire une conclusion fausse (19/09/2026). Chaque remarque dit desormais
+# DE QUOI elle parle, en trois mots, avant son chiffre.
+
+from datetime import date  # noqa: E402
+
+from views._helpers import notes_donnees  # noqa: E402
+
+
+def _df_notes(**colonnes):
+    idx = pd.to_datetime(["2026-09-01", "2026-09-02", "2026-09-03"])
+    base = {"soutirage_kwh": [0.0, 0.0, 0.0]}
+    base.update(colonnes)
+    return pd.DataFrame(base, index=idx)
+
+
+def test_sans_rien_a_signaler_aucune_remarque():
+    assert notes_donnees(_df_notes()) == []
+
+
+def test_chaque_remarque_dit_de_quelle_grandeur_elle_parle():
+    df = _df_notes(releve_incomplet=[1.0, 1.0, 0.0],
+                   conso_absente=[0.0, 0.0, 1.0])
+    titres = [titre for titre, _resume, _aide in notes_donnees(df)]
+    assert titres == ["Injection estimée", "Consommation manquante"]
+
+
+def test_les_deux_remarques_qui_ont_ete_confondues_ne_se_ressemblent_plus():
+    """Le cas exact du 19/09/2026 : 27 jours d'injection estimee et 2 jours
+    sans consommation, lus comme un seul nombre."""
+    df = _df_notes(releve_incomplet=[1.0, 1.0, 0.0],
+                   conso_absente=[0.0, 0.0, 1.0])
+    notes = notes_donnees(df)
+    injection = notes[0][0] + " " + notes[0][1]
+    conso = notes[1][0] + " " + notes[1][1]
+    assert "Injection" in injection and "2 jours" in injection
+    assert "Consommation" in conso and "1 jour" in conso
+    # Aucune des deux ne peut etre prise pour l'autre.
+    assert "Consommation" not in injection
+    assert "Injection" not in conso
+
+
+def test_le_detail_complet_reste_disponible_en_infobulle():
+    df = _df_notes(conso_absente=[0.0, 0.0, 1.0])
+    _titre, resume, aide = notes_donnees(df)[0]
+    assert len(resume) < 60          # la ligne se lit d'un coup d'oeil
+    assert "Enedis" in aide          # le pourquoi n'est pas perdu
+
+
+def test_la_journee_en_attente_vient_en_premier():
+    """C'est la seule qui parle du present : elle doit se voir avant les
+    remarques historiques."""
+    df = _df_notes(releve_incomplet=[1.0, 0.0, 0.0])
+    notes = notes_donnees(df, [date(2026, 9, 19)])
+    assert notes[0][0] == "Journée en attente"
+    assert "19/09/2026" in notes[0][1]
+
+
+def test_un_singulier_reste_au_singulier():
+    df = _df_notes(releve_incomplet=[1.0, 0.0, 0.0])
+    _titre, resume, _aide = notes_donnees(df)[0]
+    assert "1 jour " in resume + " "
+    assert "1 jours" not in resume
+
