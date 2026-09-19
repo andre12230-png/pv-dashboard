@@ -22,6 +22,7 @@ import data_loaders as dl
 from app_data import AppData
 from gui_widgets import SectionTitle
 from views._base import BaseView
+from views._helpers import phrase_import
 
 
 class SaisieView(BaseView):
@@ -314,8 +315,15 @@ class SaisieView(BaseView):
         if not fichier:
             return
 
+        # Remarques de lecture : le parseur y dépose ce que l'utilisateur
+        # doit savoir du fichier -- le premier jour d'un relevé d'index, par
+        # exemple, qui sert de référence et ne produit aucune journée.
+        remarques: list[str] = []
         try:
-            imports = parser(fichier)
+            try:
+                imports = parser(fichier, notes=remarques)
+            except TypeError:
+                imports = parser(fichier)   # parseur sans remarques
         except (OSError, ValueError) as exc:
             QMessageBox.warning(self, titre, f"Import impossible :\n\n{exc}")
             return
@@ -349,14 +357,22 @@ class SaisieView(BaseView):
             recap.append(
                 f"\n  (journée en cours du {jour_ignore} ignorée : incomplète)")
         if not recap:
-            QMessageBox.warning(
-                self, titre,
-                "Ce fichier ne contient aucun jour à importer.")
+            message = "Ce fichier ne contient aucun jour à importer."
+            if remarques:
+                message += "\n\n" + "\n\n".join(remarques)
+            QMessageBox.warning(self, titre, message)
             return
 
         # Une anomalie physique passe devant le recapitulatif, et le bouton
         # par defaut devient Non : mieux vaut renoncer que corrompre le CSV.
-        message = "Contenu du fichier :\n\n" + "\n".join(recap)
+        # Une phrase avant le detail : un utilisateur a lu « 0 nouveau(x) »
+        # dans le detail et cru que son import ne faisait rien, alors qu'il
+        # corrigeait plus de mille valeurs (18/09/2026).
+        jours_lus = max((len(v) for v in imports.values()), default=0)
+        message = (phrase_import(total_nouveaux, total_remplaces, jours_lus)
+                   + "\n\nContenu du fichier :\n\n" + "\n".join(recap))
+        if remarques:
+            message += "\n\n" + "\n\n".join(remarques)
         if alertes:
             message = "\n\n".join(alertes) + "\n\n" + ("-" * 40) + "\n\n" + message
         message += ("\n\nAppliquer ? Une sauvegarde de l'ancienne version est "

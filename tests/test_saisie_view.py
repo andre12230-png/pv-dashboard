@@ -450,3 +450,48 @@ def test_deux_enregistrements_de_suite_fonctionnent(vue, dialogue):
     assert _dates_du_fichier(vue) == [
         "01/05/2026", "02/05/2026", "03/05/2026", "04/05/2026", "05/05/2026"]
     assert dialogue.avertissements == []   # aucune fausse alerte de concurrence
+
+# -----------------------------------------------------------------------------
+# Le recapitulatif d'import dit ce qui va changer
+# -----------------------------------------------------------------------------
+#
+# Un utilisateur, 18/09/2026 : « quand je l'importe je n'ai aucune nouvelle
+# ligne ». Son import avait pourtant corrige plus de 1000 valeurs -- il avait
+# lu « 0 nouveau(x) » et conclu qu'il ne se passait rien. Quatre nombres par
+# ligne, et aucun ne disait lequel comptait.
+from views._helpers import phrase_import  # noqa: E402
+
+
+def test_rien_ne_change_se_dit_en_toutes_lettres():
+    assert phrase_import(nouveaux=0, remplaces=0, jours=591) == (
+        "Rien à changer : les 591 jours de ce fichier sont déjà dans vos "
+        "relevés, avec les mêmes valeurs."
+    )
+
+
+def test_des_valeurs_corrigees_sans_jour_nouveau():
+    # Le cas de Denis : rien de nouveau, mais 1062 valeurs remplacees.
+    assert phrase_import(nouveaux=0, remplaces=1062, jours=591) == (
+        "1 062 valeurs vont être corrigées. Aucune journée nouvelle : "
+        "ces dates sont déjà dans vos relevés."
+    )
+
+
+def test_des_journees_nouvelles_et_des_corrections():
+    assert phrase_import(nouveaux=12, remplaces=30, jours=42) == (
+        "12 journées vont être ajoutées, et 30 valeurs corrigées."
+    )
+
+
+def test_une_seule_journee_nouvelle_se_dit_au_singulier():
+    assert phrase_import(nouveaux=1, remplaces=0, jours=1) == (
+        "1 journée va être ajoutée."
+    )
+
+
+def test_une_seule_valeur_corrigee():
+    assert phrase_import(nouveaux=0, remplaces=1, jours=5) == (
+        "1 valeur va être corrigée. Aucune journée nouvelle : "
+        "ces dates sont déjà dans vos relevés."
+    )
+
