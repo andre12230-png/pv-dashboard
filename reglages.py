@@ -473,11 +473,36 @@ def _kwc(x: float) -> str:
     return f"{x:g}".replace(".", ",")
 
 
-def phrase_prime(par_kwc: float, kwc: float, duree: int) -> str:
-    """Ce que la prime represente vraiment, en euros et non en euros par kWc."""
-    total = float(par_kwc) * float(kwc)
+def prime_totale(par_kwc: float, kwc: float) -> float:
+    """Le total en euros, a partir du montant par kWc."""
+    return float(par_kwc) * float(kwc)
+
+
+def prime_par_kwc_depuis_total(total: float, kwc: float) -> float:
+    """L'inverse. Sans puissance saisie, la conversion n'a pas de sens : on
+    rend zero plutot que de diviser par zero."""
+    if float(kwc) <= 0:
+        return 0.0
+    return float(total) / float(kwc)
+
+
+def phrase_prime(par_kwc: float, kwc: float, duree: int,
+                 saisie: str = "kwc") -> str:
+    """Ce que la prime represente vraiment, dans l'unite que l'utilisateur
+    n'a pas sous les yeux : le total quand il saisit par kWc, le montant par
+    kWc quand il saisit son total."""
+    total = prime_totale(par_kwc, kwc)
     if total <= 0:
         return "Pas de prime."
+
+    if saisie == "total":
+        debut = (f"{_euros(total)} € au total pour {_kwc(kwc)} kWc, "
+                 f"soit {_euros(par_kwc)} €/kWc")
+        if duree <= 1:
+            return debut + ", versés en une seule fois."
+        return (f"{debut}, étalés sur {duree} ans "
+                f"({_euros(total / duree)} € par an).")
+
     debut = (f"{_euros(par_kwc)} €/kWc × {_kwc(kwc)} kWc = "
              f"{_euros(total)} € au total")
     if duree <= 1:
