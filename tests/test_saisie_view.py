@@ -516,9 +516,10 @@ def test_sans_journee_en_attente_on_ne_dit_rien():
 def test_une_journee_en_attente_est_nommee_et_rassure():
     texte = phrase_en_attente([date(2026, 9, 19)])
     assert texte == (
-        "La journée du 19/09/2026 n'est pas encore comptée : sa production "
-        "est connue, mais Enedis publie la consommation et l'injection le "
-        "lendemain. Elle s'ajoutera d'elle-même au prochain import — rien "
+        "La journée du 19/09/2026 n'est pas encore comptée : une journée "
+        "n'est complète que le lendemain — le soleil doit avoir fini la "
+        "sienne, et Enedis publie la consommation et l'injection avec un jour "
+        "de retard. Elle s'ajoutera d'elle-même au prochain import — rien "
         "n'est perdu."
     )
 

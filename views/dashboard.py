@@ -142,7 +142,8 @@ class DashboardView(BaseView):
         # chiffre, elles se lisaient comme un seul decompte (19/09/2026).
         # Le detail va en infobulle : la ligne doit se lire d'un coup d'oeil.
         notes = notes_donnees(
-            df, getattr(self.data, "jours_en_attente", []))
+            df, getattr(self.data, "jours_en_attente", []),
+            start_oa=self.data.start_oa)
         if notes:
             self.layout_inner.addWidget(self._carte_remarques(notes))
 

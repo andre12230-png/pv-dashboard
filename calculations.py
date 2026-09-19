@@ -50,15 +50,21 @@ def merge_series(production: pd.DataFrame, reseau: pd.DataFrame) -> pd.DataFrame
     return df
 
 
-def jours_en_attente(df_daily: pd.DataFrame) -> pd.DatetimeIndex:
-    """Les journees de fin de serie qui n'ont encore AUCUN releve reseau.
+def jours_en_attente(df_daily: pd.DataFrame,
+                     aujourd_hui: date | None = None) -> pd.DatetimeIndex:
+    """Les journees de fin de serie qui ne sont pas encore completes.
 
-    L'onduleur donne la production du jour meme ; Enedis publie consommation
-    et injection le lendemain. La derniere journee d'un fichier n'a donc
-    souvent que sa production. Ce n'est pas une journee a trou : c'est une
-    journee qui n'est pas encore arrivee. La compter ferait 0 kWh au reseau,
-    donc 100 % d'autoproduction et une facture amputee d'un jour
-    (signale par un utilisateur le 19/09/2026).
+    Deux raisons, signalees le 19/09/2026 par le meme utilisateur :
+
+    - **le jour en cours n'est pas fini.** « On ne connait la production du
+      jour que des l'instant ou il n'y a plus du tout de soleil. » Meme
+      saisie, elle est partielle : on borne donc a la veille, quel que soit
+      le contenu de la ligne ;
+    - **Enedis publie avec un jour de retard.** L'onduleur donne la
+      production du jour meme, la consommation et l'injection arrivent le
+      lendemain. Une journee qui n'a AUCUN releve reseau n'est pas une
+      journee a trou : la compter ferait 0 kWh au reseau, donc 100 %
+      d'autoproduction et une facture amputee d'un jour.
 
     On ne regarde que la FIN de la serie : un jour sans releve suivi de jours
     releves est un vrai trou, qui reste signale et comble par les factures.
@@ -68,13 +74,17 @@ def jours_en_attente(df_daily: pd.DataFrame) -> pd.DatetimeIndex:
     vide = pd.DatetimeIndex([])
     if df_daily.empty:
         return vide
-    colonnes = ("conso_absente", "releve_incomplet")
-    if any(c not in df_daily.columns for c in colonnes):
-        return vide
 
-    # Ni consommation ni injection : rien du reseau pour cette journee.
-    attente = ((df_daily["conso_absente"] > 0)
-               & (df_daily["releve_incomplet"] > 0)).values
+    limite = pd.Timestamp(aujourd_hui or date.today())
+    # Le jour en cours, et tout ce qui le suit (une date saisie de travers).
+    attente = (df_daily.index >= limite)
+
+    colonnes = ("conso_absente", "releve_incomplet")
+    if all(c in df_daily.columns for c in colonnes):
+        # Ni consommation ni injection : rien du reseau pour cette journee.
+        attente = attente | ((df_daily["conso_absente"] > 0)
+                             & (df_daily["releve_incomplet"] > 0)).values
+
     n = 0
     for valeur in attente[::-1]:
         if not valeur:

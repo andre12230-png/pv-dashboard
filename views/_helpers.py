@@ -534,8 +534,16 @@ def _pluriel(n: int, mot: str) -> str:
 # chiffre, en deux ou trois mots ; le detail, lui, passe en infobulle. Fonction
 # pure : elle se teste sans ouvrir de fenetre.
 
-def notes_donnees(df, jours_en_attente=()) -> list[tuple[str, str, str]]:
-    """Les remarques a afficher sous le bilan : (titre, resume, infobulle)."""
+def notes_donnees(df, jours_en_attente=(),
+                  start_oa=None) -> list[tuple[str, str, str]]:
+    """Les remarques a afficher sous le bilan : (titre, resume, infobulle).
+
+    start_oa sert a dire POURQUOI des journees ont une injection estimee : le
+    plus souvent parce qu'elles precedent le contrat EDF OA, donc la mise en
+    service du compteur de production. Sans cette precision, l'utilisateur
+    voit un nombre de jours « sans releve » et le prend pour un defaut
+    (19/09/2026) -- il demandait meme de ne plus les compter.
+    """
     notes: list[tuple[str, str, str]] = []
 
     # La seule qui parle du present : elle passe devant.
@@ -555,9 +563,22 @@ def notes_donnees(df, jours_en_attente=()) -> list[tuple[str, str, str]]:
 
     n = _compte("releve_incomplet")
     if n:
+        # Combien de ces journees precedent le contrat OA : c'est la cause la
+        # plus frequente, et la seule qui ne se comblera jamais.
+        avant = 0
+        if start_oa is not None and "releve_incomplet" in df.columns:
+            estimes = df.index[df["releve_incomplet"] > 0]
+            avant = int((estimes < pd.Timestamp(start_oa)).sum())
+        if avant == n:
+            resume = f"{_pluriel(n, 'jour')} avant votre contrat EDF OA"
+        elif avant:
+            resume = (f"{_pluriel(n, 'jour')} sans relevé Enedis, "
+                      f"dont {avant} avant votre contrat")
+        else:
+            resume = f"{_pluriel(n, 'jour')} sans relevé Enedis"
         notes.append((
             "Injection estimée",
-            f"{_pluriel(n, 'jour')} sans relevé Enedis",
+            resume,
             "Ces journées n'ont pas de relevé d'injection : elles sont "
             "antérieures à la mise en service de votre compteur de "
             "production, ou tombent pendant une panne.\n\n"
@@ -618,13 +639,14 @@ def phrase_en_attente(jours) -> str:
     dates = ", ".join(d.strftime("%d/%m/%Y") for d in jours)
     if len(jours) == 1:
         debut = f"La journée du {dates} n'est pas encore comptée"
-        possessif, suite = "sa", "Elle s'ajoutera d'elle-même"
+        suite = "Elle s'ajoutera d'elle-même"
     else:
         debut = f"Les journées du {dates} ne sont pas encore comptées"
-        possessif, suite = "leur", "Elles s'ajouteront d'elles-mêmes"
-    return (f"{debut} : {possessif} production est connue, mais Enedis publie "
-            f"la consommation et l'injection le lendemain. {suite} au prochain "
-            "import — rien n'est perdu.")
+        suite = "Elles s'ajouteront d'elles-mêmes"
+    return (f"{debut} : une journée n'est complète que le lendemain — le "
+            "soleil doit avoir fini la sienne, et Enedis publie la "
+            f"consommation et l'injection avec un jour de retard. {suite} au "
+            "prochain import — rien n'est perdu.")
 
 
 def phrase_import(nouveaux: int, remplaces: int, jours: int) -> str:
