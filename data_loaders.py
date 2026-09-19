@@ -826,7 +826,7 @@ def _charger_openpyxl():
 
 
 def _index_d_une_feuille(ws, production: bool = False
-                         ) -> dict[str, dict[str, str]] | None:
+                         ) -> tuple[dict[str, dict[str, str]] | None, str | None]:
     """
     Lit une feuille d'export d'index Enedis.
 
@@ -836,8 +836,8 @@ def _index_d_une_feuille(ws, production: bool = False
     de la feuille les distingue, d'ou ce drapeau -- sans lui, des kWh injectes
     seraient ranges en soutirage.
 
-    Retourne {colonne_cible: {date: kWh}} converti en consommations, ou None
-    si cette feuille n'est pas un export d'index (en-tetes absents).
+    Retourne ({colonne_cible: {date: kWh}} converti en consommations, premier
+    jour lu), ou (None, None) si cette feuille n'est pas un export d'index.
     """
     total = "Inj_Jour" if production else "Conso_réseau_Jour"
     colonnes: dict[int, str] = {}
@@ -882,12 +882,18 @@ def _index_d_une_feuille(ws, production: bool = False
                 index.setdefault(cible, {})[jour] = valeur
 
     if not colonnes:
-        return None
-    return {cible: consommation_depuis_index(valeurs)
-            for cible, valeurs in index.items()}
+        return None, None
+    # Le premier releve du fichier sert de reference : il n'y a rien avant
+    # lui a soustraire, donc il ne produit aucune journee. L'appelant le dit
+    # a l'utilisateur, qui sinon cherche en vain ce jour dans ses releves.
+    tous = [j for valeurs in index.values() for j in valeurs]
+    premier = min(tous, key=_en_date) if tous else None
+    return ({cible: consommation_depuis_index(valeurs)
+             for cible, valeurs in index.items()}, premier)
 
 
-def parse_enedis_index_xlsx(path: str) -> dict[str, dict[str, str]] | None:
+def parse_enedis_index_xlsx(path: str, notes: list | None = None
+                            ) -> dict[str, dict[str, str]] | None:
     """
     Lit un export d'index quotidiens d'Enedis et le convertit en
     consommations journalieres. Chez un producteur, le classeur porte aussi
@@ -895,6 +901,9 @@ def parse_enedis_index_xlsx(path: str) -> dict[str, dict[str, str]] | None:
 
     Retourne None si le classeur n'est pas de ce type : l'appelant passe
     alors au lecteur du classeur conso/production habituel.
+
+    `notes` : liste que l'appelant fournit s'il veut afficher les remarques
+    de lecture -- ici, le premier jour, qui sert de reference.
     """
     openpyxl = _charger_openpyxl()
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
@@ -904,15 +913,28 @@ def parse_enedis_index_xlsx(path: str) -> dict[str, dict[str, str]] | None:
         # Un producteur a deux feuilles : la consommation (avec le detail
         # HP/HC) et la production, c'est-a-dire l'injection. On prend les
         # deux, chacune dans sa colonne.
+        premiers = []
         for nom in wb.sheetnames:
-            trouve = _index_d_une_feuille(wb[nom], "prod" in nom.lower())
+            trouve, premier = _index_d_une_feuille(
+                wb[nom], "prod" in nom.lower())
             if trouve is None:
                 continue  # feuille de garde, ou autre chose
             reconnu = True
             resultat.update(trouve)
+            if premier:
+                premiers.append(premier)
     finally:
         wb.close()
-    return resultat if reconnu else None
+    if not reconnu:
+        return None
+    if notes is not None and premiers:
+        premier = min(premiers, key=_en_date)
+        notes.append(
+            f"Le {premier} n'apparaît pas : dans un relevé d'index, le "
+            "premier jour sert de référence, il n'y a rien avant lui à "
+            "soustraire. Pour l'obtenir, refaites l'export en partant de la "
+            "veille.")
+    return resultat
 
 
 # Feuilles reconnues dans le classeur Excel Enedis. Pour un producteur,
@@ -1010,7 +1032,8 @@ def parse_enedis_xlsx(path: str) -> dict[str, dict[str, str]]:
     return resultat
 
 
-def parse_enedis_fichier(path: str) -> dict[str, dict[str, str]]:
+def parse_enedis_fichier(path: str, notes: list | None = None
+                         ) -> dict[str, dict[str, str]]:
     """
     Point d'entree de l'import d'un releve du reseau, trois formats acceptes :
     - .xlsx : le classeur officiel d'Enedis (feuilles conso + production),
@@ -1024,7 +1047,7 @@ def parse_enedis_fichier(path: str) -> dict[str, dict[str, str]]:
     Retourne {colonne_cible: {date 'DD/MM/YYYY': valeur kWh en chaine FR}}.
     """
     if path.lower().endswith((".xlsx", ".xlsm")):
-        index = parse_enedis_index_xlsx(path)
+        index = parse_enedis_index_xlsx(path, notes)
         if index is not None:
             return index
         return parse_enedis_xlsx(path)
