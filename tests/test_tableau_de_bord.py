@@ -344,3 +344,39 @@ def test_sans_date_de_contrat_le_resume_ne_change_pas():
     _titre, resume, _aide = notes_donnees(df)[0]
     assert resume == "2 jours sans relevé Enedis"
 
+def test_un_jour_sans_production_n_est_pas_un_jour_estime():
+    """L'utilisateur a recompte a la main et trouvait 23 jours la ou
+    l'application en annoncait 27 (19/09/2026). Les quatre autres etaient des
+    journees a production nulle : estime_injection_manquante ne les touche pas
+    (elle ne travaille que sur production > 0), mais le decompte les comptait.
+    Annoncer une estimation qui n'a pas lieu, c'est se tromper deux fois."""
+    idx = pd.to_datetime(["2025-01-14", "2025-01-15", "2025-01-18"])
+    df = pd.DataFrame(
+        {"soutirage_kwh": [0.0, 0.0, 0.0],
+         "production_kwh": [0.0, 0.0, 12.0],
+         "releve_incomplet": [1.0, 1.0, 1.0]},
+        index=idx)
+    _titre, resume, _aide = notes_donnees(df)[0]
+    assert resume == "1 jour sans relevé Enedis"
+
+
+def test_sans_colonne_de_production_on_compte_comme_avant():
+    """Compatibilite : un jeu de donnees sans production_kwh ne plante pas."""
+    idx = pd.to_datetime(["2025-01-14", "2025-01-15"])
+    df = pd.DataFrame(
+        {"soutirage_kwh": [0.0, 0.0], "releve_incomplet": [1.0, 1.0]},
+        index=idx)
+    _titre, resume, _aide = notes_donnees(df)[0]
+    assert resume == "2 jours sans relevé Enedis"
+
+
+def test_les_jours_a_production_nulle_ne_comptent_pas_non_plus_avant_le_contrat():
+    idx = pd.to_datetime(["2025-01-14", "2025-01-18", "2025-01-19"])
+    df = pd.DataFrame(
+        {"soutirage_kwh": [0.0, 0.0, 0.0],
+         "production_kwh": [0.0, 12.0, 14.0],
+         "releve_incomplet": [1.0, 1.0, 1.0]},
+        index=idx)
+    _titre, resume, _aide = notes_donnees(df, start_oa=date(2025, 2, 10))[0]
+    assert resume == "2 jours avant votre contrat EDF OA"
+

@@ -561,14 +561,24 @@ def notes_donnees(df, jours_en_attente=(),
             return 0
         return int((df[colonne] > 0).sum())
 
-    n = _compte("releve_incomplet")
+    # Les journees dont l'injection est vraiment estimee : production connue
+    # ET pas de releve. Une journee a production NULLE n'a rien a estimer --
+    # estime_injection_manquante ne la touche pas -- et la compter gonflait le
+    # nombre annonce. Un utilisateur a recompte a la main et trouve 23 jours
+    # la ou l'application en annoncait 27 (19/09/2026).
+    if "releve_incomplet" in df.columns:
+        estimes = df["releve_incomplet"] > 0
+        if "production_kwh" in df.columns:
+            estimes = estimes & (df["production_kwh"] > 0)
+        n = int(estimes.sum())
+    else:
+        estimes, n = None, 0
     if n:
         # Combien de ces journees precedent le contrat OA : c'est la cause la
         # plus frequente, et la seule qui ne se comblera jamais.
         avant = 0
-        if start_oa is not None and "releve_incomplet" in df.columns:
-            estimes = df.index[df["releve_incomplet"] > 0]
-            avant = int((estimes < pd.Timestamp(start_oa)).sum())
+        if start_oa is not None:
+            avant = int((df.index[estimes] < pd.Timestamp(start_oa)).sum())
         if avant == n:
             resume = f"{_pluriel(n, 'jour')} avant votre contrat EDF OA"
         elif avant:
