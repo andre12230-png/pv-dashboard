@@ -183,8 +183,14 @@ sans relevé laisse un trou plutôt qu'une valeur double.</p>
 d'index de production : l'application y lit votre <b>injection</b>. Un seul
 téléchargement remplit alors quatre colonnes — consommation réseau, heures
 creuses, heures pleines et injection. Pour l'obtenir : espace client Enedis,
-<b>Ma consommation ▸ Suivre ma consommation</b>, choisir <b>Index (kWh)</b>
-dans le menu de droite, puis <b>Télécharger le .xlsx</b>.</p>
+<b>Ma consommation ▸ Suivre ma consommation</b>, choisir <b>Mixte</b> dans le
+menu du milieu (sans quoi la production manque) et <b>Index (kWh)</b> dans
+celui de droite, puis <b>Télécharger le .xlsx</b>.</p>
+<p><b>Le premier jour de l'export n'apparaîtra pas</b> dans vos relevés, et
+c'est normal : il sert de référence, il n'y a rien avant lui à soustraire.
+Pour ne pas perdre une journée, <b>partez de la veille</b> — si votre
+installation date du 18 janvier, exportez depuis le 17. L'application vous le
+rappelle après chaque import d'index.</p>
 <p><b>Le détail heures creuses / heures pleines</b> demande deux colonnes
 nommées, l'une pour les heures creuses, l'autre pour les heures pleines.
 Plusieurs libellés sont acceptés : <code>Consommation HC (kWh)</code> et

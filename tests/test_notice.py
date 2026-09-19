@@ -49,3 +49,11 @@ def test_la_notice_renvoie_les_recalages_vers_la_fenetre():
     Si la notice ne le dit pas, la fenetre ne sert a rien."""
     assert "Recalages sur mes factures" in NOTICE_HTML
     assert "Injection payée par EDF OA" in NOTICE_HTML
+
+def test_la_notice_previent_pour_le_premier_jour_d_un_index():
+    """Un utilisateur a perdu le jour de sa mise en service sans comprendre
+    pourquoi (18/09/2026). La parade — partir de la veille — doit être écrite."""
+    assert "partez de la veille" in NOTICE_HTML
+    assert "sert de référence" in NOTICE_HTML
+    # Et le menu qui manquait à son export.
+    assert "Mixte" in NOTICE_HTML
