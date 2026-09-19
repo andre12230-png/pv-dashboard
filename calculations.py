@@ -93,6 +93,23 @@ def jours_en_attente(df_daily: pd.DataFrame,
     return df_daily.index[len(df_daily) - n:] if n else vide
 
 
+def jours_injection_estimee(df: pd.DataFrame) -> pd.Series:
+    """Les journees dont l'injection est reellement estimee.
+
+    C'est la meme condition que dans estime_injection_manquante : un releve
+    manquant ET une production connue. Une journee a production nulle n'a rien
+    a estimer -- l'annoncer comme estimee gonfle le compte pour rien. Un
+    utilisateur a recompte a la main et trouve 23 jours la ou l'application en
+    annoncait 27 (19/09/2026).
+    """
+    if df.empty or "releve_incomplet" not in df.columns:
+        return pd.Series(False, index=df.index)
+    estimes = df["releve_incomplet"].fillna(0) > 0
+    if "production_kwh" in df.columns:
+        estimes = estimes & (df["production_kwh"].fillna(0) > 0)
+    return estimes
+
+
 def estime_injection_manquante(df_daily: pd.DataFrame) -> pd.DataFrame:
     """
     Estime l'injection des jours 'releve_incomplet' (production connue mais
@@ -1142,8 +1159,7 @@ def controle_injection_facturee(
             continue
         releve = float(df.loc[dans, "injection_kwh"].fillna(0.0).sum())
         facture = float(tranche["total_kwh"])
-        estimes = (int(df_brut.loc[dans, "releve_incomplet"].fillna(0).sum())
-                   if "releve_incomplet" in df_brut.columns else 0)
+        estimes = int(jours_injection_estimee(df_brut.loc[dans]).sum())
         lignes.append({
             "debut": debut.date(),
             "fin": fin.date(),
@@ -1262,8 +1278,7 @@ def lasm_par_annee(df_brut: pd.DataFrame, lasm: LasmConfig,
         inj = float(tranche["injection_kwh"].fillna(0.0).sum())
         kwh = float(auto.sum())
         base = float((auto * prix_lasm_serie(tranche.index, lasm.periodes)).sum())
-        sans_inj = (int(tranche["releve_incomplet"].fillna(0).sum())
-                    if "releve_incomplet" in tranche.columns else 0)
+        sans_inj = int(jours_injection_estimee(tranche).sum())
 
         estimation = an not in completes
         if estimation:

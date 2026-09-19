@@ -1206,3 +1206,20 @@ def test_un_jour_futur_saisi_par_erreur_n_est_pas_compte_non_plus():
     attente = calc.jours_en_attente(df, aujourd_hui=date(2026, 9, 19))
     assert len(attente) == 1
 
+def test_jours_injection_estimee_ignore_les_productions_nulles():
+    """La condition est la meme que celle d'estime_injection_manquante : les
+    trois endroits qui affichent ce nombre disent donc la meme chose."""
+    idx = pd.to_datetime(["2025-01-14", "2025-01-18", "2025-01-19"])
+    df = pd.DataFrame(
+        {"production_kwh": [0.0, 12.0, 14.0],
+         "releve_incomplet": [1.0, 1.0, 0.0]},
+        index=idx)
+    estimes = calc.jours_injection_estimee(df)
+    assert list(estimes) == [False, True, False]
+
+
+def test_jours_injection_estimee_sans_colonne_ne_plante_pas():
+    df = pd.DataFrame({"production_kwh": [1.0]},
+                      index=pd.to_datetime(["2025-01-14"]))
+    assert not calc.jours_injection_estimee(df).any()
+
