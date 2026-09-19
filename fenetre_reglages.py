@@ -26,7 +26,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from reglages import SORTES_RECALAGE, ReglagesRefuses, recalages_vides
+from reglages import (
+    SORTES_RECALAGE,
+    ReglagesRefuses,
+    phrase_prime,
+    recalages_vides,
+)
 
 TITRE = "Mes réglages"
 FRANCAIS = QLocale(QLocale.French, QLocale.France)
@@ -173,13 +178,30 @@ class FenetreReglages(QDialog):
         self.prime_duree.setRange(1, 20)
         self.prime_duree.setSuffix(" an(s)")
         self.prime_duree.setValue(valeurs["prime_duree"])
+        # La prime se saisit PAR kWc : cette ligne dit ce que ça fait en
+        # euros, et se recalcule a chaque frappe. Sans elle, on saisit son
+        # total et l'installation paraît amortie en un an.
+        self.total_prime = QLabel()
+        self.total_prime.setWordWrap(True)
+        self.total_prime.setStyleSheet(
+            "color: #1c1917; font-size: 12px; font-weight: 600;")
+        for case in (self.puissance, self.prime):
+            case.valueChanged.connect(self._montrer_total_prime)
+        self.prime_duree.valueChanged.connect(self._montrer_total_prime)
+        self._montrer_total_prime()
+
         v.addWidget(self._groupe("Ma vente du surplus à EDF OA", [
             ("Prix de rachat du kWh", self.prix_oa),
             ("Prime à l'autoconsommation", self.prime),
             ("Prime versée sur", self.prime_duree),
-        ], "Prix hors taxes, fixé par votre contrat pour toute sa durée. "
-           "La prime est versée sur 1 an pour les contrats récents, sur "
-           "5 ans pour les plus anciens."))
+            ("", self.total_prime),
+        ], "Prix hors taxes, fixé par votre contrat pour toute sa durée.<br><br>"
+           "<b>La prime se saisit par kWc</b>, pas en tout : c'est le montant "
+           "de votre attestation divisé par la puissance de vos panneaux. La "
+           "ligne au-dessus montre ce que ça donne en euros — vérifiez qu'elle "
+           "correspond à ce que vous avez reçu.<br><br>"
+           "Elle est versée <b>en une seule fois</b> pour les contrats récents "
+           "(mettez 1 an), sur 5 ans pour les plus anciens."))
 
         # --- Mon fournisseur ---------------------------------------------
         self.nom = QLineEdit(valeurs["nom"])
@@ -308,6 +330,12 @@ class FenetreReglages(QDialog):
             cle, periode = ligne.valeurs()
             tous[cle].append(periode)
         return tous
+
+    def _montrer_total_prime(self) -> None:
+        """Recalcule la phrase de la prime a chaque changement de case."""
+        self.total_prime.setText(phrase_prime(
+            self.prime.value(), self.puissance.value(),
+            self.prime_duree.value()))
 
     def _groupe(self, titre: str, champs, aide: str) -> QGroupBox:
         groupe = QGroupBox(titre)

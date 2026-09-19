@@ -517,3 +517,34 @@ def test_une_ligne_retiree_disparait_des_recalages(fenetre):
     f._retirer_ligne(f._lignes.itemAt(0).widget())
     assert f.recalages() == rg.recalages_vides()
 
+# ======================================================================
+# La prime a l'autoconsommation se lit en euros, pas en euros par kWc
+# ======================================================================
+#
+# Un utilisateur, 18/09/2026 : « j'ai donc mis mes 1440 euros et du coup au bout
+# d'un an mon installation etait amortie ». Le champ attend un montant PAR
+# kWc ; il a saisi son total, et rien ne l'a averti. Il a fini par trouver
+# 120 par tatonnement, en croyant que c'etait un montant mensuel.
+
+
+def test_la_prime_dit_son_total():
+    assert rg.phrase_prime(par_kwc=120, kwc=12, duree=1) == (
+        "120 €/kWc × 12 kWc = 1 440 € au total, versés en une seule fois."
+    )
+
+
+def test_la_prime_etalee_dit_le_versement_annuel():
+    assert rg.phrase_prime(par_kwc=380, kwc=6, duree=5) == (
+        "380 €/kWc × 6 kWc = 2 280 € au total, soit 456 € par an pendant 5 ans."
+    )
+
+
+def test_une_prime_nulle_se_tait():
+    assert rg.phrase_prime(par_kwc=0, kwc=6, duree=1) == "Pas de prime."
+
+
+def test_les_decimales_de_puissance_sont_gardees():
+    assert rg.phrase_prime(par_kwc=100, kwc=3.5, duree=1) == (
+        "100 €/kWc × 3,5 kWc = 350 € au total, versés en une seule fois."
+    )
+
