@@ -521,6 +521,88 @@ def _pluriel(n: int, mot: str) -> str:
     return f"{nombre} {mot}" + ("s" if n > 1 else "")
 
 
+# -----------------------------------------------------------------------------
+# Les remarques sous le bilan financier
+# -----------------------------------------------------------------------------
+#
+# Elles disaient chacune la verite, mais empilees elles formaient un pave de
+# cinq lignes grises de meme poids, toutes commencant par un nombre de jours.
+# Un utilisateur y a pris « 2 jour(s) sans releve de consommation » pour des
+# jours sans injection (19/09/2026), et en a tire une conclusion fausse.
+#
+# Chaque remarque dit desormais DE QUOI elle parle avant de donner son
+# chiffre, en deux ou trois mots ; le detail, lui, passe en infobulle. Fonction
+# pure : elle se teste sans ouvrir de fenetre.
+
+def notes_donnees(df, jours_en_attente=()) -> list[tuple[str, str, str]]:
+    """Les remarques a afficher sous le bilan : (titre, resume, infobulle)."""
+    notes: list[tuple[str, str, str]] = []
+
+    # La seule qui parle du present : elle passe devant.
+    texte = phrase_en_attente(jours_en_attente)
+    if texte:
+        jours = list(jours_en_attente)
+        resume = (f"la journée du {jours[0]:%d/%m/%Y} n'est pas encore comptée"
+                  if len(jours) == 1
+                  else f"{_pluriel(len(jours), 'journée')} pas encore comptées")
+        notes.append(("Journée en attente" if len(jours) == 1
+                      else "Journées en attente", resume, texte))
+
+    def _compte(colonne: str) -> int:
+        if colonne not in df.columns:
+            return 0
+        return int((df[colonne] > 0).sum())
+
+    n = _compte("releve_incomplet")
+    if n:
+        notes.append((
+            "Injection estimée",
+            f"{_pluriel(n, 'jour')} sans relevé Enedis",
+            "Ces journées n'ont pas de relevé d'injection : elles sont "
+            "antérieures à la mise en service de votre compteur de "
+            "production, ou tombent pendant une panne.\n\n"
+            "Leur injection et leur autoconsommation sont estimées d'après "
+            "vos ratios mensuels observés.",
+        ))
+
+    n = _compte("injection_recalee")
+    if n:
+        notes.append((
+            "Vente recalée",
+            f"{_pluriel(n, 'jour')} ajustés sur vos factures EDF OA",
+            "Le total vendu de chaque année OA est celui qui a été payé, au "
+            "kWh près : c'est l'index du compteur qui fait foi.\n\n"
+            "Le détail quotidien, lui, reste approché.",
+        ))
+
+    n = _compte("conso_recalee")
+    if n:
+        notes.append((
+            "Consommation arrondie",
+            f"{_pluriel(n, 'jour')} saisis au kWh entier",
+            "Ces journées ont été saisies sans décimales. Elles sont recalées "
+            "sur le total de vos factures EDF, qui est exact.\n\n"
+            "Le total de la période est donc juste, le détail quotidien "
+            "approché à environ 1 kWh près.",
+        ))
+
+    n = _compte("conso_absente")
+    if n:
+        kwh = df.loc[df["conso_absente"] > 0, "soutirage_kwh"].sum()
+        notes.append((
+            "Consommation manquante",
+            f"{_pluriel(n, 'jour')} sans relevé exploitable ({fmt_kwh(kwh)})",
+            "Données absentes chez Enedis, qui ne conserve que 36 mois "
+            "glissants, ou valeurs interpolées pendant une panne du "
+            "compteur.\n\n"
+            "Le total de la facture EDF correspondante est réparti sur ces "
+            "jours : le total de la période est juste, pas le détail "
+            "quotidien.",
+        ))
+
+    return notes
+
+
 def phrase_en_attente(jours) -> str:
     """Ce que deviennent les journees mises de cote faute de releves reseau.
 
