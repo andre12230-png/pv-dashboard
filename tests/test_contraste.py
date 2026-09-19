@@ -112,9 +112,9 @@ def test_cadre_de_carte_visible(cadre, fond):
 # widget, sans rien emprunter au système. Ces deux tests verrouillent ce
 # choix : sans eux, alléger la règle ferait revenir le défaut en silence.
 
-import re                                        # noqa: E402
+import re  # noqa: E402
 
-from gui_theme import qss_for                    # noqa: E402
+from gui_theme import qss_for  # noqa: E402
 
 
 def _bloc(qss: str, selecteur: str) -> str:
