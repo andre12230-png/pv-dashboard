@@ -50,6 +50,39 @@ def merge_series(production: pd.DataFrame, reseau: pd.DataFrame) -> pd.DataFrame
     return df
 
 
+def jours_en_attente(df_daily: pd.DataFrame) -> pd.DatetimeIndex:
+    """Les journees de fin de serie qui n'ont encore AUCUN releve reseau.
+
+    L'onduleur donne la production du jour meme ; Enedis publie consommation
+    et injection le lendemain. La derniere journee d'un fichier n'a donc
+    souvent que sa production. Ce n'est pas une journee a trou : c'est une
+    journee qui n'est pas encore arrivee. La compter ferait 0 kWh au reseau,
+    donc 100 % d'autoproduction et une facture amputee d'un jour
+    (signale par un utilisateur le 19/09/2026).
+
+    On ne regarde que la FIN de la serie : un jour sans releve suivi de jours
+    releves est un vrai trou, qui reste signale et comble par les factures.
+    Le CSV n'est jamais touche -- la journee revient d'elle-meme au prochain
+    import.
+    """
+    vide = pd.DatetimeIndex([])
+    if df_daily.empty:
+        return vide
+    colonnes = ("conso_absente", "releve_incomplet")
+    if any(c not in df_daily.columns for c in colonnes):
+        return vide
+
+    # Ni consommation ni injection : rien du reseau pour cette journee.
+    attente = ((df_daily["conso_absente"] > 0)
+               & (df_daily["releve_incomplet"] > 0)).values
+    n = 0
+    for valeur in attente[::-1]:
+        if not valeur:
+            break
+        n += 1
+    return df_daily.index[len(df_daily) - n:] if n else vide
+
+
 def estime_injection_manquante(df_daily: pd.DataFrame) -> pd.DataFrame:
     """
     Estime l'injection des jours 'releve_incomplet' (production connue mais

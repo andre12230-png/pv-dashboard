@@ -521,6 +521,30 @@ def _pluriel(n: int, mot: str) -> str:
     return f"{nombre} {mot}" + ("s" if n > 1 else "")
 
 
+def phrase_en_attente(jours) -> str:
+    """Ce que deviennent les journees mises de cote faute de releves reseau.
+
+    L'onduleur donne la production du jour meme, Enedis publie conso et
+    injection le lendemain : la derniere journee d'un fichier n'a souvent que
+    sa production. Elle sort des calculs (voir calculations.jours_en_attente),
+    donc il faut dire ou elle est passee -- sinon on la croit perdue, ce qui
+    a ete la premiere reaction d'un utilisateur (19/09/2026).
+    """
+    jours = list(jours or [])
+    if not jours:
+        return ""
+    dates = ", ".join(d.strftime("%d/%m/%Y") for d in jours)
+    if len(jours) == 1:
+        debut = f"La journée du {dates} n'est pas encore comptée"
+        possessif, suite = "sa", "Elle s'ajoutera d'elle-même"
+    else:
+        debut = f"Les journées du {dates} ne sont pas encore comptées"
+        possessif, suite = "leur", "Elles s'ajouteront d'elles-mêmes"
+    return (f"{debut} : {possessif} production est connue, mais Enedis publie "
+            f"la consommation et l'injection le lendemain. {suite} au prochain "
+            "import — rien n'est perdu.")
+
+
 def phrase_import(nouveaux: int, remplaces: int, jours: int) -> str:
     """Ce que l'import va changer, en une phrase, avant le detail chiffre.
 

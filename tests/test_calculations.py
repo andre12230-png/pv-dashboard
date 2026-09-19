@@ -1077,3 +1077,86 @@ def test_fraicheur_sans_date_illisible_ne_dit_rien():
     texte, _ = fraicheur_donnees({"Prod_Jour": date(2026, 8, 17)}, AUJOURDHUI,
                                  illisibles=[])
     assert "illisible" not in texte.lower()
+
+# =============================================================================
+# Les journees en attente de leurs releves reseau
+# =============================================================================
+#
+# L'onduleur donne la production du jour meme ; Enedis publie consommation et
+# injection le lendemain. Un utilisateur a donc vu sa journee du 19/09 comptee
+# comme « sans releve de consommation » avec 0 kWh au reseau, ce qui affichait
+# 100 % d'autoproduction ce jour-la (19/09/2026). Une journee qui n'est pas
+# encore arrivee n'est pas une journee a trou.
+
+
+def _serie(lignes):
+    """lignes : [(jour, conso_absente, releve_incomplet), ...]"""
+    idx = pd.to_datetime([f"2026-09-{j:02d}" for j, _, _ in lignes])
+    return pd.DataFrame(
+        {"conso_absente": [c for _, c, _ in lignes],
+         "releve_incomplet": [r for _, _, r in lignes]},
+        index=idx)
+
+
+def test_une_serie_complete_n_a_aucune_journee_en_attente():
+    df = _serie([(16, 0.0, 0.0), (17, 0.0, 0.0), (18, 0.0, 0.0)])
+    assert list(calc.jours_en_attente(df)) == []
+
+
+def test_le_dernier_jour_sans_aucun_releve_reseau_est_en_attente():
+    df = _serie([(16, 0.0, 0.0), (17, 0.0, 0.0), (19, 1.0, 1.0)])
+    attente = calc.jours_en_attente(df)
+    assert [d.strftime("%d/%m/%Y") for d in attente] == ["19/09/2026"]
+
+
+def test_deux_journees_de_retard_sont_toutes_les_deux_en_attente():
+    df = _serie([(16, 0.0, 0.0), (18, 1.0, 1.0), (19, 1.0, 1.0)])
+    assert len(calc.jours_en_attente(df)) == 2
+
+
+def test_un_trou_ancien_n_est_pas_une_attente():
+    """Un jour sans releve suivi de jours releves est un vrai trou : il reste
+    signale et comble par les factures, comme avant."""
+    df = _serie([(16, 1.0, 1.0), (17, 0.0, 0.0), (18, 0.0, 0.0)])
+    assert list(calc.jours_en_attente(df)) == []
+
+
+def test_une_journee_sans_conso_mais_avec_injection_n_attend_rien():
+    """Les journees d'avant mise en service ont une consommation relevee et
+    pas d'injection : ce sont de vraies estimations, pas des attentes."""
+    df = _serie([(16, 0.0, 1.0), (17, 0.0, 1.0), (18, 0.0, 1.0)])
+    assert list(calc.jours_en_attente(df)) == []
+
+
+def test_une_serie_vide_ne_plante_pas():
+    assert list(calc.jours_en_attente(pd.DataFrame())) == []
+
+def test_la_journee_en_attente_ne_gonfle_plus_l_autoproduction():
+    """Mesure du defaut corrige le 19/09/2026 : comptee, la journee du jour
+    n'apportait que de la production et 0 kWh de reseau -- donc 100 %
+    d'autoproduction ce jour-la, et un taux de periode fausse vers le haut."""
+    idx = pd.to_datetime(["2026-09-16", "2026-09-17", "2026-09-18",
+                          "2026-09-19"])
+    df = pd.DataFrame(
+        {"production_kwh": [19.1, 22.8, 20.8, 21.5],
+         "injection_kwh": [10.46, 17.74, 14.39, 0.0],
+         "soutirage_kwh": [7.67, 4.64, 7.93, 0.0],
+         "conso_absente": [0.0, 0.0, 0.0, 1.0],
+         "releve_incomplet": [0.0, 0.0, 0.0, 1.0]},
+        index=idx)
+    df["autoconsommation_kwh"] = df["production_kwh"] - df["injection_kwh"]
+    df["consommation_kwh"] = df["autoconsommation_kwh"] + df["soutirage_kwh"]
+
+    def taux(d):
+        return d["autoconsommation_kwh"].sum() / d["consommation_kwh"].sum() * 100
+
+    attente = calc.jours_en_attente(df)
+    assert len(attente) == 1
+    avec = taux(df)
+    sans = taux(df.drop(index=attente))
+    assert round(avec, 1) == 67.3          # ce qu'on affichait
+    assert round(sans, 1) == 49.8          # ce qui est vrai
+    # La consommation reseau, elle, ne change pas : cette journee n'en avait
+    # aucune. C'est bien le denominateur qui etait ampute.
+    assert df["soutirage_kwh"].sum() == df.drop(index=attente)["soutirage_kwh"].sum()
+

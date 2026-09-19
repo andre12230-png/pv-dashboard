@@ -35,6 +35,7 @@ from views._helpers import (
     fraicheur_donnees,
     libelle_periode,
     periode_precedente,
+    phrase_en_attente,
 )
 from views.comparaison import date_limite_n1
 
@@ -138,6 +139,12 @@ class DashboardView(BaseView):
         # Jours dont une grandeur n'a jamais ete relevee : l'app la reconstitue,
         # et le dit ici pour qu'on ne prenne pas ces chiffres pour des mesures.
         notes = []
+        # Journees mises de cote faute de releves reseau : elles ne sont plus
+        # dans df, donc on les lit sur les donnees. Les nommer evite qu'on les
+        # croie perdues -- c'est la premiere reaction (retour du 19/09/2026).
+        texte = phrase_en_attente(getattr(self.data, "jours_en_attente", []))
+        if texte:
+            notes.append(f"ℹ {texte}")
         if "releve_incomplet" in df.columns:
             n_inc = int((df["releve_incomplet"] > 0).sum())
             if n_inc:
