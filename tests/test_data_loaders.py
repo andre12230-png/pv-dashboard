@@ -638,6 +638,36 @@ def test_index_enedis_xlsx_ignore_le_calendrier_distributeur(tmp_path):
     assert "0" not in imports["Conso_HP"].values()      # 999 - 999 = 0
 
 
+def test_index_enedis_previent_pour_le_premier_jour(tmp_path):
+    """Le premier releve sert de reference : il ne peut produire aucune
+    journee. Un utilisateur l'a decouvert tout seul (18/09/2026) en exportant
+    depuis la date de son installation -- ce jour-la restait vide, sans que
+    rien ne l'explique."""
+    p = _classeur_index(str(tmp_path / "Export_Index.xlsx"))
+    notes = []
+    dl.parse_enedis_fichier(p, notes=notes)
+    assert len(notes) == 1
+    assert "01/01/2025" in notes[0]
+    assert "référence" in notes[0]
+    assert "veille" in notes[0]
+
+
+def test_sans_liste_de_notes_l_import_marche_pareil(tmp_path):
+    p = _classeur_index(str(tmp_path / "Export_Index.xlsx"))
+    assert dl.parse_enedis_fichier(p)["Conso_HC"] == {
+        "01/01/2025": "5,5", "02/01/2025": "4,5"}
+
+
+def test_un_fichier_sans_index_ne_note_rien(tmp_path):
+    p = tmp_path / "octopus.csv"
+    p.write_text("Date;Consommation HC (kWh);Consommation HP (kWh)@NL@"
+                 "01/09/2026;5,1;7,2@NL@".replace("@NL@", chr(10)),
+                 encoding="utf-8")
+    notes = []
+    dl.parse_enedis_fichier(str(p), notes=notes)
+    assert notes == []
+
+
 def test_index_enedis_xlsx_compteur_sans_hphc(tmp_path):
     # Un compteur en tarif Base n'a que l'index totalisateur : on importe la
     # consommation totale, et rien d'autre.

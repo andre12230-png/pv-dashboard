@@ -514,3 +514,33 @@ def libelle_periode(period: str) -> str:
     if period.startswith("oa-"):
         return f"Année OA #{period.split('-')[1]}"
     return period
+
+def _pluriel(n: int, mot: str) -> str:
+    """« 1 journée », « 1 062 valeurs » -- milliers separes comme fmt_eur."""
+    nombre = f"{n:,}".replace(",", " ")
+    return f"{nombre} {mot}" + ("s" if n > 1 else "")
+
+
+def phrase_import(nouveaux: int, remplaces: int, jours: int) -> str:
+    """Ce que l'import va changer, en une phrase, avant le detail chiffre.
+
+    Un utilisateur a lu « 0 nouveau(x) » dans le detail et conclu que son
+    import ne faisait rien, alors qu'il corrigeait plus de mille valeurs
+    (18/09/2026). Le detail par colonne reste ; cette phrase le precede et
+    dit lequel des quatre nombres compte.
+    """
+    if not nouveaux and not remplaces:
+        return (f"Rien à changer : les {jours} jours de ce fichier sont "
+                "déjà dans vos relevés, avec les mêmes valeurs.")
+    if not remplaces:
+        return f"{_pluriel(nouveaux, 'journée')} va être ajoutée." if nouveaux == 1 \
+            else f"{_pluriel(nouveaux, 'journée')} vont être ajoutées."
+    if not nouveaux:
+        debut = (f"{_pluriel(remplaces, 'valeur')} va être corrigée."
+                 if remplaces == 1
+                 else f"{_pluriel(remplaces, 'valeur')} vont être corrigées.")
+        return (debut + " Aucune journée nouvelle : ces dates sont déjà dans "
+                "vos relevés.")
+    return (f"{_pluriel(nouveaux, 'journée')} vont être ajoutées, et "
+            f"{_pluriel(remplaces, 'valeur')} corrigées.")
+

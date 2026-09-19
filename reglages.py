@@ -452,6 +452,41 @@ def _poser_fin(lignes_periode: list[str], fin: str) -> list[str] | None:
 
 
 # ----------------------------------------------------------------------
+# La prime a l'autoconsommation, dite en euros
+# ----------------------------------------------------------------------
+#
+# Le champ attend un montant PAR kWc. Un utilisateur y a saisi le total de sa
+# prime (1440 EUR) : son installation s'est retrouvee amortie au bout d'un an,
+# sans qu'aucun message ne l'avertisse (18/09/2026). Il a fini par trouver la
+# bonne valeur par tatonnement, en croyant que c'etait un montant mensuel.
+# D'ou cette phrase, affichee sous les cases et recalculee a chaque frappe.
+
+def _euros(x: float) -> str:
+    """1440 -> « 1 440 », 456.5 -> « 456,50 » (milliers comme fmt_eur)."""
+    entier = abs(x - round(x)) < 0.005
+    texte = f"{x:,.0f}" if entier else f"{x:,.2f}"
+    return texte.replace(",", " ").replace(".", ",")
+
+
+def _kwc(x: float) -> str:
+    """6.0 -> « 6 », 3.5 -> « 3,5 » : on ne montre pas de zero inutile."""
+    return f"{x:g}".replace(".", ",")
+
+
+def phrase_prime(par_kwc: float, kwc: float, duree: int) -> str:
+    """Ce que la prime represente vraiment, en euros et non en euros par kWc."""
+    total = float(par_kwc) * float(kwc)
+    if total <= 0:
+        return "Pas de prime."
+    debut = (f"{_euros(par_kwc)} €/kWc × {_kwc(kwc)} kWc = "
+             f"{_euros(total)} € au total")
+    if duree <= 1:
+        return debut + ", versés en une seule fois."
+    return (f"{debut}, soit {_euros(total / duree)} € par an pendant "
+            f"{duree} ans.")
+
+
+# ----------------------------------------------------------------------
 # Controle des valeurs saisies
 # ----------------------------------------------------------------------
 
