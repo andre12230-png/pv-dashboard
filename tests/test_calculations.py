@@ -1160,3 +1160,49 @@ def test_la_journee_en_attente_ne_gonfle_plus_l_autoproduction():
     # aucune. C'est bien le denominateur qui etait ampute.
     assert df["soutirage_kwh"].sum() == df.drop(index=attente)["soutirage_kwh"].sum()
 
+# La journee en cours : elle n'est pas finie
+# -----------------------------------------------------------------------------
+#
+# « on ne connait la production du jour que des l'instant ou il n'y a plus du
+# tout de soleil » -- l'utilisateur, 19/09/2026. Meme saisie, la production du
+# jour en cours est partielle : elle tire les moyennes vers le bas sans qu'on
+# sache pourquoi. On borne donc a la veille, quel que soit le contenu.
+
+
+def test_le_jour_en_cours_est_en_attente_meme_s_il_est_renseigne():
+    idx = pd.to_datetime(["2026-09-17", "2026-09-18", "2026-09-19"])
+    df = pd.DataFrame(
+        {"conso_absente": [0.0, 0.0, 0.0],
+         "releve_incomplet": [0.0, 0.0, 0.0]},
+        index=idx)
+    attente = calc.jours_en_attente(df, aujourd_hui=date(2026, 9, 19))
+    assert [d.strftime("%d/%m/%Y") for d in attente] == ["19/09/2026"]
+
+
+def test_la_veille_reste_comptee():
+    idx = pd.to_datetime(["2026-09-17", "2026-09-18"])
+    df = pd.DataFrame(
+        {"conso_absente": [0.0, 0.0], "releve_incomplet": [0.0, 0.0]},
+        index=idx)
+    assert list(calc.jours_en_attente(df, aujourd_hui=date(2026, 9, 19))) == []
+
+
+def test_le_jour_en_cours_et_la_veille_sans_releve_partent_ensemble():
+    """Enedis a un jour de retard ET la journee du jour n'est pas finie."""
+    idx = pd.to_datetime(["2026-09-17", "2026-09-18", "2026-09-19"])
+    df = pd.DataFrame(
+        {"conso_absente": [0.0, 1.0, 1.0],
+         "releve_incomplet": [0.0, 1.0, 1.0]},
+        index=idx)
+    attente = calc.jours_en_attente(df, aujourd_hui=date(2026, 9, 19))
+    assert len(attente) == 2
+
+
+def test_un_jour_futur_saisi_par_erreur_n_est_pas_compte_non_plus():
+    idx = pd.to_datetime(["2026-09-18", "2026-09-30"])
+    df = pd.DataFrame(
+        {"conso_absente": [0.0, 0.0], "releve_incomplet": [0.0, 0.0]},
+        index=idx)
+    attente = calc.jours_en_attente(df, aujourd_hui=date(2026, 9, 19))
+    assert len(attente) == 1
+

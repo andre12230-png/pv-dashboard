@@ -307,3 +307,40 @@ def test_un_singulier_reste_au_singulier():
     assert "1 jour " in resume + " "
     assert "1 jours" not in resume
 
+# Les jours d'injection estimee disent POURQUOI
+# -----------------------------------------------------------------------------
+#
+# « Pour les journees avant la mise en service je pense que tu ne devrais pas
+# les compter dans ces lignes » -- l'utilisateur, 19/09/2026. Les compter reste
+# honnete (leur injection est bien estimee) ; ce qui manquait, c'est la raison.
+
+
+def test_les_jours_d_avant_contrat_disent_leur_cause():
+    idx = pd.to_datetime(["2025-01-20", "2025-01-21", "2025-03-01"])
+    df = pd.DataFrame(
+        {"soutirage_kwh": [0.0, 0.0, 0.0],
+         "releve_incomplet": [1.0, 1.0, 0.0]},
+        index=idx)
+    _titre, resume, _aide = notes_donnees(df, start_oa=date(2025, 2, 10))[0]
+    assert resume == "2 jours avant votre contrat EDF OA"
+
+
+def test_les_deux_causes_se_distinguent():
+    """Des jours d'avant contrat ET une panne plus tard."""
+    idx = pd.to_datetime(["2025-01-20", "2025-01-21", "2026-03-01"])
+    df = pd.DataFrame(
+        {"soutirage_kwh": [0.0, 0.0, 0.0],
+         "releve_incomplet": [1.0, 1.0, 1.0]},
+        index=idx)
+    _titre, resume, _aide = notes_donnees(df, start_oa=date(2025, 2, 10))[0]
+    assert resume == "3 jours sans relevé Enedis, dont 2 avant votre contrat"
+
+
+def test_sans_date_de_contrat_le_resume_ne_change_pas():
+    idx = pd.to_datetime(["2025-01-20", "2025-01-21"])
+    df = pd.DataFrame(
+        {"soutirage_kwh": [0.0, 0.0], "releve_incomplet": [1.0, 1.0]},
+        index=idx)
+    _titre, resume, _aide = notes_donnees(df)[0]
+    assert resume == "2 jours sans relevé Enedis"
+
