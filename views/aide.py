@@ -344,8 +344,12 @@ surplus d'électricité à un prix fixe garanti.</p>
 {fin_oa} de l'année suivante.</p>
 <p><b>Vente du surplus</b> — revenu tiré de l'électricité injectée et vendue à
 EDF OA.</p>
-<p><b>Prime à l'autoconsommation</b> — aide de l'État versée les premières
-années du contrat, calculée selon la puissance (€/kWc).</p>
+<p><b>Prime à l'autoconsommation</b> — aide de l'État calculée selon la
+puissance installée (€/kWc), versée en une seule fois pour les contrats
+récents, sur cinq ans pour les plus anciens. Dans <b>Mes réglages</b>, vous
+la saisissez comme vous l'avez reçue : <b>en tout</b>, le montant versé avec
+votre première facture, ou <b>par kWc</b>. La ligne sous les cases affiche
+l'autre valeur, pour vérification.</p>
 <p><b>Autoliquidation</b> — mécanisme par lequel c'est l'acheteur, ici EDF OA,
 qui déclare la TVA à votre place. Vous n'en collectez donc aucune sur vos
 ventes de surplus.</p>

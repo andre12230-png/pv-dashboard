@@ -548,3 +548,95 @@ def test_les_decimales_de_puissance_sont_gardees():
         "100 €/kWc × 3,5 kWc = 350 € au total, versés en une seule fois."
     )
 
+# ======================================================================
+# La prime se saisit au choix : en tout, ou par kWc
+# ======================================================================
+#
+# Suite du retour du 18/09/2026. L'utilisateur a fait remarquer (19/09) que ce
+# qu'il a sous les yeux, c'est le montant touche avec sa premiere facture --
+# pas un montant par kWc. La saisie propose donc les deux, le fichier de
+# configuration continuant de stocker le montant PAR kWc : rien a convertir
+# dans les reglages existants.
+
+
+def test_le_total_se_deduit_du_montant_par_kwc():
+    assert rg.prime_totale(par_kwc=160, kwc=9) == 1440
+
+
+def test_le_montant_par_kwc_se_deduit_du_total():
+    assert rg.prime_par_kwc_depuis_total(total=1440, kwc=9) == 160
+
+
+def test_une_puissance_nulle_ne_divise_rien():
+    """Sans puissance saisie, la conversion n'a pas de sens : zero, pas un
+    plantage."""
+    assert rg.prime_par_kwc_depuis_total(total=1440, kwc=0) == 0
+
+
+def test_les_deux_conversions_se_repondent():
+    total = rg.prime_totale(par_kwc=380, kwc=6)
+    assert rg.prime_par_kwc_depuis_total(total, 6) == 380
+
+
+def test_la_phrase_en_mode_total_donne_le_montant_par_kwc():
+    """En saisie « en tout », c'est l'autre valeur qui manque a l'utilisateur."""
+    assert rg.phrase_prime(par_kwc=160, kwc=9, duree=1, saisie="total") == (
+        "1 440 € au total pour 9 kWc, soit 160 €/kWc, "
+        "versés en une seule fois."
+    )
+
+
+def test_la_phrase_en_mode_total_avec_etalement():
+    assert rg.phrase_prime(par_kwc=380, kwc=6, duree=5, saisie="total") == (
+        "2 280 € au total pour 6 kWc, soit 380 €/kWc, "
+        "étalés sur 5 ans (456 € par an)."
+    )
+
+
+def test_le_mode_par_kwc_reste_la_phrase_d_origine():
+    """Le defaut ne change pas : les appels existants gardent leur phrase."""
+    assert rg.phrase_prime(par_kwc=120, kwc=12, duree=1) == (
+        "120 €/kWc × 12 kWc = 1 440 € au total, versés en une seule fois."
+    )
+
+
+def test_une_prime_nulle_se_tait_aussi_en_mode_total():
+    assert rg.phrase_prime(0, 9, 1, saisie="total") == "Pas de prime."
+
+def test_la_fenetre_ouvre_la_prime_sur_le_montant_total(qapp):
+    """Le choix s'ouvre sur « en tout » : ce que l'utilisateur a touche."""
+    from fenetre_reglages import FenetreReglages
+    f = FenetreReglages(dict(VALEURS_FENETRE), lambda _v: None)
+    # 380 €/kWc pour 6 kWc, c'est 2 280 € recus.
+    assert f.prime.value() == 2280
+    assert f.prime.suffix() == " €"
+    # Mais le fichier, lui, garde des euros par kWc : rien a convertir.
+    assert f.valeurs()["prime_par_kwc"] == 380.0
+
+
+def test_basculer_en_par_kwc_convertit_la_somme_affichee(qapp):
+    from fenetre_reglages import FenetreReglages
+    f = FenetreReglages(dict(VALEURS_FENETRE), lambda _v: None)
+    f.mode_prime.setCurrentIndex(1)
+    assert f.prime.value() == 380
+    assert f.prime.suffix() == " €/kWc"
+    assert f.valeurs()["prime_par_kwc"] == 380.0
+
+
+def test_le_total_saisi_ne_se_multiplie_plus_par_la_puissance(qapp):
+    """Le piege du 18/09/2026 : saisir 1440 (son total) dans une case qui
+    attendait des €/kWc valorisait la prime a 8 640 € pour 6 kWc."""
+    from fenetre_reglages import FenetreReglages
+    f = FenetreReglages(dict(VALEURS_FENETRE), lambda _v: None)
+    f.prime.setValue(1440)
+    assert f.valeurs()["prime_par_kwc"] == 240.0
+    assert "1 440 € au total" in f.total_prime.text()
+
+
+def test_la_phrase_suit_le_mode_de_saisie(qapp):
+    from fenetre_reglages import FenetreReglages
+    f = FenetreReglages(dict(VALEURS_FENETRE), lambda _v: None)
+    assert f.total_prime.text().startswith("2 280 € au total")
+    f.mode_prime.setCurrentIndex(1)
+    assert f.total_prime.text().startswith("380 €/kWc")
+

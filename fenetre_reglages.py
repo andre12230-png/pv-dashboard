@@ -30,6 +30,8 @@ from reglages import (
     SORTES_RECALAGE,
     ReglagesRefuses,
     phrase_prime,
+    prime_par_kwc_depuis_total,
+    prime_totale,
     recalages_vides,
 )
 
@@ -173,14 +175,24 @@ class FenetreReglages(QDialog):
 
         # --- Ma vente a EDF OA -------------------------------------------
         self.prix_oa = _nombre(valeurs["prix_oa"], 4, " €/kWh", 5)
-        self.prime = _nombre(valeurs["prime_par_kwc"], 2, " €/kWc", 10_000)
+        # La prime se saisit au choix : en tout, ou par kWc. Le fichier de
+        # configuration, lui, garde toujours le montant PAR kWc -- rien a
+        # convertir dans les reglages existants. Le choix s'ouvre sur « en
+        # tout » : c'est ce que l'utilisateur a sous les yeux, le montant
+        # touche avec sa premiere facture (retour du 19/09/2026).
+        self.mode_prime = QComboBox()
+        self.mode_prime.addItems(["en tout", "par kWc"])
+        self.prime = _nombre(
+            prime_totale(valeurs["prime_par_kwc"], valeurs["puissance_kwc"]),
+            2, " €", 1_000_000)
         self.prime_duree = QSpinBox()
         self.prime_duree.setRange(1, 20)
         self.prime_duree.setSuffix(" an(s)")
         self.prime_duree.setValue(valeurs["prime_duree"])
-        # La prime se saisit PAR kWc : cette ligne dit ce que ça fait en
-        # euros, et se recalcule a chaque frappe. Sans elle, on saisit son
-        # total et l'installation paraît amortie en un an.
+        # Cette ligne montre l'unite que l'utilisateur n'a PAS sous les yeux,
+        # et se recalcule a chaque frappe. Sans elle, on saisit son total dans
+        # une case qui attend des euros par kWc, et l'installation parait
+        # amortie en un an.
         self.total_prime = QLabel()
         self.total_prime.setWordWrap(True)
         self.total_prime.setStyleSheet(
@@ -188,18 +200,21 @@ class FenetreReglages(QDialog):
         for case in (self.puissance, self.prime):
             case.valueChanged.connect(self._montrer_total_prime)
         self.prime_duree.valueChanged.connect(self._montrer_total_prime)
+        self.mode_prime.currentIndexChanged.connect(self._changer_mode_prime)
         self._montrer_total_prime()
 
         v.addWidget(self._groupe("Ma vente du surplus à EDF OA", [
             ("Prix de rachat du kWh", self.prix_oa),
+            ("Prime saisie", self.mode_prime),
             ("Prime à l'autoconsommation", self.prime),
             ("Prime versée sur", self.prime_duree),
             ("", self.total_prime),
         ], "Prix hors taxes, fixé par votre contrat pour toute sa durée.<br><br>"
-           "<b>La prime se saisit par kWc</b>, pas en tout : c'est le montant "
-           "de votre attestation divisé par la puissance de vos panneaux. La "
-           "ligne au-dessus montre ce que ça donne en euros — vérifiez qu'elle "
-           "correspond à ce que vous avez reçu.<br><br>"
+           "<b>La prime se saisit comme vous l'avez reçue</b> : « en tout », "
+           "le montant versé avec votre première facture, ou « par kWc », "
+           "comme l'écrit l'arrêté tarifaire. La ligne au-dessous montre "
+           "l'autre valeur — vérifiez qu'elle correspond à votre "
+           "attestation.<br><br>"
            "Elle est versée <b>en une seule fois</b> pour les contrats récents "
            "(mettez 1 an), sur 5 ans pour les plus anciens."))
 
@@ -331,11 +346,39 @@ class FenetreReglages(QDialog):
             tous[cle].append(periode)
         return tous
 
+    def _en_tout(self) -> bool:
+        """Vrai quand la case de prime contient un montant total."""
+        return self.mode_prime.currentIndex() == 0
+
+    def _prime_par_kwc(self) -> float:
+        """La valeur a enregistrer : le fichier garde toujours des €/kWc."""
+        if self._en_tout():
+            return prime_par_kwc_depuis_total(
+                self.prime.value(), self.puissance.value())
+        return self.prime.value()
+
     def _montrer_total_prime(self) -> None:
         """Recalcule la phrase de la prime a chaque changement de case."""
         self.total_prime.setText(phrase_prime(
-            self.prime.value(), self.puissance.value(),
-            self.prime_duree.value()))
+            self._prime_par_kwc(), self.puissance.value(),
+            self.prime_duree.value(),
+            saisie="total" if self._en_tout() else "kwc"))
+
+    def _changer_mode_prime(self) -> None:
+        """Bascule entre montant total et montant par kWc : la somme saisie
+        est convertie, pour que l'utilisateur retrouve la meme prime."""
+        kwc = self.puissance.value()
+        valeur = self.prime.value()
+        if self._en_tout():
+            # On vient de « par kWc » : la case contenait des €/kWc.
+            self.prime.setSuffix(" €")
+            self.prime.setMaximum(1_000_000)
+            self.prime.setValue(prime_totale(valeur, kwc))
+        else:
+            self.prime.setSuffix(" €/kWc")
+            self.prime.setValue(prime_par_kwc_depuis_total(valeur, kwc))
+            self.prime.setMaximum(10_000)
+        self._montrer_total_prime()
 
     def _groupe(self, titre: str, champs, aide: str) -> QGroupBox:
         groupe = QGroupBox(titre)
@@ -361,7 +404,7 @@ class FenetreReglages(QDialog):
             "date_mise_en_service": _en_date(self.mise_en_service),
             "date_debut_contrat_oa": _en_date(self.debut_oa),
             "prix_oa": round(self.prix_oa.value(), 4),
-            "prime_par_kwc": round(self.prime.value(), 2),
+            "prime_par_kwc": round(self._prime_par_kwc(), 4),
             "prime_duree": self.prime_duree.value(),
             "nom": self.nom.text().strip(),
             "offre": self.offre.text().strip(),
