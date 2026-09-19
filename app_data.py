@@ -40,6 +40,11 @@ class AppData:
     # Dates du CSV que pandas n'a pas su lire : ces journees sont absentes de
     # tous les calculs alors qu'elles restent visibles dans l'onglet Saisie.
     dates_illisibles: list = field(default_factory=list)
+    # Journees de fin de serie dont seule la production est connue : Enedis
+    # publie conso et injection le lendemain. Mises de cote jusqu'a leur
+    # import, et nommees par le tableau de bord pour qu'on ne les croie pas
+    # perdues (voir calculations.jours_en_attente).
+    jours_en_attente: list = field(default_factory=list)
     # Dossier ou vivent config.yaml et les releves. Les vues Parametres et
     # Notice l'affichent : une fois l'application installee, il est cache
     # dans %LOCALAPPDATA% et l'utilisateur ne le trouverait pas seul.

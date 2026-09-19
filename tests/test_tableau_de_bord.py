@@ -237,4 +237,3 @@ def test_le_tableau_de_bord_explique_ses_quatre_montants():
     assert bloc.count("aide=") == 4, "une carte du bilan n'explique rien"
     assert "pas de l'argent reçu" in bloc
     assert "sorti de votre poche" in bloc
-

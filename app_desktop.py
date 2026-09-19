@@ -432,6 +432,13 @@ def build_dataset(cfg: dict) -> AppData:
 
     production, reseau = dl.load_releves_pv(str(releves_path))
     df = calc.merge_series(production, reseau)
+    # Journees dont seule la production est connue, en fin de serie : Enedis
+    # publie conso et injection le lendemain. Elles sont mises de cote (le CSV
+    # les garde) plutot que comptees a 0 kWh au reseau, ce qui afficherait
+    # 100 % d'autoproduction. Le tableau de bord les nomme.
+    attente = calc.jours_en_attente(df)
+    if len(attente):
+        df = df.drop(index=attente)
     # Copie de la serie AVANT toute correction : c'est elle, et elle seule,
     # que la vue TVA utilise. Les etapes qui suivent (estimation des jours
     # manquants, recalage sur les factures) ameliorent les chiffres affiches
@@ -513,6 +520,7 @@ def build_dataset(cfg: dict) -> AppData:
                    edf_ref=edf_ref, df_brut=df_brut, lasm=lasm,
                    dernieres_saisies=dl.dernieres_saisies(str(releves_path)),
                    dates_illisibles=dl.dates_illisibles(str(releves_path)),
+                   jours_en_attente=[d.date() for d in attente],
                    dossier_donnees=str(BASE_DIR))
 
 

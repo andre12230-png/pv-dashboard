@@ -495,3 +495,37 @@ def test_une_seule_valeur_corrigee():
         "ces dates sont déjà dans vos relevés."
     )
 
+# -----------------------------------------------------------------------------
+# La journee en attente de ses releves reseau
+# -----------------------------------------------------------------------------
+#
+# Elle sort des calculs (calculations.jours_en_attente) : il faut donc dire ou
+# elle est passee. Un utilisateur a cru ses lignes perdues des qu'une journee
+# a disparu d'une vue (19/09/2026) -- c'est la premiere conclusion qu'on tire.
+
+from datetime import date  # noqa: E402
+
+from views._helpers import phrase_en_attente  # noqa: E402
+
+
+def test_sans_journee_en_attente_on_ne_dit_rien():
+    assert phrase_en_attente([]) == ""
+    assert phrase_en_attente(None) == ""
+
+
+def test_une_journee_en_attente_est_nommee_et_rassure():
+    texte = phrase_en_attente([date(2026, 9, 19)])
+    assert texte == (
+        "La journée du 19/09/2026 n'est pas encore comptée : sa production "
+        "est connue, mais Enedis publie la consommation et l'injection le "
+        "lendemain. Elle s'ajoutera d'elle-même au prochain import — rien "
+        "n'est perdu."
+    )
+
+
+def test_deux_journees_en_attente_se_mettent_au_pluriel():
+    texte = phrase_en_attente([date(2026, 9, 18), date(2026, 9, 19)])
+    assert texte.startswith(
+        "Les journées du 18/09/2026, 19/09/2026 ne sont pas encore comptées")
+    assert "Elles s'ajouteront" in texte
+
