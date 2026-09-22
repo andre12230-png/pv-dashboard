@@ -1414,3 +1414,149 @@ def test_load_pv_colonnes_manquantes(tmp_path):
     p.write_text("Foo;Bar\n1;2\n", encoding="utf-8")
     with pytest.raises(ValueError, match="non reconnu"):
         dl.load_releves_pv(str(p))
+
+
+# -----------------------------------------------------------------------------
+# Rapport de centrale d'un onduleur (Huawei FusionSolar et equivalents)
+# -----------------------------------------------------------------------------
+# Forme du vrai fichier, transmise par un utilisateur le 19/09/2026 :
+# ligne 1 le titre, ligne 2 les en-tetes, les jours a partir de la ligne 3.
+_ENTETES_RAPPORT = [
+    "Période statistique", "Capacité de branche totale (kWp)",
+    "Irradiation globale (kWh/m²)", "Heures d'ensoleillement (h)",
+    "Température moyenne(℃)", "Production théorique (kWh)",
+    "Production PV (kWh)", "Production de l'onduleur (kWh)",
+    "Production totale (kWh)", "Exportation (kWh)", "Importation (kWh)",
+    "Énergie spécifique (kWh/kWp)", "Pertes dues à limite export. (kWh)",
+    "Pertes dues à une limite d'exportation (€)", "Consommation (kWh)",
+    "Autoconsommation (kWh)", "Taux d'autoconsommation (%)",
+    "Puissance crête (kW)", "Ratio de performances (%)", "CO₂ évité (t)",
+    "Économies charbon standard (t)", "Puissance de charge (kWh)",
+    "Capacité de décharge (kWh)", "Revenus(€)",
+]
+
+# (jour, production PV, production totale CUMULEE, exportation, importation)
+_JOURS_RAPPORT = [
+    ("2025-01-17", 0.0, 0.0, 0.0, 57.66),
+    ("2025-01-18", 1.36, 1.36, 0.0, 96.09),
+    ("2025-01-21", 9.34, 16.22, 0.31, 89.91),
+    ("2025-01-27", 16.63, 59.84, 13.26, 45.0),
+]
+
+
+def _classeur_rapport_onduleur(chemin, lignes=None, titre="Rapport de centrale"):
+    """Fabrique un faux rapport de centrale mensuel, a la forme du vrai."""
+    openpyxl = pytest.importorskip("openpyxl")
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws["A1"] = titre
+    for col, nom in enumerate(_ENTETES_RAPPORT, start=1):
+        ws.cell(row=2, column=col, value=nom)
+    for i, (jour, prod, cumul, export, imp) in enumerate(
+            lignes if lignes is not None else _JOURS_RAPPORT, start=3):
+        ws.cell(row=i, column=1, value=jour)
+        ws.cell(row=i, column=7, value=prod)
+        ws.cell(row=i, column=8, value=prod)      # production de l'onduleur
+        ws.cell(row=i, column=9, value=cumul)     # production totale : un CUMUL
+        ws.cell(row=i, column=10, value=export)
+        ws.cell(row=i, column=11, value=imp)
+        ws.cell(row=i, column=15, value=imp + (prod - export))   # consommation
+        ws.cell(row=i, column=16, value=prod - export)           # autoconso
+    wb.save(chemin)
+    return chemin
+
+
+def test_rapport_onduleur_lit_les_trois_grandeurs(tmp_path):
+    # Production, exportation et importation nourrissent les trois colonnes
+    # du CSV ; les dates ISO du rapport deviennent des dates francaises.
+    p = _classeur_rapport_onduleur(str(tmp_path / "Rapport.xlsx"))
+    imports = dl.parse_rapport_onduleur_xlsx(p)
+    assert set(imports) == {"Prod_Jour", "Inj_Jour", "Conso_réseau_Jour"}
+    assert imports["Prod_Jour"]["18/01/2025"] == "1,36"
+    assert imports["Inj_Jour"]["21/01/2025"] == "0,31"
+    assert imports["Conso_réseau_Jour"]["17/01/2025"] == "57,66"
+
+
+def test_rapport_onduleur_ignore_la_production_totale_cumulee(tmp_path):
+    # "Production totale" ne repart jamais a zero : la prendre pour la
+    # production du jour multiplierait les chiffres par dix en fin de mois.
+    p = _classeur_rapport_onduleur(str(tmp_path / "Rapport.xlsx"))
+    imports = dl.parse_rapport_onduleur_xlsx(p)
+    assert imports["Prod_Jour"]["27/01/2025"] == "16,63"   # et non 59,84
+
+
+def test_rapport_onduleur_garde_la_journee_sans_production(tmp_path):
+    # Le 17/01 l'onduleur tournait sans les panneaux : production nulle,
+    # mais 57,66 kWh consommes. La journee ne doit pas disparaitre.
+    p = _classeur_rapport_onduleur(str(tmp_path / "Rapport.xlsx"))
+    imports = dl.parse_rapport_onduleur_xlsx(p)
+    assert imports["Prod_Jour"]["17/01/2025"] == "0"
+    assert "17/01/2025" in imports["Conso_réseau_Jour"]
+
+
+def test_rapport_onduleur_signale_une_incoherence(tmp_path):
+    # L'autoconsommation du rapport doit valoir production - exportation.
+    # Si elle ne tombe pas juste, c'est que les colonnes ne sont pas celles
+    # qu'on croit : on le dit au lieu d'importer en silence.
+    openpyxl = pytest.importorskip("openpyxl")
+    p = _classeur_rapport_onduleur(str(tmp_path / "Rapport.xlsx"))
+    wb = openpyxl.load_workbook(p)
+    wb.active.cell(row=4, column=16, value=99.0)   # autoconso fantaisiste
+    wb.save(p)
+    notes = []
+    dl.parse_rapport_onduleur_xlsx(p, notes=notes)
+    assert any("autoconsommation" in n.lower() for n in notes)
+
+
+def test_rapport_onduleur_refuse_un_classeur_etranger(tmp_path):
+    # Un classeur qui n'est pas un rapport de centrale retourne None :
+    # l'aiguillage peut alors essayer un autre lecteur.
+    p = _classeur_index(str(tmp_path / "Export_Index.xlsx"))
+    assert dl.parse_rapport_onduleur_xlsx(p) is None
+
+
+def test_rapport_onduleur_par_le_bouton_production(tmp_path):
+    # Le bouton "Importer la production" accepte ce classeur sans qu'on ait
+    # a choisir un format : c'est bien un export d'onduleur.
+    p = _classeur_rapport_onduleur(str(tmp_path / "Rapport.xlsx"))
+    imports = dl.parse_enphase_fichier(p)
+    assert imports["Prod_Jour"]["18/01/2025"] == "1,36"
+    assert "Inj_Jour" in imports
+
+
+# -----------------------------------------------------------------------------
+# garder_si_case_vide : l'onduleur complete Enedis, il ne le remplace jamais
+# -----------------------------------------------------------------------------
+def test_garder_si_case_vide_laisse_la_valeur_en_place():
+    # 01/05 a deja une injection relevee chez Enedis : l'onduleur n'y touche
+    # pas, meme si son chiffre differe.
+    rows = [
+        {"Date": "01/05/2026", "Prod_Jour": "20,5", "Inj_Jour": "15,2",
+         "Conso_réseau_Jour": "3,1", "Conso_HC": "", "Conso_HP": ""},
+        {"Date": "02/05/2026", "Prod_Jour": "18,0", "Inj_Jour": "",
+         "Conso_réseau_Jour": "", "Conso_HC": "", "Conso_HP": ""},
+    ]
+    valeurs = {"01/05/2026": "14,9", "02/05/2026": "11,0"}
+    gardees, ecartees = dl.garder_si_case_vide(rows, "Inj_Jour", valeurs)
+    assert gardees == {"02/05/2026": "11,0"}
+    assert ecartees == 1
+
+
+def test_garder_si_case_vide_accepte_une_journee_inconnue():
+    # Une journee absente du CSV est entierement nouvelle : rien a proteger.
+    rows = [{"Date": "01/05/2026", "Prod_Jour": "20,5", "Inj_Jour": "15,2",
+             "Conso_réseau_Jour": "3,1", "Conso_HC": "", "Conso_HP": ""}]
+    gardees, ecartees = dl.garder_si_case_vide(
+        rows, "Inj_Jour", {"20/01/2025": "0,31"})
+    assert gardees == {"20/01/2025": "0,31"}
+    assert ecartees == 0
+
+
+def test_garder_si_case_vide_ignore_les_blancs():
+    # Une case remplie d'espaces est vide : elle se laisse completer.
+    rows = [{"Date": "01/05/2026", "Prod_Jour": "20,5", "Inj_Jour": "   ",
+             "Conso_réseau_Jour": "", "Conso_HC": "", "Conso_HP": ""}]
+    gardees, ecartees = dl.garder_si_case_vide(
+        rows, "Inj_Jour", {"01/05/2026": "14,9"})
+    assert gardees == {"01/05/2026": "14,9"}
+    assert ecartees == 0

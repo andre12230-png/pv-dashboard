@@ -229,6 +229,17 @@ Enphase — sont <b>totalisés par jour</b>. La <b>journée en cours est
 ignorée</b>, car l'export s'arrête à l'heure où vous l'avez demandé : elle
 serait sous-évaluée. Mêmes garanties que l'autre import : aucun doublon,
 récapitulatif avant d'appliquer, sauvegarde <code>.bak</code>.</p>
+<p>Le même bouton accepte aussi le <b>classeur Excel</b> publié par le portail
+de votre onduleur (« rapport de centrale » chez Huawei et semblables), une
+ligne par jour. Celui-là apporte <b>plus que la production</b> : avant la mise
+en service de votre compteur, votre gestionnaire de réseau n'a encore rien
+relevé et l'application doit <b>estimer</b> votre autoconsommation. L'onduleur,
+lui, mesurait déjà — ces journées cessent donc d'être estimées.</p>
+<p>Vos relevés réseau restent protégés : l'injection et la consommation du
+rapport <b>ne remplissent que les cases vides</b>. Là où Enedis a relevé
+quelque chose, c'est lui qui fait foi et rien n'est remplacé — ces valeurs
+servent de base à la TVA sur l'autoconsommation. Le récapitulatif vous dit
+combien de journées ont été laissées telles quelles.</p>
 
 <h3 style="color:#b45309">D'où viennent les données</h3>
 <p>Ci-dessous les sources de l'installation suivie ici ; les vôtres peuvent

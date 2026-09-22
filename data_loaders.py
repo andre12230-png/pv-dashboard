@@ -1032,6 +1032,157 @@ def parse_enedis_xlsx(path: str) -> dict[str, dict[str, str]]:
     return resultat
 
 
+# Export mensuel du portail d'un onduleur ("rapport de centrale" chez Huawei
+# FusionSolar, formes voisines ailleurs) : une ligne par jour, une vingtaine
+# de colonnes en kWh.
+#
+# Il apporte ce qu'aucun releve Enedis ne peut donner AVANT la mise en service
+# du compteur : ce qui a ete produit, injecte et soutire pendant ces journees.
+# Sans lui, l'application doit estimer l'autoconsommation de cette periode --
+# des semaines, parfois une saison entiere chez qui attend son raccordement.
+#
+# Trois colonnes seulement sont importees. La "Consommation" et
+# l'"Autoconsommation" du rapport sont redondantes : l'application les
+# recalcule (autoconso = production - injection). Elles servent de controle.
+#
+# Piege principal : "Production totale" est un CUMUL qui ne repart jamais a
+# zero (88,16 le 31/01 puis 129,46 le 01/02). La prendre pour la production du
+# jour multiplierait les chiffres par dix en fin de mois. C'est "Production PV"
+# qui donne le jour, et elle seule est lue.
+_COLONNES_RAPPORT_ONDULEUR = {
+    "production pv (kwh)": "Prod_Jour",
+    "production pv": "Prod_Jour",
+    "exportation (kwh)": "Inj_Jour",
+    "exportation": "Inj_Jour",
+    "injection (kwh)": "Inj_Jour",
+    "importation (kwh)": "Conso_réseau_Jour",
+    "importation": "Conso_réseau_Jour",
+}
+_ENTETES_AUTOCONSO_RAPPORT = ("autoconsommation (kwh)", "autoconsommation")
+_ENTETES_DATE_RAPPORT = (
+    "période statistique", "periode statistique", "date statistique",
+    "date", "jour",
+)
+
+
+def _rapport_d_une_feuille(ws, notes: list | None
+                           ) -> dict[str, dict[str, str]] | None:
+    """Lit une feuille de rapport d'onduleur, ou None si ce n'en est pas une."""
+    cibles: dict[int, str] = {}
+    col_date: int | None = None
+    col_autoconso: int | None = None
+    entetes_bas = ""
+    lignes_donnees: list[tuple] = []
+
+    for row in ws.iter_rows(values_only=True):
+        if not cibles:
+            # Tant qu'on n'a pas reconnu l'en-tete, chaque ligne est un
+            # candidat : le titre du rapport occupe la premiere.
+            vus: dict[int, str] = {}
+            for i, cellule in enumerate(row):
+                if not isinstance(cellule, str):
+                    continue
+                nom = _normalise_entete(cellule)
+                if nom in _COLONNES_RAPPORT_ONDULEUR:
+                    vus[i] = _COLONNES_RAPPORT_ONDULEUR[nom]
+                elif nom in _ENTETES_AUTOCONSO_RAPPORT:
+                    col_autoconso = i
+                elif nom in _ENTETES_DATE_RAPPORT and col_date is None:
+                    col_date = i
+            # Deux grandeurs reconnues au moins : une seule pourrait etre
+            # une coincidence d'en-tete dans un tout autre classeur.
+            if len(set(vus.values())) >= 2:
+                cibles = vus
+                entetes_bas = " ".join(
+                    c.lower() for c in row if isinstance(c, str))
+                if col_date is None:
+                    col_date = 0
+            else:
+                col_autoconso = None
+                col_date = None
+            continue
+
+        jour = _cellule_date(row[col_date]) if col_date < len(row) else None
+        if jour is None:
+            continue  # ligne vide, ou total de bas de tableau
+        lignes_donnees.append((jour, row))
+
+    if not cibles or not lignes_donnees:
+        return None
+
+    # Unite : l'en-tete l'annonce presque toujours ("(kWh)"). Sinon, meme
+    # repere que pour les autres imports -- une production journaliere
+    # domestique depasse toujours 200 en Wh et reste en dessous en kWh.
+    if "(kwh" in entetes_bas:
+        en_kwh = True
+    elif "(wh" in entetes_bas:
+        en_kwh = False
+    else:
+        prods = [v for v in (_valeur_ligne(r, i) for _j, r in lignes_donnees
+                             for i, c in cibles.items() if c == "Prod_Jour")
+                 if v is not None]
+        en_kwh = not prods or statistics.median(prods) < 200
+
+    resultat: dict[str, dict[str, str]] = {}
+    ecarts = comparables = 0
+    for jour, row in lignes_donnees:
+        du_jour: dict[str, float] = {}
+        for i, colonne in cibles.items():
+            valeur = _valeur_ligne(row, i)
+            if valeur is None:
+                continue
+            du_jour[colonne] = valeur if en_kwh else valeur / 1000.0
+            resultat.setdefault(colonne, {})[jour] = _fmt_kwh_fr(du_jour[colonne])
+        # Controle : l'autoconsommation annoncee doit valoir
+        # production - injection. Si elle ne tombe pas juste, les colonnes
+        # lues ne sont pas celles qu'on croit.
+        auto = _valeur_ligne(row, col_autoconso) if col_autoconso is not None else None
+        if (auto is not None and "Prod_Jour" in du_jour and "Inj_Jour" in du_jour):
+            comparables += 1
+            attendu = du_jour["Prod_Jour"] - du_jour["Inj_Jour"]
+            if abs((auto if en_kwh else auto / 1000.0) - attendu) > 0.05:
+                ecarts += 1
+
+    if not resultat:
+        return None
+    if notes is not None and comparables and ecarts > comparables * 0.10:
+        notes.append(
+            f"Attention : sur {comparables} jour(s), {ecarts} ont une "
+            "autoconsommation qui ne vaut pas « production − exportation ». "
+            "Les colonnes lues ne sont peut-être pas les bonnes : vérifiez "
+            "quelques journées avant d'appliquer.")
+    return resultat
+
+
+def _valeur_ligne(row, i: int | None) -> float | None:
+    """Valeur numerique de la colonne i d'une ligne, ou None."""
+    if i is None or i >= len(row):
+        return None
+    return _cellule_nombre(row[i])
+
+
+def parse_rapport_onduleur_xlsx(path: str, notes: list | None = None
+                                ) -> dict[str, dict[str, str]] | None:
+    """
+    Lit le rapport mensuel du portail d'un onduleur (Huawei FusionSolar et
+    equivalents) : une ligne par jour, production / exportation / importation.
+
+    Retourne {colonne_cible: {date 'DD/MM/YYYY': kWh en chaine FR}}, ou None
+    si le classeur n'est pas de ce format -- l'appelant essaie alors un
+    autre lecteur.
+    """
+    openpyxl = _charger_openpyxl()
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    try:
+        for nom in wb.sheetnames:
+            trouve = _rapport_d_une_feuille(wb[nom], notes)
+            if trouve is not None:
+                return trouve
+    finally:
+        wb.close()
+    return None
+
+
 def parse_enedis_fichier(path: str, notes: list | None = None
                          ) -> dict[str, dict[str, str]]:
     """
@@ -1165,15 +1316,29 @@ def parse_enphase_texte(texte: str) -> dict[str, str]:
     }
 
 
-def parse_enphase_fichier(path: str) -> dict[str, dict[str, str]]:
+def parse_enphase_fichier(path: str, notes: list | None = None
+                          ) -> dict[str, dict[str, str]]:
     """
-    Point d'entree de l'import Enphase : fichier CSV/texte du rapport, ou
-    l'archive .zip telle qu'elle arrive dans l'email (le premier fichier
-    texte de l'archive est lu).
+    Point d'entree de l'import de production : fichier CSV/texte du rapport
+    Enphase, archive .zip telle qu'elle arrive dans l'email (le premier
+    fichier texte de l'archive est lu), ou classeur Excel du portail d'un
+    onduleur ("rapport de centrale" Huawei et equivalents).
 
-    Retourne {'Prod_Jour': {date 'DD/MM/YYYY': valeur kWh en chaine FR}},
-    meme forme que parse_enedis_fichier.
+    Retourne {'Prod_Jour': {date 'DD/MM/YYYY': valeur kWh en chaine FR}} ;
+    le rapport d'onduleur y ajoute l'injection et la consommation reseau,
+    qu'il est seul a connaitre avant la mise en service du compteur.
     """
+    if path.lower().endswith((".xlsx", ".xlsm")):
+        rapport = parse_rapport_onduleur_xlsx(path, notes)
+        if rapport is None:
+            raise ValueError(
+                "Ce classeur Excel n'a pas la forme d'un rapport d'onduleur "
+                "(une ligne par jour, des colonnes « Production PV », "
+                "« Exportation », « Importation »).\n\nS'il vient de votre "
+                "gestionnaire de réseau, importez-le avec le bouton "
+                "« Importer conso / injection… ».")
+        return rapport
+
     if path.lower().endswith(".zip"):
         import zipfile
 
@@ -1338,6 +1503,28 @@ def merge_import(rows: list[dict[str, str]], colonne: str,
             toutes[date_fr] = ligne
             nb_nouveaux += 1
     return list(toutes.values()), nb_nouveaux, nb_remplaces, nb_inchanges
+
+
+def garder_si_case_vide(rows: list[dict[str, str]], colonne: str,
+                        valeurs: dict[str, str]) -> tuple[dict[str, str], int]:
+    """
+    Ne garde d'un import que les journees dont la case est encore vide.
+
+    Sert aux grandeurs dont le gestionnaire de reseau est la source de
+    verite : l'injection et la consommation reseau. Le rapport d'un onduleur
+    les COMPLETE la ou Enedis n'a rien (avant la mise en service du
+    compteur), mais ne doit jamais ecrire par-dessus un releve existant --
+    ces valeurs servent de base a la TVA sur l'autoconsommation.
+
+    Une journee absente du CSV n'a rien a proteger : elle est gardee.
+
+    Retourne (valeurs_a_importer, nombre_de_journees_ecartees).
+    """
+    occupees = {
+        r["Date"] for r in rows if (r.get(colonne) or "").strip()
+    }
+    gardees = {d: v for d, v in valeurs.items() if d not in occupees}
+    return gardees, len(valeurs) - len(gardees)
 
 
 def controle_apres_import(rows: list[dict[str, str]],

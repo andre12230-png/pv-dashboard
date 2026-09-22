@@ -117,7 +117,11 @@ class SaisieView(BaseView):
             "(Enlighten > Menu > Système > Rapports), ou l'export\n"
             "de production de votre onduleur : tout fichier\n"
             "« date + valeur » convient, les pas infrajournaliers\n"
-            "étant totalisés par jour.")
+            "étant totalisés par jour.\n\n"
+            "Le classeur Excel d'un portail d'onduleur (« rapport\n"
+            "de centrale » Huawei et semblables) apporte en plus\n"
+            "l'injection et la consommation des journées que votre\n"
+            "gestionnaire de réseau ne connaît pas encore.")
         btn_enphase.clicked.connect(self._importer_enphase)
 
         btn_enregistrer = QPushButton("Enregistrer")
@@ -277,14 +281,22 @@ class SaisieView(BaseView):
         pas de 15 minutes est totalisee par jour.
 
         La journee en cours est ignoree : le rapport s'arrete a l'heure de
-        sa generation, elle serait donc sous-evaluee."""
+        sa generation, elle serait donc sous-evaluee.
+
+        Le classeur Excel du portail d'un onduleur ("rapport de centrale")
+        passe par le meme bouton, et apporte en plus l'injection et la
+        consommation reseau. Celles-la ne remplissent que les cases vides :
+        la ou le gestionnaire de reseau a releve quelque chose, c'est lui
+        qui fait foi (18/09/2026, un utilisateur sans donnees Enedis avant
+        sa mise en service)."""
         self._importer_fichier(
             source="production",
             libelle_dialogue="Importer un relevé de production",
-            filtre="Relevés de production (*.csv *.zip *.txt);;"
+            filtre="Relevés de production (*.csv *.zip *.txt *.xlsx);;"
                    "Tous les fichiers (*)",
             parser=dl.parse_enphase_fichier,
             ignorer_jour_en_cours=True,
+            colonnes_a_completer=("Inj_Jour", "Conso_réseau_Jour"),
         )
 
     # Libelle affiche dans le recapitulatif pour chaque colonne importee.
@@ -298,12 +310,19 @@ class SaisieView(BaseView):
 
     def _importer_fichier(self, source: str, libelle_dialogue: str,
                           filtre: str, parser,
-                          ignorer_jour_en_cours: bool = False) -> None:
+                          ignorer_jour_en_cours: bool = False,
+                          colonnes_a_completer: tuple[str, ...] = ()) -> None:
         """Rouage commun aux imports Enedis et Enphase.
 
         Fusion par date, donc jamais de doublon : les jours nouveaux sont
         ajoutes, les dates deja presentes voient la valeur de la colonne
-        importee remplacee (les autres colonnes ne bougent pas)."""
+        importee remplacee (les autres colonnes ne bougent pas).
+
+        `colonnes_a_completer` fait exception a ce remplacement : pour ces
+        colonnes, seules les cases vides sont remplies. Le rapport d'un
+        onduleur s'en sert pour apporter l'injection et la consommation des
+        journees d'avant mise en service, sans jamais toucher a un releve
+        du gestionnaire de reseau -- qui, lui, fait foi."""
         titre = f"Import {source}"
         path = self.data.releves_path
         if not path:
@@ -338,7 +357,17 @@ class SaisieView(BaseView):
         for colonne, valeurs in imports.items():
             if ignorer_jour_en_cours:
                 jour_ignore = dl.retirer_jour_en_cours(valeurs) or jour_ignore
+            respectees = 0
+            if colonne in colonnes_a_completer:
+                valeurs, respectees = dl.garder_si_case_vide(
+                    lignes, colonne, valeurs)
             if not valeurs:
+                if respectees:
+                    libelle = self.LIBELLES_IMPORT.get(colonne, colonne)
+                    recap.append(
+                        f"  - {libelle} : rien à compléter, les {respectees} "
+                        "journée(s) sont déjà relevées par votre "
+                        "gestionnaire de réseau")
                 continue
             # Garde-fou : une grandeur rangee dans la mauvaise colonne se
             # trahit par une injection superieure a la production.
@@ -347,9 +376,13 @@ class SaisieView(BaseView):
                 alertes.append(alerte)
             lignes, nb_n, nb_r, nb_i = dl.merge_import(lignes, colonne, valeurs)
             libelle = self.LIBELLES_IMPORT.get(colonne, colonne)
-            recap.append(
-                f"  - {libelle} : {len(valeurs)} jour(s) lus, {nb_n} "
-                f"nouveau(x), {nb_r} remplacé(s), {nb_i} identique(s)")
+            detail = (f"  - {libelle} : {len(valeurs)} jour(s) lus, {nb_n} "
+                      f"nouveau(x), {nb_r} remplacé(s), {nb_i} identique(s)")
+            if respectees:
+                detail += (f"\n      ({respectees} journée(s) laissée(s) "
+                           "telle(s) quelle(s) : déjà relevée(s) par votre "
+                           "gestionnaire de réseau)")
+            recap.append(detail)
             total_nouveaux += nb_n
             total_remplaces += nb_r
 
