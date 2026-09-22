@@ -530,3 +530,98 @@ def test_deux_journees_en_attente_se_mettent_au_pluriel():
         "Les journées du 18/09/2026, 19/09/2026 ne sont pas encore comptées")
     assert "Elles s'ajouteront" in texte
 
+
+
+# ---------------------------------------------------------------------------
+# Rapport d'onduleur : il complete le gestionnaire de reseau, il ne le
+# remplace pas. L'injection et la consommation ne remplissent que les cases
+# vides -- elles servent de base a la TVA sur l'autoconsommation.
+# ---------------------------------------------------------------------------
+
+def _rapport_onduleur(chemin, jours):
+    """Faux rapport de centrale : (jour ISO, production, export, import)."""
+    openpyxl = pytest.importorskip("openpyxl")
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws["A1"] = "Rapport de centrale"
+    for col, nom in enumerate(
+            ["Période statistique", "Production PV (kWh)",
+             "Exportation (kWh)", "Importation (kWh)"], start=1):
+        ws.cell(row=2, column=col, value=nom)
+    for i, (jour, prod, export, imp) in enumerate(jours, start=3):
+        ws.cell(row=i, column=1, value=jour)
+        ws.cell(row=i, column=2, value=prod)
+        ws.cell(row=i, column=3, value=export)
+        ws.cell(row=i, column=4, value=imp)
+    wb.save(chemin)
+    return str(chemin)
+
+
+@pytest.fixture
+def fichier_choisi(monkeypatch):
+    """Remplace le selecteur de fichier par un chemin impose."""
+    choix = {}
+
+    class _FauxQFileDialog:
+        @staticmethod
+        def getOpenFileName(*_a, **_k):
+            return choix.get("path", ""), ""
+
+    monkeypatch.setattr(saisie_module, "QFileDialog", _FauxQFileDialog)
+    return choix
+
+
+def test_rapport_onduleur_ne_recouvre_pas_une_injection_relevee(
+        vue, dialogue, fichier_choisi, tmp_path):
+    # Le 01/05 a deja une injection Enedis (15,2) : l'onduleur annonce 9,9,
+    # sa valeur doit etre ignoree. Le 30/04 est inconnu du CSV : tout entre.
+    fichier_choisi["path"] = _rapport_onduleur(
+        tmp_path / "Rapport.xlsx",
+        [("2026-04-30", 17.0, 11.0, 4.0), ("2026-05-01", 21.0, 9.9, 8.8)])
+    dialogue.reponse = dialogue.Yes
+
+    vue._importer_enphase()
+
+    lignes = {r["Date"]: r for r in dl.read_releves_raw(vue.data.releves_path)}
+    # Journee inconnue d'Enedis : les trois grandeurs sont ecrites.
+    assert lignes["30/04/2026"]["Prod_Jour"] == "17"
+    assert lignes["30/04/2026"]["Inj_Jour"] == "11"
+    assert lignes["30/04/2026"]["Conso_réseau_Jour"] == "4"
+    # Journee deja relevee : l'injection et la conso reseau ne bougent pas.
+    assert lignes["01/05/2026"]["Inj_Jour"] == "15,2"
+    assert lignes["01/05/2026"]["Conso_réseau_Jour"] == "3,1"
+    # La production, elle, n'a pas d'autre source que l'onduleur.
+    assert lignes["01/05/2026"]["Prod_Jour"] == "21"
+
+
+def test_le_recapitulatif_annonce_les_journees_laissees_au_reseau(
+        vue, dialogue, fichier_choisi, tmp_path):
+    # L'utilisateur doit comprendre pourquoi toutes ses journees ne sont pas
+    # reprises : sans cette phrase, il croirait a un import rate.
+    fichier_choisi["path"] = _rapport_onduleur(
+        tmp_path / "Rapport.xlsx",
+        [("2026-04-30", 17.0, 11.0, 4.0), ("2026-05-01", 21.0, 9.9, 8.8)])
+    dialogue.reponse = dialogue.No
+
+    vue._importer_enphase()
+
+    message = dialogue.messages[0]
+    assert "1 journée(s) laissée(s) telle(s) quelle(s)" in message
+    assert "gestionnaire de réseau" in message
+
+
+def test_rapport_entierement_couvert_par_le_reseau_le_dit(
+        vue, dialogue, fichier_choisi, tmp_path):
+    # Toutes les journees du rapport sont deja relevees : la production est
+    # reprise, mais il n'y a rien a completer cote reseau. Sans cette
+    # phrase, l'utilisateur croirait l'import rate.
+    fichier_choisi["path"] = _rapport_onduleur(
+        tmp_path / "Rapport.xlsx",
+        [("2026-05-01", 21.0, 9.9, 8.8), ("2026-05-02", 18.0, 11.0, 2.0)])
+    dialogue.reponse = dialogue.No
+
+    vue._importer_enphase()
+
+    message = dialogue.messages[0]
+    assert "rien à compléter" in message
+    assert "2 journée(s) sont déjà relevées" in message

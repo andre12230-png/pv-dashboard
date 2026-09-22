@@ -340,6 +340,35 @@ Memes garanties que l'autre import : fusion sans doublon, seule la
 colonne Prod_Jour est modifiee, recapitulatif avant d'appliquer et
 ancienne version conservee dans `Releves-pv.csv.bak`.
 
+#### Le rapport mensuel d'un portail d'onduleur
+
+Le meme bouton accepte le **classeur Excel** que publient les portails
+d'onduleurs (« rapport de centrale » chez Huawei FusionSolar, formes
+voisines ailleurs) : une ligne par jour, une vingtaine de colonnes.
+
+Il apporte **plus que la production**. Avant la mise en service du
+compteur, le gestionnaire de reseau n'a aucun releve : l'application doit
+alors **estimer** l'autoconsommation de ces journees. Or l'onduleur, lui,
+mesurait deja. Le rapport donne ses colonnes **Production PV**,
+**Exportation** et **Importation**, et ces journees cessent d'etre
+estimees. Quelques semaines chez la plupart, une saison entiere chez qui
+attend longtemps son raccordement.
+
+Une regle protege les donnees du reseau : l'injection et la consommation
+du rapport **ne remplissent que les cases vides**. La ou Enedis a releve
+quelque chose, c'est lui qui fait foi et rien n'est remplace — ces
+valeurs servent de base a la TVA sur l'autoconsommation. La production,
+elle, n'a pas d'autre source que l'onduleur : elle est reprise
+normalement. Le recapitulatif dit combien de journees ont ete laissees
+telles quelles.
+
+Deux verifications au passage : la colonne **Production totale** est un
+cumul qui ne repart jamais a zero, elle n'est **jamais** lue (c'est
+Production PV qui donne le jour) ; et l'**autoconsommation** annoncee par
+le rapport doit valoir production moins exportation, sans quoi
+l'application previent que les colonnes lues ne sont peut-etre pas les
+bonnes.
+
 ### Une autre marque d'onduleur, un autre fournisseur
 
 Les deux lecteurs ne connaissent pas de marque : ils acceptent **tout export
