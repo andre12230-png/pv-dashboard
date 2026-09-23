@@ -32,7 +32,9 @@ financier et l'amortissement des {invest} investis.</p>
 sens :</p>
 <p><b>1. Décrire votre installation.</b> Onglet <b>Paramètres</b>, bouton
 <b>Modifier mes réglages</b> : puissance, coût, dates de votre contrat, prix
-de rachat, fournisseur et prix de votre électricité. L'application se
+de rachat, fournisseur et prix de votre électricité, et la part de votre
+autoconsommation qui tomberait en heures creuses (0 % si elles sont toutes la
+nuit). L'application se
 recharge seule à l'enregistrement. L'onglet <b>Paramètres</b> montre ensuite
 à tout moment ce qui est pris en compte : c'est là qu'on vérifie qu'on ne
 s'est pas trompé.<br>

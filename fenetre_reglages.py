@@ -229,6 +229,13 @@ class FenetreReglages(QDialog):
         self.plages = QLineEdit(" ; ".join(valeurs["plages_hc"]))
         self.plages.setPlaceholderText("22:00-06:00 ; 14:00-16:00")
         self.prix_depuis = _date(valeurs["prix_depuis"])
+        # Pourcentage a l'ecran, fraction dans config.yaml (0.20 = 20 %).
+        # On retient ce que la case affichait a l'ouverture : tant qu'elle
+        # n'a pas bouge, c'est la valeur lue, exacte, qui repart (voir
+        # _part_hc).
+        self._part_hc_lue = valeurs["part_hc_autoconso"]
+        self.part_hc = _nombre(self._part_hc_lue * 100, 0, " %", 100)
+        self._part_hc_affichee = self.part_hc.value()
         v.addWidget(self._groupe("Mon fournisseur d'électricité", [
             ("Fournisseur", self.nom),
             ("Offre", self.offre),
@@ -237,6 +244,7 @@ class FenetreReglages(QDialog):
             ("Prix heures creuses", self.prix_hc),
             ("Heures creuses", self.plages),
             ("Ces prix s'appliquent depuis le", self.prix_depuis),
+            ("Autoconsommation en heures creuses", self.part_hc),
         ], "Prix TTC, pour la puissance de votre compteur. En option Base "
            "(prix unique), mettez le même prix en heures pleines et en heures "
            "creuses. Vous êtes chez EDF ? Écrivez EDF : l'onglet de "
@@ -246,7 +254,14 @@ class FenetreReglages(QDialog):
            "séparez-les par un point-virgule : 23:00-05:00 ; 14:00-16:00."
            "<br><br>"
            "<b>Vos prix ont changé ?</b> Indiquez la date du changement : "
-           "les anciens prix restent appliqués aux mois d'avant."))
+           "les anciens prix restent appliqués aux mois d'avant.<br><br>"
+           "<b>Autoconsommation en heures creuses</b> : la part du courant "
+           "de vos panneaux que vous auriez payée au prix des heures creuses, "
+           "s'il avait fallu l'acheter. Vos panneaux produisent le jour : si "
+           "toutes vos heures creuses sont la nuit, mettez 0 %. Avec une plage "
+           "l'après-midi, une partie de votre production tombe dedans — "
+           "20 % par exemple. Ce réglage sert à chiffrer ce que votre "
+           "autoconsommation vous fait économiser."))
 
         # --- Recalages sur factures -------------------------------------
         if enregistrer_recalages is not None:
@@ -413,7 +428,18 @@ class FenetreReglages(QDialog):
             "prix_hc": round(self.prix_hc.value(), 4),
             "prix_depuis": _en_date(self.prix_depuis),
             "plages_hc": plages,
+            "part_hc_autoconso": self._part_hc(),
         }
+
+    def _part_hc(self) -> float:
+        """La part saisie, en fraction.
+
+        Case non touchee : la valeur lue, exacte. Un 0,225 du fichier
+        s'affiche arrondi a 23 % ; enregistrer un autre reglage ne doit pas
+        le changer en 0,23 sans que l'utilisateur l'ait voulu."""
+        if self.part_hc.value() == self._part_hc_affichee:
+            return self._part_hc_lue
+        return round(self.part_hc.value() / 100, 4)
 
     def _on_enregistrer(self) -> None:
         try:

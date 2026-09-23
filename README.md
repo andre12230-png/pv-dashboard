@@ -65,7 +65,8 @@ Rien n'est demande avant le premier lancement : sans fichier de releves,
 l'application **le cree vide** et s'ouvre dessus. Trois etapes ensuite :
 
 1. **Decrire l'installation** dans la fenetre **Mes reglages** : puissance,
-   cout, dates du contrat, prix de rachat, fournisseur et ses prix. Elle
+   cout, dates du contrat, prix de rachat, fournisseur et ses prix, et la
+   part de l'autoconsommation qui tomberait en heures creuses. Elle
    s'ouvre depuis le message d'accueil, la carte « Pour commencer » du
    tableau de bord ou le bouton **Modifier mes reglages** de l'onglet
    **Parametres**. L'application se recharge seule a l'enregistrement.
@@ -607,9 +608,11 @@ code les fait bouger un jour, le test tombe. Faites de meme avec les votres.
 - **Conso totale** = Autoconso + Soutirage reseau
 - **Economie d'autoconso** = kWh autoconsommes × prix achat reseau du
   moment. Avant la bascule en heures pleines / creuses : prix Base de la
-  date. Apres : prix HP/HC pondere par `part_hc_autoconso` (config), la
+  date. Apres : prix HP/HC pondere par `part_hc_autoconso` (config, ou la
+  case « Autoconsommation en heures creuses » de **Mes reglages**, en %), la
   part d'autoconso qui tomberait en heures creuses — l'autoconso etant
-  diurne, elle est faible, sauf plage creuse l'apres-midi
+  diurne, elle est faible, sauf plage creuse l'apres-midi. Absente du
+  fichier, elle vaut 20 %
 - **Bilan net** (tableau de bord, pastille) = Vente OA + Economies − Facture
   reseau. La prime, versee une fois par an a l'anniversaire OA, est comptee
   a part dans la Synthese financiere et les Annees OA
