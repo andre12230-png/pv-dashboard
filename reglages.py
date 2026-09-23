@@ -72,6 +72,20 @@ def _contrat(cfg: dict) -> dict:
     return cfg["tarifs_reseau"][section] if section else {}
 
 
+# Valeur appliquee par les calculs quand le fichier ne dit rien (voir
+# app_desktop.build_dataset) : la fenetre doit montrer la meme.
+PART_HC_PAR_DEFAUT = 0.20
+
+
+def _part_hc(contrat: dict) -> float:
+    """Part des kWh autoconsommes qu'on aurait payes en heures creuses.
+
+    Un 0 ecrit dans le fichier est une vraie valeur (heures creuses toutes la
+    nuit) : on teste l'absence, pas la « faussete », d'ou le `is None`."""
+    valeur = contrat.get("part_hc_autoconso")
+    return PART_HC_PAR_DEFAUT if valeur is None else float(valeur)
+
+
 def lire_reglages(cfg: dict) -> dict:
     """Les reglages modifiables, tels qu'ils sont aujourd'hui.
 
@@ -102,6 +116,7 @@ def lire_reglages(cfg: dict) -> dict:
         "prix_hc": float(derniere.get("prix_hc") or 0),
         "prix_depuis": _date(derniere.get("debut") or aujourdhui),
         "plages_hc": [str(p) for p in (contrat.get("plages_hc") or [])],
+        "part_hc_autoconso": _part_hc(contrat),
     }
 
 
@@ -309,6 +324,8 @@ def reglages_attendus(cfg: dict, v: dict) -> dict:
             contrat[cle] = v[cle]
     if [str(p) for p in contrat.get("plages_hc") or []] != list(v["plages_hc"]):
         contrat["plages_hc"] = list(v["plages_hc"])
+    if _part_hc(contrat) != float(v["part_hc_autoconso"]):
+        contrat["part_hc_autoconso"] = float(v["part_hc_autoconso"])
     nouvelles = _periodes_apres(contrat.get("periodes") or [], v)
     if nouvelles is not None:
         contrat["periodes"] = nouvelles
@@ -390,6 +407,10 @@ def appliquer_reglages(texte: str, cfg: dict, v: dict) -> str:
         if k is None:
             raise ReglagesRefuses("Réglage introuvable : plages_hc.")
         _remplacer_liste(lignes, k, list(v["plages_hc"]))
+
+    if _part_hc(contrat) != float(v["part_hc_autoconso"]):
+        _poser_ou_ajouter(lignes, chemin_contrat, "part_hc_autoconso",
+                          _nombre(v["part_hc_autoconso"]))
 
     nouvelles = _periodes_apres(contrat.get("periodes") or [], v)
     if nouvelles is not None:
@@ -531,6 +552,10 @@ def controler(v: dict) -> None:
         raise ReglagesRefuses(
             "Heures creuses : écrivez chaque plage sous la forme "
             "22:00-06:00, et séparez-les par un point-virgule.") from exc
+    if not 0 <= float(v["part_hc_autoconso"]) <= 1:
+        raise ReglagesRefuses(
+            "La part de votre autoconsommation en heures creuses doit être "
+            "comprise entre 0 et 100 %.")
 
 
 # ----------------------------------------------------------------------

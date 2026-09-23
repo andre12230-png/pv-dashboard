@@ -459,7 +459,7 @@ VALEURS_FENETRE = {
     "prix_oa": 0.1003, "prime_par_kwc": 380.0, "prime_duree": 5,
     "nom": "Octopus", "offre": "Octopus Go", "abonnement": 20.16,
     "prix_hp": 0.2213, "prix_hc": 0.129, "prix_depuis": date(2026, 8, 1),
-    "plages_hc": ["22:00-06:00"],
+    "plages_hc": ["22:00-06:00"], "part_hc_autoconso": 0.20,
 }
 
 
@@ -640,3 +640,81 @@ def test_la_phrase_suit_le_mode_de_saisie(qapp):
     f.mode_prime.setCurrentIndex(1)
     assert f.total_prime.text().startswith("380 €/kWc")
 
+
+
+# -----------------------------------------------------------------------------
+# Part des heures creuses dans l'autoconsommation (promesse du 19/09/2026 a un
+# utilisateur : ce reglage ne se changeait qu'au Bloc-notes)
+# -----------------------------------------------------------------------------
+
+
+def _sans_part_hc(texte: str) -> str:
+    """Le meme fichier, sans la ligne part_hc_autoconso (vieux fichiers)."""
+    return "".join(ligne for ligne in texte.splitlines(keepends=True)
+                   if "part_hc_autoconso:" not in ligne)
+
+
+def test_part_hc_est_lue_telle_qu_ecrite():
+    assert rg.lire_reglages(yaml.safe_load(ANCIEN))["part_hc_autoconso"] == 0.20
+    # Le modele livre ecrit 0 : ce zero est une vraie valeur, pas un vide.
+    assert rg.lire_reglages(yaml.safe_load(MODELE))["part_hc_autoconso"] == 0.0
+
+
+def test_part_hc_absente_vaut_ce_que_l_application_utilise():
+    # Sans la ligne, les calculs prennent 20 % (app_desktop) : la fenetre
+    # doit montrer ce qui est reellement applique, pas une case vide.
+    cfg = yaml.safe_load(_sans_part_hc(ANCIEN))
+    assert rg.lire_reglages(cfg)["part_hc_autoconso"] == 0.20
+
+
+def test_changer_la_part_hc_ne_touche_que_sa_ligne():
+    nouveau, relu = _appliquer(ANCIEN, part_hc_autoconso=0.35)
+    assert relu["tarifs_reseau"]["octopus_hphc"]["part_hc_autoconso"] == 0.35
+    avant, apres = ANCIEN.splitlines(), nouveau.splitlines()
+    # strict : meme nombre de lignes, la valeur est remplacee, pas ajoutee.
+    differentes = [a for a, b in zip(avant, apres, strict=True) if a != b]
+    assert differentes == ["    part_hc_autoconso: 0.20"]
+    assert _commentaires(nouveau) == _commentaires(ANCIEN)
+
+
+def test_la_part_hc_du_modele_se_remplit():
+    _nouveau, relu = _appliquer(MODELE, part_hc_autoconso=0.2)
+    assert relu["tarifs_reseau"]["contrat_hphc"]["part_hc_autoconso"] == 0.2
+
+
+def test_part_hc_absente_et_inchangee_n_ecrit_rien():
+    texte = _sans_part_hc(ANCIEN)
+    cfg = yaml.safe_load(texte)
+    assert rg.appliquer_reglages(texte, cfg, rg.lire_reglages(cfg)) == texte
+
+
+def test_part_hc_absente_puis_changee_est_ajoutee_au_contrat():
+    _nouveau, relu = _appliquer(_sans_part_hc(ANCIEN), part_hc_autoconso=0.0)
+    assert relu["tarifs_reseau"]["octopus_hphc"]["part_hc_autoconso"] == 0.0
+
+
+@pytest.mark.parametrize("part", [-0.1, 1.5])
+def test_une_part_hc_hors_de_0_a_100_pour_cent_est_refusee(part):
+    v = {**rg.lire_reglages(yaml.safe_load(ANCIEN)), "part_hc_autoconso": part}
+    with pytest.raises(rg.ReglagesRefuses, match="heures creuses"):
+        rg.controler(v)
+
+
+def test_la_fenetre_montre_la_part_hc_en_pour_cent(qapp):
+    from fenetre_reglages import FenetreReglages
+    f = FenetreReglages(dict(VALEURS_FENETRE), lambda _v: None)
+    assert f.part_hc.value() == 20
+    assert f.part_hc.suffix() == " %"
+    f.part_hc.setValue(35)
+    assert f.valeurs()["part_hc_autoconso"] == 0.35
+
+
+def test_une_part_hc_fine_n_est_pas_arrondie_en_douce(qapp):
+    # 0,225 s'affiche arrondi a 23 %. Tant qu'on ne touche pas a la case,
+    # enregistrer d'autres reglages doit rendre 0,225, pas 0,23 : sinon le
+    # fichier changerait sans que l'utilisateur l'ait voulu.
+    from fenetre_reglages import FenetreReglages
+    f = FenetreReglages({**VALEURS_FENETRE, "part_hc_autoconso": 0.225},
+                        lambda _v: None)
+    f.prix_hp.setValue(0.25)
+    assert f.valeurs()["part_hc_autoconso"] == 0.225
