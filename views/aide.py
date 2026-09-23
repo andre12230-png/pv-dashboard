@@ -79,8 +79,11 @@ dernier.</p>
 <p><b>Synthèse financière</b> — ventes, primes, économies et facture réseau
 depuis le début, et le graphique du remboursement de l'installation : ce
 qu'elle vous a rapporté face à ce qu'elle a coûté, avec l'année où elle sera
-remboursée au rythme actuel. Le bilan net compte les ventes, les économies
-et les primes, moins le coût de l'installation ; la facture d'électricité
+remboursée au rythme actuel. La courbe fait une marche, marquée d'un point,
+à chaque versement de la prime à l'autoconsommation : EDF OA la paie d'un
+coup, à la date anniversaire du contrat. L'année du remboursement n'en dépend
+pas, la prime étant déduite une fois pour toutes du coût à rembourser. Le
+bilan net compte les ventes, les économies et les primes, moins le coût de l'installation ; la facture d'électricité
 n'y entre pas, puisque vous la paieriez même sans panneaux.</p>
 <p><b>Années OA</b> — récapitulatif par cycle de contrat (du {debut_oa} au
 {fin_oa} de l'année suivante).</p>

@@ -64,3 +64,51 @@ def test_la_facture_reseau_reste_affichee(qapp, donnees):
     textes = _textes_de_la_synthese(donnees)
     assert "Facture réseau" in textes
     assert fmt_eur(-donnees.df["cout_reseau_eur"].sum(), signed=True) in textes
+
+
+# --- La marche de la prime sur le graphique « Récupéré » -------------------
+# La prime a l'autoconsommation arrive d'un coup, a la facture anniversaire
+# EDF OA : la courbe fait une marche. Un utilisateur l'a prise pour une
+# anomalie (23/09/2026). La marche est juste - avant ce versement, l'argent
+# n'etait pas la - mais elle doit se lire sans explication : un point sur
+# chaque versement, et une seule etiquette (plusieurs se chevaucheraient
+# quand la prime est versee sur 5 ans).
+
+def _prime_sur_le_graphique(donnees) -> tuple[list[str], int]:
+    """(etiquettes de la prime, nombre de points de versement)."""
+    from gui_widgets import MplCanvas
+    from views.accounts import AccountsView
+    vue = AccountsView(donnees, LIGHT)
+    vue.refresh("all")
+    textes, points = [], 0
+    for canvas in vue.findChildren(MplCanvas):
+        for ax in canvas.fig.axes:
+            textes += [t.get_text() for t in ax.texts
+                       if "Prime autoconso" in t.get_text()]
+            points += sum(len(ligne.get_xdata()) for ligne in ax.lines
+                          if ligne.get_gid() == "versements_prime")
+    return textes, points
+
+
+def test_chaque_versement_de_prime_est_marque(qapp, donnees):
+    # Deux annees OA closes dans la fixture : deux versements de 360 EUR
+    # (300 EUR/kWc x 6 kWc / 5 ans), deux points, une seule etiquette.
+    etiquettes, points = _prime_sur_le_graphique(donnees)
+    assert points == 2
+    assert len(etiquettes) == 1
+    assert "2 versements de " + fmt_eur(360.0) in etiquettes[0]
+
+
+def test_prime_versee_en_une_fois(qapp, donnees):
+    # Contrat recent : toute la prime d'un coup, la premiere annee.
+    donnees.oa = calc.OAConfig(type="surplus", prix_kwh=0.1, prime_par_kwc=240.0,
+                               prime_duree=1, duree_contrat=20)
+    etiquettes, points = _prime_sur_le_graphique(donnees)
+    assert points == 1
+    assert etiquettes == ["Prime autoconso\n" + fmt_eur(1440.0, signed=True)]
+
+
+def test_pas_de_prime_avant_le_premier_versement(qapp, donnees):
+    # Moins d'un an de donnees : aucune prime encore versee, aucune marche.
+    donnees.df = donnees.df.loc[:"2023-03-31"]
+    assert _prime_sur_le_graphique(donnees) == ([], 0)

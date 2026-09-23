@@ -174,6 +174,26 @@ class AccountsView(BaseView):
         ax.fill_between(x, 0, recupere.values, color=CC["autoconso"], alpha=0.18)
         ax.plot(x, recupere.values, color=CC["autoconso"], lw=2.5,
                 label="Récupéré : ventes + économies + primes")
+        # Chaque versement de la prime fait une marche dans la courbe, qui
+        # passait pour une anomalie. La marche reste a sa vraie date (avant le
+        # versement, l'argent n'etait pas la) mais elle est signalee : un point
+        # sur chaque versement, et UNE etiquette sur le dernier - versee sur
+        # 5 ans, la prime ferait sinon cinq etiquettes qui se chevauchent.
+        mois_primes = [d.to_period("M").to_timestamp() for d in prime_dates]
+        mois_primes = [m for m in mois_primes if m in recupere.index]
+        if mois_primes:
+            y_primes = [recupere.loc[m] for m in mois_primes]
+            ax.plot(mois_primes, y_primes, ls="none", marker="o", ms=5,
+                    color=CC["autoconso"], gid="versements_prime")
+            n = len(mois_primes)
+            detail = (fmt_eur(prime_an, signed=True) if n == 1
+                      else f"{n} versements de {fmt_eur(prime_an)}")
+            ax.annotate(f"Prime autoconso\n{detail}",
+                        xy=(mois_primes[-1], y_primes[-1]), xytext=(0, 14),
+                        textcoords="offset points", ha="center", va="bottom",
+                        fontsize=8, color=self.theme["text_secondary"],
+                        arrowprops={"arrowstyle": "-", "lw": 0.8,
+                                    "color": self.theme["text_secondary"]})
         ax.axhline(invest, color=CC["soutirage"], lw=1.5, ls="--",
                    label=f"Coût de l'installation ({fmt_eur(invest)})")
         # Projection au rythme actuel : la meme echeance que la barre du
