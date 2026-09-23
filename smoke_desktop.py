@@ -63,6 +63,38 @@ def main():
         errors.append(("fleches", str(e)))
         print(f"  fleches ERREUR : {e}")
 
+    print("--- bouton « Ce mois-ci » et raccourcis ---")
+    # Depuis un mois passe, le bouton et Ctrl+Origine ramenent au mois de
+    # reference ; Ctrl+Gauche recule d'un mois. Grise une fois arrive.
+    try:
+        from views import mois_de_reference
+        cible = mois_de_reference(win.data.df)
+        win._switch_view("dashboard")
+        win._appliquer_periode("month-2025-06")
+        if not win.btn_ce_mois.isEnabled():
+            raise AssertionError("bouton grise sur un mois passe")
+        win.btn_ce_mois.click()
+        if win.current_period != cible or win.btn_ce_mois.isEnabled():
+            raise AssertionError(f"bouton -> {win.current_period}, attendu {cible}")
+        touches = {sc.key().toString(): sc for sc in win.raccourcis_periode}
+        win._appliquer_periode("month-2025-06")
+        touches["Ctrl+Left"].activated.emit()
+        if win.current_period != "month-2025-05":
+            raise AssertionError(f"Ctrl+Gauche -> {win.current_period}")
+        touches["Ctrl+Home"].activated.emit()
+        if win.current_period != cible:
+            raise AssertionError(f"Ctrl+Origine -> {win.current_period}")
+        # Onglet sans periode : les raccourcis ne font rien.
+        win._switch_view("saisie")
+        touches["Ctrl+Left"].activated.emit()
+        if win.current_period != cible:
+            raise AssertionError("raccourci actif sur un onglet sans periode")
+        win._switch_view("dashboard")
+        print(f"  Ce mois-ci et raccourcis OK (-> {cible})")
+    except Exception as e:
+        errors.append(("ce mois-ci", str(e)))
+        print(f"  Ce mois-ci ERREUR : {e}")
+
     print("--- les deux menus ---")
     try:
         win._appliquer_periode("month-2026-04")

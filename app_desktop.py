@@ -20,7 +20,7 @@ matplotlib.use("QtAgg")
 import pandas as pd
 import yaml
 from PySide6.QtCore import QDir, QLockFile, QSettings, Qt
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -68,6 +68,7 @@ from views import (
     bornes_annee_oa,
     fmt_kwc,
     fmt_kwh,
+    mois_de_reference,
     options_annees,
     options_mois,
     period_options,
@@ -133,7 +134,7 @@ LOG_PATH = BASE_DIR / "pv-dashboard.log"
 # config.yaml et ajoutee au titre de la fenetre. Ecrite en dur, elle
 # affichait "6 kWc" a tout le monde, quelle que soit l'installation suivie.
 APP_NAME = "Gestion Photovoltaique"
-APP_VERSION = "1.47.1"
+APP_VERSION = "1.48.0"
 
 
 TAILLE_MAX_LOG = 1_000_000  # 1 Mo
@@ -916,6 +917,32 @@ class MainWindow(QMainWindow):
         self.next_btn.clicked.connect(lambda: self._decaler_periode(+1))
         h.addWidget(self.next_btn)
 
+        # Retour au mois en cours en un clic, apres etre alle voir un mois
+        # passe (meme bouton que Pecule et Recharges VE, 23/09/2026). Grise
+        # quand on y est deja : il dit alors aussi qu'on regarde bien le mois
+        # en cours, pas de vieux chiffres. Avant l'import du mois, il mene au
+        # dernier mois qui a des releves (cf. mois_de_reference).
+        self.btn_ce_mois = QPushButton("Ce mois-ci")
+        self.btn_ce_mois.setObjectName("PeriodToday")
+        self.btn_ce_mois.setCursor(Qt.PointingHandCursor)
+        self.btn_ce_mois.clicked.connect(self._aller_au_mois_en_cours)
+        h.addWidget(self.btn_ce_mois)
+
+        # Raccourcis clavier, dans toute la fenetre : Ctrl+Gauche / Ctrl+Droite
+        # (mois precedent / suivant), Ctrl+Origine (mois en cours). Une zone de
+        # saisie garde ses propres Ctrl+Gauche / Ctrl+Droite (sauter un mot) :
+        # Qt lui laisse la priorite quand elle a le curseur. Sans effet sur
+        # les onglets qui n'utilisent pas la periode, comme le selecteur.
+        self.raccourcis_periode = []
+        for touches, action in (
+                ("Ctrl+Left", lambda: self._raccourci_periode(-1)),
+                ("Ctrl+Right", lambda: self._raccourci_periode(+1)),
+                ("Ctrl+Home", lambda: self._raccourci_periode(0))):
+            sc = QShortcut(QKeySequence(touches), self)
+            sc.setContext(Qt.WindowShortcut)
+            sc.activated.connect(action)
+            self.raccourcis_periode.append(sc)
+
         self._peupler_selecteur()
 
         # Plus de bouton Clair / Sombre : un seul theme, le clair (14/09/2026).
@@ -971,6 +998,11 @@ class MainWindow(QMainWindow):
                         "période d'affichage.")
         for w in (self.prev_btn, self.year_combo, self.month_combo, self.next_btn):
             w.setToolTip(inutile)
+        self.btn_ce_mois.setToolTip(
+            inutile or "Revenir au mois en cours (Ctrl+Origine)")
+        if not inutile:
+            self.prev_btn.setToolTip("Période précédente (Ctrl+←)")
+            self.next_btn.setToolTip("Période suivante (Ctrl+→)")
         self._maj_etat_selecteur()
 
         vue.refresh(self.current_period)
@@ -1037,6 +1069,9 @@ class MainWindow(QMainWindow):
             voisine = periode_voisine(self.data.df, self.data.start_oa,
                                       self.current_period, sens)
             bouton.setEnabled(actif and voisine is not None)
+        cible = mois_de_reference(self.data.df)
+        self.btn_ce_mois.setEnabled(
+            actif and cible is not None and self.current_period != cible)
 
     def _appliquer_periode(self, periode: str) -> None:
         """Change la periode affichee et remet toute la barre d'aplomb."""
@@ -1074,6 +1109,23 @@ class MainWindow(QMainWindow):
                                   self.current_period, sens)
         if voisine is not None:
             self._appliquer_periode(voisine)
+
+    def _aller_au_mois_en_cours(self) -> None:
+        """Bouton « Ce mois-ci » : le mois en cours, ou le dernier mois
+        releve tant que le mois en cours n'a rien."""
+        cible = mois_de_reference(self.data.df)
+        if cible is not None:
+            self._appliquer_periode(cible)
+
+    def _raccourci_periode(self, sens: int) -> None:
+        """Ctrl+Gauche (-1), Ctrl+Droite (+1), Ctrl+Origine (0). Sans effet
+        quand le selecteur est grise pour l'onglet affiche."""
+        if not getattr(self, "_selecteur_actif", True):
+            return
+        if sens == 0:
+            self._aller_au_mois_en_cours()
+        else:
+            self._decaler_periode(sens)
 
     def _update_status_bar(self) -> None:
         """Barre d'etat : volume, production cumulee, fichier et fraicheur.

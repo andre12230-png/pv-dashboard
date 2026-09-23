@@ -130,6 +130,10 @@ c'est une année OA. Elles se grisent quand il n'y a plus rien de ce côté.</p>
 grise sur <b>Toute la période</b> et sur une <b>année OA</b>, qui sont à
 cheval sur les mois ; les dates exactes d'une année OA se lisent en survolant
 son entrée dans le menu des années.</p>
+<p>Le bouton <b>Ce mois-ci</b> ramène au mois en cours en un clic (ou au
+dernier mois relevé, tant que le mois en cours n'a rien) ; il est grisé quand
+vous y êtes déjà. Au clavier : <b>Ctrl+←</b> période précédente,
+<b>Ctrl+→</b> période suivante, <b>Ctrl+Origine</b> mois en cours.</p>
 <p>L'application s'ouvre <b>toujours sur le mois en cours</b> : la période
 n'est pas mémorisée d'une fois sur l'autre, pour ne pas retrouver au
 lancement suivant les chiffres d'un mois passé consulté la veille.</p>

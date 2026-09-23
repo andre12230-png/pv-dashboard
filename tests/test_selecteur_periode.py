@@ -118,3 +118,29 @@ def test_fichier_vide_ne_casse_rien():
     assert valeurs(options_annees(vide, DEBUT_OA)) == [PERIOD_ALL]
     assert valeurs(options_mois(vide, 2026)) == [MOIS_TOUS]
     assert periode_voisine(vide, DEBUT_OA, "month-2026-09", -1) is None
+
+
+# ---------- Bouton « Ce mois-ci » (23/09/2026) ----------
+
+def test_ce_mois_ci_vise_le_mois_en_cours_quand_il_a_des_releves():
+    from views._helpers import mois_de_reference
+    auj = pd.Timestamp("2026-02-20")
+    jours = pd.to_datetime(["2025-12-10", "2026-01-10", "2026-02-03"])
+    df = pd.DataFrame({"annee_oa": [1, 1, 1]}, index=jours)
+    assert mois_de_reference(df, auj) == "month-2026-02"
+
+
+def test_ce_mois_ci_replie_sur_le_dernier_mois_releve():
+    # Le mois en cours n'a encore aucun releve (import mensuel pas fait) : il
+    # ne figure pas dans les menus. On mene au dernier mois qui en a.
+    from views._helpers import mois_de_reference
+    auj = pd.Timestamp("2026-03-02")
+    jours = pd.to_datetime(["2025-12-10", "2026-01-10", "2026-02-03"])
+    df = pd.DataFrame({"annee_oa": [1, 1, 1]}, index=jours)
+    assert mois_de_reference(df, auj) == "month-2026-02"
+
+
+def test_ce_mois_ci_sans_aucun_releve():
+    from views._helpers import mois_de_reference
+    vide = pd.DataFrame({"annee_oa": []}, index=pd.to_datetime([]))
+    assert mois_de_reference(vide, pd.Timestamp("2026-03-02")) is None

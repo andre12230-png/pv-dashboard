@@ -216,6 +216,22 @@ QPushButton#PeriodArrow:disabled {{
     background: {t["bg_app"]};
     border-color: {t["border"]};
 }}
+QPushButton#PeriodToday {{
+    background: {t["bg_panel_alt"]};
+    border: 1px solid {t["cadre_controle"]};
+    border-radius: 8px;
+    padding: 7px 12px;
+    color: {t["text_primary"]};
+}}
+QPushButton#PeriodToday:hover {{
+    border-color: {t["primary"]};
+    color: {t["primary"]};
+}}
+QPushButton#PeriodToday:disabled {{
+    color: {t["text_muted"]};
+    background: {t["bg_app"]};
+    border-color: {t["border"]};
+}}
 QComboBox#PeriodSelector {{
     background: {t["bg_panel"]};
     border: 1px solid {t["cadre_controle"]};

@@ -398,6 +398,23 @@ def _echelle_de_navigation(df: pd.DataFrame, start_oa, period: str) -> list[str]
     return []   # « toute la periode » n'a ni precedent ni suivant
 
 
+def mois_de_reference(df: pd.DataFrame, aujourdhui=None) -> str | None:
+    """Mois vise par le bouton « Ce mois-ci » (et Ctrl+Origine).
+
+    Le mois en cours s'il porte des releves ; sinon le dernier mois qui en
+    porte — avant l'import mensuel, le mois en cours n'est pas encore dans
+    les menus (options_mois ne propose que des mois avec releves). None s'il
+    n'y a aucun releve.
+    """
+    if df.empty:
+        return None
+    aujourdhui = aujourdhui if aujourdhui is not None else pd.Timestamp.now()
+    mois = sorted(df.index.to_period("M").unique().tolist())
+    courant = pd.Timestamp(aujourdhui).to_period("M")
+    cible = courant if courant in mois else mois[-1]
+    return f"month-{cible.strftime('%Y-%m')}"
+
+
 def periode_voisine(df: pd.DataFrame, start_oa, period: str, sens: int) -> str | None:
     """Periode d'un cran plus ancienne (sens=-1) ou plus recente (sens=+1).
 
