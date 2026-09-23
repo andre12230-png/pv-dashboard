@@ -14,6 +14,7 @@ from views._helpers import chiffres_sur_barres
 
 class StatsView(BaseView):
     utilise_periode = False  # comparaisons multi-annees : toujours tout l'historique
+    selecteur_annuel = True  # un mois n'a aucun sens ici : menu des mois masque
 
     def populate(self, period: str) -> None:
         df = self.data.df

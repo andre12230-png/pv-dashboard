@@ -95,6 +95,21 @@ def main():
         errors.append(("ce mois-ci", str(e)))
         print(f"  Ce mois-ci ERREUR : {e}")
 
+    print("--- page Statistiques : l'annee seulement ---")
+    try:
+        win._switch_view("stats")
+        if not win.month_combo.isHidden():
+            raise AssertionError("menu des mois visible sur Statistiques")
+        if win.btn_ce_mois.text() != "Cette année":
+            raise AssertionError(f"bouton : {win.btn_ce_mois.text()}")
+        win._switch_view("dashboard")
+        if win.month_combo.isHidden() or win.btn_ce_mois.text() != "Ce mois-ci":
+            raise AssertionError("selecteur complet non retabli")
+        print("  Statistiques sans menu des mois, retour au complet OK")
+    except Exception as e:
+        errors.append(("stats annuel", str(e)))
+        print(f"  Statistiques ERREUR : {e}")
+
     print("--- les deux menus ---")
     try:
         win._appliquer_periode("month-2026-04")

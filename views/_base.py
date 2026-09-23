@@ -14,6 +14,10 @@ class BaseView(QWidget):
     # False dans les vues qui ignorent le selecteur de periode global :
     # MainWindow grise alors le menu deroulant quand la vue est affichee.
     utilise_periode: bool = True
+    # True dans les vues ou seule l'annee a un sens : MainWindow y masque le
+    # menu des mois et le bouton devient « Cette annee » (Statistiques,
+    # 23/09/2026, comme la page du meme nom de Recharges VE).
+    selecteur_annuel: bool = False
 
     def __init__(self, data: AppData, theme: dict, parent=None):
         super().__init__(parent)

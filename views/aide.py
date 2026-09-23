@@ -134,6 +134,10 @@ son entrée dans le menu des années.</p>
 dernier mois relevé, tant que le mois en cours n'a rien) ; il est grisé quand
 vous y êtes déjà. Au clavier : <b>Ctrl+←</b> période précédente,
 <b>Ctrl+→</b> période suivante, <b>Ctrl+Origine</b> mois en cours.</p>
+<p>Sur <b>Statistiques</b>, le menu des mois disparaît et le bouton devient
+<b>Cette année</b> : la page compare toujours toutes les années, un mois n'y a
+pas de sens. Le sélecteur y reste grisé, comme sur les autres onglets qui ne
+dépendent pas de la période.</p>
 <p>L'application s'ouvre <b>toujours sur le mois en cours</b> : la période
 n'est pas mémorisée d'une fois sur l'autre, pour ne pas retrouver au
 lancement suivant les chiffres d'un mois passé consulté la veille.</p>

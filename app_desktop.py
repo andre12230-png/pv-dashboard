@@ -134,7 +134,7 @@ LOG_PATH = BASE_DIR / "pv-dashboard.log"
 # config.yaml et ajoutee au titre de la fenetre. Ecrite en dur, elle
 # affichait "6 kWc" a tout le monde, quelle que soit l'installation suivie.
 APP_NAME = "Gestion Photovoltaique"
-APP_VERSION = "1.48.0"
+APP_VERSION = "1.48.1"
 
 
 TAILLE_MAX_LOG = 1_000_000  # 1 Mo
@@ -1000,6 +1000,11 @@ class MainWindow(QMainWindow):
             w.setToolTip(inutile)
         self.btn_ce_mois.setToolTip(
             inutile or "Revenir au mois en cours (Ctrl+Origine)")
+        # Pages ou seule l'annee a un sens (Statistiques) : pas de menu des
+        # mois, et le bouton parle d'annee.
+        self.month_combo.setVisible(not vue.selecteur_annuel)
+        self.btn_ce_mois.setText(
+            "Cette année" if vue.selecteur_annuel else "Ce mois-ci")
         if not inutile:
             self.prev_btn.setToolTip("Période précédente (Ctrl+←)")
             self.next_btn.setToolTip("Période suivante (Ctrl+→)")

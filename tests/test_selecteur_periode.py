@@ -144,3 +144,15 @@ def test_ce_mois_ci_sans_aucun_releve():
     from views._helpers import mois_de_reference
     vide = pd.DataFrame({"annee_oa": []}, index=pd.to_datetime([]))
     assert mois_de_reference(vide, pd.Timestamp("2026-03-02")) is None
+
+
+# ---------- Page Statistiques : l'annee seulement (23/09/2026) ----------
+
+def test_seule_la_page_statistiques_masque_le_menu_des_mois():
+    # Elle compare toujours toutes les annees : un mois n'y a aucun sens.
+    # Les autres onglets gardent le selecteur complet.
+    import views
+    annuelles = {nom for nom in dir(views)
+                 if nom.endswith("View") and nom != "BaseView"
+                 and getattr(getattr(views, nom), "selecteur_annuel", False)}
+    assert annuelles == {"StatsView"}
