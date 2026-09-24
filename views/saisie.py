@@ -3,10 +3,11 @@ from __future__ import annotations
 
 import os
 import sys
+from datetime import datetime
 
 import pandas as pd
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
@@ -14,6 +15,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QMessageBox,
     QPushButton,
+    QStyledItemDelegate,
     QTableWidget,
     QTableWidgetItem,
 )
@@ -23,6 +25,26 @@ from app_data import AppData
 from gui_widgets import SectionTitle
 from views._base import BaseView
 from views._helpers import phrase_import
+
+# Abreviations des jours, lundi en premier (comme datetime.weekday()).
+JOURS_COURTS = ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."]
+
+
+class _DelegueDate(QStyledItemDelegate):
+    """Affiche le jour de la semaine devant la date : « mer. 23/09/2026 ».
+
+    Seul l'AFFICHAGE change : le texte de la case reste « 23/09/2026 »,
+    c'est lui qu'on retrouve en modifiant la case et lui qu'on enregistre.
+    Une date illisible (en cours de frappe) s'affiche telle quelle.
+    """
+
+    def displayText(self, value, locale):
+        texte = str(value or "").strip()
+        try:
+            jour = datetime.strptime(texte, "%d/%m/%Y")
+        except ValueError:
+            return texte
+        return f"{JOURS_COURTS[jour.weekday()]} {texte}"
 
 
 class SaisieView(BaseView):
@@ -150,14 +172,28 @@ class SaisieView(BaseView):
         self.table.setAlternatingRowColors(True)
         self.table.verticalHeader().setVisible(False)
         self.table.setSelectionBehavior(QTableWidget.SelectItems)
-        self.table.setMinimumHeight(520)
+        # Le tableau prend toute la hauteur libre (facteur 1 plus bas) ;
+        # ce minimum ne sert que sur un petit ecran.
+        self.table.setMinimumHeight(320)
+        # Lignes un peu plus hautes et un peu d'air dans les cases : les
+        # chiffres collaient au trait de separation.
+        self.table.verticalHeader().setDefaultSectionSize(32)
+        self.table.setStyleSheet(
+            "QTableWidget::item { padding-left: 10px; padding-right: 14px;"
+            " margin: 0; }")
+        self.table.setItemDelegateForColumn(0, _DelegueDate(self.table))
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.table.horizontalHeaderItem(0).setTextAlignment(
+            Qt.AlignLeft | Qt.AlignVCenter)
         for i in range(1, len(self.COLS)):
             header.setSectionResizeMode(i, QHeaderView.Stretch)
+            # Titre cale a droite, au-dessus de ses chiffres.
+            self.table.horizontalHeaderItem(i).setTextAlignment(
+                Qt.AlignRight | Qt.AlignVCenter)
 
         self._remplir_tableau()
-        self.layout_inner.addWidget(self.table)
+        self.layout_inner.addWidget(self.table, 1)
 
         texte_info = (
             f"{len(self.toutes_lignes)} relevé(s) au total dans le fichier. "
@@ -186,7 +222,6 @@ class SaisieView(BaseView):
             f"color: {couleur}; font-size: 11px; padding-top: 4px;"
         )
         self.layout_inner.addWidget(info)
-        self.layout_inner.addStretch(1)
 
     def _prochaine_date(self) -> str:
         """Date du jour suivant le dernier releve, au format DD/MM/YYYY."""
@@ -214,12 +249,32 @@ class SaisieView(BaseView):
         self.table.setRowCount(len(lignes))
         for r, row_data in enumerate(lignes):
             for c, col in enumerate(self.COLS):
-                item = QTableWidgetItem(row_data.get(col, ""))
-                if r == 0:
-                    # Met en evidence la nouvelle ligne
-                    item.setBackground(self._couleur_nouvelle_ligne())
-                self.table.setItem(r, c, item)
+                self.table.setItem(r, c, self._case(
+                    row_data.get(col, ""), c, nouvelle=(r == 0)))
         self.table.setCurrentCell(0, 1)  # focus sur Prod_Jour de la nouvelle ligne
+
+    def _case(self, texte: str, colonne: int,
+              nouvelle: bool = False) -> QTableWidgetItem:
+        """Fabrique une case du tableau, mise en forme pour la lecture.
+
+        Les nombres sont cales a droite, comme dans un tableur : les
+        valeurs d'un jour a l'autre se comparent d'un coup d'oeil. La ligne
+        neuve (a saisir) garde son fond jaune et sa date passe en gras.
+        """
+        item = QTableWidgetItem(texte)
+        if colonne == 0:
+            item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        else:
+            item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        if nouvelle:
+            item.setBackground(self._couleur_nouvelle_ligne())
+            item.setToolTip("Nouvelle journée : saisissez ses relevés "
+                            "puis cliquez sur Enregistrer.")
+            if colonne == 0:
+                police = QFont(item.font())
+                police.setBold(True)
+                item.setFont(police)
+        return item
 
     def _couleur_nouvelle_ligne(self):
         # Jaune solaire tres pale, contraste OK clair et sombre
@@ -231,9 +286,7 @@ class SaisieView(BaseView):
         prochaine = self._prochaine_date_apres_table()
         valeurs = [prochaine, "", "", "", "", ""]
         for c, val in enumerate(valeurs):
-            item = QTableWidgetItem(val)
-            item.setBackground(self._couleur_nouvelle_ligne())
-            self.table.setItem(0, c, item)
+            self.table.setItem(0, c, self._case(val, c, nouvelle=True))
         self.table.setCurrentCell(0, 1)
 
     def _prochaine_date_apres_table(self) -> str:

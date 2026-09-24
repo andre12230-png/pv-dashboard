@@ -625,3 +625,26 @@ def test_rapport_entierement_couvert_par_le_reseau_le_dit(
     message = dialogue.messages[0]
     assert "rien à compléter" in message
     assert "2 journée(s) sont déjà relevées" in message
+
+
+# ---------------------------------------------------------------------------
+# Mise en forme : le jour de la semaine s'affiche devant la date, mais le
+# texte de la case -- celui qu'on enregistre -- reste la date seule.
+# ---------------------------------------------------------------------------
+
+def test_date_affichee_avec_le_jour_sans_changer_la_case(vue):
+    from PySide6.QtCore import QLocale
+    delegue = vue.table.itemDelegateForColumn(0)
+    # 01/05/2026 est un vendredi.
+    assert delegue.displayText("01/05/2026", QLocale()) == "ven. 01/05/2026"
+    # Une date en cours de frappe s'affiche telle quelle.
+    assert delegue.displayText("01/05", QLocale()) == "01/05"
+    # La case, elle, garde la date nue : c'est elle qui part dans le CSV.
+    assert vue.table.item(1, 0).text() == "03/05/2026"
+
+
+def test_jour_de_la_semaine_n_entre_pas_dans_le_fichier(vue):
+    # L'affichage « ven. 01/05/2026 » ne doit jamais partir dans le CSV.
+    _cellule(vue, 1, "Prod_Jour", "21,5")
+    vue._enregistrer()
+    assert _dates_du_fichier(vue) == ["01/05/2026", "02/05/2026", "03/05/2026"]
