@@ -20,8 +20,8 @@ Pas besoin d'etre informaticien, ni d'installer Python :
    rubrique *Assets*).
 2. Lancez-le. Aucun mot de passe administrateur n'est demande.
 3. Windows peut afficher « Windows a protege votre ordinateur » : le
-   programme n'est pas signe (un certificat coute plusieurs centaines
-   d'euros par an). Cliquez sur **Informations complementaires**, puis
+   programme est encore peu telecharge et n'est pas signe, ce qui ne veut
+   pas dire qu'il est dangereux. Cliquez sur **Informations complementaires**, puis
    **Executer quand meme**.
 4. Lancez **Gestion Photovoltaique** depuis le menu Demarrer. Le tableau de
    bord indique les premiers pas : decrire votre installation, puis importer
