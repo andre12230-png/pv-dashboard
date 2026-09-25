@@ -21,13 +21,13 @@ from views._base import BaseView
 from views._helpers import fmt_date_fr, fmt_kwc
 
 NOTICE_HTML = """
-<h3 style="color:#b45309">À quoi sert l'application</h3>
+<h3 style="color:#1F3A6B">À quoi sert l'application</h3>
 <p>Cette application suit votre installation photovoltaïque de {puissance},
 mise en service le {mise_en_service}. Elle réunit la production solaire,
 l'électricité vendue au réseau et celle achetée, puis calcule le bilan
 financier et l'amortissement des {invest} investis.</p>
 
-<h3 style="color:#b45309">La première fois</h3>
+<h3 style="color:#1F3A6B">La première fois</h3>
 <p>Trois choses à faire, dans cet ordre, avant que les chiffres aient un
 sens :</p>
 <p><b>1. Décrire votre installation.</b> Onglet <b>Paramètres</b>, bouton
@@ -64,7 +64,7 @@ ordinateur : ce sont vos factures. <b>N'y recopiez jamais celles de quelqu'un
 d'autre</b>, vos relevés seraient réécrits pour retomber sur des totaux qui ne
 sont pas les vôtres.</p>
 
-<h3 style="color:#b45309">Les vues (menu de gauche)</h3>
+<h3 style="color:#1F3A6B">Les vues (menu de gauche)</h3>
 <p><b>Tableau de bord</b> — vue d'ensemble de la période choisie : la part de
 soleil dans votre consommation (jauge), la production comparée à l'an passé,
 où va votre soleil et d'où vient votre électricité, le bilan financier, où
@@ -83,8 +83,9 @@ remboursée au rythme actuel. La courbe fait une marche, marquée d'un point,
 à chaque versement de la prime à l'autoconsommation : EDF OA la paie d'un
 coup, à la date anniversaire du contrat. L'année du remboursement n'en dépend
 pas, la prime étant déduite une fois pour toutes du coût à rembourser. Le
-bilan net compte les ventes, les économies et les primes, moins le coût de l'installation ; la facture d'électricité
-n'y entre pas, puisque vous la paieriez même sans panneaux.</p>
+bilan net compte les ventes, les économies et les primes, moins le coût de
+l'installation ; la facture d'électricité n'y entre pas, puisque vous la
+paieriez même sans panneaux.</p>
 <p><b>Années OA</b> — récapitulatif par cycle de contrat (du {debut_oa} au
 {fin_oa} de l'année suivante).</p>
 <p><b>TVA autoconsommation</b> — pour qui est assujetti à la TVA : la base à
@@ -110,7 +111,7 @@ bouton <b>Modifier mes réglages</b> pour la changer.</p>
 court questionnaire dans votre navigateur. L'application, elle, n'envoie
 rien.</p>
 
-<h3 style="color:#b45309">Vos données sont-elles à jour ?</h3>
+<h3 style="color:#1F3A6B">Vos données sont-elles à jour ?</h3>
 <p>Un bandeau en haut du <b>Tableau de bord</b> indique l'âge de chaque
 grandeur : <i>Production il y a 2 jours · Injection il y a 2 jours…</i>. Elles
 n'avancent pas ensemble — la production vient de l'onduleur (disponible le
@@ -121,7 +122,7 @@ plus tard encore.</p>
 qu'un import a probablement été oublié. La barre d'état, en bas, rappelle la
 date du dernier relevé quel que soit l'onglet affiché.</p>
 
-<h3 style="color:#b45309">Choisir une période</h3>
+<h3 style="color:#1F3A6B">Choisir une période</h3>
 <p>La barre en haut à droite porte <b>‹ année mois ›</b> et filtre toutes les
 vues. Les deux flèches reculent ou avancent d'un cran : d'un mois quand un
 mois est affiché, d'une année quand c'est une année, d'une année OA quand
@@ -142,7 +143,7 @@ dépendent pas de la période.</p>
 n'est pas mémorisée d'une fois sur l'autre, pour ne pas retrouver au
 lancement suivant les chiffres d'un mois passé consulté la veille.</p>
 
-<h3 style="color:#b45309">Saisir les relevés du jour</h3>
+<h3 style="color:#1F3A6B">Saisir les relevés du jour</h3>
 <p>1. Ouvrez <b>Saisie quotidienne</b>.<br>
 2. La première ligne, surlignée, est prête avec la date attendue.<br>
 3. Saisissez les valeurs (touche Tab pour changer de case).<br>
@@ -158,7 +159,7 @@ négatives sont refusées elles aussi.</p>
 l'application demande confirmation, puis retire la ligne du fichier. L'ancienne
 version reste dans le <code>.bak</code>.</p>
 
-<h3 style="color:#b45309">Importer conso et injection</h3>
+<h3 style="color:#1F3A6B">Importer conso et injection</h3>
 <p>Le bouton <b>Importer conso / injection…</b> (onglet Saisie quotidienne)
 charge d'un coup ce que votre compteur a échangé avec le réseau. Deux fichiers
 sont utiles, et se complètent :</p>
@@ -229,7 +230,7 @@ ranger vos chiffres dans la mauvaise colonne. Elle vérifie aussi que
 l'injection ne dépasse pas la production du jour — impossible, puisqu'on
 n'injecte que le surplus — et vous prévient avant d'appliquer.</p>
 
-<h3 style="color:#b45309">Importer la production</h3>
+<h3 style="color:#1F3A6B">Importer la production</h3>
 <p>Le bouton <b>Importer la production…</b> remplit la colonne Production sans
 recopie à la main, à partir de l'export de votre onduleur. Avec un
 <b>Enphase</b>, sur le site Enlighten : <b>Menu ▸ Système ▸ Rapports</b>,
@@ -254,7 +255,7 @@ quelque chose, c'est lui qui fait foi et rien n'est remplacé — ces valeurs
 servent de base à la TVA sur l'autoconsommation. Le récapitulatif vous dit
 combien de journées ont été laissées telles quelles.</p>
 
-<h3 style="color:#b45309">D'où viennent les données</h3>
+<h3 style="color:#1F3A6B">D'où viennent les données</h3>
 <p>Ci-dessous les sources de l'installation suivie ici ; les vôtres peuvent
 être différentes, les imports s'en accommodent.</p>
 <p><b>Production</b> : l'application ou le site de votre onduleur.<br>
@@ -267,7 +268,7 @@ l'application estime la répartition et le dit.<br>
 <b>Recharges du véhicule</b> : l'application <i>Recharges VE</i>, dont le
 fichier est simplement lu (jamais modifié).</p>
 
-<h3 style="color:#b45309">La part de la voiture</h3>
+<h3 style="color:#1F3A6B">La part de la voiture</h3>
 <p>Le soutirage réseau mélange deux choses très différentes : ce que consomme
 la maison et ce que prend la voiture. L'application les sépare — sous la
 barre <b>D'où vient votre électricité</b> du Tableau de bord, colonne
@@ -277,7 +278,7 @@ barre <b>D'où vient votre électricité</b> du Tableau de bord, colonne
 bornes extérieures ne passent pas par votre compteur. Une charge de nuit,
 à cheval sur deux journées, est répartie entre les deux au prorata du temps.</p>
 
-<h3 style="color:#b45309">Si vous êtes assujetti à la TVA</h3>
+<h3 style="color:#1F3A6B">Si vous êtes assujetti à la TVA</h3>
 <p>Cette partie ne concerne que les producteurs qui déclarent la TVA
 (entreprise individuelle au régime réel simplifié). Si ce n'est pas votre
 cas, l'onglet <b>TVA autoconsommation</b> ne vous servira à rien : laissez la
@@ -316,7 +317,7 @@ terminée.</p>
 <b>bruts</b>, sans le recalage sur factures appliqué ailleurs : une
 déclaration doit reposer sur ce qui a réellement été relevé.</p>
 
-<h3 style="color:#b45309">Vos sauvegardes</h3>
+<h3 style="color:#1F3A6B">Vos sauvegardes</h3>
 <p>À chaque enregistrement, l'application met de côté la version précédente
 de vos relevés, à trois endroits :</p>
 <ul>
@@ -335,7 +336,7 @@ et vérifie chaque copie. Un fichier <code>LISEZMOI.txt</code>, déposé à côt
 explique comment la remettre en service. Faites-le de temps en temps, par
 exemple après chaque import mensuel.</p>
 
-<h3 style="color:#b45309">Bon à savoir</h3>
+<h3 style="color:#1F3A6B">Bon à savoir</h3>
 <p>Toutes les données restent sur votre ordinateur. Après chaque enregistrement, les
 calculs et graphiques sont recalculés automatiquement.</p>
 <p>L'application ne se connecte jamais à Internet. Pour savoir si une version

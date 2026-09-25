@@ -120,7 +120,7 @@ class AvisDialog(QDialog):
 
         # Confirmation affichee une fois le questionnaire ouvert.
         self.confirmation = QLabel("")
-        self.confirmation.setStyleSheet("color:#2E7D32")
+        self.confirmation.setStyleSheet("color:#18733A")
         self.confirmation.setWordWrap(True)
         self.confirmation.hide()
         v.addWidget(self.confirmation)

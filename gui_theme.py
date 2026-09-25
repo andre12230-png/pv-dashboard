@@ -1,67 +1,79 @@
 """
-Palettes Light / Dark + generation du QSS Qt + style matplotlib associe.
+Palette claire (celle de Pecule) + generation du QSS Qt + style matplotlib
+associe + style Fusion et palette Qt qui resistent au mode sombre de Windows.
 """
 
 from __future__ import annotations
 
+from PySide6.QtGui import QColor, QPalette
+
+# Les couleurs de Pecule (decision de l'auteur du 25/09/2026 : ses trois
+# applications suivent Pecule — comptesbudget/app.py, ui/main_window.py,
+# ui/views/bilan.py). Fond gris clair sous des cartes blanches a liseré
+# gris-bleu, texte noir, bleu nuit et bleu de selection pour les accents,
+# bandeau creme. Trois exceptions assumees, pour rester lisible : voir
+# « fonce » ci-dessous (tests/test_contraste.py).
 LIGHT = {
     "name":           "light",
-    "bg_app":         "#f8fafc",
-    "bg_panel":       "#ffffff",
-    "bg_panel_alt":   "#f9fafb",
-    "bg_sidebar":     "#0f172a",
-    "bg_sidebar_2":   "#1e293b",
-    "border":         "#e2e8f0",
-    "border_strong":  "#cbd5e1",
-    # Cadres (15/09/2026) : "border" ci-dessus reste pour les grilles des
-    # graphiques et le fond des jauges, qui doivent rester discrets.
-    # Contour des cartes et des tableaux : un cran plus marque.
-    "cadre":          "#cbd5e1",
+    "bg_app":         "#ECEEF2",   # fond des pages (Bilan de Pecule)
+    "bg_panel":       "#FFFFFF",   # cartes, tableaux, champs
+    "bg_panel_alt":   "#F5F5F0",   # une ligne sur deux, boutons secondaires
+    # Grilles des graphiques et fond des jauges : doivent rester discrets.
+    "border":         "#E2E8F0",
+    "border_strong":  "#C8D0DC",
+    # Contour des cartes et des tableaux : le liseré des cartes de Pecule.
+    "cadre":          "#C8D0DC",
     # Contour de ce qu'on clique (boutons, menus de periode) : 3 pour 1
-    # au moins sur son fond, le minimum conseille pour un element actif.
-    "cadre_controle": "#8492a6",
-    "text_primary":   "#0f172a",
-    "text_secondary": "#475569",
-    # Gris des petits textes : fonce le 15/09/2026 (#94a3b8 etait trop pale,
-    # contraste 2,6:1 sur blanc) ; #64748b atteint 4,8:1, le minimum conseille.
-    "text_muted":     "#64748b",
-    "text_on_dark":   "#cbd5e1",
-    # Vert et rouge des montants : un cran plus fonces le 15/09/2026 pour se
-    # lire dans les tableaux (contraste d'au moins 4,5:1 sur blanc).
-    "credit":         "#15803d",
-    "credit_bg":      "#dcfce7",
-    "debit":          "#b91c1c",
-    "debit_bg":       "#fee2e2",
-    "primary":        "#4f46e5",
-    "primary_bg":     "#eef2ff",
-    "warm":           "#f59e0b",
-    "warm_bg":        "#fef3c7",
-    # Orange "encre" : pour ECRIRE en orange (bandeaux, pastilles). L'orange
-    # vif ci-dessus reste pour les bordures, il est illisible en texte.
-    "warm_ink":       "#92400e",
-    "info":           "#0ea5e9",
-    "info_bg":        "#dbeafe",
-    # Bleu "encre" : meme principe que warm_ink, pour le texte.
-    "info_ink":       "#0369a1",
-    "table_row_alt":  "#fafbfc",
+    # au moins sur son fond, le minimum conseille pour un element actif
+    # (regle du 15/09/2026, gardee : Pecule n'a pas d'equivalent). Fonce d'un
+    # cran le 25/09/2026 : le fond gris de Pecule est plus soutenu que l'ancien.
+    "cadre_controle": "#6F7885",
+    "text_primary":   "#000000",   # le texte courant de Pecule
+    "text_secondary": "#555555",   # lignes secondaires des tuiles de Pecule
+    "text_muted":     "#666666",   # intitules des tuiles de Pecule
+    # Vert et rouge des montants (ceux de Pecule). Le vert est fonce d'un cran :
+    # le #229954 de Pecule ne fait que 3,5 pour 1 sur blanc.
+    "credit":         "#18733A",
+    "credit_bg":      "#E6F4EA",
+    "debit":          "#C0392B",
+    "debit_bg":       "#FDEDEB",
+    # Accent : le bleu de selection de Pecule.
+    "primary":        "#316AC5",
+    "primary_bg":     "#E8EEF7",   # haut du degrade des en-tetes de Pecule
+    # Orange des alertes de Pecule : vif pour les bordures, « encre » pour
+    # ECRIRE en orange (bandeaux, pastilles).
+    "warm":           "#E67E22",
+    "warm_bg":        "#FEF5E7",
+    "warm_ink":       "#7E5109",
+    # Bleu d'information : celui des en-tetes de carte de Pecule.
+    "info":           "#316AC5",
+    "info_bg":        "#E8EEF7",
+    "info_ink":       "#1F3A6B",
+    "table_row_alt":  "#F5F5F0",
     "shadow":         "rgba(15, 23, 42, 0.06)",
-    # Bandeau de gauche : les couleurs de celui de Pecule.
-    "sb_bg":               "#efece5",
-    "sb_btn":              "#fcfcfc",
-    # Contours du menu fonces le 15/09/2026 (3 pour 1 sur le fond beige).
-    "sb_btn_border":       "#878787",
+    # Bandeau de gauche : celui de Pecule.
+    "sb_bg":               "#ECE9D8",
+    "sb_btn":              "#FCFCFC",
+    # Contours du menu : ceux de Pecule (#DCDCDC) ne font que 1,3 pour 1.
+    # Fonces le 15/09/2026 pour atteindre 3 pour 1, et garde ainsi (un cran
+    # de plus le 25/09/2026 : le creme de Pecule est plus soutenu).
+    "sb_btn_border":       "#808080",
     "sb_btn_text":         "#222222",
-    "sb_btn_hover":        "#eaf2fb",
-    "sb_btn_hover_border": "#2f74b5",
-    "sb_btn_pressed":      "#d8e7f7",
-    "sb_actif":            "#d8e7f7",
-    "sb_actif_border":     "#2f74b5",
-    "sb_actif_text":       "#0f3b6e",
-    "sb_titre":            "#5c5c5c",
-    "sb_titre_filet":      "#a9a9a9",
-    "sb_brand":            "#b45309",
-    "sb_sub":              "#5c5c5c",
-    "sb_version":          "#5c5c5c",
+    "sb_btn_hover":        "#EAF2FB",
+    # Survol et page affichee : le bleu de selection de Pecule, plus marque
+    # que son bleu pale #9CC0E8 (1,6 pour 1 seulement).
+    "sb_btn_hover_border": "#316AC5",
+    "sb_btn_pressed":      "#D8E7F7",
+    "sb_actif":            "#D8E7F7",
+    "sb_actif_border":     "#316AC5",
+    "sb_actif_text":       "#1F3A6B",
+    # Titres de section : #6E6E6E dans Pecule, qui ne fait que 4,2 pour 1
+    # sur le creme — fonce d'un cran.
+    "sb_titre":            "#5A5A5A",
+    "sb_titre_filet":      "#A9A9A9",
+    "sb_brand":            "#1F3A6B",   # le bleu nuit de Pecule
+    "sb_sub":              "#5A5A5A",
+    "sb_version":          "#5A5A5A",
 }
 
 
@@ -529,7 +541,7 @@ CHART_COLORS = {
     # Orange : ce qu'on achete au reseau (soutirage) et ce que ca coute.
     "soutirage":     "#d95926",
     # Indigo : les totaux et les cumuls, qui ne sont pas un flux d'energie.
-    "primary":       "#4f46e5",
+    "primary":       "#1F3A6B",
 }
 
 # Couleurs de signe pour les montants et les variations (+ favorable /
@@ -538,3 +550,37 @@ CHART_COLORS = {
 # de corriger dans les graphiques.
 COULEUR_FAVORABLE = CHART_COLORS["autoconso"]
 COULEUR_DEFAVORABLE = CHART_COLORS["soutirage"]
+
+
+def palette_claire() -> QPalette:
+    """La palette de Pecule, construite de zero — fonds ET textes
+    (comptesbudget/app.py). Reprise le 25/09/2026.
+
+    La feuille de style impose deja fond et texte a chaque widget ; la
+    palette couvre ce qu'elle ne touche pas (boites de message, menus
+    deroulants, fenetres de choix de fichier). Rien n'est pris a la palette
+    du systeme : un Windows regle en mode sombre ne change plus rien (defaut
+    vu dans Pecule le 16/09/2026 : texte blanc sur fond clair)."""
+    pal = QPalette()
+    for role, couleur in (
+            (QPalette.Window, "#ECE9D8"), (QPalette.WindowText, "#000000"),
+            (QPalette.Base, "#FFFFFF"), (QPalette.Text, "#000000"),
+            (QPalette.AlternateBase, "#F5F5F0"),
+            (QPalette.Button, "#ECE9D8"), (QPalette.ButtonText, "#000000"),
+            (QPalette.ToolTipBase, "#FFFFDC"), (QPalette.ToolTipText, "#000000"),
+            (QPalette.Highlight, "#316AC5"), (QPalette.HighlightedText, "#FFFFFF"),
+            (QPalette.PlaceholderText, "#6B6B6B"), (QPalette.BrightText, "#FFFFFF"),
+            (QPalette.Link, "#0B5AA8"), (QPalette.LinkVisited, "#6A3FA0")):
+        pal.setColor(role, QColor(couleur))
+    # Ce qui est desactive s'efface, sans disparaitre pour autant.
+    for role in (QPalette.WindowText, QPalette.Text, QPalette.ButtonText):
+        pal.setColor(QPalette.Disabled, role, QColor("#6B6B6B"))
+    return pal
+
+
+def appliquer_style(app) -> None:
+    """Style « Fusion » et palette claire, comme Pecule. Fusion est
+    indispensable : les styles natifs de Windows peignent certains textes
+    eux-memes, sans consulter la palette."""
+    app.setStyle("Fusion")
+    app.setPalette(palette_claire())

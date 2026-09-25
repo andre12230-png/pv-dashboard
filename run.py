@@ -62,24 +62,25 @@ def _set_windows_app_id() -> None:
 
 
 def _make_splash() -> QSplashScreen:
-    """Ecran de chargement simple : panneau sombre, barre d'accent et titre."""
+    """Ecran de chargement simple : panneau creme, barre d'accent et titre,
+    aux couleurs de Pecule (25/09/2026)."""
     w, h = 460, 250
     pix = QPixmap(w, h)
-    pix.fill(QColor("#0f172a"))
+    pix.fill(QColor("#ECE9D8"))
 
     painter = QPainter(pix)
     painter.setRenderHint(QPainter.Antialiasing)
-    # Barre d'accent en haut (couleur "production" du tableau de bord).
-    painter.fillRect(0, 0, w, 6, QColor("#f5a524"))
+    # Barre d'accent en haut : le bleu nuit de Pecule.
+    painter.fillRect(0, 0, w, 6, QColor("#1F3A6B"))
 
-    painter.setPen(QColor("#f8fafc"))
+    painter.setPen(QColor("#1F3A6B"))
     title_font = QFont()
     title_font.setPointSize(20)
     title_font.setBold(True)
     painter.setFont(title_font)
     painter.drawText(0, 80, w, 40, Qt.AlignHCenter, "Gestion Photovoltaique")
 
-    painter.setPen(QColor("#94a3b8"))
+    painter.setPen(QColor("#5A5A5A"))
     sub_font = QFont()
     sub_font.setPointSize(11)
     painter.setFont(sub_font)
@@ -93,7 +94,7 @@ def _make_splash() -> QSplashScreen:
 
 def _message(splash: QSplashScreen, app: QApplication, text: str) -> None:
     splash.showMessage(f"   {text}", Qt.AlignBottom | Qt.AlignLeft,
-                       QColor("#cbd5e1"))
+                       QColor("#555555"))
     app.processEvents()
 
 

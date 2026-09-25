@@ -53,6 +53,13 @@ PAIRES = [
     ("sb_titre", "sb_bg"),
     ("sb_sub", "sb_bg"),
     ("sb_version", "sb_bg"),
+    # Ajoutes le 25/09/2026, avec les couleurs de Pecule :
+    ("sb_brand", "sb_bg"),           # nom de l'application
+    ("sb_actif_text", "sb_actif"),   # page affichee
+    ("primary", "bg_panel"),         # periode choisie, liens d'accent
+    ("primary", "primary_bg"),       # element choisi dans un menu deroulant
+    ("text_primary", "bg_panel_alt"),
+    ("text_secondary", "bg_app"),
 ]
 
 
@@ -94,10 +101,14 @@ def test_cadre_cliquable_visible(cadre, fond):
 
 @pytest.mark.parametrize("cadre, fond", CADRES_DECORATIFS)
 def test_cadre_de_carte_visible(cadre, fond):
+    # 1,3 et non plus 1,4 depuis le 25/09/2026 : le liseré est celui des
+    # cartes de Pecule (#C8D0DC) sur le fond de son Bilan (#ECEEF2), la
+    # reference choisie par l'auteur, qui donne 1,34. Contour decoratif : la
+    # carte se detache aussi par son fond blanc.
     rapport = contraste(LIGHT[cadre], LIGHT[fond])
-    assert rapport >= 1.4, (
+    assert rapport >= 1.3, (
         f"{cadre} {LIGHT[cadre]} sur {fond} {LIGHT[fond]} : "
-        f"{rapport:.2f} pour 1, moins que 1,4")
+        f"{rapport:.2f} pour 1, moins que 1,3")
 
 
 # ── Le thème clair tient, quel que soit le réglage de Windows ───────────────
@@ -138,6 +149,44 @@ def test_la_regle_universelle_ecrit_sombre_sur_clair():
     """Et dans le bon sens : fond clair, texte sombre, lisible."""
     assert _luminance(LIGHT["bg_app"]) > _luminance(LIGHT["text_primary"])
     assert contraste(LIGHT["text_primary"], LIGHT["bg_app"]) >= 4.5
+
+
+def test_les_couleurs_sont_celles_de_pecule():
+    """Decision de l'auteur du 25/09/2026 : ses trois applications suivent
+    les couleurs de Pecule. Les teintes de base ne doivent pas deriver."""
+    assert LIGHT["bg_app"].upper() == "#ECEEF2"     # fond du Bilan de Pecule
+    assert LIGHT["cadre"].upper() == "#C8D0DC"      # liseré de ses cartes
+    assert LIGHT["sb_bg"].upper() == "#ECE9D8"      # creme de ses fenetres
+    assert LIGHT["primary"].upper() == "#316AC5"    # son bleu de selection
+    assert LIGHT["text_primary"].upper() == "#000000"
+
+
+def test_la_palette_ignore_le_mode_sombre_de_windows():
+    """Sur un poste regle en sombre, Qt fournit une palette a textes blancs :
+    appliquer_style() doit tout remplacer, fonds ET textes, et passer en
+    Fusion (defaut vu dans Pecule le 16/09/2026)."""
+    import os
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtGui import QColor, QPalette
+    from PySide6.QtWidgets import QApplication
+
+    from gui_theme import appliquer_style
+    app = QApplication.instance() or QApplication([])
+    ancienne_feuille = app.styleSheet()
+    app.setStyleSheet("")                 # lire le style sans intermediaire
+    sombre = QPalette()
+    for role in (QPalette.WindowText, QPalette.Text, QPalette.ButtonText):
+        sombre.setColor(role, QColor("#FFFFFF"))
+    app.setPalette(sombre)
+
+    appliquer_style(app)
+
+    palette = app.palette()
+    assert palette.color(QPalette.WindowText).name() == "#000000"
+    assert palette.color(QPalette.Text).name() == "#000000"
+    assert palette.color(QPalette.Base).name() == "#ffffff"
+    assert app.style().name().lower() == "fusion"
+    app.setStyleSheet(ancienne_feuille)
 
 
 def test_pas_de_theme_sombre():

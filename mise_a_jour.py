@@ -58,7 +58,7 @@ class MiseAJourDialog(QDialog):
 
         # Confirmation affichee une fois le navigateur sollicite.
         self.confirmation = QLabel("")
-        self.confirmation.setStyleSheet("color:#2E7D32")
+        self.confirmation.setStyleSheet("color:#18733A")
         self.confirmation.setWordWrap(True)
         self.confirmation.hide()
         v.addWidget(self.confirmation)

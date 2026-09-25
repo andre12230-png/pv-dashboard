@@ -47,7 +47,7 @@ import reglages
 import sauvegarde_externe
 from app_data import AppData
 from fenetre_reglages import FenetreReglages
-from gui_theme import LIGHT, mpl_style, qss_for
+from gui_theme import LIGHT, appliquer_style, mpl_style, qss_for
 from views import (
     MOIS_TOUS,
     PERIOD_ALL,
@@ -134,7 +134,7 @@ LOG_PATH = BASE_DIR / "pv-dashboard.log"
 # config.yaml et ajoutee au titre de la fenetre. Ecrite en dur, elle
 # affichait "6 kWc" a tout le monde, quelle que soit l'installation suivie.
 APP_NAME = "Gestion Photovoltaique"
-APP_VERSION = "1.48.2"
+APP_VERSION = "1.49.0"
 
 
 TAILLE_MAX_LOG = 1_000_000  # 1 Mo
@@ -950,6 +950,9 @@ class MainWindow(QMainWindow):
 
     # ---------- Theme ----------
     def _apply_theme(self) -> None:
+        # Fusion et palette claire d'abord (resistent au mode sombre de
+        # Windows), puis la feuille de style par-dessus.
+        appliquer_style(QApplication.instance())
         QApplication.instance().setStyleSheet(qss_for(self.theme))
         matplotlib.rcParams.update(mpl_style(self.theme))
         for v in self.views.values():

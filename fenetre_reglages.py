@@ -196,7 +196,7 @@ class FenetreReglages(QDialog):
         self.total_prime = QLabel()
         self.total_prime.setWordWrap(True)
         self.total_prime.setStyleSheet(
-            "color: #1c1917; font-size: 12px; font-weight: 600;")
+            "color: #000000; font-size: 12px; font-weight: 600;")
         for case in (self.puissance, self.prime):
             case.valueChanged.connect(self._montrer_total_prime)
         self.prime_duree.valueChanged.connect(self._montrer_total_prime)
@@ -311,7 +311,7 @@ class FenetreReglages(QDialog):
             "jamais avec le programme.")
         note.setTextFormat(Qt.RichText)
         note.setWordWrap(True)
-        note.setStyleSheet("color: #64748b; font-size: 11px;")
+        note.setStyleSheet("color: #666666; font-size: 11px;")
         dehors.addWidget(note)
 
         entetes = QHBoxLayout()
@@ -321,7 +321,7 @@ class FenetreReglages(QDialog):
                                ("D'où ça vient", 130), ("", 30)):
             case = QLabel(titre)
             case.setMinimumWidth(largeur)
-            case.setStyleSheet("color: #64748b; font-size: 11px;")
+            case.setStyleSheet("color: #666666; font-size: 11px;")
             entetes.addWidget(case)
         dehors.addLayout(entetes)
 
@@ -405,7 +405,7 @@ class FenetreReglages(QDialog):
         note = QLabel(aide)
         note.setTextFormat(Qt.RichText)
         note.setWordWrap(True)
-        note.setStyleSheet("color: #64748b; font-size: 11px;")
+        note.setStyleSheet("color: #666666; font-size: 11px;")
         form.addRow(note)
         return groupe
 
