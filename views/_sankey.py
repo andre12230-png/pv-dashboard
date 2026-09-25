@@ -276,7 +276,7 @@ class SankeyWidget(QWidget):
         # du fond. Sans ce liseré, un noeud et le ruban de meme couleur qui
         # en part se touchent et se lisent comme un seul bloc : le noeud
         # parait alors bien plus grand que sa valeur.
-        fond = QColor(self.theme["bg_panel"])
+        fond = QColor(self.theme["bg_carte"])
         for noeuds, pos, x in ((self.gauche, pos_g, x_gauche),
                                (self.droite, pos_d, x_droite)):
             for n in noeuds:
@@ -350,7 +350,7 @@ class SankeyWidget(QWidget):
         bord = QColor(teinte)
         bord.setAlphaF(0.55)
         p.setPen(QPen(bord, 1))
-        p.setBrush(QColor(self.theme["bg_panel"]))
+        p.setBrush(QColor(self.theme["bg_carte"]))
         p.drawRoundedRect(zone, RAYON_PASTILLE, RAYON_PASTILLE)
         p.setBrush(Qt.NoBrush)
 

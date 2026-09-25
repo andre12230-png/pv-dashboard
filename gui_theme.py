@@ -15,14 +15,21 @@ from PySide6.QtGui import QColor, QPalette
 # « fonce » ci-dessous (tests/test_contraste.py).
 LIGHT = {
     "name":           "light",
-    "bg_app":         "#ECEEF2",   # fond des pages (Bilan de Pecule)
-    "bg_panel":       "#FFFFFF",   # cartes, tableaux, champs
+    # Fond des pages : le creme du menu de gauche, et cartes en ivoire. Le
+    # gris-bleu et le blanc pur d'avant juraient avec le reste de
+    # l'application (demande de l'auteur, 25/09/2026 ; memes couleurs dans
+    # Pecule et Recharges VE).
+    "bg_app":         "#ECE9D8",   # fond des pages
+    "bg_carte":       "#FAF8F1",   # cartes, tuiles, graphiques
+    "bg_panel":       "#FFFFFF",   # tableaux, champs, listes
     "bg_panel_alt":   "#F5F5F0",   # une ligne sur deux, boutons secondaires
     # Grilles des graphiques et fond des jauges : doivent rester discrets.
     "border":         "#E2E8F0",
     "border_strong":  "#C8D0DC",
-    # Contour des cartes et des tableaux : le liseré des cartes de Pecule.
-    "cadre":          "#C8D0DC",
+    # Contour des cartes et des tableaux : le liseré des cartes de Pecule,
+    # fonce d'un cran (#C8D0DC -> #BEC7D4) le 25/09/2026 pour rester visible
+    # sur le fond creme (1,40 pour 1 au lieu de 1,27).
+    "cadre":          "#BEC7D4",
     # Contour de ce qu'on clique (boutons, menus de periode) : 3 pour 1
     # au moins sur son fond, le minimum conseille pour un element actif
     # (regle du 15/09/2026, gardee : Pecule n'a pas d'equivalent). Fonce d'un
@@ -166,7 +173,7 @@ QPushButton#NavItem:checked, QPushButton#NavItem[active="true"] {{
 
 /* Toolbar */
 QFrame#Toolbar {{
-    background: {t["bg_panel"]};
+    background: {t["bg_app"]};
     border-bottom: 1px solid {t["cadre"]};
 }}
 QLabel#ViewTitle {{
@@ -299,7 +306,7 @@ QScrollArea > QWidget > QWidget {{
 
 /* Cards */
 QFrame#Card, QFrame.Card {{
-    background: {t["bg_panel"]};
+    background: {t["bg_carte"]};
     border-radius: 12px;
     border: 1px solid {t["cadre"]};
 }}
@@ -318,7 +325,7 @@ QLabel#SectionSub {{
 
 /* KPI cards */
 QFrame[role="kpi"] {{
-    background: {t["bg_panel"]};
+    background: {t["bg_carte"]};
     border: 1px solid {t["cadre"]};
     border-radius: 12px;
     border-left-width: 4px;
@@ -357,7 +364,7 @@ QLabel#KpiSub {{
 /* Tuiles KPI (rangee du haut de "Repartition energie") : meme carte que
    KpiCard mais chiffre nettement plus gros, car c'est le seul contenu. */
 QFrame[role="tile"] {{
-    background: {t["bg_panel"]};
+    background: {t["bg_carte"]};
     border: 1px solid {t["cadre"]};
     border-radius: 12px;
 }}
@@ -398,7 +405,7 @@ QWidget#PosteCell {{
 
 /* Account card */
 QFrame[role="account"] {{
-    background: {t["bg_panel"]};
+    background: {t["bg_carte"]};
     border: 1px solid {t["cadre"]};
     border-radius: 12px;
 }}
@@ -473,7 +480,7 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{ height: 0; }
 
 /* Status bar */
 QStatusBar {{
-    background: {t["bg_panel"]};
+    background: {t["bg_app"]};
     color: {t["text_muted"]};
     border-top: 1px solid {t["cadre"]};
 }}
@@ -483,8 +490,8 @@ QStatusBar {{
 def mpl_style(t: dict) -> dict:
     """Retourne un dict pour mettre a jour plt.rcParams selon le theme."""
     return {
-        "figure.facecolor":    t["bg_panel"],
-        "axes.facecolor":      t["bg_panel"],
+        "figure.facecolor":    t["bg_carte"],
+        "axes.facecolor":      t["bg_carte"],
         "axes.edgecolor":      t["border"],
         "axes.labelcolor":     t["text_secondary"],
         "axes.titlecolor":     t["text_primary"],
@@ -492,9 +499,9 @@ def mpl_style(t: dict) -> dict:
         "ytick.color":         t["text_muted"],
         "grid.color":          t["border"],
         "text.color":          t["text_primary"],
-        "legend.facecolor":    t["bg_panel"],
+        "legend.facecolor":    t["bg_carte"],
         "legend.edgecolor":    t["border"],
-        "savefig.facecolor":   t["bg_panel"],
+        "savefig.facecolor":   t["bg_carte"],
         "font.family":         ["Segoe UI", "DejaVu Sans"],
         # Tailles de police harmonisees pour tous les graphiques.
         "font.size":           11,   # base (etiquettes de barres, etc.)

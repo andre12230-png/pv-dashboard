@@ -41,7 +41,7 @@ PAIRES = [
     ("text_primary", "bg_panel"),
     ("text_secondary", "bg_panel"),
     ("text_muted", "bg_panel"),
-    ("text_muted", "bg_app"),        # sous-titres des pages, sur le fond gris
+    ("text_muted", "bg_app"),        # sous-titres des pages, sur le fond creme
     ("credit", "bg_panel"),          # montants positifs dans les tableaux
     ("debit", "bg_panel"),           # montants negatifs
     ("credit", "credit_bg"),         # pastille "+16 % vs ..."
@@ -60,6 +60,14 @@ PAIRES = [
     ("primary", "primary_bg"),       # element choisi dans un menu deroulant
     ("text_primary", "bg_panel_alt"),
     ("text_secondary", "bg_app"),
+    # Le fond ivoire des cartes (25/09/2026) :
+    ("text_primary", "bg_carte"),
+    ("text_secondary", "bg_carte"),
+    ("text_muted", "bg_carte"),
+    ("credit", "bg_carte"),
+    ("debit", "bg_carte"),
+    ("info_ink", "bg_carte"),
+    ("primary", "bg_carte"),
 ]
 
 
@@ -86,7 +94,8 @@ CADRES_CLIQUABLES = [
     ("sb_btn_hover_border", "sb_btn_hover"),
 ]
 CADRES_DECORATIFS = [
-    ("cadre", "bg_panel"),               # contour des cartes, cote carte
+    ("cadre", "bg_carte"),               # contour des cartes, cote carte
+    ("cadre", "bg_panel"),               # contour des tableaux
     ("cadre", "bg_app"),                 # ... cote fond de page
 ]
 
@@ -101,10 +110,9 @@ def test_cadre_cliquable_visible(cadre, fond):
 
 @pytest.mark.parametrize("cadre, fond", CADRES_DECORATIFS)
 def test_cadre_de_carte_visible(cadre, fond):
-    # 1,3 et non plus 1,4 depuis le 25/09/2026 : le liseré est celui des
-    # cartes de Pecule (#C8D0DC) sur le fond de son Bilan (#ECEEF2), la
-    # reference choisie par l'auteur, qui donne 1,34. Contour decoratif : la
-    # carte se detache aussi par son fond blanc.
+    # 1,3 au moins. Depuis le 25/09/2026 : liseré #BEC7D4 sur le fond creme
+    # (#ECE9D8), 1,40 pour 1. Contour decoratif : la carte se detache aussi
+    # par son fond ivoire.
     rapport = contraste(LIGHT[cadre], LIGHT[fond])
     assert rapport >= 1.3, (
         f"{cadre} {LIGHT[cadre]} sur {fond} {LIGHT[fond]} : "
@@ -154,8 +162,9 @@ def test_la_regle_universelle_ecrit_sombre_sur_clair():
 def test_les_couleurs_sont_celles_de_pecule():
     """Decision de l'auteur du 25/09/2026 : ses trois applications suivent
     les couleurs de Pecule. Les teintes de base ne doivent pas deriver."""
-    assert LIGHT["bg_app"].upper() == "#ECEEF2"     # fond du Bilan de Pecule
-    assert LIGHT["cadre"].upper() == "#C8D0DC"      # liseré de ses cartes
+    assert LIGHT["bg_app"].upper() == "#ECE9D8"     # creme de ses fenetres
+    assert LIGHT["bg_carte"].upper() == "#FAF8F1"   # ivoire de ses cartes
+    assert LIGHT["cadre"].upper() == "#BEC7D4"      # liseré de ses cartes
     assert LIGHT["sb_bg"].upper() == "#ECE9D8"      # creme de ses fenetres
     assert LIGHT["primary"].upper() == "#316AC5"    # son bleu de selection
     assert LIGHT["text_primary"].upper() == "#000000"
