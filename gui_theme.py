@@ -5,7 +5,43 @@ associe + style Fusion et palette Qt qui resistent au mode sombre de Windows.
 
 from __future__ import annotations
 
+import os
+
+from PySide6.QtCore import QLibraryInfo, QTranslator
 from PySide6.QtGui import QColor, QPalette
+
+
+def installer_traduction_qt(app) -> bool:
+    """Passe en francais les boutons et menus fournis par Qt lui-meme
+    (« Yes / No » des questions, clic droit « Undo, Cut, Copy... »).
+
+    Repris de Pecule et de Recharges VE, qui le faisaient deja ; ici, il
+    manquait jusqu'a la 1.50.0 (diagnostic du 26/09/2026). Qt livre ses
+    traductions (`qtbase_fr.qm`) : on les charge plutot que de renommer les
+    boutons un par un. Le traducteur est range sur `app`, sinon il serait
+    ramasse par Python et cesserait de traduire. Un second appel ne fait
+    rien. Rend False si le fichier est introuvable : l'application demarre
+    quand meme, en anglais pour ces quelques mots."""
+    if getattr(app, "_traducteur_qt", None) is not None:
+        return True
+    chemins = [QLibraryInfo.path(QLibraryInfo.TranslationsPath)]
+    # Second recours : le dossier livre avec PySide6, que PyInstaller recopie
+    # dans `_internal/PySide6/translations/`.
+    try:
+        import PySide6
+        chemins.append(os.path.join(os.path.dirname(PySide6.__file__),
+                                    "translations"))
+    except Exception:
+        pass
+    for dossier in chemins:
+        if not dossier or not os.path.isdir(dossier):
+            continue
+        traducteur = QTranslator(app)
+        if traducteur.load("qtbase_fr", dossier):
+            app.installTranslator(traducteur)
+            app._traducteur_qt = traducteur   # garde une reference vivante
+            return True
+    return False
 
 # Les couleurs de Pecule (decision de l'auteur du 25/09/2026 : ses trois
 # applications suivent Pecule — comptesbudget/app.py, ui/main_window.py,

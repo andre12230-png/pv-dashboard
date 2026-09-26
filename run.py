@@ -22,6 +22,8 @@ from PySide6.QtCore import QDir, QLockFile, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QMessageBox, QSplashScreen
 
+from gui_theme import installer_traduction_qt
+
 WIN_APP_ID = "pvdashboard.gestion.6kwc"
 
 
@@ -131,6 +133,9 @@ def prendre_le_verrou(chemin: str | None = None) -> QLockFile | None:
 def main() -> int:
     _set_windows_app_id()
     app = QApplication.instance() or QApplication(sys.argv)
+    # Tout de suite : le message « deja ouvert » ci-dessous a deja des
+    # boutons fournis par Qt.
+    installer_traduction_qt(app)
 
     # Garde dans une variable jusqu'a la fin : relache, il ne protege plus.
     verrou = prendre_le_verrou()

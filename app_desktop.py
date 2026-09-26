@@ -47,7 +47,7 @@ import reglages
 import sauvegarde_externe
 from app_data import AppData
 from fenetre_reglages import FenetreReglages
-from gui_theme import LIGHT, appliquer_style, mpl_style, qss_for
+from gui_theme import LIGHT, appliquer_style, installer_traduction_qt, mpl_style, qss_for
 from views import (
     MOIS_TOUS,
     PERIOD_ALL,
@@ -1335,6 +1335,7 @@ def prendre_le_verrou(chemin: str | None = None) -> QLockFile | None:
 def main() -> int:
     set_windows_app_id()
     app = QApplication(sys.argv)
+    installer_traduction_qt(app)
     configure_application(app)
 
     verrou = prendre_le_verrou()
