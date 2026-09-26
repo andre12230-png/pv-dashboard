@@ -117,7 +117,8 @@ d'avant, et non au mois entier — les libellés l'indiquent, « (au 09/09) ».
 Le bouton <b>Une journée précise</b> ouvre un calendrier pour comparer un jour
 donné au même jour de l'an passé ; changer de période en haut le referme.</p>
 <p><b>{comparaison}</b> — ce que votre contrat vous fait gagner (ou
-perdre) par rapport au Tarif Bleu d'EDF, mois par mois. Cet onglet n'apparaît que si votre fournisseur n'est
+perdre) par rapport au Tarif Bleu d'EDF, mois par mois. Cet onglet
+n'apparaît que si votre fournisseur n'est
 pas EDF : il compare votre contrat au Tarif Bleu d'EDF.</p>
 <p><b>Paramètres</b> — récapitulatif de la configuration (tarifs, contrat), et
 bouton <b>Modifier mes réglages</b> pour la changer.</p>

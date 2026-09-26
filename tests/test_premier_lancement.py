@@ -180,8 +180,10 @@ def test_sans_vehicule_la_notice_n_en_parle_pas(fenetre_neuve):
 
 
 def test_avec_vehicule_la_rubrique_voiture_reste(qapp):
-    import pandas as pd
     from types import SimpleNamespace
+
+    import pandas as pd
+
     from views.aide import AideView
     vue = SimpleNamespace(data=SimpleNamespace(
         cfg={}, df=pd.DataFrame(columns=["recharge_ve_kwh"]),
