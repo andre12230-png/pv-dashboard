@@ -206,7 +206,7 @@ def _lire_yaml(chemin: Path) -> dict:
         if marque is not None:
             ligne = f" (ligne {marque.line + 1})"
         raise RuntimeError(
-            f"{chemin.name} est mal ecrit{ligne}. Verifiez les deux-points, "
+            f"{chemin} est mal ecrit{ligne}. Verifiez les deux-points, "
             "les tirets et l'alignement des lignes autour de cet endroit, "
             "puis relancez l'application."
         ) from exc
@@ -214,7 +214,7 @@ def _lire_yaml(chemin: Path) -> dict:
         return {}
     if not isinstance(contenu, dict):
         raise RuntimeError(
-            f"{chemin.name} ne contient pas une configuration valide "
+            f"{chemin} ne contient pas une configuration valide "
             "(il devrait commencer par des sections comme 'installation:')."
         )
     return contenu
@@ -1325,7 +1325,7 @@ def main() -> int:
             "Impossible de démarrer l'application.\n\n"
             f"{type(exc).__name__} : {exc}\n\n"
             "Vérifiez config.yaml et le fichier de relevés.\n"
-            f"Trace complète dans {LOG_PATH.name}.",
+            f"Trace complète dans {LOG_PATH}.",
         )
         return 1
 

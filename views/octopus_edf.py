@@ -78,7 +78,7 @@ class OctopusEdfView(BaseView):
                     "option HP/HC", "neutral"),
         ]))
 
-        self.layout_inner.addWidget(SectionTitle(f"Économie grâce à {mien}"))
+        self.layout_inner.addWidget(SectionTitle(f"Économie (ou surcoût) avec {mien}"))
         self.layout_inner.addLayout(grid_row([
             KpiCard(f"vs {autre} Base", fmt_eur(gain_base, signed=True),
                     f"~{fmt_eur(gain_base * par_an, signed=True)}/an",

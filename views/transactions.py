@@ -153,9 +153,10 @@ class TransactionsView(BaseView):
         if "conso_absente" in df.columns and (df["conso_absente"] > 0).any():
             legendes.append(
                 "* sur Achetée au réseau : pas de relevé de consommation ce "
-                "jour-là (données "
-                "hors des 36 mois conservés par Enedis) — le total de la facture "
-                "EDF de la période est réparti sur ses jours."
+                "jour-là (données hors des 36 mois conservés par Enedis, ou "
+                "panne du compteur) — si vous avez déclaré le total de la "
+                "facture de la période (Mes réglages), il est réparti sur ses "
+                "jours ; sinon, ces jours comptent 0 kWh acheté."
             )
         if legendes:
             note = QLabel("\n".join(legendes))

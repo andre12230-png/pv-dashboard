@@ -629,7 +629,7 @@ def notes_donnees(df, jours_en_attente=(),
             "Consommation arrondie",
             f"{_pluriel(n, 'jour')} saisis au kWh entier",
             "Ces journées ont été saisies sans décimales. Elles sont recalées "
-            "sur le total de vos factures EDF, qui est exact.\n\n"
+            "sur le total de vos factures, qui est exact.\n\n"
             "Le total de la période est donc juste, le détail quotidien "
             "approché à environ 1 kWh près.",
         ))
@@ -643,9 +643,10 @@ def notes_donnees(df, jours_en_attente=(),
             "Données absentes chez Enedis, qui ne conserve que 36 mois "
             "glissants, ou valeurs interpolées pendant une panne du "
             "compteur.\n\n"
-            "Le total de la facture EDF correspondante est réparti sur ces "
-            "jours : le total de la période est juste, pas le détail "
-            "quotidien.",
+            "Si vous avez déclaré le total de la facture correspondante "
+            "(Mes réglages, « Recalages sur mes factures »), il est réparti "
+            "sur ces jours : le total de la période est juste, pas le détail "
+            "quotidien. Sinon, ces jours comptent 0 kWh acheté.",
         ))
 
     return notes

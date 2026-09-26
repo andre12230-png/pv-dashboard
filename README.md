@@ -131,8 +131,9 @@ l'auteur s'en sert, dans un dossier a part ; pour passer a une
 nouvelle version, on remplace seulement le sous-dossier `pv-dashboard\`.
 
 En cas d'erreur au demarrage (config invalide, CSV introuvable), une
-boite de dialogue affiche le probleme ; la trace complete est ecrite
-dans **`pv-dashboard.log`** a cote de l'app.
+boite de dialogue affiche le probleme et le chemin complet de la trace,
+**`pv-dashboard.log`**, ecrite dans le dossier des donnees
+(`%LOCALAPPDATA%\pv-dashboard` pour la version installee).
 
 ### Installeur Windows (pour donner l'application)
 

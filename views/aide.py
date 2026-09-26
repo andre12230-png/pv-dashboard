@@ -20,6 +20,20 @@ from gui_widgets import Card, SectionTitle
 from views._base import BaseView
 from views._helpers import fmt_date_fr, fmt_kwc
 
+# Rubrique affichee seulement si un fichier de recharges du vehicule
+# est lu : les autres utilisateurs n'ont rien a en faire.
+RUBRIQUE_VOITURE = """<h3 style="color:#1F3A6B">La part de la voiture</h3>
+<p>Le soutirage réseau mélange deux choses très différentes : ce que consomme
+la maison et ce que prend la voiture. L'application les sépare — sous la
+barre <b>D'où vient votre électricité</b> du Tableau de bord, colonne
+<b>dont véhicule</b> dans les Relevés journaliers, et deux sous-lignes dans
+<b>Répartition énergie</b>.</p>
+<p>Seules les recharges <b>faites à la maison</b> sont comptées : celles des
+bornes extérieures ne passent pas par votre compteur. Une charge de nuit,
+à cheval sur deux journées, est répartie entre les deux au prorata du temps.</p>
+
+"""
+
 NOTICE_HTML = """
 <h3 style="color:#1F3A6B">À quoi sert l'application</h3>
 <p>Cette application suit votre installation photovoltaïque de {puissance},
@@ -102,8 +116,8 @@ septembre relevé jusqu'au 9 face au 1<sup>er</sup>–9 septembre de l'année
 d'avant, et non au mois entier — les libellés l'indiquent, « (au 09/09) ».
 Le bouton <b>Une journée précise</b> ouvre un calendrier pour comparer un jour
 donné au même jour de l'an passé ; changer de période en haut le referme.</p>
-<p><b>{comparaison}</b> — ce que le changement d'opérateur a réellement fait
-gagner, mois par mois. Cet onglet n'apparaît que si votre fournisseur n'est
+<p><b>{comparaison}</b> — ce que votre contrat vous fait gagner (ou
+perdre) par rapport au Tarif Bleu d'EDF, mois par mois. Cet onglet n'apparaît que si votre fournisseur n'est
 pas EDF : il compare votre contrat au Tarif Bleu d'EDF.</p>
 <p><b>Paramètres</b> — récapitulatif de la configuration (tarifs, contrat), et
 bouton <b>Modifier mes réglages</b> pour la changer.</p>
@@ -264,21 +278,9 @@ combien de journées ont été laissées telles quelles.</p>
 commune à tous les foyers français, quel que soit le fournisseur.<br>
 <b>Heures creuses et heures pleines</b> : l'espace client du <b>fournisseur</b>
 d'électricité. Tous ne publient pas ce détail jour par jour ; sans lui,
-l'application estime la répartition et le dit.<br>
-<b>Recharges du véhicule</b> : l'application <i>Recharges VE</i>, dont le
-fichier est simplement lu (jamais modifié).</p>
+l'application estime la répartition et le dit.{source_vehicule}</p>
 
-<h3 style="color:#1F3A6B">La part de la voiture</h3>
-<p>Le soutirage réseau mélange deux choses très différentes : ce que consomme
-la maison et ce que prend la voiture. L'application les sépare — sous la
-barre <b>D'où vient votre électricité</b> du Tableau de bord, colonne
-<b>dont véhicule</b> dans les Relevés journaliers, et deux sous-lignes dans
-<b>Répartition énergie</b>.</p>
-<p>Seules les recharges <b>faites à la maison</b> sont comptées : celles des
-bornes extérieures ne passent pas par votre compteur. Une charge de nuit,
-à cheval sur deux journées, est répartie entre les deux au prorata du temps.</p>
-
-<h3 style="color:#1F3A6B">Si vous êtes assujetti à la TVA</h3>
+{rubrique_voiture}<h3 style="color:#1F3A6B">Si vous êtes assujetti à la TVA</h3>
 <p>Cette partie ne concerne que les producteurs qui déclarent la TVA
 (entreprise individuelle au régime réel simplifié). Si ce n'est pas votre
 cas, l'onglet <b>TVA autoconsommation</b> ne vous servira à rien : laissez la
@@ -516,6 +518,7 @@ class AideView(BaseView):
                                   "config.yaml : tous vos achats sont comptés "
                                   "en heures pleines / heures creuses.")
             phrase_hphc = "C'est ainsi que tous vos achats sont comptés."
+        a_vehicule = "recharge_ve_kwh" in getattr(self.data.df, "columns", ())
         return {
             # Echappe : un « & » dans un nom de dossier casserait le HTML.
             "dossier": html.escape(self.data.dossier_donnees
@@ -529,6 +532,12 @@ class AideView(BaseView):
             "veille_bascule": f"{veille:%d/%m/%Y}",
             "phrase_prix_unique": phrase_prix_unique,
             "phrase_hphc": phrase_hphc,
+            # La voiture n'existe dans la notice que si ses recharges sont lues.
+            "source_vehicule": (
+                "<br>\n<b>Recharges du véhicule</b> : l'application "
+                "<i>Recharges VE</i>, dont le fichier est simplement lu "
+                "(jamais modifié)." if a_vehicule else ""),
+            "rubrique_voiture": RUBRIQUE_VOITURE if a_vehicule else "",
             # Nom de la vue de comparaison, qui porte celui des deux offres.
             "comparaison": f"{self.data.fournisseur[1]} vs "
                            f"{self.data.fournisseur_reference[1]}",

@@ -564,8 +564,9 @@ def _type_de_donnees(texte: str) -> str:
                 f"{' / '.join(inj)} et {' / '.join(conso)}. Impossible de "
                 "savoir s'il s'agit de l'injection ou de la consommation. "
                 "Utilisez le classeur Excel Enedis, qui indique clairement "
-                "chaque grandeur, ou le CSV 'suivi de consommation' "
-                "d'Octopus."
+                "chaque grandeur, ou un export de votre fournisseur qui le "
+                "fait aussi (par exemple le CSV 'suivi de consommation' "
+                "d'Octopus)."
             )
         if inj:
             return "Inj_Jour"
@@ -1299,9 +1300,10 @@ def parse_enphase_texte(texte: str) -> dict[str, str]:
 
     if not totaux:
         raise ValueError(
-            "Aucune ligne 'date;valeur' reconnue. Attendu : le rapport "
+            "Aucune ligne 'date;valeur' reconnue. Attendu : la production "
+            "journaliere de votre onduleur -- par exemple le rapport "
             "Enphase 'Energie mensuelle' (Enlighten > Menu > Systeme > "
-            "Rapports), recu par email."
+            "Rapports), ou le rapport d'onduleur au format Excel."
         )
 
     if unite_kwh is None:

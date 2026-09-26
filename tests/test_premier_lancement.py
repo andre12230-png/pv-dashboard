@@ -166,3 +166,29 @@ def test_sans_ancien_tarif_le_glossaire_n_en_invente_pas(fenetre_neuve):
                       fenetre_neuve.views["aide"].findChildren(QLabel))
     assert "vos achats jusqu'au" not in textes
     assert "Vous n'en avez déclaré aucun" in textes
+
+
+def test_sans_vehicule_la_notice_n_en_parle_pas(fenetre_neuve):
+    # Lot « autres utilisateurs » (26/09/2026) : la rubrique « La part de la
+    # voiture » et l'appli Recharges VE etaient presentees a tout le monde.
+    fenetre_neuve._switch_view("aide")
+    textes = " ".join(lbl.text() for lbl in
+                      fenetre_neuve.views["aide"].findChildren(QLabel))
+    assert "La part de la voiture" not in textes
+    assert "Recharges VE" not in textes
+    assert "changement d'opérateur" not in textes
+
+
+def test_avec_vehicule_la_rubrique_voiture_reste(qapp):
+    import pandas as pd
+    from types import SimpleNamespace
+    from views.aide import AideView
+    vue = SimpleNamespace(data=SimpleNamespace(
+        cfg={}, df=pd.DataFrame(columns=["recharge_ve_kwh"]),
+        start_oa="2024-01-01", dossier_donnees="", puissance_kwc=6.0,
+        date_mise_en_service="2024-01-01",
+        fournisseur=("F", "Offre F"), fournisseur_reference=("EDF", "Tarif Bleu")))
+    vue.data.cfg = {"installation": {"cout_total_eur": 1000.0}}
+    champs = AideView._champs_installation(vue)
+    assert "La part de la voiture" in champs["rubrique_voiture"]
+    assert "Recharges VE" in champs["source_vehicule"]

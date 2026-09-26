@@ -170,7 +170,7 @@ def main() -> int:
             "Gestion Photovoltaique",
             "Impossible de démarrer l'application.\n\n"
             f"{detail}\n\n"
-            f"Trace complète dans {LOG_PATH.name}.",
+            f"Trace complète dans {LOG_PATH}.",
         )
         return 1
 
