@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from erreurs import erreur_en_clair
 from reglages import (
     SORTES_RECALAGE,
     ReglagesRefuses,
@@ -482,6 +483,6 @@ class FenetreReglages(QDialog):
             if self._enregistrer_recalages is not None:
                 self._enregistrer_recalages(self.recalages())
         except (ReglagesRefuses, OSError) as exc:
-            QMessageBox.warning(self, TITRE, str(exc))
+            QMessageBox.warning(self, TITRE, erreur_en_clair(exc))
             return
         self.accept()

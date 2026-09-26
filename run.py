@@ -22,6 +22,7 @@ from PySide6.QtCore import QDir, QLockFile, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QMessageBox, QSplashScreen
 
+from erreurs import erreur_en_clair
 from gui_theme import installer_traduction_qt
 
 WIN_APP_ID = "pvdashboard.gestion.6kwc"
@@ -163,13 +164,12 @@ def main() -> int:
         _log_traceback()
         # Les erreurs que l'application leve elle-meme (configuration
         # incomplete, fichier mal ecrit) portent deja une phrase redigee pour
-        # l'utilisateur : la faire preceder de "RuntimeError :" ne l'aide en
-        # rien. Les autres, imprevues, gardent leur nom technique - c'est ce
-        # qui permettra de les identifier.
-        if isinstance(exc, RuntimeError):
-            detail = str(exc)
-        else:
-            detail = f"{type(exc).__name__} : {exc}"
+        # l'utilisateur : elles passent telles quelles. Celles de Python
+        # (fichier verrouille, colonne manquante...) sont dites en francais ;
+        # un vrai defaut du programme garde son nom technique, pour pouvoir
+        # l'identifier (voir erreurs.py). La trace complete est dans le
+        # journal.
+        detail = erreur_en_clair(exc)
         QMessageBox.critical(
             None,
             "Gestion Photovoltaique",

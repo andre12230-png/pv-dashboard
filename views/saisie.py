@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 
 import data_loaders as dl
 from app_data import AppData
+from erreurs import erreur_en_clair
 from gui_widgets import SectionTitle
 from views._base import BaseView
 from views._helpers import phrase_import
@@ -402,7 +403,7 @@ class SaisieView(BaseView):
             # echouer l'import sans le moindre message.
             QMessageBox.warning(
                 self, titre,
-                f"Import impossible :\n\n{exc or type(exc).__name__}\n\n"
+                f"Import impossible :\n\n{erreur_en_clair(exc)}\n\n"
                 "Le fichier est peut-être abîmé, ou d'un autre format que "
                 "celui attendu.")
             return
@@ -525,7 +526,8 @@ class SaisieView(BaseView):
         """
         QMessageBox.critical(
             self, "Enregistrement impossible",
-            f"Les relevés n'ont PAS été enregistrés.\n\n{exc}\n\n"
+            "Les relevés n'ont PAS été enregistrés.\n\n"
+            f"{erreur_en_clair(exc)}\n\n"
             "Le fichier est peut-être ouvert dans un autre programme "
             "(Excel), ou en cours de synchronisation. Fermez-le puis "
             "réessayez : vos saisies sont toujours dans le tableau.")
@@ -613,7 +615,7 @@ class SaisieView(BaseView):
                 # qu'on allait de toute facon ignorer.
                 if not a_des_valeurs:
                     continue
-                erreurs.append(f"Ligne {r + 1} : {exc}.")
+                erreurs.append(f"Ligne {r + 1} : {erreur_en_clair(exc)}.")
                 continue
 
             if not a_des_valeurs:
@@ -657,7 +659,7 @@ class SaisieView(BaseView):
                         row[col], self.LIBELLES_IMPORT.get(col, col),
                         dl.plafond_colonne(col, self.data.puissance_kwc))
                 except ValueError as exc:
-                    erreurs.append(f"Ligne {r + 1} : {exc}.")
+                    erreurs.append(f"Ligne {r + 1} : {erreur_en_clair(exc)}.")
                     ok_row = False
                     break
             if not ok_row:

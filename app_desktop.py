@@ -46,6 +46,7 @@ import mise_a_jour
 import reglages
 import sauvegarde_externe
 from app_data import AppData
+from erreurs import erreur_en_clair
 from fenetre_reglages import FenetreReglages
 from gui_theme import LIGHT, appliquer_style, installer_traduction_qt, mpl_style, qss_for
 from views import (
@@ -861,7 +862,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(
                 self, APP_NAME,
                 "Réglages enregistrés, mais l'application n'a pas pu les "
-                f"relire :\n\n{exc}\n\nRelancez-la.")
+                f"relire :\n\n{erreur_en_clair(exc)}\n\nRelancez-la.")
             return
         nouvelle = MainWindow(data, self.settings)
         nouvelle.setWindowIcon(self.windowIcon())
@@ -899,7 +900,8 @@ class MainWindow(QMainWindow):
                 fichiers, Path(choisi), BASE_DIR, "Gestion Photovoltaïque",
                 APP_VERSION)
         except sauvegarde_externe.SauvegardeImpossible as e:
-            QMessageBox.warning(self, "Sauvegarde impossible", str(e))
+            QMessageBox.warning(self, "Sauvegarde impossible",
+                                erreur_en_clair(e))
             return
         self.settings.setValue(self.CLE_DESTINATION_SAUVEGARDE, choisi)
         liste = "\n".join(f"  • {nom}" for nom in copies)
@@ -1212,7 +1214,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(
                 self, APP_NAME,
                 "Vos relevés sont enregistrés, mais l'application n'a pas pu "
-                f"les relire :\n\n{exc}\n\n"
+                f"les relire :\n\n{erreur_en_clair(exc)}\n\n"
                 "Corrigez config.yaml si vous l'avez modifié, puis relancez "
                 "l'application.")
             return
@@ -1361,7 +1363,7 @@ def main() -> int:
             None,
             APP_NAME,
             "Impossible de démarrer l'application.\n\n"
-            f"{type(exc).__name__} : {exc}\n\n"
+            f"{erreur_en_clair(exc)}\n\n"
             "Vérifiez config.yaml et le fichier de relevés.\n"
             f"Trace complète dans {LOG_PATH}.",
         )
