@@ -14,8 +14,6 @@ ecran, Qt efface une partie du texte). Les preferences de la fenetre vont
 dans un fichier jetable : celles de l'utilisateur ne sont pas touchees.
 """
 
-import math
-import random
 import shutil
 import sys
 import tempfile
@@ -32,37 +30,11 @@ DEMO = Path(tempfile.mkdtemp(prefix="captures_pv_"))
 # --- installation d'exemple : le modele livre avec l'application ---
 shutil.copy2(PROJET / "config.yaml", DEMO / "config.yaml")
 
-# --- releves inventes ---
-# Production moyenne d'un jour, en kWh par kWc, mois par mois : environ
-# 980 kWh/kWc sur l'annee, dans la moyenne francaise.
-PROD_PAR_KWC = [1.1, 1.7, 2.6, 3.4, 3.9, 4.2, 4.3, 3.8, 3.0, 2.0, 1.2, 0.9]
-KWC = 3.0
-hasard = random.Random(2026)
+# --- releves inventes (graine fixe, du 01/01/2024 a hier) ---
+from demo_releves import ecrire_releves_demo  # noqa: E402
 
-
-def nombre(x: float) -> str:
-    """3,142 : la virgule decimale du CSV."""
-    return f"{x:.3f}".replace(".", ",")
-
-
-lignes = ["Date;Prod_Jour;Inj_Jour;Conso_réseau_Jour;Conso_HC;Conso_HP"]
-jour, hier = date(2024, 1, 1), date.today() - timedelta(days=1)
-while jour <= hier:
-    # Meteo du jour : de tres couvert a grand soleil.
-    meteo = min(1.35, max(0.15, hasard.gauss(0.95, 0.3)))
-    prod = PROD_PAR_KWC[jour.month - 1] * KWC * meteo
-    # Maison d'environ 4 000 kWh par an, davantage l'hiver.
-    saison = math.cos(2 * math.pi * (jour.timetuple().tm_yday - 15) / 365)
-    conso = max(5.0, 11 + 4 * saison + hasard.gauss(0, 1.5))
-    autoconso = min(prod * hasard.uniform(0.32, 0.48), conso * 0.6)
-    soutirage = conso - autoconso
-    hc = soutirage * hasard.uniform(0.40, 0.55)
-    lignes.append(";".join([
-        jour.strftime("%d/%m/%Y"), nombre(prod), nombre(prod - autoconso),
-        nombre(soutirage), nombre(hc), nombre(soutirage - hc)]))
-    jour += timedelta(days=1)
-(DEMO / "Releves-pv.csv").write_text("\n".join(lignes) + "\n", encoding="utf-8")
-print("jeu :", len(lignes) - 1, "jours, dans", DEMO)
+hier = date.today() - timedelta(days=1)
+print("jeu :", ecrire_releves_demo(DEMO / "Releves-pv.csv", fin=hier), "jours, dans", DEMO)
 
 # --- l'application, tournee vers le dossier de demonstration ---
 import app_desktop  # noqa: E402

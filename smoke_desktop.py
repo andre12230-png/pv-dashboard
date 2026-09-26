@@ -1,10 +1,17 @@
 """Smoke test offscreen : ouvre la fenetre, force chaque vue, chaque periode
 et le selecteur. Aucun affichage visible. (Un seul theme depuis 1.32.0 : le
-clair, comme Pecule.)"""
+clair, comme Pecule.)
+
+Il tourne sur un jeu INVENTE (demo_releves.py : l'installation du config.yaml
+livre, releves du 01/01/2024 a hier), dans un dossier temporaire. Il lisait
+auparavant les releves du dossier du projet ; depuis qu'ils n'y sont plus, il
+n'avait rien a montrer et trois controles echouaient (26/09/2026)."""
 
 import os
+import shutil
 import sys
 import tempfile
+from pathlib import Path
 
 # Force le mode offscreen AVANT d'importer Qt
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
@@ -13,9 +20,18 @@ from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QApplication
 
 import app_desktop
+from demo_releves import ecrire_releves_demo
 
 
 def main():
+    # Dossier de donnees jetable : le modele livre et le jeu invente. Rien
+    # n'est ecrit dans le dossier du projet (ni releves, ni sauvegardes).
+    demo = Path(tempfile.mkdtemp(prefix="smoke_pv_"))
+    shutil.copy2(app_desktop.CONFIG_PATH, demo / "config.yaml")
+    print(f"jeu : {ecrire_releves_demo(demo / 'Releves-pv.csv')} jours invente(s)")
+    app_desktop.BASE_DIR = demo
+    app_desktop.CONFIG_PATH = demo / "config.yaml"
+    app_desktop.CONFIG_LOCAL_PATH = demo / "config-local.yaml"   # absent : voulu
     cfg = app_desktop.load_config()
     data = app_desktop.build_dataset(cfg)
     # Reference gardee : QApplication doit rester vivante pendant le test.
