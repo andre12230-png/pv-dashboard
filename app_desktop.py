@@ -454,9 +454,9 @@ def build_dataset(cfg: dict) -> AppData:
     # kWh reellement payes. CSV intact.
     df = calc.recale_injection_sur_facture(
         df, cfg["sources"].get("injection_facturee"))
-    # Jours sans releve de consommation reseau (2022 - debut 2023, hors des
-    # 36 mois conserves par Enedis) : totaux lus sur les factures EDF et
-    # repartis sur la periode. CSV intact la aussi.
+    # Jours sans releve de consommation reseau (plus anciens que les 36 mois
+    # conserves par Enedis) : totaux lus sur les factures et repartis sur
+    # la periode. CSV intact la aussi.
     df = calc.repartit_conso_facturee(df, cfg["sources"].get("conso_reseau_facturee"))
     # Jours dont la conso saisie n'est pas fiable (panne Linky interpolee) :
     # declares sans releve, ils seront reconstitues par le recalage.

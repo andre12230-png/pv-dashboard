@@ -128,8 +128,8 @@ def amortissement(data) -> dict | None:
     - recupere : ventes EDF OA + economies + primes deja versees ;
     - gains_an : rythme des gains RECURRENTS (vente OA + economies), les seuls
       qui se repetent chaque annee. La prime, apport unique limite a quelques
-      annees, gonflerait ce rythme et raccourcirait l'amortissement (~4 ans
-      de moins) ;
+      annees, gonflerait ce rythme et raccourcirait l'amortissement de
+      plusieurs annees) ;
     - roi_an : annees necessaires depuis la mise en service, la prime totale
       (versee ou non) venant en deduction du capital a rembourser.
     """
@@ -280,7 +280,7 @@ def pas_graphique(df: pd.DataFrame) -> tuple[str, str, str]:
     mensuels ») :
       - jusqu'a ~2 mois   -> semaines  (4 a 9 groupes)
       - jusqu'a ~18 mois  -> mois      (jusqu'a 18 groupes)
-      - au-dela           -> annees    (5 groupes sur 4 ans d'historique)
+      - au-dela           -> annees    (un groupe par annee)
     """
     if df.empty:
         return "MS", "%m/%y", "mensuel"

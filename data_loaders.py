@@ -369,9 +369,8 @@ def dernieres_saisies(path: str) -> dict[str, _date]:
 # toutes les moyennes sans que rien ne le signale.
 #
 # Production et injection : le plafond DEPEND de la taille de l'installation.
-# Sur 6 kWc, le maximum observe en 4 ans de releves est d'environ 40 kWh
-# (un jour de juillet ; environ 35 kWh injectes), soit moins de 7 kWh par kWc.
-# Avec une marge de moitie : 10 kWh par kWc, ce qui redonne 60 kWh sur 6 kWc.
+# Un beau jour d'ete, une installation produit rarement plus de 7 kWh par
+# kWc. Avec une marge de moitie : 10 kWh par kWc, soit 60 kWh sur 6 kWc.
 #
 # Ce plafond etait fige a 60 : une installation de 9 kWc voyait ses journees
 # d'ete refusees a la saisie, avec un message parlant de valeur improbable
@@ -381,10 +380,10 @@ PUISSANCE_PAR_DEFAUT_KWC = 6.0
 MAX_KWH_JOUR = KWH_MAX_PAR_KWC * PUISSANCE_PAR_DEFAUT_KWC
 # Consommation reseau : elle ne depend pas de l'installation mais du
 # chauffage et de la recharge du vehicule, elle monte donc bien plus haut.
-# Maximum observe : environ 80 kWh soutires un jour d'hiver, et une
-# cinquantaine en heures creuses. Marge x1,9 environ -> 150 kWh.
+# Un foyer chauffe a l'electricite qui recharge une voiture peut soutirer
+# 80 kWh un jour d'hiver. Marge x1,9 environ -> 150 kWh.
 #
-# Un plafond unique a 60 refuserait 14 journees d'hiver REELLES du fichier :
+# Un plafond unique a 60 refuserait de vraies journees d'hiver :
 # la vue Saisie deviendrait impossible a enregistrer des qu'elle en affiche
 # une. D'ou deux plafonds, et non un seul.
 MAX_KWH_JOUR_CONSO = 150.0

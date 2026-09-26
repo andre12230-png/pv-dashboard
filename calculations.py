@@ -113,8 +113,8 @@ def jours_injection_estimee(df: pd.DataFrame) -> pd.Series:
 def estime_injection_manquante(df_daily: pd.DataFrame) -> pd.DataFrame:
     """
     Estime l'injection des jours 'releve_incomplet' (production connue mais
-    injection jamais relevee : avant-contrat OA du 29/04 au 27/06/2022,
-    pannes Linky), puis recale autoconso et consommation.
+    injection jamais relevee : periode d'avant le contrat OA, pannes
+    Linky), puis recale autoconso et consommation.
 
     Methode : ratio injection/production du meme mois calendaire, observe
     sur les jours complets de toutes les annees (fallback : ratio global).
@@ -407,7 +407,7 @@ def aggregate(df: pd.DataFrame, freq: str) -> pd.DataFrame:
 
 
 # ----------------------------------------------------------------------
-# Annees OA (28/06 -> 27/06)
+# Annees OA (d'un anniversaire du contrat au suivant)
 # ----------------------------------------------------------------------
 
 def _anniversaire(annee: int, mois: int, jour: int) -> date:
@@ -626,9 +626,9 @@ def _prix_bleu_series(idx: pd.DatetimeIndex,
 
 
 # Date a laquelle on change de facon de facturer : prix unique (Tarif Bleu
-# Base) avant, heures pleines / heures creuses apres. Chez l'auteur c'est le
-# passage chez Octopus, le 01/01/2026 ; ailleurs ce sera une autre date, ou
-# la mise en service si le contrat a toujours ete en HP/HC.
+# Base) avant, heures pleines / heures creuses apres. Ce peut etre un
+# changement de fournisseur ou d'option, ou la mise en service si le contrat
+# a toujours ete en HP/HC.
 #
 # Cette date etait ecrite en dur : qui etait reste en prix unique en 2026 se
 # voyait facturer en HP/HC sans pouvoir rien y faire. Elle se regle
@@ -921,8 +921,8 @@ def abonnement_mensuel_eur(jour: pd.Timestamp, bleu: BleuBaseConfig,
                            octopus: OctopusConfig) -> float:
     """Abonnement mensuel applicable a une date donnee.
 
-    - A partir du 01/01/2026 : abonnement Octopus de la periode en cours
-      (19,83 EUR jusqu'au 31/07/2026, 20,16 EUR depuis le 01/08/2026).
+    - A partir de la bascule en HP/HC : abonnement du contrat HP/HC pour
+      la periode en cours (config.yaml).
     - Avant : Tarif Bleu, recherche dans les tranches par date.
     """
     if jour >= CUTOFF_OCTOPUS:
@@ -1024,8 +1024,8 @@ def comparaison_octopus_edf(df_daily: pd.DataFrame,
 #     energie + acheminement HT, plus l'accise. Hors TVA, hors abonnement ;
 #   - la periode declaree est l'annee CIVILE.
 #
-# Methode confirmee par ecrit par le SIE de l'auteur en septembre 2026, qui renvoie
-# aux releves du producteur pour les quantites.
+# Methode confirmee par ecrit par un service des impots des entreprises
+# (SIE), qui renvoie aux releves du producteur pour les quantites.
 #
 # Deux points de methode qui ne vont pas de soi :
 #
