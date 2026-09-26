@@ -108,12 +108,28 @@ class DashboardView(BaseView):
         # lecture etait juste, mais la formule seule ne le disait pas -- et
         # surtout, rien ne signalait que les economies ne sont pas encaissees.
         deboursé = cout - revenu
+        # La vente suit le contrat declare : acheteur, surplus ou production
+        # entiere, ou pas de vente du tout (l'injection n'est alors pas payee).
+        data = self.data
+        if data.vend:
+            quoi = ("le surplus injecté" if data.oa.type == "surplus"
+                    else "votre production")
+            carte_vente = KpiCard(
+                f"💶 Vente à {data.acheteur}", fmt_eur(revenu, signed=True),
+                f"à {fmt_prix_kwh(data.oa.prix_kwh)}", "credit",
+                aide=f"Ce que {data.acheteur} vous verse pour {quoi} sur "
+                     "la période.\n\nLe prix du kWh se règle dans "
+                     "« Mes réglages » : tout le bilan en dépend.")
+            recu = f", {fmt_eur(revenu)} reçus {data.d_acheteur}"
+        else:
+            carte_vente = KpiCard(
+                "⚡ Injecté, non payé", fmt_kwh(inj),
+                "sans contrat de vente", "neutral",
+                aide="Sans contrat de vente, l'électricité que vous ne "
+                     "consommez pas part sur le réseau sans être payée.")
+            recu = ""
         self.layout_inner.addLayout(grid_row([
-            KpiCard("💶 Vente à EDF OA", fmt_eur(revenu, signed=True),
-                    f"à {fmt_prix_kwh(self.data.oa.prix_kwh)}", "credit",
-                    aide="Ce qu'EDF OA vous verse pour le surplus injecté sur "
-                         "la période.\n\nLe prix du kWh se règle dans "
-                         "« Mes réglages » : tout le bilan en dépend."),
+            carte_vente,
             KpiCard("🐷 Économies", fmt_eur(eco, signed=True),
                     "kWh du soleil, non achetés", "credit",
                     aide="Ce que vous n'avez PAS payé, en consommant votre "
@@ -138,7 +154,7 @@ class DashboardView(BaseView):
                         "Les économies n'étant pas encaissées, ce qui est "
                         f"réellement sorti de votre poche sur la période est "
                         f"{fmt_eur(deboursé)} : {fmt_eur(cout)} payés au "
-                        f"fournisseur, {fmt_eur(revenu)} reçus d'EDF OA.\n\n"
+                        f"fournisseur{recu}.\n\n"
                         "Sans l'installation, vous auriez payé "
                         f"{fmt_eur(cout + eco)}.")),
         ]))
@@ -290,11 +306,14 @@ class DashboardView(BaseView):
         v.addWidget(BarreRepartition([
             ([f"Consommé {fmt_kwh(auto)}", fmt_kwh(auto)],
              auto, CC["autoconso"]),
-            ([f"Vendu à EDF OA {fmt_kwh(inj)}", f"Vendu {fmt_kwh(inj)}",
-              fmt_kwh(inj)], inj, CC["injection"]),
+            ([f"Vendu à {self.data.acheteur} {fmt_kwh(inj)}",
+              f"Vendu {fmt_kwh(inj)}", fmt_kwh(inj)]
+             if self.data.vend else
+             [f"Injecté {fmt_kwh(inj)}", fmt_kwh(inj)], inj, CC["injection"]),
         ]))
         v.addWidget(legende(f"{fmt_pct(ratio_ac)} consommé sur place · "
-                            f"{fmt_pct(ratio_inj)} vendu"))
+                            f"{fmt_pct(ratio_inj)} "
+                            f"{'vendu' if self.data.vend else 'injecté'}"))
         v.addSpacing(8)
         v.addWidget(titre("D'où vient votre électricité"))
         avec_ve = ve > 0 and sout > 0
@@ -464,9 +483,14 @@ class DashboardView(BaseView):
         v.addLayout(tete)
         v.addWidget(BarMeter(min(ratio, 1.0), CC["autoconso"],
                              self.theme["border"], hauteur=12))
+        sources = ([f"ventes à {self.data.acheteur}"] if self.data.vend else [])
+        sources.append("économies")
+        if self.data.oa.prime_duree:
+            sources.append("primes déjà perçues")
         detail = (f"{fmt_eur(am['recupere'])} récupérés sur "
-                  f"{fmt_eur(am['invest'])} : ventes à EDF OA, économies et "
-                  "primes déjà perçues.")
+                  f"{fmt_eur(am['invest'])} : "
+                  + (", ".join(sources[:-1]) + " et " + sources[-1]
+                     if len(sources) > 1 else sources[0]) + ".")
         if ratio >= 1:
             detail += " L'installation est remboursée."
         elif am["roi_an"]:

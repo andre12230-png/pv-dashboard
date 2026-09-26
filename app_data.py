@@ -96,6 +96,23 @@ class AppData:
         return re.search(rf"\b{re.escape(ref)}\b", texte, re.IGNORECASE) is not None
 
     @property
+    def vend(self) -> bool:
+        """L'electricite injectee est-elle vendue ? (oa.type « aucune » : non)"""
+        return self.oa is None or self.oa.type != "aucune"
+
+    @property
+    def acheteur(self) -> str:
+        """Qui achete l'electricite vendue : oa.acheteur, « EDF OA » sinon."""
+        return str((self.cfg.get("oa") or {}).get("acheteur") or "EDF OA")
+
+    @property
+    def d_acheteur(self) -> str:
+        """« d'EDF OA », « de Solaire Coop » : l'elision suit le nom."""
+        nom = self.acheteur
+        return (f"d'{nom}" if nom[:1].upper() in "AEIOUYÉÈÊH"
+                else f"de {nom}")
+
+    @property
     def cycle_oa(self) -> str:
         """Bornes de l'annee OA, jour et mois : '20/05 → 19/05'.
 

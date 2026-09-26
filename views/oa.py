@@ -147,8 +147,8 @@ class OAView(BaseView):
             items[0].setFont(f)
             if r["n"] == 0:
                 items[1].setToolTip(
-                    "Du raccordement au début du contrat EDF OA : l'injection "
-                    "de cette période n'etait pas remuneree.")
+                    "Du raccordement au début du contrat de vente : "
+                    "l'injection de cette période n'était pas rémunérée.")
             bilan_color = self.theme["credit"] if r["bilan"] >= 0 else self.theme["debit"]
             items[-1].setForeground(self._color(bilan_color))
             items[-1].setFont(f)
@@ -172,12 +172,14 @@ class OAView(BaseView):
             legendes.append(
                 "La ligne « avant OA » couvre du raccordement au début du "
                 "contrat : l'électricité injectée pendant cette période "
-                "n'était pas achetée par EDF OA, d'où un revenu nul."
+                f"n'était pas achetée par {self.data.acheteur}, d'où un "
+                "revenu nul."
             )
         if any(r.get("prime_a_venir") for r in rows):
             legendes.append(
-                "Une prime « à venir » n'est pas encore encaissée : EDF OA la "
-                "facture après la fin de l'année OA concernée. Elle n'entre "
+                "Une prime « à venir » n'est pas encore encaissée : "
+                f"{self.data.acheteur} la facture après la fin de l'année OA "
+                "concernée. Elle n'entre "
                 "donc pas dans le bilan de la ligne."
             )
         if legendes:

@@ -55,18 +55,22 @@ class AccountsView(BaseView):
         ))
 
         date_mes = fmt_date_fr(cfg["installation"]["date_mise_en_service"])
-        accounts = [
-            AccountCard("Vente EDF OA", "Recettes — surplus injecté",
-                        fmt_eur(revenu_cum, signed=True),
-                        f"+{fmt_eur(revenu_p)} sur période" if revenu_p > 0 else "Aucune recette",
-                        self.theme["credit"], "💶", "#dbeafe"),
-            AccountCard("Prime autoconso",
+        # Vente et prime n'apparaissent que si le contrat les prevoit.
+        vente = [AccountCard(
+            f"Vente {self.data.acheteur}",
+            "Recettes — " + ("surplus injecté" if oa.type == "surplus"
+                             else "production vendue"),
+            fmt_eur(revenu_cum, signed=True),
+            f"+{fmt_eur(revenu_p)} sur période" if revenu_p > 0 else "Aucune recette",
+            self.theme["credit"], "💶", "#dbeafe")] if self.data.vend else []
+        prime = [AccountCard("Prime autoconso",
                         f"Versée sur {oa.prime_duree} "
                         f"an{'s' if oa.prime_duree > 1 else ''} (anniv. OA)",
                         fmt_eur(prime_versee, signed=True),
                         f"{nb_oa}/{oa.prime_duree} versement(s) - "
                         f"total prévu {fmt_eur(prime_total)}",
-                        self.theme["credit"], "🎁", "#dcfce7"),
+                        self.theme["credit"], "🎁", "#dcfce7")] if oa.prime_duree else []
+        accounts = vente + prime + [
             AccountCard("Économies autoconso", "Coût évité - kWh non achetés",
                         fmt_eur(eco_cum, signed=True),
                         f"+{fmt_eur(eco_p)} sur période" if eco_p > 0 else "Aucune économie",
@@ -80,7 +84,7 @@ class AccountsView(BaseView):
                         "Amorti progressivement",
                         self.theme["debit"], "🏡", "#e5e7eb"),
             AccountCard("Bilan net global",
-                        "Ventes + économies + primes − installation",
+                        self._recettes().capitalize() + " − installation",
                         fmt_eur(bilan_global, signed=True),
                         "Amortissement atteint" if bilan_global >= 0 else "Amortissement en cours",
                         self.theme["credit"] if bilan_global >= 0 else self.theme["debit"],
@@ -109,28 +113,39 @@ class AccountsView(BaseView):
 
         self.layout_inner.addLayout(grid_row([
             KpiCard("Gains récurrents par an", fmt_eur(gains_an),
-                    f"vente OA + économies, moyenne sur {_ans(annees)} an(s)",
+                    ("vente + économies" if self.data.vend else "économies")
+                    + f", moyenne sur {_ans(annees)} an(s)",
                     "credit"),
             KpiCard("ROI estimé", f"{_ans(roi_an)} ans" if roi_an else "—",
-                    f"{fmt_eur(reste_a_amortir)} à amortir "
-                    f"(prime de {fmt_eur(prime_totale)} déduite)", "primary"),
+                    f"{fmt_eur(reste_a_amortir)} à amortir"
+                    + (f" (prime de {fmt_eur(prime_totale)} déduite)"
+                       if prime_totale else ""), "primary"),
             KpiCard("Bilan net actuel", fmt_eur(bilan_global, signed=True),
-                    "ventes + économies + primes − installation",
+                    self._recettes() + " − installation",
                     "credit" if bilan_global >= 0 else "debit"),
         ]))
         note = QLabel(
             "Le ROI suppose que vos gains annuels restent au rythme observé "
-            "jusqu'ici. Il ne compte que les gains qui se répètent : la prime "
-            "à l'autoconsommation, versée sur "
-            f"{oa.prime_duree} an{'s' if oa.prime_duree > 1 else ''} "
-            "seulement, est déduite du capital à amortir "
-            "au lieu d'être comptée comme un revenu perpétuel."
+            "jusqu'ici."
+            + (" Il ne compte que les gains qui se répètent : la prime "
+               "à l'autoconsommation, versée sur "
+               f"{oa.prime_duree} an{'s' if oa.prime_duree > 1 else ''} "
+               "seulement, est déduite du capital à amortir "
+               "au lieu d'être comptée comme un revenu perpétuel."
+               if oa.prime_duree else "")
         )
         note.setWordWrap(True)
         note.setStyleSheet(
             f"color: {self.theme['text_muted']}; font-size: 11px; padding-top: 4px;")
         self.layout_inner.addWidget(note)
         self.layout_inner.addStretch(1)
+
+    def _recettes(self) -> str:
+        """« ventes + économies + primes », selon ce que le contrat prévoit."""
+        parts = (["ventes"] if self.data.vend else []) + ["économies"]
+        if self.data.oa.prime_duree:
+            parts.append("primes")
+        return " + ".join(parts)
 
     def _remboursement_card(self, df_total: pd.DataFrame, prime_an: float,
                             oa, invest: float, am: dict) -> QFrame:
@@ -176,7 +191,7 @@ class AccountsView(BaseView):
         x = recupere.index
         ax.fill_between(x, 0, recupere.values, color=CC["autoconso"], alpha=0.18)
         ax.plot(x, recupere.values, color=CC["autoconso"], lw=2.5,
-                label="Récupéré : ventes + économies + primes")
+                label=f"Récupéré : {self._recettes()}")
         # Chaque versement de la prime fait une marche dans la courbe, qui
         # passait pour une anomalie. La marche reste a sa vraie date (avant le
         # versement, l'argent n'etait pas la) mais elle est signalee : un point

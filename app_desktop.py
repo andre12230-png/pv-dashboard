@@ -734,7 +734,8 @@ class MainWindow(QMainWindow):
         debut = self.data.start_oa
         sub = QLabel(" · ".join(filter(None, [
             puissance,
-            f"OA depuis {debut.strftime('%d/%m/%Y')}" if debut else None])))
+            (f"{'OA' if self.data.acheteur == 'EDF OA' else 'Vente'} depuis "
+             f"{debut.strftime('%d/%m/%Y')}") if debut else None])))
         sub.setObjectName("BrandSub")
         v.addWidget(sub)
 

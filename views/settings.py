@@ -66,6 +66,7 @@ class SettingsView(BaseView):
             contrat = [
                 ("Type", "Vente du surplus" if oa.type == "surplus"
                  else "Vente de toute la production"),
+                ("Acheteur", self.data.acheteur),
                 ("Prix d'achat du kWh", fmt_prix_kwh(oa.prix_kwh)),
             ]
             if oa.type == "surplus":
@@ -76,7 +77,8 @@ class SettingsView(BaseView):
             contrat.append(("Durée contrat", _duree_ans(oa.duree_contrat)))
         cards = [
             self._kv_card("Installation", installation),
-            self._kv_card("Contrat OA", contrat),
+            self._kv_card("Contrat OA" if self.data.acheteur == "EDF OA"
+                          else "Contrat de vente", contrat),
         ]
         self.layout_inner.addLayout(grid_row(cards))
 

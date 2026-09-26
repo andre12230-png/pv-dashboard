@@ -97,3 +97,58 @@ def test_type_de_vente_inconnu_refuse_en_francais():
     with pytest.raises(RuntimeError) as erreur:
         app_desktop.verifier_config(cfg)
     assert "surplus, totale ou aucune" in str(erreur.value)
+
+
+# ── Les libellés suivent le contrat (étape 2) ───────────────────────────────
+
+def _textes(win, key) -> str:
+    # En majuscules : les titres des cartes s'affichent ainsi.
+    win._switch_view(key)
+    return " ".join(lbl.text() for lbl in
+                    win.views[key].findChildren(QLabel)).upper()
+
+
+def _fenetre(qapp, tmp_path, monkeypatch, retoucher):
+    data = _donnees(tmp_path, monkeypatch, retoucher)
+    prefs = QSettings(str(tmp_path / "prefs.ini"), QSettings.Format.IniFormat)
+    return app_desktop.MainWindow(data, prefs)
+
+
+def _autre_acheteur(cfg):
+    cfg["oa"]["type"] = "totale"
+    cfg["oa"]["acheteur"] = "Solaire Coop"
+
+
+def test_un_autre_acheteur_est_nomme(qapp, tmp_path, monkeypatch):
+    win = _fenetre(qapp, tmp_path, monkeypatch, _autre_acheteur)
+    try:
+        tableau = _textes(win, "dashboard")
+        assert "VENTE À SOLAIRE COOP" in tableau
+        assert "EDF OA" not in tableau
+        synthese = _textes(win, "accounts")
+        assert "SOLAIRE COOP" in synthese
+        assert "PRIME AUTOCONSO" not in synthese      # vente totale : pas de prime
+        assert "EDF OA" not in _textes(win, "settings")
+    finally:
+        win.close()
+
+
+def test_sans_revente_pas_de_vente_affichee(qapp, tmp_path, monkeypatch):
+    win = _fenetre(qapp, tmp_path, monkeypatch, _sans_revente)
+    try:
+        tableau = _textes(win, "dashboard")
+        assert "VENTE À" not in tableau
+        assert "INJECTÉ" in tableau
+        synthese = _textes(win, "accounts")
+        assert "VENTE" not in synthese and "PRIME AUTOCONSO" not in synthese
+    finally:
+        win.close()
+
+
+def test_par_defaut_toujours_edf_oa(qapp, tmp_path, monkeypatch):
+    # Sans acheteur déclaré (les fichiers existants) : rien ne change.
+    win = _fenetre(qapp, tmp_path, monkeypatch, lambda cfg: None)
+    try:
+        assert "VENTE À EDF OA" in _textes(win, "dashboard")
+    finally:
+        win.close()

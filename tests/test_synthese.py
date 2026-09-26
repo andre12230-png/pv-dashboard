@@ -39,6 +39,7 @@ def donnees():
                        prime_duree=5, duree_contrat=20)
     return SimpleNamespace(
         df=df, oa=oa, start_oa=debut, current_period="all",
+        vend=True, acheteur="EDF OA", d_acheteur="d'EDF OA",
         cfg={"installation": {"puissance_kwc": 6.0, "cout_total_eur": 20000.0,
                               "date_mise_en_service": "2022-06-28"}})
 

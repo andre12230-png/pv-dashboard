@@ -61,7 +61,8 @@ def _vue(df: pd.DataFrame):
     from types import SimpleNamespace
 
     from views.dashboard import DashboardView
-    donnees = SimpleNamespace(df=df, start_oa=pd.Timestamp("2022-06-28").date())
+    donnees = SimpleNamespace(df=df, start_oa=pd.Timestamp("2022-06-28").date(),
+                              vend=True, acheteur="EDF OA")
     vue = DashboardView.__new__(DashboardView)
     vue.data, vue.theme = donnees, LIGHT
     return vue
@@ -234,7 +235,9 @@ def test_le_tableau_de_bord_explique_ses_quatre_montants():
     debut = source.index("Bilan financier de la période")
     fin = source.index("]))", debut)
     bloc = source[debut:fin]
-    assert bloc.count("aide=") == 4, "une carte du bilan n'explique rien"
+    # Cinq « aide= » pour quatre cartes : la carte de vente a deux formes,
+    # avec ou sans contrat de vente (lot du 26/09/2026).
+    assert bloc.count("aide=") == 5, "une carte du bilan n'explique rien"
     assert "pas de l'argent reçu" in bloc
     assert "sorti de votre poche" in bloc
 
