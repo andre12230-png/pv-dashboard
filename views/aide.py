@@ -45,7 +45,8 @@ financier et l'amortissement des {invest} investis.</p>
 <p>Trois choses à faire, dans cet ordre, avant que les chiffres aient un
 sens :</p>
 <p><b>1. Décrire votre installation.</b> Onglet <b>Paramètres</b>, bouton
-<b>Modifier mes réglages</b> : puissance, coût, dates de votre contrat, prix
+<b>Modifier mes réglages</b> : puissance, coût, ce que vous vendez (votre
+surplus, toute votre production, ou rien), dates de votre contrat, prix
 de rachat, fournisseur et prix de votre électricité, et la part de votre
 autoconsommation qui tomberait en heures creuses (0 % si elles sont toutes la
 nuit). L'application se
@@ -366,7 +367,9 @@ vous-même (autoconsommation ÷ production).</p>
 <p><b>Taux d'autoproduction</b> — part de vos besoins couverte par le solaire
 (autoconsommation ÷ consommation totale).</p>
 <p><b>EDF OA (Obligation d'Achat)</b> — contrat par lequel EDF achète votre
-surplus d'électricité à un prix fixe garanti.</p>
+surplus d'électricité (ou toute votre production) à un prix fixe garanti.
+C'est l'acheteur le plus courant ; un autre se déclare dans <b>Mes
+réglages</b>.</p>
 <p><b>Année OA</b> — cycle annuel du contrat. {cycle_glossaire}</p>
 <p><b>Vente du surplus</b> — revenu tiré de l'électricité injectée et vendue à
 EDF OA.</p>

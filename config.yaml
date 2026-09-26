@@ -15,10 +15,15 @@ installation:
   date_debut_contrat_oa: "2024-01-01"  # debut de l'annee OA 1
 
 # =====================================================================
-# Contrat EDF OA - Vente du surplus
+# Vente de l'electricite (contrat EDF OA le plus souvent)
 # =====================================================================
 oa:
-  type: "surplus"                # "surplus" ou "totale"
+  # "surplus" : vente du surplus, avec prime a l'autoconsommation ;
+  # "totale"  : vente de toute la production (pas de prime) ;
+  # "aucune"  : pas de vente -- date de contrat, prix et prime ne servent pas.
+  type: "surplus"
+  # Qui vous achete l'electricite. Sans cette ligne : "EDF OA".
+  # acheteur: "EDF OA"
   # Prix d'achat du surplus injecte, en euros HT par kWh. Fixe par votre
   # contrat et garanti sur toute sa duree (voir vos factures EDF OA).
   prix_kwh_eur: 0.10

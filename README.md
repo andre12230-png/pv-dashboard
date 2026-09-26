@@ -460,7 +460,9 @@ garde une copie quotidienne dans `backups/` (les 30 dernieres).
 - `installation` : puissance, cout, dates. La **puissance** sert aussi au
   titre de la fenetre, a la Notice et au plafond de saisie (10 kWh par kWc :
   60 kWh sur 6 kWc, 90 sur 9 kWc)
-- `oa` : prix d'achat surplus (€/kWh), prime autoconso (€/kWc, duree)
+- `oa` : type de vente (`surplus`, `totale` ou `aucune`), acheteur
+  (facultatif, `EDF OA` par defaut), prix d'achat (€/kWh), prime autoconso
+  (€/kWc, duree — vente du surplus seulement)
 - `tarifs_reseau.bascule_hphc` : date du passage du prix unique aux heures
   pleines / creuses (chez l'auteur, un changement de fournisseur). Qui a
   toujours ete en heures creuses met sa date de mise en service ; qui est

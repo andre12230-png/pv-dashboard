@@ -155,9 +155,9 @@ class FenetreReglages(QDialog):
 
         intro = QLabel(
             "Décrivez votre installation et vos contrats. Ces valeurs se "
-            "lisent sur la facture de l'installateur, le contrat EDF OA et "
-            "la fiche tarifaire de votre fournisseur. Tout se change plus "
-            "tard, ici même.")
+            "lisent sur la facture de l'installateur, votre contrat de vente "
+            "(EDF OA, le plus souvent) et la fiche tarifaire de votre "
+            "fournisseur. Tout se change plus tard, ici même.")
         intro.setWordWrap(True)
         v.addWidget(intro)
 
@@ -170,10 +170,23 @@ class FenetreReglages(QDialog):
             ("Puissance des panneaux", self.puissance),
             ("Coût total, pose comprise", self.cout),
             ("Date de mise en service", self.mise_en_service),
-            ("Début du contrat EDF OA", self.debut_oa),
-        ], "L'année du contrat OA commence à sa date de début et dure un an."))
+            ("Début du contrat de vente", self.debut_oa),
+        ], "L'année du contrat de vente commence à sa date de début et dure "
+           "un an. Sans vente, cette date ne sert pas."))
 
-        # --- Ma vente a EDF OA -------------------------------------------
+        # --- Ma vente d'electricite ---------------------------------------
+        # Vente du surplus (avec prime), de toute la production, ou pas de
+        # vente : les cases qui ne servent pas sont grisees (_maj_type_vente)
+        # et leur contenu n'est pas ecrit dans config.yaml.
+        self.type_vente = QComboBox()
+        for texte, code in (("Je vends mon surplus", "surplus"),
+                            ("Je vends toute ma production", "totale"),
+                            ("Je ne vends pas mon électricité", "aucune")):
+            self.type_vente.addItem(texte, code)
+        self.type_vente.setCurrentIndex(max(
+            self.type_vente.findData(valeurs.get("type_vente", "surplus")), 0))
+        self.acheteur = QLineEdit(valeurs.get("acheteur", "EDF OA"))
+        self.acheteur.setPlaceholderText("EDF OA")
         self.prix_oa = _nombre(valeurs["prix_oa"], 4, " €/kWh", 5)
         # La prime se saisit au choix : en tout, ou par kWc. Le fichier de
         # configuration, lui, garde toujours le montant PAR kWc -- rien a
@@ -203,7 +216,9 @@ class FenetreReglages(QDialog):
         self.mode_prime.currentIndexChanged.connect(self._changer_mode_prime)
         self._montrer_total_prime()
 
-        v.addWidget(self._groupe("Ma vente du surplus à EDF OA", [
+        v.addWidget(self._groupe("Ma vente d'électricité", [
+            ("Ce que je vends", self.type_vente),
+            ("Acheteur", self.acheteur),
             ("Prix de rachat du kWh", self.prix_oa),
             ("Prime saisie", self.mode_prime),
             ("Prime à l'autoconsommation", self.prime),
@@ -216,7 +231,10 @@ class FenetreReglages(QDialog):
            "l'autre valeur — vérifiez qu'elle correspond à votre "
            "attestation.<br><br>"
            "Elle est versée <b>en une seule fois</b> pour les contrats récents "
-           "(mettez 1 an), sur 5 ans pour les plus anciens."))
+           "(mettez 1 an), sur 5 ans pour les plus anciens. Elle ne concerne "
+           "que la vente du surplus."))
+        self.type_vente.currentIndexChanged.connect(self._maj_type_vente)
+        self._maj_type_vente()
 
         # --- Mon fournisseur ---------------------------------------------
         self.nom = QLineEdit(valeurs["nom"])
@@ -421,6 +439,8 @@ class FenetreReglages(QDialog):
             "prix_oa": round(self.prix_oa.value(), 4),
             "prime_par_kwc": round(self._prime_par_kwc(), 4),
             "prime_duree": self.prime_duree.value(),
+            "type_vente": self.type_vente.currentData(),
+            "acheteur": self.acheteur.text().strip() or "EDF OA",
             "nom": self.nom.text().strip(),
             "offre": self.offre.text().strip(),
             "abonnement": round(self.abonnement.value(), 2),
@@ -430,6 +450,18 @@ class FenetreReglages(QDialog):
             "plages_hc": plages,
             "part_hc_autoconso": self._part_hc(),
         }
+
+    def _maj_type_vente(self) -> None:
+        """Grise ce qui ne sert pas : tout le contrat sans vente, la prime en
+        vente totale (elle ne va qu'a la vente du surplus)."""
+        vente = self.type_vente.currentData()
+        for case in (self.debut_oa, self.acheteur, self.prix_oa):
+            case.setEnabled(vente != "aucune")
+        for case in (self.mode_prime, self.prime, self.prime_duree):
+            case.setEnabled(vente == "surplus")
+        # Sa couleur est fixee (noir) : grisee, elle se lirait encore comme
+        # un montant a toucher. On la masque.
+        self.total_prime.setVisible(vente == "surplus")
 
     def _part_hc(self) -> float:
         """La part saisie, en fraction.

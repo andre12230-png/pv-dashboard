@@ -109,6 +109,8 @@ def lire_reglages(cfg: dict) -> dict:
         "prix_oa": float(oa.get("prix_kwh_eur") or 0),
         "prime_par_kwc": float(prime.get("montant_par_kwc") or 0),
         "prime_duree": int(prime.get("duree_annees") or 1),
+        "type_vente": _type_vente(oa),
+        "acheteur": _acheteur(oa),
         "nom": str(contrat.get("nom") or ""),
         "offre": str(contrat.get("offre") or ""),
         "abonnement": float(derniere.get("abonnement") or 0),
@@ -319,10 +321,17 @@ def reglages_attendus(cfg: dict, v: dict) -> dict:
     inst = c.setdefault("installation", {})
     oa = c.setdefault("oa", {})
     prime = oa.setdefault("prime_autoconsommation", {})
+    ignores = _champs_ignores(oa, v)
     for cle_v, (bloc, cle) in _CHAMPS_SIMPLES.items():
+        if cle_v in ignores:
+            continue
         cible = {"installation": inst, "oa": oa, "prime": prime}[bloc]
         if _change(cible.get(cle), v[cle_v], cle_v):
             cible[cle] = _valeur_attendue(v[cle_v], cle_v)
+    if "type_vente" in v and _type_vente(oa) != v["type_vente"]:
+        oa["type"] = v["type_vente"]
+    if "acheteur" in v and _acheteur(oa) != v["acheteur"]:
+        oa["acheteur"] = v["acheteur"]
     section = _section_contrat(c)
     contrat = c["tarifs_reseau"][section]
     for cle in ("nom", "offre"):
@@ -336,6 +345,31 @@ def reglages_attendus(cfg: dict, v: dict) -> dict:
     if nouvelles is not None:
         contrat["periodes"] = nouvelles
     return c
+
+
+def _type_vente(oa: dict) -> str:
+    """oa.type : « surplus » s'il n'est pas dit (les anciens fichiers)."""
+    return str(oa.get("type") or "surplus")
+
+
+def _acheteur(oa: dict) -> str:
+    """oa.acheteur : « EDF OA » s'il n'est pas dit."""
+    return str(oa.get("acheteur") or ACHETEUR_PAR_DEFAUT)
+
+
+ACHETEUR_PAR_DEFAUT = "EDF OA"
+
+
+def _champs_ignores(oa: dict, v: dict) -> set[str]:
+    """Les champs grises dans la fenetre, donc laisses tels quels dans le
+    fichier : tout le contrat sans vente, la prime en vente totale (elle ne
+    va qu'a la vente du surplus)."""
+    vente = v.get("type_vente", _type_vente(oa))
+    if vente == "aucune":
+        return {"date_debut_contrat_oa", "prix_oa", "prime_par_kwc", "prime_duree"}
+    if vente == "totale":
+        return {"prime_par_kwc", "prime_duree"}
+    return set()
 
 
 # (cle dans la fenetre) -> (bloc, cle dans config.yaml)
@@ -393,9 +427,18 @@ def appliquer_reglages(texte: str, cfg: dict, v: dict) -> str:
     oa = cfg.get("oa") or {}
     prime = oa.get("prime_autoconsommation") or {}
     blocs = {"installation": inst, "oa": oa, "prime": prime}
+    ignores = _champs_ignores(oa, v)
     for cle_v, (bloc, cle) in _CHAMPS_SIMPLES.items():
+        if cle_v in ignores:
+            continue
         if _change(blocs[bloc].get(cle), v[cle_v], cle_v):
             _poser(lignes, _CHEMINS[bloc] + [cle], _valeur_texte(v[cle_v], cle_v))
+    # Type de vente et acheteur : ecrits seulement s'ils changent, ajoutes en
+    # tete de la section oa s'ils n'y etaient pas.
+    if "type_vente" in v and _type_vente(oa) != v["type_vente"]:
+        _poser_ou_ajouter(lignes, ["oa"], "type", _chaine(v["type_vente"]))
+    if "acheteur" in v and _acheteur(oa) != v["acheteur"]:
+        _poser_ou_ajouter(lignes, ["oa"], "acheteur", _chaine(v["acheteur"]))
 
     section = _section_contrat(cfg)
     if section is None:

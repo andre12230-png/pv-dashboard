@@ -730,3 +730,60 @@ def test_une_seule_periode_peut_commencer_plus_tot():
     assert periodes == [{"debut": "2022-03-01", "fin": None, "abonnement": 18.0,
                          "prix_hp": 0.20, "prix_hc": 0.15}]
     assert _commentaires(nouveau) == _commentaires(MODELE)
+
+
+# -----------------------------------------------------------------------------
+# Type de vente et acheteur (lot « autres utilisateurs », 26/09/2026)
+# -----------------------------------------------------------------------------
+
+def test_lire_le_type_et_l_acheteur_par_defaut():
+    v = rg.lire_reglages(yaml.safe_load(MODELE))
+    assert (v["type_vente"], v["acheteur"]) == ("surplus", "EDF OA")
+
+
+def test_passer_en_vente_totale_ecrit_le_type():
+    nouveau, relu = _appliquer(MODELE, type_vente="totale")
+    assert relu["oa"]["type"] == "totale"
+    assert _commentaires(nouveau) == _commentaires(MODELE)
+
+
+def test_sans_vente_le_contrat_n_est_pas_touche():
+    # Les champs du contrat sont grisés : ce qu'ils contiennent n'est pas
+    # écrit, le fichier garde ses anciennes valeurs.
+    _, relu = _appliquer(MODELE, type_vente="aucune", prix_oa=0.3,
+                         date_debut_contrat_oa=date(2030, 1, 1))
+    avant = yaml.safe_load(MODELE)
+    assert relu["oa"]["type"] == "aucune"
+    assert relu["oa"]["prix_kwh_eur"] == avant["oa"]["prix_kwh_eur"]
+    assert (relu["installation"]["date_debut_contrat_oa"]
+            == avant["installation"]["date_debut_contrat_oa"])
+
+
+def test_vente_totale_la_prime_n_est_pas_touchee():
+    _, relu = _appliquer(MODELE, type_vente="totale", prime_par_kwc=999.0)
+    avant = yaml.safe_load(MODELE)
+    assert relu["oa"]["prime_autoconsommation"] == avant["oa"]["prime_autoconsommation"]
+
+
+def test_un_autre_acheteur_s_ajoute():
+    nouveau, relu = _appliquer(MODELE, acheteur="Solaire Coop")
+    assert relu["oa"]["acheteur"] == "Solaire Coop"
+    assert _commentaires(nouveau) == _commentaires(MODELE)
+
+
+def test_l_acheteur_par_defaut_n_ecrit_rien():
+    cfg = yaml.safe_load(MODELE)
+    v = rg.lire_reglages(cfg)
+    assert rg.appliquer_reglages(MODELE, cfg, v) == MODELE
+
+
+def test_la_fenetre_grise_ce_qui_ne_sert_pas(qapp):
+    from fenetre_reglages import FenetreReglages
+    fenetre = FenetreReglages(rg.lire_reglages(yaml.safe_load(MODELE)),
+                              lambda _v: None)
+    fenetre.type_vente.setCurrentIndex(fenetre.type_vente.findData("aucune"))
+    assert not fenetre.prix_oa.isEnabled()
+    assert not fenetre.debut_oa.isEnabled()
+    assert fenetre.valeurs()["type_vente"] == "aucune"
+    fenetre.type_vente.setCurrentIndex(fenetre.type_vente.findData("totale"))
+    assert fenetre.prix_oa.isEnabled() and not fenetre.prime.isEnabled()
