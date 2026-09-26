@@ -186,3 +186,21 @@ def test_ouverture_toujours_sur_le_mois_en_cours(tmp_path):
     periode = app_desktop.MainWindow._startup_period(faux_self)
 
     assert periode == f"month-{mois_en_cours}"
+
+
+def test_rechargement_rate_apres_saisie_le_dit(monkeypatch):
+    """Lot « autres utilisateurs » (26/09/2026) : la notice invite a
+    retoucher config.yaml au Bloc-notes. Une faute de frappe, appli ouverte,
+    faisait echouer le rafraichissement apres un Enregistrer sans un mot."""
+    def config_cassee():
+        raise RuntimeError("config.yaml est mal ecrit (ligne 12)")
+
+    avertissements = []
+    monkeypatch.setattr(app_desktop, "load_config", config_cassee)
+    monkeypatch.setattr(app_desktop.QMessageBox, "warning",
+                        lambda _p, _t, message: avertissements.append(message))
+    fenetre = SimpleNamespace()
+
+    app_desktop.MainWindow._on_data_changed(fenetre)
+
+    assert avertissements and "ligne 12" in avertissements[0]

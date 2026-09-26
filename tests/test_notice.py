@@ -57,3 +57,11 @@ def test_la_notice_previent_pour_le_premier_jour_d_un_index():
     assert "sert de référence" in NOTICE_HTML
     # Et le menu qui manquait à son export.
     assert "Mixte" in NOTICE_HTML
+
+
+def test_la_notice_nomme_le_vrai_fichier_de_releves():
+    """Lot « autres utilisateurs » (26/09/2026) : la rubrique des sauvegardes
+    nommait « Relevés-pv.csv », avec un accent, alors que le fichier livré
+    s'appelle « Releves-pv.csv ». Restaurer d'après la notice echouait."""
+    assert "Relevés-pv.csv" not in NOTICE_HTML
+    assert "<code>Releves-pv.csv</code>" in NOTICE_HTML

@@ -396,8 +396,15 @@ class SaisieView(BaseView):
                 imports = parser(fichier, notes=remarques)
             except TypeError:
                 imports = parser(fichier)   # parseur sans remarques
-        except (OSError, ValueError) as exc:
-            QMessageBox.warning(self, titre, f"Import impossible :\n\n{exc}")
+        except Exception as exc:  # frontiere : l'utilisateur doit le savoir
+            # Pas seulement OSError / ValueError : un .xlsx abime ou un .xls
+            # renomme levent d'autres erreurs (BadZipFile...), qui faisaient
+            # echouer l'import sans le moindre message.
+            QMessageBox.warning(
+                self, titre,
+                f"Import impossible :\n\n{exc or type(exc).__name__}\n\n"
+                "Le fichier est peut-être abîmé, ou d'un autre format que "
+                "celui attendu.")
             return
 
         # Fusionne chaque grandeur (production, conso, injection) dans les
@@ -624,6 +631,22 @@ class SaisieView(BaseView):
                     # de production dans toutes les statistiques.
                     videes.append(row["Date"])
                 # sinon : ligne neuve pre-remplie, laissee telle quelle -> rien
+                continue
+
+            # Journee que l'utilisateur n'a pas touchee : elle vient du fichier
+            # (souvent d'un import, qui n'est pas borne) et on la garde telle
+            # quelle. La revalider refusait TOUT l'enregistrement des qu'une
+            # ancienne journee depassait le plafond -- un foyer qui soutire
+            # plus de 150 kWh, une installation plus grande que celle
+            # declaree. Le plafond ne s'applique qu'a ce qui est tape.
+            avant = lignes_avant.get(row["Date"])
+            if avant is not None and all(
+                    row[col] == (avant.get(col) or "").strip()
+                    for col in self.COLS[1:]):
+                if row["Date"] in lignes_table:
+                    doublons.append(row["Date"])
+                else:
+                    lignes_table[row["Date"]] = dict(avant)
                 continue
 
             # Validation numerique (vide autorise)

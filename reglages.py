@@ -281,6 +281,12 @@ def _periodes_apres(periodes: list[dict], v: dict) -> list[dict] | None:
             "Les périodes de prix de config.yaml ne sont pas rangées dans "
             "l'ordre des dates : modifiez-les avec le Bloc-notes.")
     depuis = _date(v["prix_depuis"])
+    if depuis < debut and len(periodes) == 1:
+        # Une seule periode (souvent celle du modele livre) : aucun historique
+        # a proteger. Un contrat souscrit avant elle la fait simplement
+        # commencer plus tot -- il fallait sinon passer par le Bloc-notes.
+        return [{**derniere, "debut": depuis.isoformat(),
+                 "fin": _fin_texte(derniere), **prix}]
     if depuis < debut:
         raise ReglagesRefuses(
             f"Les nouveaux prix ne peuvent pas commencer avant la période en "

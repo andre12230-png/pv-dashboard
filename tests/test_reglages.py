@@ -718,3 +718,15 @@ def test_une_part_hc_fine_n_est_pas_arrondie_en_douce(qapp):
                         lambda _v: None)
     f.prix_hp.setValue(0.25)
     assert f.valeurs()["part_hc_autoconso"] == 0.225
+
+
+def test_une_seule_periode_peut_commencer_plus_tot():
+    # Lot « autres utilisateurs » (26/09/2026) : un contrat souscrit avant la
+    # periode du modele (2024) etait refuse, il fallait passer par le
+    # Bloc-notes. Avec une seule periode, rien a proteger : elle recule.
+    nouveau, relu = _appliquer(MODELE, abonnement=18.0, prix_hp=0.20,
+                               prix_hc=0.15, prix_depuis=date(2022, 3, 1))
+    periodes = relu["tarifs_reseau"]["contrat_hphc"]["periodes"]
+    assert periodes == [{"debut": "2022-03-01", "fin": None, "abonnement": 18.0,
+                         "prix_hp": 0.20, "prix_hc": 0.15}]
+    assert _commentaires(nouveau) == _commentaires(MODELE)

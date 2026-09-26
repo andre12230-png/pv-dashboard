@@ -489,8 +489,20 @@ def build_dataset(cfg: dict) -> AppData:
     )
     # Date de passage en heures pleines / heures creuses : reglable, car elle
     # n'a aucune raison d'etre la meme pour tout le monde.
-    calc.definir_bascule_hphc(cfg["tarifs_reseau"].get("bascule_hphc"))
     cfg_octopus = cfg["tarifs_reseau"]["contrat_hphc"]
+    bascule = cfg["tarifs_reseau"].get("bascule_hphc")
+    if not bleu.tranches:
+        # Aucun tarif a prix unique declare : l'utilisateur ne l'a jamais eu,
+        # toutes ses journees relevent du contrat HP/HC (avant sa premiere
+        # periode, c'est elle qui sert). Sans cela, les journees d'avant la
+        # date de bascule etaient comptees a 0 EUR, sans un mot. La bascule
+        # recule donc a la plus ancienne des dates connues.
+        candidats = [pd.Timestamp(p["debut"])
+                     for p in calc.periodes_octopus(cfg_octopus)]
+        if not df.empty:
+            candidats.append(pd.Timestamp(df.index.min()).normalize())
+        bascule = min(candidats).date().isoformat()
+    calc.definir_bascule_hphc(bascule)
     octopus = calc.OctopusConfig(
         periodes=calc.periodes_octopus(cfg_octopus),
         plages_hc=calc.parse_plages_hc(cfg_octopus["plages_hc"]),
@@ -1154,8 +1166,20 @@ class MainWindow(QMainWindow):
 
     def _on_data_changed(self) -> None:
         """Recharge le CSV apres une saisie et rafraichit toutes les vues."""
-        cfg = load_config()
-        self.data = build_dataset(cfg)
+        try:
+            data = build_dataset(load_config())
+        except Exception as exc:  # frontiere : l'utilisateur doit le savoir
+            # Les releves sont bien enregistres ; c'est la relecture qui
+            # echoue (config.yaml retouche au Bloc-notes, appli ouverte...).
+            # On garde l'affichage precedent plutot que d'echouer sans un mot.
+            QMessageBox.warning(
+                self, APP_NAME,
+                "Vos relevés sont enregistrés, mais l'application n'a pas pu "
+                f"les relire :\n\n{exc}\n\n"
+                "Corrigez config.yaml si vous l'avez modifié, puis relancez "
+                "l'application.")
+            return
+        self.data = data
         for vue in self.views.values():
             vue.data = self.data
         # De nouveaux mois (voire une nouvelle annee) peuvent etre apparus.

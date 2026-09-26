@@ -48,6 +48,13 @@ class DashboardView(BaseView):
         # Aucun releve du tout : premier lancement. Au lieu d'un bandeau
         # « Aucun releve » qui ne dit pas quoi faire, les premiers pas.
         if self.data.df.empty:
+            # Des journees de production existent, mais aucune n'a de releve
+            # reseau : elles sont toutes « en attente ». Sans cette carte,
+            # l'utilisateur croyait son import perdu.
+            attente = getattr(self.data, "jours_en_attente", [])
+            if attente:
+                self.layout_inner.addWidget(
+                    self._carte_releves_reseau_manquants(attente))
             self.layout_inner.addWidget(self._carte_premiers_pas())
             self.layout_inner.addStretch(1)
             return
@@ -327,6 +334,33 @@ class DashboardView(BaseView):
                 f"color: {self.theme['text_primary']}; font-size: 13px; "
                 "font-weight: 600; background: transparent; padding-top: 4px;")
             v.addWidget(vehicule)
+        return card
+
+    def _carte_releves_reseau_manquants(self, jours) -> QFrame:
+        """Production connue, releves du reseau absents : dire ce qui manque."""
+        jours = sorted(jours)
+        n = len(jours)
+        if n == 1:
+            quoi = f"1 journée de production (le {jours[0]:%d/%m/%Y})"
+        else:
+            quoi = (f"{n} journées de production (du {jours[0]:%d/%m/%Y} "
+                    f"au {jours[-1]:%d/%m/%Y})")
+        card = Card()
+        v = QVBoxLayout(card)
+        v.setContentsMargins(28, 18, 28, 18)
+        texte = QLabel(
+            f"<p><b>Vos relevés sont bien là : {quoi}.</b></p>"
+            "<p>Il manque encore la <b>consommation</b> et l'<b>injection</b> "
+            "de ces journées, que publie Enedis (ou le rapport de votre "
+            "onduleur, s'il les mesure). Sans elles, l'application ne peut "
+            "calculer ni votre autoconsommation ni vos ventes : ces journées "
+            "attendent. Importez-les depuis l'onglet <b>Saisie "
+            "quotidienne</b> ; rien de ce qui est déjà saisi ne sera perdu.</p>")
+        texte.setTextFormat(Qt.RichText)
+        texte.setWordWrap(True)
+        texte.setStyleSheet(
+            f"color: {self.theme['text_primary']}; font-size: 13px;")
+        v.addWidget(texte)
         return card
 
     def _carte_premiers_pas(self) -> QFrame:

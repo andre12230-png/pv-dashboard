@@ -98,3 +98,71 @@ def test_le_titre_du_menu_ne_porte_plus_la_puissance(fenetre_neuve):
     assert marque.text() == "Photovoltaïque"
     sous_titre = fenetre_neuve.findChild(QLabel, "BrandSub")
     assert "kWc" in sous_titre.text()
+
+
+# -----------------------------------------------------------------------------
+# Lot « autres utilisateurs » (26/09/2026) : production seule
+# -----------------------------------------------------------------------------
+
+def test_production_seule_le_tableau_de_bord_dit_ce_qui_manque(
+        qapp, tmp_path, monkeypatch):
+    # Qui n'a que sa production (onduleur, pas encore de compte Enedis)
+    # retombait sur « Pour commencer », comme si rien n'avait ete importe.
+    import data_loaders as dl
+    shutil.copy(app_desktop.CONFIG_PATH, tmp_path / "config.yaml")
+    monkeypatch.setattr(app_desktop, "BASE_DIR", tmp_path)
+    monkeypatch.setattr(app_desktop, "CONFIG_PATH", tmp_path / "config.yaml")
+    monkeypatch.setattr(app_desktop, "CONFIG_LOCAL_PATH",
+                        tmp_path / "config-local.yaml")
+    entete = ";".join(dl.RELEVES_HEADER)
+    vides = ";" * (len(dl.RELEVES_HEADER) - 2)
+    (tmp_path / "Releves-pv.csv").write_text(
+        entete + "\n"
+        + f"01/05/2026;20{vides}\n02/05/2026;18{vides}\n", encoding="utf-8")
+    cfg = app_desktop.normaliser_config(
+        app_desktop._lire_yaml(tmp_path / "config.yaml"))
+    data = app_desktop.build_dataset(cfg)
+    assert data.df.empty and len(data.jours_en_attente) == 2
+    prefs = QSettings(str(tmp_path / "prefs.ini"), QSettings.Format.IniFormat)
+    win = app_desktop.MainWindow(data, prefs)
+    try:
+        win._switch_view("dashboard")
+        textes = " ".join(lbl.text() for lbl in
+                          win.views["dashboard"].findChildren(QLabel))
+        assert "2 journées de production" in textes
+        assert "Enedis" in textes
+    finally:
+        win.close()
+
+
+def test_sans_ancien_tarif_les_journees_anciennes_ont_un_prix(
+        qapp, tmp_path, monkeypatch):
+    # Le modele livre ne declare aucun tarif a prix unique (bleu_base) : la
+    # notice dit qu'on ne l'a alors jamais eu. Pourtant, les journees d'avant
+    # la date de bascule du modele (2024) etaient comptees a 0 EUR, sans un
+    # mot -- qui importait ses 36 mois Enedis avait des bilans faux.
+    import data_loaders as dl
+    shutil.copy(app_desktop.CONFIG_PATH, tmp_path / "config.yaml")
+    monkeypatch.setattr(app_desktop, "BASE_DIR", tmp_path)
+    monkeypatch.setattr(app_desktop, "CONFIG_PATH", tmp_path / "config.yaml")
+    monkeypatch.setattr(app_desktop, "CONFIG_LOCAL_PATH",
+                        tmp_path / "config-local.yaml")
+    (tmp_path / "Releves-pv.csv").write_text(
+        ";".join(dl.RELEVES_HEADER) + "\n"
+        "01/06/2023;20;12;5;;\n02/06/2023;18;10;6;;\n", encoding="utf-8")
+    cfg = app_desktop.normaliser_config(
+        app_desktop._lire_yaml(tmp_path / "config.yaml"))
+    data = app_desktop.build_dataset(cfg)
+    jour = data.df.loc["2023-06-01"]
+    assert jour["cout_reseau_eur"] > 0
+    assert jour["economie_eur"] > 0
+
+
+def test_sans_ancien_tarif_le_glossaire_n_en_invente_pas(fenetre_neuve):
+    # Le glossaire disait a chacun « prix unique jusqu'au 31/12/2023 », date
+    # du modele, meme sans aucun tarif a prix unique declare.
+    fenetre_neuve._switch_view("aide")
+    textes = " ".join(lbl.text() for lbl in
+                      fenetre_neuve.views["aide"].findChildren(QLabel))
+    assert "vos achats jusqu'au" not in textes
+    assert "Vous n'en avez déclaré aucun" in textes

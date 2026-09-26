@@ -648,3 +648,50 @@ def test_jour_de_la_semaine_n_entre_pas_dans_le_fichier(vue):
     _cellule(vue, 1, "Prod_Jour", "21,5")
     vue._enregistrer()
     assert _dates_du_fichier(vue) == ["01/05/2026", "02/05/2026", "03/05/2026"]
+
+
+# ---------------------------------------------------------------------------
+# Lot « autres utilisateurs » (26/09/2026)
+# ---------------------------------------------------------------------------
+
+def test_import_d_un_fichier_abime_le_dit(vue, dialogue, fichier_choisi, tmp_path):
+    # Un .xlsx abime (ou un .xls renomme) levait une exception que rien
+    # n'attrapait : l'import echouait sans le moindre message.
+    abime = tmp_path / "Rapport.xlsx"
+    abime.write_bytes(b"ceci n'est pas un classeur Excel")
+    fichier_choisi["path"] = str(abime)
+
+    vue._importer_enphase()
+
+    assert dialogue.avertissements
+    assert "Import impossible" in dialogue.avertissements[0]
+
+
+def test_une_ancienne_journee_hors_plafond_ne_bloque_pas_la_saisie(qapp, tmp_path):
+    # Une journee importee depasse le plafond de saisie (foyer qui soutire
+    # plus de 150 kWh, ou installation plus grande que celle declaree). Les
+    # imports ne sont pas bornes : cette ligne, que l'utilisateur ne touche
+    # pas, refusait ensuite TOUT enregistrement.
+    csv = tmp_path / "Releves-pv.csv"
+    csv.write_text(CSV_DEPART.replace("03/05/2026;19;13;2,5",
+                                      "03/05/2026;19;13;200"),
+                   encoding="utf-8")
+    data = SimpleNamespace(releves_path=str(csv), current_period="all",
+                           puissance_kwc=6.0)
+    v = SaisieView(data, gui_theme.LIGHT)
+    v.populate("all")
+
+    _cellule(v, 2, "Prod_Jour", "17")      # le 02/05, rien d'autre
+    v._enregistrer()
+
+    lignes = {r["Date"]: r for r in dl.read_releves_raw(str(csv))}
+    assert lignes["02/05/2026"]["Prod_Jour"] == "17"
+    assert lignes["03/05/2026"]["Conso_réseau_Jour"] == "200"
+
+
+def test_une_journee_modifiee_reste_bornee(vue):
+    # Le plafond vaut toujours pour ce que l'utilisateur tape.
+    _cellule(vue, 2, "Prod_Jour", "251")
+    vue._enregistrer()
+    lignes = {r["Date"]: r for r in dl.read_releves_raw(vue.data.releves_path)}
+    assert lignes["02/05/2026"]["Prod_Jour"] == "18"

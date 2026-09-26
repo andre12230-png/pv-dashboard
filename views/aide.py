@@ -321,13 +321,13 @@ déclaration doit reposer sur ce qui a réellement été relevé.</p>
 <p>À chaque enregistrement, l'application met de côté la version précédente
 de vos relevés, à trois endroits :</p>
 <ul>
-<li><code>Relevés-pv.csv.bak</code> — juste avant le dernier enregistrement ;</li>
+<li><code>Releves-pv.csv.bak</code> — juste avant le dernier enregistrement ;</li>
 <li><code>backups/</code> — les <b>15 dernières versions</b>, horodatées ;</li>
 <li><code>backups/</code> — la première de <b>chaque journée</b>, gardée 30 jours.</li>
 </ul>
 <p>Les copies quotidiennes échappent à la rotation des 15 : vous pouvez donc
 revenir plusieurs semaines en arrière. Pour restaurer, fermez l'application et
-recopiez le fichier voulu sur <code>Relevés-pv.csv</code>.</p>
+recopiez le fichier voulu sur <code>Releves-pv.csv</code>.</p>
 <p><b>Sur une clé USB ou un disque externe.</b> Toutes ces copies restent sur
 le même disque que vos données : si ce disque lâche, elles partent avec lui.
 Le bouton <b>💾 Sauvegarde externe</b>, en bas du menu de gauche, copie vos
@@ -388,11 +388,9 @@ l'onglet TVA autoconsommation.</p>
 comprise dans le prix payé au fournisseur. Elle entre dans la base de la
 livraison à soi-même ; la TVA, elle, n'y entre pas.</p>
 <p><b>Prix unique (type Tarif Bleu Base)</b> — le kWh est facturé au même
-prix à toute heure. C'est ce qui s'applique à vos achats jusqu'au
-{veille_bascule}.</p>
+prix à toute heure. {phrase_prix_unique}</p>
 <p><b>Heures Pleines / Heures Creuses (HP/HC)</b> — l'électricité est facturée
-moins cher pendant les heures creuses. C'est ainsi que vos achats sont
-comptés depuis le {bascule}.</p>
+moins cher pendant les heures creuses. {phrase_hphc}</p>
 <p><b>Compteur Linky</b> — compteur communicant qui mesure l'énergie injectée
 et soutirée.</p>
 <p><b>Rendement spécifique</b> — production annuelle rapportée à la puissance
@@ -503,6 +501,21 @@ class AideView(BaseView):
         debut_oa = pd.Timestamp(self.data.start_oa)
         veille_oa = debut_oa - pd.Timedelta(days=1)
         bascule = calc.CUTOFF_OCTOPUS
+        veille = bascule - pd.Timedelta(days=1)
+        # Un tarif a prix unique n'existe que s'il est declare : sinon toutes
+        # les journees sont comptees en HP/HC, et le glossaire ne doit pas
+        # inventer une date de fin a un contrat que l'utilisateur n'a jamais eu.
+        bleu = (self.data.cfg.get("tarifs_reseau") or {}).get("bleu_base") or {}
+        if bleu.get("prix_kwh_par_periode"):
+            phrase_prix_unique = ("C'est ce qui s'applique à vos achats "
+                                  f"jusqu'au {veille:%d/%m/%Y}.")
+            phrase_hphc = ("C'est ainsi que vos achats sont comptés depuis "
+                           f"le {bascule:%d/%m/%Y}.")
+        else:
+            phrase_prix_unique = ("Vous n'en avez déclaré aucun dans "
+                                  "config.yaml : tous vos achats sont comptés "
+                                  "en heures pleines / heures creuses.")
+            phrase_hphc = "C'est ainsi que tous vos achats sont comptés."
         return {
             # Echappe : un « & » dans un nom de dossier casserait le HTML.
             "dossier": html.escape(self.data.dossier_donnees
@@ -513,7 +526,9 @@ class AideView(BaseView):
             "debut_oa": f"{debut_oa:%d/%m}",
             "fin_oa": f"{veille_oa:%d/%m}",
             "bascule": f"{bascule:%d/%m/%Y}",
-            "veille_bascule": f"{bascule - pd.Timedelta(days=1):%d/%m/%Y}",
+            "veille_bascule": f"{veille:%d/%m/%Y}",
+            "phrase_prix_unique": phrase_prix_unique,
+            "phrase_hphc": phrase_hphc,
             # Nom de la vue de comparaison, qui porte celui des deux offres.
             "comparaison": f"{self.data.fournisseur[1]} vs "
                            f"{self.data.fournisseur_reference[1]}",
