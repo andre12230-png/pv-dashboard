@@ -30,7 +30,7 @@ class SettingsView(BaseView):
     def populate(self, period: str) -> None:
         cfg = self.data.cfg
         inst = cfg["installation"]
-        oa = cfg["oa"]
+        oa = self.data.oa
         # Facultative : qui n'a jamais eu de contrat a prix unique n'a pas
         # cette section dans son config.yaml.
         bleu = cfg["tarifs_reseau"].get("bleu_base") or {}
@@ -50,23 +50,33 @@ class SettingsView(BaseView):
             bouton.clicked.connect(self.ouvrir_reglages)
             self.layout_inner.addWidget(bouton, alignment=Qt.AlignLeft)
 
+        # Vente du surplus, vente totale, ou pas de vente : les lignes suivent
+        # le contrat declare (voir build_dataset), sans rien supposer.
+        installation = [
+            ("Puissance crête", fmt_kwc(inst["puissance_kwc"])),
+            ("Coût total", fmt_eur(inst["cout_total_eur"])),
+            ("Mise en service", fmt_date_fr(inst["date_mise_en_service"])),
+        ]
+        if self.data.start_oa is not None:
+            installation.append(("Début du contrat de vente",
+                                 fmt_date_fr(self.data.start_oa)))
+        if oa.type == "aucune":
+            contrat = [("Type", "Pas de vente : l'injection n'est pas payée")]
+        else:
+            contrat = [
+                ("Type", "Vente du surplus" if oa.type == "surplus"
+                 else "Vente de toute la production"),
+                ("Prix d'achat du kWh", fmt_prix_kwh(oa.prix_kwh)),
+            ]
+            if oa.type == "surplus":
+                contrat += [
+                    ("Prime par kWc", fmt_eur(oa.prime_par_kwc) + "/kWc"),
+                    ("Durée prime", _duree_ans(oa.prime_duree)),
+                ]
+            contrat.append(("Durée contrat", _duree_ans(oa.duree_contrat)))
         cards = [
-            self._kv_card("Installation", [
-                ("Puissance crête", fmt_kwc(inst["puissance_kwc"])),
-                ("Coût total", fmt_eur(inst["cout_total_eur"])),
-                ("Mise en service", fmt_date_fr(inst["date_mise_en_service"])),
-                ("Début du contrat OA", fmt_date_fr(inst["date_debut_contrat_oa"])),
-            ]),
-            self._kv_card("Contrat OA", [
-                ("Type", "Vente du surplus" if oa["type"] == "surplus"
-                 else "Vente totale"),
-                ("Prix d'achat du surplus", fmt_prix_kwh(oa["prix_kwh_eur"])),
-                ("Prime par kWc", fmt_eur(
-                    oa["prime_autoconsommation"]["montant_par_kwc"]) + "/kWc"),
-                ("Durée prime",
-                 _duree_ans(oa['prime_autoconsommation']['duree_annees'])),
-                ("Durée contrat", _duree_ans(oa['duree_contrat_annees'])),
-            ]),
+            self._kv_card("Installation", installation),
+            self._kv_card("Contrat OA", contrat),
         ]
         self.layout_inner.addLayout(grid_row(cards))
 

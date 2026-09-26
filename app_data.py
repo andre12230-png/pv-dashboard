@@ -22,7 +22,7 @@ class AppData:
     oa: calc.OAConfig
     bleu: calc.BleuBaseConfig
     octopus: calc.OctopusConfig
-    start_oa: date                   # debut du contrat OA
+    start_oa: date | None            # debut du contrat OA (None : pas de vente)
     releves_path: str | None         # chemin absolu du CSV de releves
     edf_ref: list[dict]              # grille EDF de reference, par periodes
     # Les memes releves, mais BRUTS : ni injection estimee, ni recalage sur
@@ -103,6 +103,8 @@ class AppData:
         plus tard. Les ecrans affichaient en dur '28/06 → 27/06', le cycle du
         contrat de l'auteur, a tous les utilisateurs.
         """
+        if self.start_oa is None:
+            return ""
         veille = self.start_oa - timedelta(days=1)
         return f"{self.start_oa:%d/%m} → {veille:%d/%m}"
 

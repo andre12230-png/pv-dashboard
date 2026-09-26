@@ -48,7 +48,10 @@ class AccountsView(BaseView):
 
         self.layout_inner.addWidget(SectionTitle(
             "Postes financiers",
-            f"Cumul depuis {self.data.start_oa.strftime('%d/%m/%Y')}",
+            # Sans contrat de vente, le cumul part de la mise en service.
+            f"Cumul depuis {self.data.start_oa.strftime('%d/%m/%Y')}"
+            if self.data.start_oa else
+            f"Cumul depuis le {fmt_date_fr(cfg['installation']['date_mise_en_service'])}",
         ))
 
         date_mes = fmt_date_fr(cfg["installation"]["date_mise_en_service"])

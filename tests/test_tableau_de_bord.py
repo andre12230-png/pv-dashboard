@@ -380,3 +380,23 @@ def test_les_jours_a_production_nulle_ne_comptent_pas_non_plus_avant_le_contrat(
     _titre, resume, _aide = notes_donnees(df, start_oa=date(2025, 2, 10))[0]
     assert resume == "2 jours avant votre contrat EDF OA"
 
+
+
+def test_pas_de_date_de_remboursement_absurde():
+    """Lot « autres utilisateurs » (26/09/2026) : avec quelques jours de
+    relevés, le rythme des gains annonçait un remboursement dans des
+    milliers d'années, et le tableau de bord plantait en calculant la date."""
+    from types import SimpleNamespace
+
+    import calculations as calc
+    from views._helpers import amortissement
+
+    jours = pd.to_datetime(["2025-06-01", "2026-06-01"])
+    df = pd.DataFrame({"revenu_vente_eur": 0.0, "economie_eur": 0.01,
+                       "annee_oa": 0}, index=jours)
+    oa = calc.OAConfig(type="aucune", prix_kwh=0.0, prime_par_kwc=0.0,
+                       prime_duree=0, duree_contrat=0)
+    donnees = SimpleNamespace(
+        df=df, oa=oa, start_oa=None,
+        cfg={"installation": {"puissance_kwc": 3.0, "cout_total_eur": 8000.0}})
+    assert amortissement(donnees)["roi_an"] is None

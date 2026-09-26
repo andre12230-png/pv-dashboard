@@ -356,14 +356,25 @@ REGLAGES_OBLIGATOIRES = [
     ("installation.puissance_kwc", "la puissance de l'installation, en kWc"),
     ("installation.cout_total_eur", "le coût total de l'installation"),
     ("installation.date_mise_en_service", "la date de mise en service"),
-    ("installation.date_debut_contrat_oa", "la date de debut du contrat OA"),
-    ("oa.prix_kwh_eur", "le prix d'achat du surplus, en EUR/kWh"),
-    ("oa.duree_contrat_annees", "la duree du contrat OA, en annees"),
     ("tarifs_reseau.contrat_hphc.periodes",
      "au moins une période de prix de votre fournisseur (abonnement, HP, HC)"),
     ("tarifs_reseau.contrat_hphc.plages_hc", "les plages d'heures creuses"),
     ("sources.releves_csv", "le nom du fichier de relevés"),
 ]
+# Exiges seulement si l'on vend son electricite (oa.type « surplus » ou
+# « totale ») : sans revente, il n'y a ni contrat, ni prix, ni date.
+REGLAGES_VENTE = [
+    ("installation.date_debut_contrat_oa", "la date de debut du contrat de vente"),
+    ("oa.prix_kwh_eur", "le prix d'achat du kWh vendu, en EUR/kWh"),
+    ("oa.duree_contrat_annees", "la duree du contrat de vente, en annees"),
+]
+# Les trois facons de vendre (ou non) son electricite.
+TYPES_VENTE = ("surplus", "totale", "aucune")
+
+
+def type_vente(cfg: dict) -> str:
+    """oa.type, « surplus » s'il n'est pas dit (le cas des anciens fichiers)."""
+    return str((cfg.get("oa") or {}).get("type") or "surplus")
 
 
 def _valeur_config(cfg: dict, chemin: str):
@@ -390,7 +401,15 @@ def verifier_config(cfg: dict) -> None:
     """
     # Une config ecrite avec l'ancien nom de section reste acceptee.
     normaliser_config(cfg)
-    manquants = [libelle for chemin, libelle in REGLAGES_OBLIGATOIRES
+    vente = type_vente(cfg)
+    if vente not in TYPES_VENTE:
+        raise RuntimeError(
+            f"config.yaml : oa.type vaut « {vente} ». Il doit valoir "
+            "surplus, totale ou aucune (vente du surplus, vente de toute la "
+            f"production, ou pas de vente). Corrigez-le dans {BASE_DIR}, "
+            "puis relancez.")
+    exiges = REGLAGES_OBLIGATOIRES + (REGLAGES_VENTE if vente != "aucune" else [])
+    manquants = [libelle for chemin, libelle in exiges
                  if _valeur_config(cfg, chemin) in (None, "", [], {})]
     if not manquants:
         return
@@ -472,12 +491,20 @@ def build_dataset(cfg: dict) -> AppData:
         for col in ("recharge_ve_kwh", "recharge_ve_eur"):
             df[col] = ve[col].reindex(df.index, fill_value=0.0)
 
+    # Vente du surplus (avec prime), vente totale, ou pas de vente du tout.
+    # La prime a l'autoconsommation ne va qu'a la vente du SURPLUS : en vente
+    # totale rien n'est autoconsomme, et sans vente il n'y a pas de contrat.
+    # Elle etait pourtant comptee en vente totale.
+    cfg_oa = cfg.get("oa") or {}
+    vente = type_vente(cfg)
+    cfg_prime = cfg_oa.get("prime_autoconsommation") or {}
+    avec_prime = vente == "surplus"
     oa = calc.OAConfig(
-        type=cfg["oa"]["type"],
-        prix_kwh=cfg["oa"]["prix_kwh_eur"],
-        prime_par_kwc=cfg["oa"]["prime_autoconsommation"]["montant_par_kwc"],
-        prime_duree=cfg["oa"]["prime_autoconsommation"]["duree_annees"],
-        duree_contrat=cfg["oa"]["duree_contrat_annees"],
+        type=vente,
+        prix_kwh=float(cfg_oa.get("prix_kwh_eur") or 0) if vente != "aucune" else 0.0,
+        prime_par_kwc=float(cfg_prime.get("montant_par_kwc") or 0) if avec_prime else 0.0,
+        prime_duree=int(cfg_prime.get("duree_annees") or 0) if avec_prime else 0,
+        duree_contrat=int(cfg_oa.get("duree_contrat_annees") or 0),
     )
     # Tarif Bleu Base : facultatif. Il ne concerne que les journees anterieures
     # au passage en heures creuses / heures pleines. Qui n'a jamais eu ce
@@ -510,12 +537,16 @@ def build_dataset(cfg: dict) -> AppData:
         part_hc_autoconso=float(cfg_octopus.get("part_hc_autoconso", 0.20)),
     )
 
-    start_oa = pd.Timestamp(cfg["installation"]["date_debut_contrat_oa"]).date()
+    # Pas de vente, pas de contrat : ni date de debut, ni « annees OA ».
+    debut_contrat = cfg["installation"].get("date_debut_contrat_oa")
+    start_oa = (pd.Timestamp(debut_contrat).date()
+                if vente != "aucune" and debut_contrat else None)
     # debut_contrat : pas de vente OA avant le debut du contrat (injection gratuite).
     df = calc.revenu_oa(df, oa, debut_contrat=start_oa)
     df = calc.cout_reseau_journalier(df, None, bleu, octopus)
     df = calc.economies_autoconsommation(df, bleu, octopus)
-    df["annee_oa"] = calc.assign_oa_year(df.index, start_oa).values
+    df["annee_oa"] = (calc.assign_oa_year(df.index, start_oa).values
+                      if start_oa is not None else 0)
     df["bilan_jour_eur"] = (
         df["revenu_vente_eur"] + df["economie_eur"] - df["cout_reseau_eur"]
     )
@@ -700,8 +731,10 @@ class MainWindow(QMainWindow):
         brand.setObjectName("Brand")
         v.addWidget(brand)
         puissance = fmt_kwc(self.data.puissance_kwc)
+        debut = self.data.start_oa
         sub = QLabel(" · ".join(filter(None, [
-            puissance, f"OA depuis {self.data.start_oa.strftime('%d/%m/%Y')}"])))
+            puissance,
+            f"OA depuis {debut.strftime('%d/%m/%Y')}" if debut else None])))
         sub.setObjectName("BrandSub")
         v.addWidget(sub)
 
@@ -791,6 +824,9 @@ class MainWindow(QMainWindow):
             return self.data.lasm is not None
         if key == "octopus_edf":
             return not self.data.meme_fournisseur_que_la_reference
+        if key == "oa":
+            # Sans contrat de vente, pas d'annees de contrat a montrer.
+            return self.data.start_oa is not None
         return True
 
     def _ouvrir_reglages(self) -> None:

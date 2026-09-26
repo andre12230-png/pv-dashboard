@@ -100,8 +100,7 @@ pas, la prime étant déduite une fois pour toutes du coût à rembourser. Le
 bilan net compte les ventes, les économies et les primes, moins le coût de
 l'installation ; la facture d'électricité n'y entre pas, puisque vous la
 paieriez même sans panneaux.</p>
-<p><b>Années OA</b> — récapitulatif par cycle de contrat (du {debut_oa} au
-{fin_oa} de l'année suivante).</p>
+<p><b>Années OA</b> — récapitulatif par cycle de contrat {cycle_notice}.</p>
 <p><b>TVA autoconsommation</b> — pour qui est assujetti à la TVA : la base à
 déclarer sur l'électricité autoconsommée, année civile par année civile. Sans
 intérêt pour les autres : cet onglet n'apparaît dans le menu que si la
@@ -368,8 +367,7 @@ vous-même (autoconsommation ÷ production).</p>
 (autoconsommation ÷ consommation totale).</p>
 <p><b>EDF OA (Obligation d'Achat)</b> — contrat par lequel EDF achète votre
 surplus d'électricité à un prix fixe garanti.</p>
-<p><b>Année OA</b> — cycle annuel du contrat. Le vôtre va du {debut_oa} au
-{fin_oa} de l'année suivante.</p>
+<p><b>Année OA</b> — cycle annuel du contrat. {cycle_glossaire}</p>
 <p><b>Vente du surplus</b> — revenu tiré de l'électricité injectée et vendue à
 EDF OA.</p>
 <p><b>Prime à l'autoconsommation</b> — aide de l'État calculée selon la
@@ -501,8 +499,17 @@ class AideView(BaseView):
         creuses vient de tarifs_reseau.bascule_hphc.
         """
         cout = self.data.cfg["installation"]["cout_total_eur"]
-        debut_oa = pd.Timestamp(self.data.start_oa)
-        veille_oa = debut_oa - pd.Timedelta(days=1)
+        # Sans contrat de vente, pas de cycle annuel a annoncer.
+        if self.data.start_oa is not None:
+            debut_oa = pd.Timestamp(self.data.start_oa)
+            veille_oa = debut_oa - pd.Timedelta(days=1)
+            cycle = f"du {debut_oa:%d/%m} au {veille_oa:%d/%m} de l'année suivante"
+            cycle_notice = f"({cycle})"
+            cycle_glossaire = f"Le vôtre va {cycle}."
+        else:
+            cycle_notice = "(cet onglet n'apparaît qu'avec un contrat de vente)"
+            cycle_glossaire = "Vous n'avez pas déclaré de contrat de vente."
+
         bascule = calc.CUTOFF_OCTOPUS
         veille = bascule - pd.Timedelta(days=1)
         # Un tarif a prix unique n'existe que s'il est declare : sinon toutes
@@ -527,8 +534,8 @@ class AideView(BaseView):
             "invest": f"{cout:,.0f} €".replace(",", " "),
             "puissance": fmt_kwc(self.data.puissance_kwc) or "puissance inconnue",
             "mise_en_service": fmt_date_fr(self.data.date_mise_en_service),
-            "debut_oa": f"{debut_oa:%d/%m}",
-            "fin_oa": f"{veille_oa:%d/%m}",
+            "cycle_notice": cycle_notice,
+            "cycle_glossaire": cycle_glossaire,
             "bascule": f"{bascule:%d/%m/%Y}",
             "veille_bascule": f"{veille:%d/%m/%Y}",
             "phrase_prix_unique": phrase_prix_unique,

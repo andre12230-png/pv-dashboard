@@ -151,6 +151,12 @@ def amortissement(data) -> dict | None:
     prime_versee = prime_an * nb_primes
     prime_totale = prime_an * oa.prime_duree
     reste = invest - prime_totale
+    # Au-dela d'un siecle, une echeance ne veut plus rien dire : c'est le cas
+    # de quelques jours de releves seulement. Elle faisait planter le calcul
+    # de la date de remboursement (au-dela de ce que pandas sait dater).
+    roi_an = reste / gains_an if gains_an > 0 else None
+    if roi_an is not None and roi_an > 100:
+        roi_an = None
     return {
         "prime_an": prime_an,
         "nb_primes_versees": nb_primes,
@@ -160,7 +166,7 @@ def amortissement(data) -> dict | None:
         "annees": annees,
         "gains_an": gains_an,
         "reste_a_amortir": reste,
-        "roi_an": reste / gains_an if gains_an > 0 else None,
+        "roi_an": roi_an,
         "recupere": revenu + eco + prime_versee,
     }
 

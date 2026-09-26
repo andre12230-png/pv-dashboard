@@ -83,9 +83,10 @@ def test_la_version_copiee_nomme_l_application():
 # -----------------------------------------------------------------------------
 
 
-def _fenetre(lasm=None, chez_edf=False):
+def _fenetre(lasm=None, chez_edf=False, start_oa="2024-01-01"):
     return SimpleNamespace(data=SimpleNamespace(
-        lasm=lasm, meme_fournisseur_que_la_reference=chez_edf))
+        lasm=lasm, meme_fournisseur_que_la_reference=chez_edf,
+        start_oa=start_oa))
 
 
 def test_onglet_tva_masque_sans_grille():
@@ -103,6 +104,12 @@ def test_les_autres_onglets_toujours_visibles():
     for key, _, _, _ in app_desktop.NAV_ITEMS:
         if key not in ("tva", "octopus_edf"):
             assert app_desktop.MainWindow._entree_visible(faux_self, key)
+
+
+def test_onglet_annees_oa_masque_sans_contrat_de_vente():
+    # Lot « autres utilisateurs » (26/09/2026) : sans vente, pas de cycle.
+    faux_self = _fenetre(start_oa=None)
+    assert not app_desktop.MainWindow._entree_visible(faux_self, "oa")
 
 
 # -----------------------------------------------------------------------------
