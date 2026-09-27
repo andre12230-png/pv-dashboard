@@ -192,7 +192,9 @@ class TvaView(BaseView):
 
         gras = QFont()
         gras.setBold(True)
-        for i, ligne in enumerate(lignes):
+        # L'annee la plus recente en haut (demande du 27/09/2026) ; le
+        # graphique, lui, reste chronologique de gauche a droite.
+        for i, ligne in enumerate(reversed(lignes)):
             controle = ligne["controle"]
             if controle is None or controle["ecart_pct"] is None:
                 ecart_txt = "—"
@@ -274,7 +276,8 @@ class TvaView(BaseView):
 
         gras = QFont()
         gras.setBold(True)
-        for i, ligne in enumerate(controles):
+        # La periode la plus recente en haut, comme le tableau des annees.
+        for i, ligne in enumerate(reversed(controles)):
             pct = ligne["ecart_pct"]
             items = [
                 QTableWidgetItem(f"{fmt_date_fr(ligne['debut'])} → "
