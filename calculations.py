@@ -1312,7 +1312,11 @@ def lasm_par_annee(df_brut: pd.DataFrame, lasm: LasmConfig,
             "production_kwh": prod,
             "injection_kwh": inj,
             "autoconsommation_kwh": kwh,
-            "part_autoconso": (kwh / prod) if prod > 0 else 0.0,
+            # La part ne se projette pas : seule l'autoconsommation est
+            # prolongee au 31/12, pas la production. Diviser l'une projetee
+            # par l'autre realisee gonflait la part de l'annee en cours
+            # (bug du 27/09/2026). C'est donc la part realisee.
+            "part_autoconso": a_date["part_autoconso"],
             "base_eur": base,
             "base_5a_eur": arrondi_euro(base),
             "prix_moyen_eur_kwh": (base / kwh) if kwh > 0 else 0.0,

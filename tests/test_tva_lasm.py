@@ -442,3 +442,21 @@ def test_les_tuiles_de_l_annee_en_cours_ne_se_disent_pas_a_declarer():
                           textes_tuiles(par_annee[2024], False, 0.20))
     assert "3517-S" in a_declarer
     assert "à déclarer" in a_declarer.lower()
+
+
+def test_la_part_de_l_annee_estimee_n_est_pas_gonflee_par_la_projection():
+    """Bug du 27/09/2026 : pour l'annee en cours, la part d'autoconsommation
+    divisait l'autoconsommation PROJETEE au 31/12 par la production A CE
+    JOUR. Ici 120 kWh projetes pour 60 kWh produits : 200 %. La part ne se
+    projette pas : c'est celle realisee, la meme que sur la tuile."""
+    df = _releves([
+        ("2023-01-15", 100.0, 50.0), ("2023-09-15", 100.0, 50.0),
+        ("2024-01-15", 100.0, 50.0), ("2024-09-15", 100.0, 50.0),
+        ("2025-01-15", 60.0, 30.0), ("2025-06-30", 0.0, 0.0),
+    ])
+    lignes = calc.lasm_par_annee(df, _lasm_plat(), aujourdhui=date(2025, 6, 30))
+    en_cours = {ligne["annee"]: ligne for ligne in lignes}[2025]
+
+    assert en_cours["estimation"] is True
+    assert en_cours["part_autoconso"] == pytest.approx(0.5)
+    assert en_cours["part_autoconso"] == en_cours["a_date"]["part_autoconso"]
