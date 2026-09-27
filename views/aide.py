@@ -304,6 +304,12 @@ l'autoconsommation se concentre sur l'été. Ces tarifs se relèvent sur vos
 factures et se déclarent dans <code>config.yaml</code>, section
 <code>tva_lasm</code> : <b>à compléter à chaque révision</b>, en général le
 1<sup>er</sup> février et le 1<sup>er</sup> août.</p>
+<p><b>Les quatre chiffres du haut de la page.</b> De janvier à fin mai, ils
+donnent l'année terminée, celle qui se déclare : ce sont les montants à
+recopier sur le 3517-S. À partir de juin, la déclaration est faite : ils
+passent à l'année en cours, <b>réalisée à ce jour</b> (jusqu'au dernier relevé
+importé), avec l'estimation au 31 décembre en petit. Ces chiffres-là ne sont
+pas à déclarer ; ils se figent une fois l'année terminée.</p>
 <p><b>Le recoupement avec vos factures.</b> Sous le tableau, l'application
 compare la somme de vos injections relevées aux kWh réellement facturés par
 EDF OA, année de contrat par année de contrat. C'est lui qui rend vos chiffres

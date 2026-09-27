@@ -11,6 +11,8 @@ calculations.py.
 """
 from __future__ import annotations
 
+from datetime import date
+
 import numpy as np
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont
@@ -33,6 +35,50 @@ from views._helpers import chiffres_sur_barres, fmt_date_fr, fmt_pct
 def _nombre(x: float, decimales: int = 1) -> str:
     """Un nombre a la francaise, virgule decimale."""
     return f"{x:,.{decimales}f}".replace(",", " ").replace(".", ",")
+
+
+def textes_tuiles(ligne: dict, en_cours: bool, taux: float
+                  ) -> list[tuple[str, str, str]]:
+    """Libellé, valeur et sous-titre des quatre tuiles du haut de la page.
+
+    Année à déclarer : les montants qui se reportent sur le formulaire.
+    Année en cours : le RÉALISÉ au dernier relevé, jamais présenté comme un
+    montant à déclarer ; l'estimation au 31/12 en sous-titre."""
+    # En kWh entiers, et non en MWh comme ailleurs dans l'app : c'est la
+    # quantite qui justifie la base declaree, elle se lit dans la meme unite
+    # que les releves.
+    if not en_cours:
+        return [
+            (f"Autoconsommation {ligne['annee']}",
+             _nombre(ligne["autoconsommation_kwh"], 0) + " kWh",
+             f"{fmt_pct(ligne['part_autoconso'] * 100)} de la production"),
+            ("Prix moyen pondéré",
+             _nombre(ligne["prix_moyen_eur_kwh"], 4) + " €/kWh",
+             "énergie + acheminement HT + accise"),
+            ("Base ligne 5A",
+             _nombre(ligne["base_5a_eur"], 0) + " €",
+             "montant à porter sur le 3517-S"),
+            ("TVA à déclarer",
+             _nombre(ligne["tva_due_eur"], 0) + " €",
+             f"soit {_nombre(taux * 100, 0)} % de la base"),
+        ]
+    reel = ligne["a_date"]
+    jusquau = reel["jusquau"].strftime("%d/%m/%Y")
+    return [
+        (f"Autoconsommation {ligne['annee']}",
+         _nombre(reel["autoconsommation_kwh"], 0) + " kWh",
+         f"au {jusquau} : {fmt_pct(reel['part_autoconso'] * 100)} "
+         "de la production"),
+        ("Prix moyen pondéré",
+         _nombre(reel["prix_moyen_eur_kwh"], 4) + " €/kWh",
+         "énergie + acheminement HT + accise"),
+        ("Base à ce jour",
+         _nombre(reel["base_5a_eur"], 0) + " €",
+         f"estimée au 31/12 : {_nombre(ligne['base_5a_eur'], 0)} €"),
+        ("TVA à ce jour",
+         _nombre(reel["tva_due_eur"], 0) + " €",
+         f"estimée au 31/12 : {_nombre(ligne['tva_due_eur'], 0)} €"),
+    ]
 
 
 class TvaView(BaseView):
@@ -76,32 +122,23 @@ class TvaView(BaseView):
     # Rangee du haut : la derniere annee CLOSE, celle qui se declare
     # ------------------------------------------------------------------
     def _cartes_annee_a_declarer(self, lignes: list[dict]) -> None:
-        closes = [ligne for ligne in lignes if not ligne["estimation"]]
-        if not closes:
+        # Janvier-mai : l'annee a declarer ; a partir de juin : l'annee en
+        # cours, en realise (voir calc.ligne_des_tuiles_lasm).
+        choix = calc.ligne_des_tuiles_lasm(lignes, self.aujourdhui())
+        if choix is None:
             return
-        ligne = closes[-1]
-        cartes = [
-            # En kWh entiers, et non en MWh comme ailleurs dans l'app : c'est
-            # la quantite qui justifie la base declaree, elle se lit dans la
-            # meme unite que les releves.
-            KpiCard("Autoconsommation " + str(ligne["annee"]),
-                    _nombre(ligne["autoconsommation_kwh"], 0) + " kWh",
-                    f"{fmt_pct(ligne['part_autoconso'] * 100)} de la production",
-                    variant="warm"),
-            KpiCard("Prix moyen pondéré",
-                    _nombre(ligne["prix_moyen_eur_kwh"], 4) + " €/kWh",
-                    "énergie + acheminement HT + accise",
-                    variant="info"),
-            KpiCard("Base ligne 5A",
-                    _nombre(ligne["base_5a_eur"], 0) + " €",
-                    "montant à porter sur le 3517-S",
-                    variant="primary"),
-            KpiCard("TVA due",
-                    _nombre(ligne["tva_due_eur"], 0) + " €",
-                    f"soit {_nombre(self.data.lasm.taux * 100, 0)} % de la base",
-                    variant="debit"),
-        ]
+        ligne, en_cours = choix
+        variantes = ("warm", "info", "primary", "debit")
+        cartes = [KpiCard(label, valeur, sous_titre, variant=variante)
+                  for (label, valeur, sous_titre), variante in zip(
+                      textes_tuiles(ligne, en_cours, self.data.lasm.taux),
+                      variantes, strict=True)]
         self.layout_inner.addLayout(grid_row(cartes))
+
+    @staticmethod
+    def aujourdhui() -> date:
+        """La date du jour (isolee pour que les tests puissent la fixer)."""
+        return date.today()
 
     # ------------------------------------------------------------------
     # Graphique : TVA due par annee

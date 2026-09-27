@@ -1281,6 +1281,22 @@ def lasm_par_annee(df_brut: pd.DataFrame, lasm: LasmConfig,
         base = float((auto * prix_lasm_serie(tranche.index, lasm.periodes)).sum())
         sans_inj = int(jours_injection_estimee(tranche).sum())
 
+        # Le REALISE, avant toute projection : ce qui est vraiment acquis au
+        # dernier releve de l'annee. Les tuiles de l'annee en cours le
+        # montrent (demande du 27/09/2026) ; pour une annee close, il est
+        # egal au total.
+        a_date = {
+            "jusquau": fin.date() if (an in completes or tranche.empty)
+            else min(arret, tranche.index.max().date()),
+            "autoconsommation_kwh": kwh,
+            "part_autoconso": (kwh / prod) if prod > 0 else 0.0,
+            "base_eur": base,
+            "base_5a_eur": arrondi_euro(base),
+            "prix_moyen_eur_kwh": (base / kwh) if kwh > 0 else 0.0,
+            "tva_eur": base * lasm.taux,
+            "tva_due_eur": arrondi_euro(base * lasm.taux),
+        }
+
         estimation = an not in completes
         if estimation:
             # Point de depart de la projection : le dernier jour renseigne DE
@@ -1306,5 +1322,33 @@ def lasm_par_annee(df_brut: pd.DataFrame, lasm: LasmConfig,
             "jours_releves": int(len(tranche)),
             "estimation": estimation,
             "controle": controles.get(an),
+            "a_date": a_date,
         })
     return lignes
+
+
+# Dernier mois ou les tuiles de la page TVA montrent l'annee a declarer. La
+# declaration annuelle (CA12 / 3517-S) se depose debut mai : fin mai laisse
+# une marge.
+MOIS_FIN_DECLARATION_LASM = 5
+
+
+def ligne_des_tuiles_lasm(lignes: list[dict], aujourdhui: date
+                          ) -> tuple[dict, bool] | None:
+    """L'annee que montrent les tuiles du haut de la page TVA.
+
+    Rend (ligne, en_cours), ou None s'il n'y a rien a montrer.
+    - De janvier a fin mai : la derniere annee close, celle qui se declare
+      (en_cours = False).
+    - A partir de juin : l'annee en cours, en realise a ce jour
+      (en_cours = True). La declaration est faite, l'annee close est payee.
+      Sans releve de l'annee en cours, on reste sur la derniere annee close.
+    """
+    closes = [ligne for ligne in lignes if not ligne["estimation"]]
+    if aujourdhui.month > MOIS_FIN_DECLARATION_LASM:
+        for ligne in lignes:
+            if ligne["annee"] == aujourdhui.year:
+                return ligne, True
+    if closes:
+        return closes[-1], False
+    return None

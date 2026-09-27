@@ -352,3 +352,93 @@ def test_le_controle_est_rattache_a_l_annee_ou_il_se_cloture():
     assert par_annee[2024]["controle"] is None
     assert par_annee[2025]["controle"] is not None
 
+
+
+# -----------------------------------------------------------------------------
+# Les tuiles du haut de la page : quelle annee, et dit comment
+# -----------------------------------------------------------------------------
+# Demande du 27/09/2026 : passee la declaration (debut mai), les tuiles
+# montraient encore l'annee deja payee. Elles suivent desormais la saison :
+# l'annee a declarer de janvier a mai, l'annee en cours a partir de juin,
+# en REALISE a ce jour (l'estimation au 31/12 en sous-titre).
+
+def _trois_annees():
+    return _releves([
+        ("2023-01-15", 100.0, 0.0), ("2023-09-15", 100.0, 0.0),
+        ("2024-01-15", 100.0, 0.0), ("2024-09-15", 100.0, 0.0),
+        ("2025-01-15", 60.0, 0.0), ("2025-06-30", 0.0, 0.0),
+    ])
+
+
+def test_chaque_annee_porte_son_realise_a_date():
+    """L'annee en cours garde, a cote de sa projection, ce qui est
+    reellement acquis au dernier releve."""
+    lignes = calc.lasm_par_annee(_trois_annees(), _lasm_plat(),
+                                 aujourdhui=date(2025, 6, 30))
+    par_annee = {ligne["annee"]: ligne for ligne in lignes}
+
+    en_cours = par_annee[2025]["a_date"]
+    assert en_cours["jusquau"] == date(2025, 6, 30)
+    assert en_cours["autoconsommation_kwh"] == pytest.approx(60.0)
+    assert en_cours["base_eur"] == pytest.approx(6.0)
+    assert en_cours["tva_eur"] == pytest.approx(1.2)
+    assert en_cours["part_autoconso"] == pytest.approx(1.0)
+    # La projection, elle, ne change pas.
+    assert par_annee[2025]["autoconsommation_kwh"] == pytest.approx(120.0)
+
+    close = par_annee[2024]
+    assert close["a_date"]["jusquau"] == date(2024, 12, 31)
+    assert close["a_date"]["base_5a_eur"] == close["base_5a_eur"]
+
+
+def test_de_janvier_a_mai_les_tuiles_montrent_l_annee_a_declarer():
+    lignes = calc.lasm_par_annee(_trois_annees(), _lasm_plat(),
+                                 aujourdhui=date(2025, 5, 31))
+    ligne, en_cours = calc.ligne_des_tuiles_lasm(lignes, date(2025, 5, 31))
+    assert ligne["annee"] == 2024
+    assert en_cours is False
+
+
+def test_a_partir_de_juin_les_tuiles_montrent_l_annee_en_cours():
+    lignes = calc.lasm_par_annee(_trois_annees(), _lasm_plat(),
+                                 aujourdhui=date(2025, 6, 30))
+    ligne, en_cours = calc.ligne_des_tuiles_lasm(lignes, date(2025, 6, 1))
+    assert ligne["annee"] == 2025
+    assert en_cours is True
+
+
+def test_sans_releve_de_l_annee_les_tuiles_restent_sur_l_annee_close():
+    """En juillet 2026 avec des releves arretes en 2025 : pas d'annee en
+    cours a montrer, on garde la derniere annee close."""
+    lignes = calc.lasm_par_annee(_trois_annees(), _lasm_plat(),
+                                 aujourdhui=date(2026, 7, 1))
+    ligne, en_cours = calc.ligne_des_tuiles_lasm(lignes, date(2026, 7, 1))
+    assert ligne["annee"] == 2024
+    assert en_cours is False
+
+
+def test_sans_annee_close_ni_en_cours_pas_de_tuiles():
+    df = _releves([("2025-01-15", 60.0, 0.0), ("2025-06-30", 0.0, 0.0)])
+    lignes = calc.lasm_par_annee(df, _lasm_plat(), aujourdhui=date(2025, 3, 1))
+    assert calc.ligne_des_tuiles_lasm(lignes, date(2025, 3, 1)) is None
+
+
+def test_les_tuiles_de_l_annee_en_cours_ne_se_disent_pas_a_declarer():
+    """Un montant partiel ne doit jamais se presenter comme celui a porter
+    sur le formulaire."""
+    from views.tva import textes_tuiles
+    lignes = calc.lasm_par_annee(_trois_annees(), _lasm_plat(),
+                                 aujourdhui=date(2025, 6, 30))
+    par_annee = {ligne["annee"]: ligne for ligne in lignes}
+
+    en_cours = " ".join(" ".join(t) for t in
+                        textes_tuiles(par_annee[2025], True, 0.20))
+    assert "3517-S" not in en_cours
+    assert "à ce jour" in en_cours
+    assert "30/06/2025" in en_cours
+    assert "estimée au 31/12" in en_cours
+
+    a_declarer = " ".join(" ".join(t) for t in
+                          textes_tuiles(par_annee[2024], False, 0.20))
+    assert "3517-S" in a_declarer
+    assert "à déclarer" in a_declarer.lower()
