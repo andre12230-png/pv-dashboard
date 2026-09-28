@@ -163,6 +163,9 @@ lancement suivant les chiffres d'un mois passé consulté la veille.</p>
 2. La première ligne, surlignée, est prête avec la date attendue.<br>
 3. Saisissez les valeurs (touche Tab pour changer de case).<br>
 4. Cliquez sur <b>Enregistrer</b> : les autres vues se mettent à jour.</p>
+<p>Des valeurs tapées et <b>pas encore enregistrées</b> restent dans le tableau
+si vous allez voir un autre onglet. Avant de fermer l'application, d'ouvrir
+« Mes réglages » ou d'importer un fichier, elle vous demande quoi en faire.</p>
 <p>Les décimales s'écrivent avec une virgule (ex. 24,8). Les cases sans donnée
 peuvent rester vides. Le bouton <b>+ Ajouter une ligne</b> permet de saisir
 plusieurs jours d'un coup.</p>
