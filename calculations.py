@@ -399,14 +399,6 @@ def recale_sur_facture(df_daily: pd.DataFrame,
     return out
 
 
-def aggregate(df: pd.DataFrame, freq: str) -> pd.DataFrame:
-    """Aggrege une serie journaliere a la frequence demandee ('MS', 'YS', etc.)."""
-    if df.empty:
-        return df
-    cols = [c for c in df.columns if c.endswith("_kwh") or c.endswith("_eur")]
-    return df[cols].resample(freq).sum(min_count=1)
-
-
 # ----------------------------------------------------------------------
 # Annees OA (d'un anniversaire du contrat au suivant)
 # ----------------------------------------------------------------------

@@ -5,9 +5,9 @@ application ne chargeait pas la traduction de Qt. Les deux questions de la
 page Saisie affichaient donc « Yes / No », et le clic droit dans une case de
 saisie « Undo, Cut, Copy, Paste... ».
 
-La traduction doit etre posee des la creation de l'application, dans les
-deux portes d'entree (run.py, celle de l'exe, et app_desktop.main) : le
-message « deja ouvert » s'affiche avant tout le reste.
+La traduction doit etre posee des la creation de l'application, dans la
+porte d'entree (run.py, celle de l'exe et des lanceurs) : le message « deja
+ouvert » s'affiche avant tout le reste.
 
     py -m pytest tests/test_traduction_qt.py
 """
@@ -62,7 +62,7 @@ def _appels_dans_l_ordre(fichier: str, fonction: str) -> list[str]:
     raise AssertionError(f"{fonction} introuvable dans {fichier}")
 
 
-@pytest.mark.parametrize("fichier", ["run.py", "app_desktop.py"])
+@pytest.mark.parametrize("fichier", ["run.py"])
 def test_traduction_posee_avant_le_message_deja_ouvert(fichier):
     appels = _appels_dans_l_ordre(fichier, "main")
     assert "installer_traduction_qt" in appels

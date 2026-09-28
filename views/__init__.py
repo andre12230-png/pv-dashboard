@@ -19,7 +19,6 @@ from views._helpers import (
     mois_de_reference,
     options_annees,
     options_mois,
-    pas_graphique,
     period_options,
     periode_voisine,
 )
@@ -51,7 +50,6 @@ __all__ = [
     "label_mois_fr",
     "options_annees",
     "options_mois",
-    "pas_graphique",
     "period_options",
     "mois_de_reference",
     "periode_voisine",

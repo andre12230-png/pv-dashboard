@@ -587,38 +587,6 @@ def _df_de(jours: int) -> pd.DataFrame:
     return pd.DataFrame({"production_kwh": [1.0] * jours}, index=idx)
 
 
-@pytest.mark.parametrize("jours, freq, adjectif", [
-    (7, "7D", "hebdomadaire"),      # une semaine
-    (31, "7D", "hebdomadaire"),     # un mois -> 5 tranches, pas 1 barre
-    (70, "7D", "hebdomadaire"),     # limite basse
-    (71, "MS", "mensuel"),
-    (365, "MS", "mensuel"),         # une annee -> 12 barres
-    (550, "MS", "mensuel"),         # limite haute
-    (551, "YS", "annuel"),
-    (1554, "YS", "annuel"),         # tout l'historique -> 5 barres, pas 208
-])
-def test_pas_graphique(jours, freq, adjectif):
-    from views._helpers import pas_graphique
-    f, _, adj = pas_graphique(_df_de(jours))
-    assert (f, adj) == (freq, adjectif)
-
-
-def test_pas_graphique_df_vide():
-    from views._helpers import pas_graphique
-    freq, _, adj = pas_graphique(pd.DataFrame())
-    assert (freq, adj) == ("MS", "mensuel")
-
-
-def test_pas_graphique_etiquettes_restent_dans_la_periode():
-    # Le pas 7D est cale sur le debut : la derniere etiquette ne peut pas
-    # deborder du mois affiche (ce que faisait W-MON, nomme par sa fin).
-    from views._helpers import pas_graphique
-    df = _df_de(31)
-    freq, _, _ = pas_graphique(df)
-    agrege = df.resample(freq).sum()
-    assert agrege.index.max() <= df.index.max()
-
-
 # -----------------------------------------------------------------------------
 # Recalage sur les totaux factures (jours releves mais arrondis)
 # -----------------------------------------------------------------------------

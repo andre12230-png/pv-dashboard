@@ -52,16 +52,6 @@ def police_tabulaire(taille_pt: int = 10, gras: bool = False) -> QFont:
     return f
 
 
-def colored_label(text: str, color: str, weight: int = 700, size: int = 13) -> QLabel:
-    lbl = QLabel(text)
-    f = QFont()
-    f.setPointSize(size - 3)
-    f.setWeight(QFont.Weight(weight))
-    lbl.setFont(f)
-    lbl.setStyleSheet(f"color: {color}; background: transparent;")
-    return lbl
-
-
 # ----------------------------------------------------------------------
 # Cartes
 # ----------------------------------------------------------------------

@@ -114,14 +114,11 @@ def _log_traceback() -> None:
 def prendre_le_verrou(chemin: str | None = None) -> QLockFile | None:
     """Verrou d'instance unique : rend le QLockFile, ou None s'il est pris.
 
-    Meme verrou (meme fichier) que prendre_le_verrou() dans app_desktop.py,
-    recopie ici pour la meme raison que _base_dir() : il doit etre pris
-    AVANT d'importer app_desktop, lent a charger.
-
-    Il manquait ici jusqu'en 1.30.0 : seul le lancement direct de
-    app_desktop.py le prenait, or l'exe, Lancer.vbs et Lancer.bat passent
-    tous par ce fichier. Deux fenetres pouvaient donc s'ouvrir et la derniere
-    a enregistrer effacait les saisies de l'autre.
+    Pris ici, AVANT d'importer app_desktop (lent a charger) : l'exe,
+    Lancer.vbs et Lancer.bat passent tous par ce fichier. Sans lui, deux
+    fenetres pouvaient s'ouvrir et la derniere a enregistrer effacait les
+    saisies de l'autre. (app_desktop.py avait sa propre porte d'entree, avec
+    une copie de ce verrou ; inutilisee, elle a ete retiree le 28/09/2026.)
     """
     chemin = chemin or os.path.join(QDir.tempPath(), "pv-dashboard.lock")
     verrou = QLockFile(chemin)

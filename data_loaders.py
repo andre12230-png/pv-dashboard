@@ -25,7 +25,6 @@ API publique :
                               (lecture du recharges.json de l'app recharges-ve)
     retirer_jour_en_cours(valeurs) -> enleve la journee en cours (incomplete)
     merge_import(rows, colonne, valeurs) -> fusion sans doublon par date
-    resample_sum(df, freq)  -> helper pandas (resample par somme)
 """
 
 from __future__ import annotations
@@ -49,17 +48,6 @@ def _first_matching(cols: Iterable[str], candidates: Iterable[str]) -> str | Non
         if cand.lower() in cols_lower:
             return cols_lower[cand.lower()]
     return None
-
-
-# ----------------------------------------------------------------------
-# Helpers
-# ----------------------------------------------------------------------
-
-def resample_sum(df: pd.DataFrame, freq: str) -> pd.DataFrame:
-    """Resample par somme. freq: 'D' (jour), 'MS' (mois), 'YS' (annee)."""
-    if df.empty:
-        return df
-    return df.resample(freq).sum(min_count=1)
 
 
 # ----------------------------------------------------------------------

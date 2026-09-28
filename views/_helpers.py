@@ -273,35 +273,6 @@ def _alerte_dates_illisibles(illisibles: list[str] | None) -> str:
     )
 
 
-def pas_graphique(df: pd.DataFrame) -> tuple[str, str, str]:
-    """
-    Choisit le pas de temps d'un graphique en fonction de l'etendue affichee.
-
-    Le pas etait fige au mois : sur « Toute la periode » cela faisait 52 mois
-    x 4 series = 208 barres sur 12 cm (illisible), et sur un seul mois une
-    unique barre par serie (sans interet).
-
-    Retourne (frequence pandas, format de date des etiquettes, adjectif au
-    SINGULIER — a accorder par l'appelant : « Bilan mensuel », « Flux
-    mensuels ») :
-      - jusqu'a ~2 mois   -> semaines  (4 a 9 groupes)
-      - jusqu'a ~18 mois  -> mois      (jusqu'a 18 groupes)
-      - au-dela           -> annees    (un groupe par annee)
-    """
-    if df.empty:
-        return "MS", "%m/%y", "mensuel"
-    jours = (df.index.max() - df.index.min()).days + 1
-    if jours <= 70:
-        # Tranches de 7 jours calees sur le debut de la periode, plutot que
-        # des semaines calendaires : pandas les nommerait par leur date de
-        # FIN, qui deborde du mois affiche ("03/08" sur un graphique de
-        # juillet). Ici chaque etiquette est le premier jour de sa tranche.
-        return "7D", "%d/%m", "hebdomadaire"
-    if jours <= 550:
-        return "MS", "%m/%y", "mensuel"
-    return "YS", "%Y", "annuel"
-
-
 def period_options(df: pd.DataFrame, start_oa) -> list[tuple[str, str]]:
     """Toutes les periodes valides, a plat : [(label, value), ...].
 

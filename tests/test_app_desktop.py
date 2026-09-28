@@ -20,34 +20,21 @@ def test_une_seule_instance_a_la_fois(tmp_path):
     # Deux fenetres ouvertes sur le meme CSV se relisent et se reecrivent
     # mutuellement : la derniere a enregistrer gagne, et les saisies de
     # l'autre disparaissent sans un mot.
+    import run
+
     chemin = str(tmp_path / "pv-dashboard.lock")
 
-    premier = app_desktop.prendre_le_verrou(chemin)
+    premier = run.prendre_le_verrou(chemin)
     assert premier is not None, "la premiere instance doit obtenir le verrou"
 
-    second = app_desktop.prendre_le_verrou(chemin)
+    second = run.prendre_le_verrou(chemin)
     assert second is None, "la seconde instance doit etre refusee"
 
     # Une fois la premiere fermee, une nouvelle instance redevient possible.
     premier.unlock()
-    troisieme = app_desktop.prendre_le_verrou(chemin)
+    troisieme = run.prendre_le_verrou(chemin)
     assert troisieme is not None
     troisieme.unlock()
-
-
-def test_le_lanceur_prend_aussi_le_verrou(tmp_path):
-    """L'exe, Lancer.vbs et Lancer.bat demarrent par run.py : c'est la que le
-    verrou doit etre pris. Jusqu'en 1.30.0 il ne l'etait que par
-    app_desktop.main(), que personne n'utilise, et deux fenetres pouvaient
-    s'ouvrir. Les deux fonctions partagent le meme fichier de verrou."""
-    import run
-
-    chemin = str(tmp_path / "pv-dashboard.lock")
-    premier = run.prendre_le_verrou(chemin)
-    assert premier is not None
-    # Une fenetre ouverte par l'autre voie est refusee elle aussi.
-    assert app_desktop.prendre_le_verrou(chemin) is None
-    premier.unlock()
 
 
 def test_le_lanceur_s_arrete_si_le_verrou_est_pris():

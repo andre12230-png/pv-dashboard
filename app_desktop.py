@@ -10,7 +10,6 @@ from __future__ import annotations
 import os
 import shutil
 import sys
-import traceback
 from datetime import date
 from pathlib import Path
 
@@ -19,7 +18,7 @@ import matplotlib
 matplotlib.use("QtAgg")
 import pandas as pd
 import yaml
-from PySide6.QtCore import QDir, QLockFile, QSettings, Qt
+from PySide6.QtCore import QSettings, Qt
 from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
@@ -48,7 +47,7 @@ import sauvegarde_externe
 from app_data import AppData
 from erreurs import erreur_en_clair
 from fenetre_reglages import FenetreReglages
-from gui_theme import LIGHT, appliquer_style, installer_traduction_qt, mpl_style, qss_for
+from gui_theme import LIGHT, appliquer_style, mpl_style, qss_for
 from views import (
     MOIS_TOUS,
     PERIOD_ALL,
@@ -1309,24 +1308,6 @@ if not ICON_PATH.exists() and getattr(sys, "frozen", False):
     ICON_PATH = Path(sys.executable).parent / "pv-dashboard.ico"
 
 
-WIN_APP_ID = "pvdashboard.gestion.6kwc"
-
-
-def set_windows_app_id() -> None:
-    """Windows : identite d'app distincte pour que la barre des taches affiche
-    notre icone et non celle de Python/pythonw. A appeler AVANT la creation de
-    QApplication. Sans effet hors Windows."""
-    if sys.platform != "win32":
-        return
-    try:
-        import ctypes
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(WIN_APP_ID)
-    except (OSError, AttributeError) as exc:
-        # Cosmetique : si echec, la barre des taches affichera l'icone Python.
-        print(f"[warn] SetCurrentProcessExplicitAppUserModelID: {exc}",
-              file=sys.stderr)
-
-
 def configure_application(app: QApplication) -> None:
     """Renseigne nom, version et icone sur la QApplication."""
     app.setApplicationName(APP_NAME)
@@ -1377,68 +1358,3 @@ def annoncer_premier_lancement(parent: QWidget | None) -> None:
     boite.exec()
     if boite.clickedButton() is remplir and hasattr(parent, "_ouvrir_reglages"):
         parent._ouvrir_reglages()
-
-
-def prendre_le_verrou(chemin: str | None = None) -> QLockFile | None:
-    """Verrou d'instance unique. Rend le QLockFile, ou None s'il est deja pris.
-
-    Rien n'empechait de lancer deux fois l'application. Or les deux fenetres
-    lisent le meme CSV au demarrage, puis le reecrivent INTEGRALEMENT a
-    chaque enregistrement : la derniere a enregistrer gagne, et les saisies
-    faites dans l'autre fenetre disparaissent sans un mot.
-
-    Le verrou doit rester vivant tant que l'application tourne : main() le
-    garde donc dans une variable jusqu'a la fin.
-    """
-    chemin = chemin or os.path.join(QDir.tempPath(), "pv-dashboard.lock")
-    verrou = QLockFile(chemin)
-    # 0 = pas de peremption par le temps. Un verrou laisse par une
-    # application qui a plante est repris grace au PID qu'il contient, mais
-    # une session longue n'est jamais consideree comme abandonnee.
-    verrou.setStaleLockTime(0)
-    return verrou if verrou.tryLock(100) else None
-
-
-def main() -> int:
-    set_windows_app_id()
-    app = QApplication(sys.argv)
-    installer_traduction_qt(app)
-    configure_application(app)
-
-    verrou = prendre_le_verrou()
-    if verrou is None:
-        QMessageBox.warning(
-            None, APP_NAME,
-            f"{APP_NAME} est déjà ouvert.\n\n"
-            "Deux fenêtres ouvertes en même temps se réécrivent le même "
-            "fichier de relevés : la dernière enregistrée effacerait les "
-            "saisies de l'autre.\n\n"
-            "Utilisez la fenetre déjà ouverte.")
-        return 1
-
-    # Chargement config + donnees APRES la creation de QApplication :
-    # en cas d'erreur (config.yaml malforme, CSV introuvable...) on peut
-    # afficher une boite de dialogue au lieu de mourir silencieusement
-    # sous pythonw (ou seul le fichier log recevait la trace).
-    try:
-        win = create_window()
-    except Exception as exc:  # frontiere applicative : tout doit etre signale
-        traceback.print_exc()  # trace complete -> pv-dashboard.log sous pythonw
-        QMessageBox.critical(
-            None,
-            APP_NAME,
-            "Impossible de démarrer l'application.\n\n"
-            f"{erreur_en_clair(exc)}\n\n"
-            "Vérifiez config.yaml et le fichier de relevés.\n"
-            f"Trace complète dans {LOG_PATH}.",
-        )
-        return 1
-
-    win.show()
-    annoncer_premier_lancement(win)
-    win.inviter_a_donner_son_avis()
-    return app.exec()
-
-
-if __name__ == "__main__":
-    sys.exit(main())

@@ -243,12 +243,19 @@ class DashboardView(BaseView):
         return card
 
     @staticmethod
+    def _pas_production(df: pd.DataFrame) -> str:
+        """Jour par jour sur un mois (ou deux), semaine par semaine sur une
+        annee, mois par mois au-dela. Une seule regle pour la mini-courbe et
+        la carte « production au fil des jours » : elle etait recopiee."""
+        jours = len(df)
+        return "D" if jours <= 62 else ("W" if jours <= 400 else "MS")
+
+    @staticmethod
     def _allure_production(df: pd.DataFrame) -> list[float]:
         """Les batons de la mini-courbe : un par jour sur un mois, un par
         semaine sur une annee, un par mois au-dela. Assez pour voir l'allure,
         jamais au point de ne plus distinguer les batons."""
-        jours = len(df)
-        freq = "D" if jours <= 62 else ("W" if jours <= 400 else "MS")
+        freq = DashboardView._pas_production(df)
         return df["production_kwh"].resample(freq).sum().tolist()
 
     def _badge_n1(self, df: pd.DataFrame, period: str,
@@ -538,8 +545,7 @@ class DashboardView(BaseView):
     def _carte_production_jours(self, df: pd.DataFrame) -> QFrame:
         """La production au fil de la periode, le meilleur jour (ou semaine,
         ou mois) en couleur pleine et chiffre, les autres adoucis."""
-        jours = len(df)
-        freq = "D" if jours <= 62 else ("W" if jours <= 400 else "MS")
+        freq = self._pas_production(df)
         titre, nom_record, fmt_date = self.PAS_PRODUCTION[freq]
         serie = df["production_kwh"].resample(freq).sum()
         if freq == "W":
