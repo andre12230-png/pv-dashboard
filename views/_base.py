@@ -9,7 +9,7 @@ from gui_widgets import Card
 
 
 class BaseView(QWidget):
-    """Classe de base : chaque vue implemente `populate(df, period)`."""
+    """Classe de base : chaque vue implemente `populate(period)`."""
 
     # False dans les vues qui ignorent le selecteur de periode global :
     # MainWindow grise alors le menu deroulant quand la vue est affichee.

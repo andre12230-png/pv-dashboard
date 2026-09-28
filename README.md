@@ -175,8 +175,9 @@ d'une annee OA se lisent en survolant son entree dans le menu.
 ## Le menu de gauche
 
 Les pages sont rangees en quatre sections — Principal, Contrats, Analyse,
-Autres — chacune avec un pictogramme, separees par un filet. Deux n'apparaissent
-que si elles vous concernent : **TVA autoconsommation** (section `tva_lasm`
+Autres — chacune avec un pictogramme, separees par un filet. Trois n'apparaissent
+que si elles vous concernent : **Annees OA** (si vous vendez votre electricite :
+masquee avec `oa.type: aucune`), **TVA autoconsommation** (section `tva_lasm`
 remplie) et la **comparaison avec EDF** (fournisseur autre qu'EDF). Le bandeau reprend celui de Pecule : boutons rectangulaires, un
 emoji devant chaque libelle, titres de section soulignes ; la page
 affichee est le bouton surligne en bleu. En haut du
@@ -192,14 +193,16 @@ version.
 | Releves journaliers | Journal jour par jour : production, autoconsommee, injectee, achetee au reseau (et part du vehicule), recettes, depenses, bilan du jour ; ligne de totaux de la periode sous le tableau (a part, pour que le tri ne la deplace pas) |
 | Repartition energie | Taux d'autoconsommation, couverture solaire et bilan ; diagramme de flux (Sankey) production/reseau -> injection/consommation ; detail par poste avec prix au kWh ; comparaison N vs N-1 |
 | Synthese financiere | 6 postes (Vente OA, Prime, Economies, Facture, Investissement, Bilan global) + graphique « Remboursement de l'installation » (ce qu'elle a rapporte face a son cout, projection au rythme actuel ; chaque versement de la prime, qui fait une marche dans la courbe, est marque d'un point et le dernier porte l'etiquette « Prime autoconso »). Le **bilan global** = ventes + economies + primes versees − cout de l'installation : la facture reseau n'y entre pas (on la paierait sans panneaux ; ce que les panneaux y changent est deja dans les economies). Meme calcul que la barre « Installation remboursee » du tableau de bord (`amortissement()`) |
-| Annees OA | Recap par annee de contrat OA (de sa date de debut a la veille de son anniversaire) |
+| Annees OA | Recap par annee de contrat OA (de sa date de debut a la veille de son anniversaire). **Masquee sans revente** (`oa.type: aucune`) |
 | TVA autoconsommation | Base de la livraison a soi-meme par annee civile (ligne 5A du 3517-S), TVA due, et recoupement des injections relevees avec les factures EDF OA. **N'apparait que si la section `tva_lasm` est remplie** : elle ne concerne que les producteurs assujettis a la TVA |
 | Statistiques | Comparaisons annuelles, rendement kWh/kWc |
 | Comparaison N vs N-1 | La periode choisie en haut (mois, annee, annee OA) vs la meme periode un an plus tot (periode en cours : memes dates de N-1) ; bouton « Une journee precise » pour comparer un jour donne |
 | *Fournisseur* vs *reference* | Cout reel du contrat en cours vs simulation de l'offre de reference, options Base et HP/HC (depuis la bascule). Le libelle porte les noms declares en config : "Mon fournisseur vs EDF" avec le modele livre. **Masque quand le fournisseur declare est EDF** (`nom: "EDF"`) : comparer EDF a EDF n'a pas de sens |
 | Notice | Mode d'emploi et glossaire des termes |
 | Votre avis | Ouvre un court questionnaire en ligne dans le navigateur (probleme, idee), apres avoir copie la version. L'application n'envoie rien elle-meme. Une seule invitation, deux semaines apres le premier lancement |
-| Parametres | Vue lecture seule de la configuration, et la liste des recalages actifs |
+| Parametres | Vue lecture seule de la configuration, et la liste des recalages actifs ; bouton « Modifier mes reglages » |
+| 💾 Sauvegarde externe | Copie les donnees sur une cle USB ou un disque choisi, verifiee fichier par fichier. Un rappel s'affiche sur le tableau de bord au-dela de 30 jours sans sauvegarde |
+| 🔄 Mise a jour | Affiche la version installee et ouvre, a la demande, la page de la derniere version dans le navigateur : l'application ne se connecte jamais a Internet, c'est vous qui comparez les numeros |
 
 ## Donnees
 
@@ -281,7 +284,8 @@ export "date + valeur" passe (voir plus bas). Les trois sources habituelles :
   creuses / heures pleines**. Si vous injectez, sa feuille d'index de
   production donne en plus votre **injection** : un seul fichier remplit
   quatre colonnes. Pour l'obtenir : *Ma consommation > Suivre ma
-  consommation*, choisir **Index (kWh)** dans le menu de droite, puis
+  consommation*, choisir **Mixte** dans le menu du milieu (sans quoi la
+  production manque) et **Index (kWh)** dans celui de droite, puis
   *Telecharger le .xlsx* ;
 - **chez Enedis** toujours, le **classeur Excel** officiel
   (`..._Export_energie_Consommation-Production_....xlsx`) : les feuilles
@@ -725,6 +729,7 @@ pv-dashboard/
 ├── Lancer.bat            # Lanceur debug (console visible)
 ├── Construire-Exe.bat    # Fabrique le dossier dist
 ├── faire_installeur.py   # Fabrique distribution\pv-dashboard-Setup-X.Y.Z.exe
+├── faire_archive.py      # Fabrique l'archive portable (.zip), sans installeur
 ├── installeur/
 │   └── pv-dashboard.iss  #   Recette Inno Setup. Son AppId ne doit JAMAIS
 │                         #   changer (reconnaissance des mises a jour)
@@ -737,6 +742,13 @@ pv-dashboard/
 ├── data_loaders.py       # Lecture/ecriture Releves-pv.csv (atomique + .bak)
 ├── gui_theme.py          # Theme clair + QSS + style matplotlib
 ├── gui_widgets.py        # Widgets reutilisables (cards, KPI, pill...)
+├── reglages.py           # « Mes reglages » : lire et ecrire config.yaml
+├── fenetre_reglages.py   #   ... et la fenetre qui les presente
+├── erreurs.py            # Erreurs techniques dites en francais (commun
+│                         #   aux trois applications de l'auteur)
+├── sauvegarde_externe.py # Copie verifiee sur cle USB ou disque (commun)
+├── mise_a_jour.py        # Existe-t-il une version plus recente ?
+├── avis.py               # « Votre avis » : le questionnaire en ligne
 ├── views/                # Une vue par fichier, une par section de l'app
 │   ├── _base.py          #   BaseView commune
 │   ├── _helpers.py       #   formatage FR + filtrage de periode
@@ -768,6 +780,8 @@ pv-dashboard/
 │   -- verification et outillage --
 ├── tests/                # Tests unitaires pytest
 ├── smoke_desktop.py      # Test de bon demarrage (offscreen)
+├── demo_releves.py       # Releves INVENTES (smoke test, captures)
+├── captures_site.py      # Captures de la page de presentation
 ├── pytest.ini
 ├── ruff.toml             # Regles d'analyse statique
 ├── requirements.txt      # Dependances d'execution

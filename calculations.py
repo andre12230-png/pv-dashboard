@@ -11,8 +11,9 @@ Modele :
 Tarifs :
   - Vente OA surplus : prix unique * injection
   - Prime autoconso : montant_par_kwc * Pcrete reparti sur 5 ans
-  - Achat reseau    : Bleu Base par tranches historiques jusqu'au 31/12/2025,
-                      puis Octopus HP/HC depuis le 01/01/2026.
+  - Achat reseau    : tarif a prix unique (Bleu Base) par tranches, puis
+                      contrat HP/HC a partir de la date de bascule
+                      (tarifs_reseau.bascule_hphc ; 01/01/2026 par defaut).
 """
 
 from __future__ import annotations
@@ -798,9 +799,9 @@ def cout_reseau_journalier(
     """
     Calcule le cout d'achat reseau journalier en EUR.
 
-    - Avant 2026 : prix unique Bleu Base * soutirage_kwh journalier
-    - Depuis 2026 : si soutirage_par_heure dispo -> split HP/HC reel ;
-                    sinon estimation via ratio HP/HC moyen.
+    - Avant la bascule HP/HC : prix unique Bleu Base * soutirage_kwh
+    - Depuis la bascule : detail HC/HP du jour s'il est releve ; sinon
+      estimation par le ratio HC observe sur les jours detailles.
     """
     out = df_daily.copy()
     out["cout_reseau_eur"] = 0.0
@@ -907,8 +908,8 @@ def economies_autoconsommation(
     Estimation de l'economie liee a l'autoconsommation : autoconso_kwh valorisee
     au prix d'achat reseau du moment.
 
-    - Avant 2026 : prix Bleu Base de la date.
-    - Depuis 2026 (Octopus) : l'autoconso remplace des achats en journee
+    - Avant la bascule HP/HC : prix Bleu Base de la date.
+    - Depuis la bascule : l'autoconso remplace des achats en journee
       (heures solaires), donc surtout en HP. On pondere HP/HC par
       part_hc_autoconso (config), et non par la duree des plages sur 24 h
       qui inclurait a tort la plage HC de nuit.

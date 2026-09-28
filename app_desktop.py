@@ -1,8 +1,8 @@
 """
 Application desktop PySide6 - Dashboard photovoltaique style "appli comptes".
 
-Lancer :
-    py app_desktop.py
+Se lance par run.py (Lancer.vbs, Lancer.bat, l'exe) : c'est lui qui montre
+l'ecran d'attente puis ouvre cette fenetre.
 """
 
 from __future__ import annotations
@@ -734,7 +734,7 @@ class MainWindow(QMainWindow):
         self._update_status_bar()
 
     # Au-dela de cette longueur, deux noms de fournisseurs ne tiennent plus
-    # dans le menu (largeur fixe de 230 px) : on retombe sur un libelle
+    # dans le menu (largeur fixe de 212 px) : on retombe sur un libelle
     # generique plutot que sur un texte coupe au milieu.
     LARGEUR_MAX_NAV = 22
 
@@ -755,8 +755,7 @@ class MainWindow(QMainWindow):
         sections annoncees par un petit titre souligne. Difference avec
         Pecule, dont les boutons lancent des actions : ici ils menent a des
         pages, et celle qui est affichee est le bouton surligne. Les couleurs
-        suivent le theme (gui_theme.py) : en theme clair, ce sont celles de
-        Pecule ; en sombre, leur transposition.
+        suivent le theme (gui_theme.py), clair et seul : celles de Pecule.
         """
         sidebar = QFrame()
         sidebar.setObjectName("Sidebar")
