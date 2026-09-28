@@ -597,20 +597,16 @@ def parse_enedis_csv_texte(texte: str) -> tuple[str, dict[str, str]]:
 
     brutes: list[tuple[str, float]] = []
     for ligne in texte.splitlines():
-        if ";" in ligne:
-            cellules = ligne.split(";")
-        elif "\t" in ligne:
-            cellules = ligne.split("\t")
-        else:
-            continue
-        cellules = [c.strip().strip('"') for c in cellules]
+        # Point-virgule, tabulation ou virgule, comme le promet la Notice.
+        cellules, virgule = _decoupe_ligne(ligne)
         if len(cellules) < 2:
             continue
         jour = _parse_date_any(cellules[0])
         if jour is None:
             continue  # ligne de metadonnees / entete
         valeur = next(
-            (v for v in (_parse_nombre(c) for c in cellules[1:]) if v is not None),
+            (v for v in (_nombre_cellule(c, virgule) for c in cellules[1:])
+             if v is not None),
             None,
         )
         if valeur is None:
@@ -621,7 +617,7 @@ def parse_enedis_csv_texte(texte: str) -> tuple[str, dict[str, str]]:
         raise ValueError(
             "Aucune ligne 'date;valeur' reconnue. Attendu : un export "
             "quotidien Enedis (une date et un nombre par ligne, separes "
-            "par des points-virgules)."
+            "par des points-virgules, des virgules ou des tabulations)."
         )
 
     if unite_kwh is None:
@@ -702,7 +698,10 @@ def parse_octopus_suivi_conso(texte: str) -> dict[str, dict[str, str]] | None:
     resultat: dict[str, dict[str, str]] = {}
 
     for ligne in texte.splitlines():
-        cellules = [c.strip().strip('"') for c in ligne.split(";")]
+        # Meme decoupage que les autres lecteurs : sans lui, un fichier separe
+        # par des tabulations n'etait pas reconnu, et le lecteur generique
+        # rangeait alors les heures creuses en consommation totale.
+        cellules, virgule = _decoupe_ligne(ligne)
         if len(cellules) < 2:
             continue
 
@@ -741,7 +740,7 @@ def parse_octopus_suivi_conso(texte: str) -> dict[str, dict[str, str]] | None:
         for i, cible in entetes.items():
             if i >= len(cellules):
                 continue
-            valeur = _parse_nombre(cellules[i])
+            valeur = _nombre_cellule(cellules[i], virgule)
             if valeur is not None:
                 resultat.setdefault(cible, {})[jour] = _fmt_kwh_fr(valeur)
 
@@ -1251,6 +1250,17 @@ def _decoupe_ligne(ligne: str) -> tuple[list[str], bool]:
     return [c.strip().strip('"') for c in ligne.split(sep)], virgule
 
 
+def _nombre_cellule(cell: str, virgule: bool) -> float | None:
+    """Lit un nombre dans une cellule decoupee par _decoupe_ligne.
+
+    Dans un fichier separe par des virgules, seul le point est decimal
+    ("5.5") ; sinon la virgule francaise est acceptee ("5,5")."""
+    if not virgule:
+        return _parse_nombre(cell)
+    brut = cell.replace(" ", "").replace(" ", "")
+    return float(brut) if _RE_NOMBRE_POINT.match(brut) else None
+
+
 def parse_enphase_texte(texte: str) -> dict[str, str]:
     """
     Lit le contenu d'un rapport Enphase Enlighten (menu Systeme > Rapports,
@@ -1283,17 +1293,11 @@ def parse_enphase_texte(texte: str) -> dict[str, str]:
         jour = _parse_jour_any(cellules[0])
         if jour is None:
             continue  # entete ou ligne de metadonnees
-        valeur = None
-        for cell in cellules[1:]:
-            if virgule:
-                # Fichier separe par des virgules : seul le point est decimal.
-                brut = cell.replace(" ", "").replace(" ", "")
-                v = float(brut) if _RE_NOMBRE_POINT.match(brut) else None
-            else:
-                v = _parse_nombre(cell)
-            if v is not None:
-                valeur = v
-                break
+        valeur = next(
+            (v for v in (_nombre_cellule(c, virgule) for c in cellules[1:])
+             if v is not None),
+            None,
+        )
         if valeur is None:
             continue
         totaux[jour] = totaux.get(jour, 0.0) + valeur
