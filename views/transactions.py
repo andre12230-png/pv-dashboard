@@ -93,7 +93,8 @@ class TransactionsView(BaseView):
         # to_dict et non iterrows, qui fabrique un objet par ligne : sur
         # toute la periode, c'etait l'essentiel du temps d'affichage.
         for row, (d, r) in enumerate(zip(df.index,
-                                         df.to_dict("records"))):
+                                         df.to_dict("records"),
+                                         strict=True)):
             credit = r["revenu_vente_eur"] + r["economie_eur"]
             debit = r["cout_reseau_eur"]
             bilan = r["bilan_jour_eur"]
