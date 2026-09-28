@@ -661,10 +661,12 @@ def test_part_hc_est_lue_telle_qu_ecrite():
 
 
 def test_part_hc_absente_vaut_ce_que_l_application_utilise():
-    # Sans la ligne, les calculs prennent 20 % (app_desktop) : la fenetre
-    # doit montrer ce qui est reellement applique, pas une case vide.
+    # Sans la ligne, les calculs prennent 0 % (decision d'Andre du
+    # 28/09/2026 : les heures creuses tombent le plus souvent la nuit, quand
+    # les panneaux ne produisent rien ; c'etait 20 %, et 0 dans le modele).
+    # La fenetre doit montrer ce qui est reellement applique.
     cfg = yaml.safe_load(_sans_part_hc(ANCIEN))
-    assert rg.lire_reglages(cfg)["part_hc_autoconso"] == 0.20
+    assert rg.lire_reglages(cfg)["part_hc_autoconso"] == 0.0
 
 
 def test_changer_la_part_hc_ne_touche_que_sa_ligne():
@@ -689,8 +691,8 @@ def test_part_hc_absente_et_inchangee_n_ecrit_rien():
 
 
 def test_part_hc_absente_puis_changee_est_ajoutee_au_contrat():
-    _nouveau, relu = _appliquer(_sans_part_hc(ANCIEN), part_hc_autoconso=0.0)
-    assert relu["tarifs_reseau"]["octopus_hphc"]["part_hc_autoconso"] == 0.0
+    _nouveau, relu = _appliquer(_sans_part_hc(ANCIEN), part_hc_autoconso=0.35)
+    assert relu["tarifs_reseau"]["octopus_hphc"]["part_hc_autoconso"] == 0.35
 
 
 @pytest.mark.parametrize("part", [-0.1, 1.5])

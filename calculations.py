@@ -550,12 +550,12 @@ class OctopusConfig:
     # achetes au reseau. L'autoconso est diurne (production solaire) : la
     # plage HC de nuit ne la concerne jamais, seule celle de l'apres-midi
     # compte (~20 % de la production d'une journee).
-    part_hc_autoconso: float = 0.20
+    part_hc_autoconso: float = 0.0
 
     @classmethod
     def periode_unique(cls, abonnement_mensuel: float, prix_hp: float,
                        prix_hc: float, plages_hc: list[tuple[time, time]],
-                       part_hc_autoconso: float = 0.20) -> "OctopusConfig":
+                       part_hc_autoconso: float = 0.0) -> "OctopusConfig":
         """Grille a prix constants, sans changement de tarif (tests, cas simple)."""
         return cls(
             periodes=[{"debut": "1970-01-01", "fin": None,

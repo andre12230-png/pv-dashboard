@@ -73,8 +73,11 @@ def _contrat(cfg: dict) -> dict:
 
 
 # Valeur appliquee par les calculs quand le fichier ne dit rien (voir
-# app_desktop.build_dataset) : la fenetre doit montrer la meme.
-PART_HC_PAR_DEFAUT = 0.20
+# calculations.PART_HC_AUTOCONSO_PAR_DEFAUT) : la fenetre doit montrer la
+# meme. 0 depuis le 28/09/2026 (decision d'Andre) : les heures creuses
+# tombent le plus souvent la nuit, quand les panneaux ne produisent rien.
+# C'etait 20 % dans le code, et deja 0 dans le modele livre.
+PART_HC_PAR_DEFAUT = 0.0
 
 
 def _part_hc(contrat: dict) -> float:

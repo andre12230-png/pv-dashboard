@@ -619,7 +619,7 @@ code les fait bouger un jour, le test tombe. Faites de meme avec les votres.
   case « Autoconsommation en heures creuses » de **Mes reglages**, en %), la
   part d'autoconso qui tomberait en heures creuses — l'autoconso etant
   diurne, elle est faible, sauf plage creuse l'apres-midi. Absente du
-  fichier, elle vaut 20 %
+  fichier, elle vaut 0 % (20 % avant la 1.51.6)
 - **Bilan net** (tableau de bord, pastille) = Vente OA + Economies − Facture
   reseau. La prime, versee une fois par an a l'anniversaire OA, est comptee
   a part dans la Synthese financiere et les Annees OA

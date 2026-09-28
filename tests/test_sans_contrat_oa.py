@@ -229,3 +229,26 @@ def test_chez_edf_oa_la_notice_ne_change_pas(qapp, tmp_path, monkeypatch):
         assert "la vente à EDF OA" in texte
     finally:
         win.close()
+
+
+# ── Part HC de l'autoconsommation : 0 % par defaut (28/09/2026) ─────────────
+
+def _sans_part_hc(cfg):
+    cfg["tarifs_reseau"]["contrat_hphc"].pop("part_hc_autoconso", None)
+
+
+def test_sans_part_hc_declaree_les_calculs_prennent_zero(tmp_path, monkeypatch):
+    # Decision d'Andre : 0 partout. Le code prenait 20 %, le modele ecrit 0.
+    data = _donnees(tmp_path, monkeypatch, _sans_part_hc)
+    assert data.octopus.part_hc_autoconso == 0.0
+
+
+def test_sans_part_hc_declaree_les_parametres_affichent_zero(
+        qapp, tmp_path, monkeypatch):
+    win = _fenetre(qapp, tmp_path, monkeypatch, _sans_part_hc)
+    try:
+        textes = _textes(win, "settings")
+        assert "0,0 %" in textes
+        assert "20,0 %" not in textes
+    finally:
+        win.close()

@@ -101,7 +101,7 @@ class SettingsView(BaseView):
         octopus_rows += [
             ("Plages HC", " / ".join(octopus["plages_hc"])),
             ("Part HC de l'autoconso (estimation)",
-             fmt_pct(octopus.get("part_hc_autoconso", 0.20) * 100)),
+             fmt_pct(octopus.get("part_hc_autoconso", 0.0) * 100)),
         ]
         # Les deux titres portaient les dates du contrat de l'auteur. Elles
         # viennent maintenant de la date de bascule declaree en config.

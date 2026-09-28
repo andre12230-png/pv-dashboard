@@ -332,7 +332,7 @@ def test_economies_autoconso_change_de_prix_au_01_08_2026(bleu,
     idx = pd.DatetimeIndex(["2026-07-31", "2026-08-01"])
     df = pd.DataFrame({"autoconsommation_kwh": [10.0, 10.0]}, index=idx)
     out = calc.economies_autoconsommation(df, bleu, octopus_deux_periodes)
-    part_hc = octopus_deux_periodes.part_hc_autoconso  # 20 % par defaut
+    part_hc = octopus_deux_periodes.part_hc_autoconso  # 0 % par defaut
     avant = 0.1251 * part_hc + 0.2132 * (1 - part_hc)
     apres = 0.1290 * part_hc + 0.2213 * (1 - part_hc)
     assert out["economie_eur"].iloc[0] == pytest.approx(10.0 * avant)
@@ -928,12 +928,13 @@ def test_economies_autoconso_avant_cutoff(bleu, octopus):
 
 
 def test_economies_autoconso_apres_cutoff(bleu, octopus):
-    # Depuis Octopus : pondere par part_hc_autoconso (defaut 20 %), pas par
-    # la duree des plages sur 24 h (l'autoconso est diurne).
+    # Depuis Octopus : pondere par part_hc_autoconso (defaut 0 % depuis le
+    # 28/09/2026, c'etait 20 %), pas par la duree des plages sur 24 h
+    # (l'autoconso est diurne) : sans part declaree, tout au prix HP.
     idx = pd.DatetimeIndex(["2026-06-01"])
     df = pd.DataFrame({"autoconsommation_kwh": [15.0]}, index=idx)
     out = calc.economies_autoconsommation(df, bleu, octopus)
-    prix_moyen = 0.18 * 0.20 + 0.30 * 0.80
+    prix_moyen = 0.18 * 0.0 + 0.30 * 1.0
     assert out["economie_eur"].iloc[0] == pytest.approx(15.0 * prix_moyen)
 
 
