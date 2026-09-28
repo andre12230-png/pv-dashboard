@@ -504,6 +504,29 @@ def _fmt_kwh_fr(v: float, decimales: int = 3) -> str:
     return s.replace(".", ",")
 
 
+def _noter_unite_devinee(notes: list | None, en_kwh: bool) -> None:
+    """L'en-tete ne dit pas l'unite : elle est deduite de la grandeur des
+    valeurs. On le dit dans le recapitulatif -- une erreur multiplierait
+    tout par mille."""
+    if notes is None:
+        return
+    if en_kwh:
+        notes.append("Unité absente de l'en-tête : valeurs lues en kWh, "
+                     "d'après leur grandeur. Vérifiez-les ci-dessus.")
+    else:
+        notes.append("Unité absente de l'en-tête : valeurs lues en Wh "
+                     "(d'après leur grandeur), converties en kWh.")
+
+
+def _noter_lignes_ecartees(notes: list | None, jours: list[str]) -> None:
+    """Des lignes commencent par une date mais ne portent aucune valeur
+    lisible : elles sont ignorees, et on le dit au lieu de se taire."""
+    if notes is None or not jours:
+        return
+    notes.append(f"{len(jours)} ligne(s) datée(s) sans valeur lisible, "
+                 f"ignorée(s) (par exemple le {jours[0]}).")
+
+
 def parse_enedis_csv(path: str) -> tuple[str, dict[str, str]]:
     """
     Lit un export quotidien Enedis (mon-compte-particulier.enedis.fr).
@@ -582,8 +605,12 @@ def _type_de_donnees(texte: str) -> str:
     )
 
 
-def parse_enedis_csv_texte(texte: str) -> tuple[str, dict[str, str]]:
-    """Comme parse_enedis_csv, mais a partir du contenu deja lu."""
+def parse_enedis_csv_texte(texte: str, notes: list | None = None
+                           ) -> tuple[str, dict[str, str]]:
+    """Comme parse_enedis_csv, mais a partir du contenu deja lu.
+
+    `notes` recoit ce que l'utilisateur doit savoir : unite devinee,
+    lignes datees sans valeur lisible."""
     bas = texte.lower()
     colonne = _type_de_donnees(texte)
 
@@ -596,6 +623,7 @@ def parse_enedis_csv_texte(texte: str) -> tuple[str, dict[str, str]]:
         unite_kwh = None
 
     brutes: list[tuple[str, float]] = []
+    ecartees: list[str] = []
     for ligne in texte.splitlines():
         # Point-virgule, tabulation ou virgule, comme le promet la Notice.
         cellules, virgule = _decoupe_ligne(ligne)
@@ -610,7 +638,11 @@ def parse_enedis_csv_texte(texte: str) -> tuple[str, dict[str, str]]:
             None,
         )
         if valeur is None:
-            continue  # ex. ligne 'date debut;date fin' des metadonnees
+            # Une ligne 'date debut;date fin' des metadonnees n'est pas une
+            # journee : on ne la compte pas parmi les lignes ecartees.
+            if not any(_parse_date_any(c) for c in cellules[1:]):
+                ecartees.append(jour)
+            continue
         brutes.append((jour, valeur))
 
     if not brutes:
@@ -622,6 +654,8 @@ def parse_enedis_csv_texte(texte: str) -> tuple[str, dict[str, str]]:
 
     if unite_kwh is None:
         unite_kwh = statistics.median(v for _, v in brutes) < 200
+        _noter_unite_devinee(notes, unite_kwh)
+    _noter_lignes_ecartees(notes, ecartees)
 
     # Doublons internes au fichier importe : la derniere valeur gagne.
     valeurs: dict[str, str] = {}
@@ -679,7 +713,8 @@ _COLONNES_SUIVI_CONSO = {
 }
 
 
-def parse_octopus_suivi_conso(texte: str) -> dict[str, dict[str, str]] | None:
+def parse_octopus_suivi_conso(texte: str, notes: list | None = None
+                              ) -> dict[str, dict[str, str]] | None:
     """
     Lit le "suivi de consommation" d'Octopus : une ligne par jour, avec des
     colonnes nommees dont le detail heures creuses / heures pleines.
@@ -696,6 +731,7 @@ def parse_octopus_suivi_conso(texte: str) -> dict[str, dict[str, str]] | None:
     """
     entetes: dict[int, str] | None = None
     resultat: dict[str, dict[str, str]] = {}
+    ecartees: list[str] = []
 
     for ligne in texte.splitlines():
         # Meme decoupage que les autres lecteurs : sans lui, un fichier separe
@@ -737,13 +773,19 @@ def parse_octopus_suivi_conso(texte: str) -> dict[str, dict[str, str]] | None:
         jour = _parse_date_any(cellules[0])
         if jour is None:
             continue  # ligne de metadonnees ou de total
+        lue = False
         for i, cible in entetes.items():
             if i >= len(cellules):
                 continue
             valeur = _nombre_cellule(cellules[i], virgule)
             if valeur is not None:
                 resultat.setdefault(cible, {})[jour] = _fmt_kwh_fr(valeur)
+                lue = True
+        if not lue:
+            ecartees.append(jour)
 
+    if resultat:
+        _noter_lignes_ecartees(notes, ecartees)
     return resultat or None
 
 
@@ -963,7 +1005,8 @@ def _cellule_nombre(c) -> float | None:
     return None
 
 
-def parse_enedis_xlsx(path: str) -> dict[str, dict[str, str]]:
+def parse_enedis_xlsx(path: str, notes: list | None = None
+                      ) -> dict[str, dict[str, str]]:
     """
     Lit un export Excel Enedis ('..._Export_energie_Consommation-Production_...').
 
@@ -993,6 +1036,7 @@ def parse_enedis_xlsx(path: str) -> dict[str, dict[str, str]]:
                 continue  # ex. "Page d'accueil"
             brutes: list[tuple[str, float]] = []
             textes: list[str] = []
+            ecartees: list[str] = []
             for row in wb[nom].iter_rows(values_only=True):
                 cellules = [c for c in row if c is not None]
                 textes.extend(c for c in cellules if isinstance(c, str))
@@ -1006,6 +1050,8 @@ def parse_enedis_xlsx(path: str) -> dict[str, dict[str, str]]:
                      if v is not None), None)
                 if valeur is not None:
                     brutes.append((jour, valeur))
+                else:
+                    ecartees.append(jour)   # 'NA' : donnee indisponible
             if not brutes:
                 continue
             bas = " ".join(textes).lower()
@@ -1015,6 +1061,8 @@ def parse_enedis_xlsx(path: str) -> dict[str, dict[str, str]]:
                 en_kwh = False
             else:
                 en_kwh = statistics.median(v for _, v in brutes) < 200
+                _noter_unite_devinee(notes, en_kwh)
+            _noter_lignes_ecartees(notes, ecartees)
             valeurs: dict[str, str] = {}
             for jour, v in brutes:  # doublon interne : la derniere gagne
                 valeurs[jour] = _fmt_kwh_fr(v if en_kwh else v / 1000.0)
@@ -1121,6 +1169,8 @@ def _rapport_d_une_feuille(ws, notes: list | None
                              for i, c in cibles.items() if c == "Prod_Jour")
                  if v is not None]
         en_kwh = not prods or statistics.median(prods) < 200
+        if prods:
+            _noter_unite_devinee(notes, en_kwh)
 
     resultat: dict[str, dict[str, str]] = {}
     ecarts = comparables = 0
@@ -1200,12 +1250,12 @@ def parse_enedis_fichier(path: str, notes: list | None = None
         index = parse_enedis_index_xlsx(path, notes)
         if index is not None:
             return index
-        return parse_enedis_xlsx(path)
+        return parse_enedis_xlsx(path, notes)
     texte = _lire_texte(path)
-    suivi = parse_octopus_suivi_conso(texte)
+    suivi = parse_octopus_suivi_conso(texte, notes)
     if suivi is not None:
         return suivi
-    colonne, valeurs = parse_enedis_csv_texte(texte)
+    colonne, valeurs = parse_enedis_csv_texte(texte, notes)
     return {colonne: valeurs}
 
 
@@ -1261,7 +1311,8 @@ def _nombre_cellule(cell: str, virgule: bool) -> float | None:
     return float(brut) if _RE_NOMBRE_POINT.match(brut) else None
 
 
-def parse_enphase_texte(texte: str) -> dict[str, str]:
+def parse_enphase_texte(texte: str, notes: list | None = None
+                        ) -> dict[str, str]:
     """
     Lit le contenu d'un rapport Enphase Enlighten (menu Systeme > Rapports,
     "Energie mensuelle" recu par email).
@@ -1286,6 +1337,7 @@ def parse_enphase_texte(texte: str) -> dict[str, str]:
         unite_kwh = None
 
     totaux: dict[str, float] = {}
+    ecartees: list[str] = []
     for ligne in texte.splitlines():
         cellules, virgule = _decoupe_ligne(ligne)
         if len(cellules) < 2:
@@ -1299,6 +1351,8 @@ def parse_enphase_texte(texte: str) -> dict[str, str]:
             None,
         )
         if valeur is None:
+            if jour not in ecartees:
+                ecartees.append(jour)
             continue
         totaux[jour] = totaux.get(jour, 0.0) + valeur
 
@@ -1314,6 +1368,8 @@ def parse_enphase_texte(texte: str) -> dict[str, str]:
         # Un total journalier de production depasse toujours 200 en Wh et
         # reste bien en dessous en kWh (installation domestique).
         unite_kwh = statistics.median(totaux.values()) < 200
+        _noter_unite_devinee(notes, unite_kwh)
+    _noter_lignes_ecartees(notes, ecartees)
 
     return {
         jour: _fmt_kwh_fr(v if unite_kwh else v / 1000.0, decimales=1)
@@ -1325,9 +1381,9 @@ def parse_enphase_fichier(path: str, notes: list | None = None
                           ) -> dict[str, dict[str, str]]:
     """
     Point d'entree de l'import de production : fichier CSV/texte du rapport
-    Enphase, archive .zip telle qu'elle arrive dans l'email (le premier
-    fichier texte de l'archive est lu), ou classeur Excel du portail d'un
-    onduleur ("rapport de centrale" Huawei et equivalents).
+    Enphase, archive .zip telle qu'elle arrive dans l'email (tous ses
+    fichiers .csv sont lus, voir _lire_archive), ou classeur Excel du portail
+    d'un onduleur ("rapport de centrale" Huawei et equivalents).
 
     Retourne {'Prod_Jour': {date 'DD/MM/YYYY': valeur kWh en chaine FR}} ;
     le rapport d'onduleur y ajoute l'injection et la consommation reseau,
@@ -1345,28 +1401,50 @@ def parse_enphase_fichier(path: str, notes: list | None = None
         return rapport
 
     if path.lower().endswith(".zip"):
-        import zipfile
+        return {"Prod_Jour": _lire_archive(path, notes)}
+    with open(path, "rb") as fh:
+        texte = _decode_texte(fh.read())
+    return {"Prod_Jour": parse_enphase_texte(texte, notes)}
 
-        with zipfile.ZipFile(path) as zf:
-            # Les .csv d'abord : une archive peut aussi contenir un
-            # lisez-moi .txt qui ne nous interesse pas.
-            noms = sorted(
-                (n for n in zf.namelist()
-                 if n.lower().endswith((".csv", ".txt"))),
-                key=lambda n: not n.lower().endswith(".csv"),
-            )
-            if not noms:
+
+def _lire_archive(path: str, notes: list | None) -> dict[str, str]:
+    """Lit TOUS les releves d'une archive .zip et les reunit par date.
+
+    Seul le premier fichier etait lu : les mois suivants d'une archive
+    disparaissaient sans un mot. Les .csv d'abord (un lisez-moi .txt ne
+    nous interesse pas) ; les .txt seulement s'il n'y a aucun .csv. Deux
+    fichiers qui donnent deux productions differentes pour le meme jour :
+    on s'arrete et on le dit, plutot que de choisir au hasard."""
+    import zipfile
+
+    with zipfile.ZipFile(path) as zf:
+        noms = sorted(n for n in zf.namelist() if n.lower().endswith(".csv"))
+        if not noms:
+            noms = sorted(n for n in zf.namelist()
+                          if n.lower().endswith(".txt"))
+        if not noms:
+            raise ValueError(
+                "Cette archive ne contient aucun fichier .csv. "
+                "Attendu : un releve de production, par exemple le "
+                "rapport Enphase recu par email.")
+        contenus = [(nom, _decode_texte(zf.read(nom))) for nom in noms]
+
+    valeurs: dict[str, str] = {}
+    origine: dict[str, str] = {}
+    for nom, texte in contenus:
+        for jour, v in parse_enphase_texte(texte, notes).items():
+            if jour in valeurs and valeurs[jour] != v:
                 raise ValueError(
-                    "Cette archive ne contient aucun fichier .csv. "
-                    "Attendu : un releve de production, par exemple le "
-                    "rapport Enphase recu par email.")
-            brut = zf.read(noms[0])
-        texte = _decode_texte(brut)
-    else:
-        with open(path, "rb") as fh:
-            texte = _decode_texte(fh.read())
-
-    return {"Prod_Jour": parse_enphase_texte(texte)}
+                    f"Les fichiers « {origine[jour]} » et « {nom} » de "
+                    f"l'archive donnent deux productions différentes pour "
+                    f"le {jour} ({valeurs[jour]} et {v} kWh). Importez-les "
+                    "un par un, en commençant par celui qui fait foi.")
+            valeurs[jour] = v
+            origine.setdefault(jour, nom)
+    if notes is not None and len(noms) > 1:
+        notes.append(f"Archive : {len(noms)} fichiers lus "
+                     f"({', '.join(noms)}).")
+    return valeurs
 
 
 def _decode_texte(brut: bytes) -> str:

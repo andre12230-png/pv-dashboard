@@ -262,6 +262,12 @@ Enphase — sont <b>totalisés par jour</b>. La <b>journée en cours est
 ignorée</b>, car l'export s'arrête à l'heure où vous l'avez demandé : elle
 serait sous-évaluée. Mêmes garanties que l'autre import : aucun doublon,
 récapitulatif avant d'appliquer, sauvegarde <code>.bak</code>.</p>
+<p>Pour les deux imports, le <b>récapitulatif dit aussi ce que l'application a
+déduit ou écarté</b> : l'unité, quand le fichier ne la précise pas (Wh ou kWh,
+d'après la grandeur des valeurs — vérifiez-les) ; les lignes datées sans valeur
+lisible, ignorées ; les fichiers lus dans une archive <code>.zip</code>, qui le
+sont tous. Si deux fichiers d'une archive donnent deux productions différentes
+pour le même jour, rien n'est importé.</p>
 <p>Le même bouton accepte aussi le <b>classeur Excel</b> publié par le portail
 de votre onduleur (« rapport de centrale » chez Huawei et semblables), une
 ligne par jour. Celui-là apporte <b>plus que la production</b> : avant la mise
