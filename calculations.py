@@ -656,7 +656,8 @@ def _prix_bleu_series(idx: pd.DatetimeIndex,
 # voyait facturer en HP/HC sans pouvoir rien y faire. Elle se regle
 # desormais dans config.yaml (tarifs_reseau.bascule_hphc) ; la valeur
 # ci-dessous n'est plus qu'un defaut, applique tant que rien n'est declare.
-CUTOFF_OCTOPUS = pd.Timestamp("2026-01-01")
+BASCULE_PAR_DEFAUT = pd.Timestamp("2026-01-01")
+CUTOFF_OCTOPUS = BASCULE_PAR_DEFAUT
 
 
 def definir_bascule_hphc(valeur) -> None:
@@ -667,6 +668,10 @@ def definir_bascule_hphc(valeur) -> None:
     """
     global CUTOFF_OCTOPUS
     if valeur in (None, ""):
+        # Case videe dans « Mes reglages » : retour au defaut. Ne rien faire
+        # gardait la date precedente jusqu'au redemarrage, la fenetre se
+        # reconstruisant sans relancer l'application.
+        CUTOFF_OCTOPUS = BASCULE_PAR_DEFAUT
         return
     try:
         CUTOFF_OCTOPUS = pd.Timestamp(valeur)

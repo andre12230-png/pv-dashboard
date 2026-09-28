@@ -178,10 +178,16 @@ def test_bascule_hphc_se_regle_par_la_config(bascule_restauree):
     assert calc.CUTOFF_OCTOPUS == pd.Timestamp("2024-03-01")
 
 
-def test_bascule_hphc_absente_garde_la_valeur_en_cours(bascule_restauree):
-    avant = calc.CUTOFF_OCTOPUS
+def test_bascule_hphc_videe_revient_a_la_date_par_defaut(bascule_restauree):
+    # Une date reglee puis effacee dans « Mes reglages » restait en vigueur
+    # jusqu'au redemarrage (la fenetre se reconstruit sans relancer
+    # l'application). La docstring promettait pourtant la date par defaut.
+    calc.definir_bascule_hphc("2024-03-01")
     calc.definir_bascule_hphc(None)
-    assert calc.CUTOFF_OCTOPUS == avant
+    assert calc.CUTOFF_OCTOPUS == pd.Timestamp("2026-01-01")
+    calc.definir_bascule_hphc("2024-03-01")
+    calc.definir_bascule_hphc("")
+    assert calc.CUTOFF_OCTOPUS == pd.Timestamp("2026-01-01")
 
 
 def test_bascule_hphc_illisible_est_signalee(bascule_restauree):

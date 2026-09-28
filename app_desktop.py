@@ -519,6 +519,10 @@ def build_dataset(cfg: dict) -> AppData:
     # n'a aucune raison d'etre la meme pour tout le monde.
     cfg_octopus = cfg["tarifs_reseau"]["contrat_hphc"]
     bascule = cfg["tarifs_reseau"].get("bascule_hphc")
+    # Poser la date declaree AVANT de lire les periodes : une config a
+    # l'ancien format date sa periode unique de la bascule, qui aurait ete
+    # celle du calcul precedent (reglage global du module).
+    calc.definir_bascule_hphc(bascule)
     if not bleu.tranches:
         # Aucun tarif a prix unique declare : l'utilisateur ne l'a jamais eu,
         # toutes ses journees relevent du contrat HP/HC (avant sa premiere
