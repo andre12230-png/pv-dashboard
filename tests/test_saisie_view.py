@@ -744,3 +744,33 @@ def test_journee_videe_compte_comme_saisie_en_cours(vue):
     assert not vue._saisies_non_enregistrees()
     _cellule(vue, 1, "Prod_Jour", "")
     assert vue._saisies_non_enregistrees()
+
+
+def test_import_invraisemblable_alerte_et_non_par_defaut(
+        vue, dialogue, fichier_choisi, tmp_path):
+    # En-tete « (kWh) » mais valeurs en Wh : mille fois trop.
+    p = tmp_path / "conso.csv"
+    p.write_text("Date;Consommation (kWh)\n04/05/2026;5500\n",
+                 encoding="utf-8")
+    fichier_choisi["path"] = str(p)
+    dialogue.reponse = dialogue.No
+
+    vue._importer_enedis()
+
+    assert "maximum vraisemblable" in dialogue.messages[0]
+    assert dialogue.defauts[0] == QMessageBox.No
+    lignes = {r["Date"] for r in dl.read_releves_raw(vue.data.releves_path)}
+    assert "04/05/2026" not in lignes
+
+
+def test_import_vraisemblable_sans_alerte(vue, dialogue, fichier_choisi,
+                                          tmp_path):
+    p = tmp_path / "conso.csv"
+    p.write_text("Date;Consommation (kWh)\n04/05/2026;5,5\n", encoding="utf-8")
+    fichier_choisi["path"] = str(p)
+    dialogue.reponse = dialogue.No
+
+    vue._importer_enedis()
+
+    assert "maximum vraisemblable" not in dialogue.messages[0]
+    assert dialogue.defauts[0] == QMessageBox.Yes

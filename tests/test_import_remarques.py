@@ -140,3 +140,31 @@ def test_zip_un_seul_fichier_rien_a_dire(tmp_path):
     dl.parse_enphase_fichier(_zip(tmp_path, {
         "rapport.csv": "Date;Production (kWh)\n01/09/2026;18\n"}), notes)
     assert not any("fichiers" in n for n in notes)
+
+
+# --- Valeurs invraisemblables (28/09/2026) -----------------------------------
+# Le plafond de la saisie a la main ne s'appliquait pas aux imports : des Wh
+# lus comme des kWh (mille fois trop) passaient sans alerte.
+
+def test_vraisemblance_rien_a_dire_sur_des_valeurs_normales():
+    assert dl.controle_vraisemblance(
+        "Conso_réseau_Jour", {"01/09/2026": "12,5"}, "Consommation") is None
+
+
+def test_vraisemblance_consommation_mille_fois_trop_grande():
+    alerte = dl.controle_vraisemblance(
+        "Conso_réseau_Jour",
+        {"01/09/2026": "5500", "02/09/2026": "12", "03/09/2026": "6100"},
+        "Consommation réseau")
+    assert "2 valeur(s)" in alerte
+    assert "01/09/2026" in alerte and "150 kWh" in alerte
+    assert "Consommation réseau" in alerte
+
+
+def test_vraisemblance_production_suit_la_puissance():
+    # 3 kWc -> 30 kWh par jour au plus ; 45 est suspect ici, pas sur 6 kWc.
+    valeurs = {"01/07/2026": "45"}
+    assert dl.controle_vraisemblance("Prod_Jour", valeurs, "Production",
+                                     puissance_kwc=3.0) is not None
+    assert dl.controle_vraisemblance("Prod_Jour", valeurs, "Production",
+                                     puissance_kwc=6.0) is None

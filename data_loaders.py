@@ -1650,6 +1650,38 @@ def controle_apres_import(rows: list[dict[str, str]],
     )
 
 
+def controle_vraisemblance(colonne: str, valeurs: dict[str, str],
+                           libelle: str,
+                           puissance_kwc: float | None = None) -> str | None:
+    """
+    Des valeurs importees depassent-elles le maximum vraisemblable ?
+
+    Meme plafond que la saisie a la main (plafond_colonne), qui ne
+    s'appliquait pas aux imports : des Wh lus comme des kWh -- mille fois
+    trop -- passaient sans un mot. Ce n'est qu'une alerte : une vraie journee
+    exceptionnelle doit rester importable (decision du 26/09/2026, le
+    plafond ne bloque que ce qui est tape).
+
+    Retourne un message d'avertissement, ou None si tout est vraisemblable.
+    """
+    plafond = plafond_colonne(colonne, puissance_kwc)
+    trop: list[tuple[str, str]] = []
+    for jour, val in valeurs.items():
+        v = _parse_nombre(val or "")
+        if v is not None and v > plafond:
+            trop.append((jour, val))
+    if not trop:
+        return None
+    exemples = "\n".join(f"  - {jour} : {val} kWh" for jour, val in trop[:3])
+    return (
+        f"Attention : {len(trop)} valeur(s) de {libelle} dépassent le maximum "
+        f"vraisemblable ({plafond:g} kWh par jour).\n\n{exemples}\n\n"
+        "Une unité mal lue (des Wh pris pour des kWh) ou une colonne qui "
+        "n'est pas la bonne donne ce genre de chiffres. Vérifiez le fichier "
+        "avant d'appliquer."
+    )
+
+
 class ReductionRefusee(ValueError):
     """L'ecriture demandee ferait disparaitre des donnees presentes sur le disque.
 

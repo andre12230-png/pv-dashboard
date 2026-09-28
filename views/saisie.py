@@ -451,6 +451,13 @@ class SaisieView(BaseView):
             alerte = dl.controle_apres_import(lignes, colonne, valeurs)
             if alerte:
                 alertes.append(alerte)
+            # Valeurs au-dela du plafond de la saisie a la main : une unite
+            # mal lue les multiplie par mille. Alerte, et « Non » par defaut.
+            alerte = dl.controle_vraisemblance(
+                colonne, valeurs, self.LIBELLES_IMPORT.get(colonne, colonne),
+                getattr(self.data, "puissance_kwc", None))
+            if alerte:
+                alertes.append(alerte)
             lignes, nb_n, nb_r, nb_i = dl.merge_import(lignes, colonne, valeurs)
             libelle = self.LIBELLES_IMPORT.get(colonne, colonne)
             detail = (f"  - {libelle} : {len(valeurs)} jour(s) lus, {nb_n} "
