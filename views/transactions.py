@@ -90,7 +90,10 @@ class TransactionsView(BaseView):
                 it.setToolTip("Valeur estimée : ce jour n'a pas de relevé.")
             return it
 
-        for row, (d, r) in enumerate(df.iterrows()):
+        # to_dict et non iterrows, qui fabrique un objet par ligne : sur
+        # toute la periode, c'etait l'essentiel du temps d'affichage.
+        for row, (d, r) in enumerate(zip(df.index,
+                                         df.to_dict("records"))):
             credit = r["revenu_vente_eur"] + r["economie_eur"]
             debit = r["cout_reseau_eur"]
             bilan = r["bilan_jour_eur"]

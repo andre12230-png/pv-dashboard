@@ -264,12 +264,15 @@ def read_releves_raw(path: str) -> list[dict[str, str]]:
             "reenregistre par Excel, qui a abime les accents de l'en-tete."
         )
 
+    # Colonne par colonne, et non ligne par ligne : iterrows fabriquait un
+    # objet par ligne et prenait a lui seul la moitie du temps du calcul
+    # complet (0,3 s sur quatre ans de releves, 28/09/2026). Meme resultat,
+    # garde par test_read_raw_meme_resultat_que_la_lecture_ligne_a_ligne.
+    colonnes = {officiel: [str(v).strip() for v in df[colmap[officiel]]]
+                for officiel in RELEVES_HEADER}
     rows: list[dict[str, str]] = []
-    for _, r in df.iterrows():
-        row = {
-            officiel: str(r[colmap[officiel]]).strip() if officiel in colmap else ""
-            for officiel in RELEVES_HEADER
-        }
+    for i in range(len(df)):
+        row = {officiel: colonnes[officiel][i] for officiel in RELEVES_HEADER}
         if not row["Date"]:
             continue
         rows.append(row)

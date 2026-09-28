@@ -1560,3 +1560,29 @@ def test_garder_si_case_vide_ignore_les_blancs():
         rows, "Inj_Jour", {"01/05/2026": "14,9"})
     assert gardees == {"01/05/2026": "14,9"}
     assert ecartees == 0
+
+
+def test_read_raw_meme_resultat_que_la_lecture_ligne_a_ligne(tmp_path):
+    # read_releves_raw lisait ligne par ligne (iterrows), la moitie du temps
+    # du calcul complet (28/09/2026). La lecture par colonnes doit rendre
+    # exactement la meme chose, espaces et cases vides compris.
+    p = tmp_path / "Releves-pv.csv"
+    p.write_text(
+        "Date;Production;Inj_Jour;Conso_reseau_Jour;Conso_HC;Conso_HP\n"
+        "03/05/2026; 19 ;13;;1,2;1,3\n"
+        "01/05/2026;20,5; 15,2 ;3,1;;\n"
+        ";;;;;\n"
+        "02/05/2026;18;12;2;1,5; 1,6\n", encoding="utf-8")
+    df = dl._read_releves_csv(str(p))
+    noms = {"Date": "Date", "Prod_Jour": "Production", "Inj_Jour": "Inj_Jour",
+            "Conso_réseau_Jour": "Conso_reseau_Jour", "Conso_HC": "Conso_HC",
+            "Conso_HP": "Conso_HP"}
+    attendu = []
+    for _, r in df.iterrows():
+        row = {o: str(r[noms[o]]).strip() for o in dl.RELEVES_HEADER}
+        if row["Date"]:
+            attendu.append(row)
+    attendu.sort(key=dl._date_key)
+    assert dl.read_releves_raw(str(p)) == attendu
+    assert [r["Date"] for r in attendu] == ["01/05/2026", "02/05/2026",
+                                            "03/05/2026"]
