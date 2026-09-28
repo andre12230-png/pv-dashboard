@@ -167,3 +167,14 @@ def test_par_defaut_toujours_edf_oa(qapp, tmp_path, monkeypatch):
         assert "VENTE À EDF OA" in _textes(win, "dashboard")
     finally:
         win.close()
+
+
+def test_sous_titre_des_annees_de_contrat_nomme_l_acheteur(
+        qapp, tmp_path, monkeypatch):
+    win = _fenetre(qapp, tmp_path, monkeypatch, _autre_acheteur)
+    try:
+        win._switch_view("oa")
+        assert "EDF" not in win.sub_lbl.text()
+        assert "Solaire Coop" in win.sub_lbl.text()
+    finally:
+        win.close()

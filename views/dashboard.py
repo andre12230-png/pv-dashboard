@@ -172,7 +172,8 @@ class DashboardView(BaseView):
         # Le detail va en infobulle : la ligne doit se lire d'un coup d'oeil.
         notes = notes_donnees(
             df, getattr(self.data, "jours_en_attente", []),
-            start_oa=self.data.start_oa)
+            start_oa=self.data.start_oa,
+            acheteur=getattr(self.data, "acheteur", "EDF OA"))
         if notes:
             self.layout_inner.addWidget(self._carte_remarques(notes))
 

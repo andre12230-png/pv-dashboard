@@ -1082,7 +1082,11 @@ class MainWindow(QMainWindow):
             "transactions": ("Relevés journaliers", "Production, injection et conso jour par jour"),
             "categories":   ("Répartition énergie", "D'où vient et où va chaque kWh"),
             "accounts":     ("Synthèse financière", "Revenus, économies et dépenses électricité"),
-            "oa":           ("Années OA", "Suivi du contrat EDF Obligation d'Achat"),
+            "oa":           ("Années OA",
+                             "Suivi du contrat EDF Obligation d'Achat"
+                             if self.data.acheteur == "EDF OA"
+                             else f"Suivi de votre contrat avec "
+                                  f"{self.data.acheteur}"),
             "tva":          ("TVA autoconsommation",
                              "Base ligne 5A de la déclaration CA12 / 3517-S"),
             "stats":        ("Statistiques", "Comparaisons annuelles et rendement"),

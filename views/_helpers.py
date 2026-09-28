@@ -557,9 +557,27 @@ def _pluriel(n: int, mot: str) -> str:
 # chiffre, en deux ou trois mots ; le detail, lui, passe en infobulle. Fonction
 # pure : elle se teste sans ouvrir de fenetre.
 
-def notes_donnees(df, jours_en_attente=(),
-                  start_oa=None) -> list[tuple[str, str, str]]:
+def _contrat_de_vente(acheteur: str) -> str:
+    """« contrat EDF OA », « contrat avec Solaire Coop »."""
+    return ("contrat EDF OA" if acheteur == "EDF OA"
+            else f"contrat avec {acheteur}")
+
+
+def _factures_de_vente(acheteur: str) -> str:
+    """« factures EDF OA », « factures d'Energie Locale »."""
+    if acheteur == "EDF OA":
+        return "factures EDF OA"
+    de = (f"d'{acheteur}" if acheteur[:1].upper() in "AEIOUYÉÈÊH"
+          else f"de {acheteur}")
+    return f"factures {de}"
+
+
+def notes_donnees(df, jours_en_attente=(), start_oa=None,
+                  acheteur: str = "EDF OA") -> list[tuple[str, str, str]]:
     """Les remarques a afficher sous le bilan : (titre, resume, infobulle).
+
+    `acheteur` : a qui l'electricite est vendue. Les resumes le nomment ;
+    ils disaient « EDF OA » a tous, meme a qui vend a un autre acheteur.
 
     start_oa sert a dire POURQUOI des journees ont une injection estimee : le
     plus souvent parce qu'elles precedent le contrat EDF OA, donc la mise en
@@ -603,7 +621,8 @@ def notes_donnees(df, jours_en_attente=(),
         if start_oa is not None:
             avant = int((df.index[estimes] < pd.Timestamp(start_oa)).sum())
         if avant == n:
-            resume = f"{_pluriel(n, 'jour')} avant votre contrat EDF OA"
+            resume = (f"{_pluriel(n, 'jour')} avant votre "
+                      f"{_contrat_de_vente(acheteur)}")
         elif avant:
             resume = (f"{_pluriel(n, 'jour')} sans relevé Enedis, "
                       f"dont {avant} avant votre contrat")
@@ -623,7 +642,8 @@ def notes_donnees(df, jours_en_attente=(),
     if n:
         notes.append((
             "Vente recalée",
-            f"{_pluriel(n, 'jour')} ajustés sur vos factures EDF OA",
+            f"{_pluriel(n, 'jour')} ajustés sur vos "
+            f"{_factures_de_vente(acheteur)}",
             "Le total vendu de chaque année OA est celui qui a été payé, au "
             "kWh près : c'est l'index du compteur qui fait foi.\n\n"
             "Le détail quotidien, lui, reste approché.",

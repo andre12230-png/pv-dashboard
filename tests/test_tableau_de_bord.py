@@ -403,3 +403,30 @@ def test_pas_de_date_de_remboursement_absurde():
         df=df, oa=oa, start_oa=None,
         cfg={"installation": {"puissance_kwc": 3.0, "cout_total_eur": 8000.0}})
     assert amortissement(donnees)["roi_an"] is None
+
+
+# --- Un autre acheteur qu'EDF OA (revue du 28/09/2026) -----------------------
+
+def test_jours_avant_contrat_nomment_l_acheteur():
+    idx = pd.to_datetime(["2025-01-20", "2025-01-21", "2025-03-01"])
+    df = pd.DataFrame(
+        {"soutirage_kwh": [0.0, 0.0, 0.0],
+         "releve_incomplet": [1.0, 1.0, 0.0]},
+        index=idx)
+    _titre, resume, _aide = notes_donnees(
+        df, start_oa=date(2025, 2, 10), acheteur="Solaire Coop")[0]
+    assert resume == "2 jours avant votre contrat avec Solaire Coop"
+
+
+def test_vente_recalee_nomme_les_factures_de_l_acheteur():
+    df = _df_notes(injection_recalee=[1.0, 1.0, 0.0])
+    notes = notes_donnees(df, acheteur="Energie Locale")
+    resume = [r for t, r, _a in notes if t == "Vente recalée"][0]
+    assert resume == "2 jours ajustés sur vos factures d'Energie Locale"
+    assert "EDF" not in resume
+
+
+def test_chez_edf_oa_les_textes_ne_changent_pas():
+    df = _df_notes(injection_recalee=[1.0, 1.0, 0.0])
+    resume = [r for t, r, _a in notes_donnees(df) if t == "Vente recalée"][0]
+    assert resume == "2 jours ajustés sur vos factures EDF OA"
