@@ -68,6 +68,14 @@ class BaseView(QWidget):
     def set_theme(self, theme: dict) -> None:
         self.theme = theme
 
+    def a_des_saisies_en_cours(self) -> bool:
+        """Des valeurs tapees ici ne sont-elles pas encore enregistrees ?
+
+        Seule la Saisie en porte. MainWindow ne redessine pas une vue qui en a
+        (le dessin repart du fichier et les effacerait) et pose la question a
+        la fermeture."""
+        return False
+
     def refresh(self, period: str) -> None:
         self._clear()
         self.populate(period)

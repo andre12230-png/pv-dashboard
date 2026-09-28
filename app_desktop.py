@@ -650,7 +650,39 @@ class MainWindow(QMainWindow):
         available = {v for _, v in period_options(self.data.df, self.data.start_oa)}
         return mois if mois in available else PERIOD_ALL
 
+    def _saisies_reglees(self, avant: str) -> bool:
+        """Avant de fermer la fenetre : que faire des valeurs tapees dans la
+        Saisie et pas encore enregistrees ? Fermer les perdait sans un mot.
+
+        Rend True si l'on peut continuer (rien en cours, enregistre, ou
+        abandon choisi), False si l'utilisateur annule ou si l'enregistrement
+        echoue. « Annuler » est le bouton par defaut."""
+        saisie = self.views.get("saisie")
+        if saisie is None or not saisie.a_des_saisies_en_cours():
+            return True
+        reponse = QMessageBox.question(
+            self, APP_NAME,
+            "Des valeurs tapées dans la Saisie quotidienne ne sont pas "
+            f"encore enregistrées.\n\nLes enregistrer {avant} ?",
+            QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+            QMessageBox.Cancel)
+        if reponse == QMessageBox.Cancel:
+            return False
+        if reponse == QMessageBox.Save and not saisie._enregistrer():
+            # Valeur refusee ou ecriture impossible : la raison s'affiche sous
+            # le tableau. On y ramene l'utilisateur plutot que de continuer.
+            self._switch_view("saisie")
+            return False
+        # Enregistre ou abandonne : le tableau repart du fichier, plus rien
+        # n'est en attente.
+        saisie._cache_mtime = None
+        saisie.refresh(self.current_period)
+        return True
+
     def closeEvent(self, event) -> None:
+        if not self._saisies_reglees("avant de fermer"):
+            event.ignore()
+            return
         self.settings.setValue("ui/geometry", self.saveGeometry())
         super().closeEvent(event)
 
@@ -838,6 +870,10 @@ class MainWindow(QMainWindow):
 
     def _ouvrir_reglages(self) -> None:
         """Ouvre la fenetre « Mes reglages » ; si elle enregistre, recharge."""
+        # Enregistrer des reglages reconstruit toute la fenetre : la question
+        # sur la Saisie se pose donc AVANT, pas une fois la nouvelle ouverte.
+        if not self._saisies_reglees("avant d'ouvrir vos réglages"):
+            return
         fenetre = FenetreReglages(
             reglages.lire_reglages(self.data.cfg),
             self._enregistrer_reglages, self,
@@ -1082,7 +1118,11 @@ class MainWindow(QMainWindow):
             self.next_btn.setToolTip("Période suivante (Ctrl+→)")
         self._maj_etat_selecteur()
 
-        vue.refresh(self.current_period)
+        # Une vue qui porte des valeurs tapees et pas encore enregistrees n'est
+        # pas redessinee : le dessin repart du fichier et les effacait sans un
+        # mot (quitter la Saisie puis y revenir, recliquer sur son onglet).
+        if not vue.a_des_saisies_en_cours():
+            vue.refresh(self.current_period)
 
     # ---------- Selecteur de periode ----------
     def _peupler_selecteur(self) -> None:

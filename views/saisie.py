@@ -508,6 +508,9 @@ class SaisieView(BaseView):
             f"{titre} OK : {total_nouveaux} ajout(s), "
             f"{total_remplaces} remplacement(s).", ok=True)
 
+    def a_des_saisies_en_cours(self) -> bool:
+        return self._saisies_non_enregistrees()
+
     def _saisies_non_enregistrees(self) -> bool:
         """Le tableau differe-t-il de ce qui a ete lu dans le fichier ?
 
@@ -601,12 +604,13 @@ class SaisieView(BaseView):
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         return reponse == QMessageBox.Yes
 
-    def _enregistrer(self) -> None:
+    def _enregistrer(self) -> bool:
+        """Ecrit le tableau dans le fichier. Rend True si c'est fait."""
         assert self.table is not None
         path = self.data.releves_path
         if not path:
             self._set_status("Pas de chemin CSV configuré.", ok=False)
-            return
+            return False
 
         if self._fichier_modifie_depuis_la_lecture():
             QMessageBox.warning(
@@ -621,7 +625,7 @@ class SaisieView(BaseView):
             self._set_status(
                 "Fichier modifié sur le disque : cliquez sur Recharger.",
                 ok=False)
-            return
+            return False
 
         # Collecte des lignes du tableau (validees)
         lignes_avant = {r["Date"]: r for r in self.toutes_lignes}
@@ -724,7 +728,7 @@ class SaisieView(BaseView):
 
         if erreurs:
             self._set_status(" ".join(erreurs[:2]), ok=False)
-            return
+            return False
 
         # Merge : on part de toutes les lignes existantes du CSV, et on
         # remplace / ajoute celles editees dans le tableau.
@@ -746,14 +750,14 @@ class SaisieView(BaseView):
         if pertes:
             if not self._confirmer_suppression(pertes, videes):
                 self._set_status("Enregistrement annule.", ok=False)
-                return
+                return False
             autoriser_reduction = True
 
         try:
             dl.write_releves_raw(path, lignes_finales, autoriser_reduction)
         except (OSError, dl.ReductionRefusee) as exc:
             self._signaler_echec_ecriture(exc)
-            return
+            return False
 
         # Le fichier vient d'etre reecrit : le cache en memoire est perime, il
         # ne contient pas ce qu'on vient d'ecrire. On l'invalide pour que le
@@ -788,3 +792,4 @@ class SaisieView(BaseView):
         if videes:
             message += f", {len(videes)} effacement(s)"
         self._set_status(message + " enregistre(s).", ok=True)
+        return True
