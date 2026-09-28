@@ -383,6 +383,22 @@ class SaisieView(BaseView):
             self._set_status("Pas de chemin CSV configuré.", ok=False)
             return
 
+        # L'import relit le fichier, l'ecrit, puis redessine ce tableau : ce
+        # qui est tape mais pas enregistre disparaissait sans un mot.
+        if self._saisies_non_enregistrees():
+            reponse = QMessageBox.question(
+                self, titre,
+                "Des valeurs tapées dans le tableau ne sont pas encore "
+                "enregistrées. L'import va les effacer.\n\n"
+                "Pour les garder, répondez Non, cliquez sur Enregistrer, "
+                "puis relancez l'import.\n\n"
+                "Importer quand même ?",
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reponse != QMessageBox.Yes:
+                self._set_status("Import annulé : enregistrez d'abord vos "
+                                 "saisies.", ok=False)
+                return
+
         fichier, _ = QFileDialog.getOpenFileName(
             self, libelle_dialogue, "", filtre)
         if not fichier:
@@ -491,6 +507,30 @@ class SaisieView(BaseView):
         self._set_status(
             f"{titre} OK : {total_nouveaux} ajout(s), "
             f"{total_remplaces} remplacement(s).", ok=True)
+
+    def _saisies_non_enregistrees(self) -> bool:
+        """Le tableau differe-t-il de ce qui a ete lu dans le fichier ?
+
+        Une ligne compte si elle porte des valeurs qui ne sont pas celles du
+        fichier, ou si une journee du fichier a ete videe. La ligne neuve
+        laissee vide ne compte pas."""
+        if self.table is None:
+            return False
+        lues = {r["Date"]: r for r in self.toutes_lignes}
+        for r in range(self.table.rowCount()):
+            row = {}
+            for c, col in enumerate(self.COLS):
+                cell = self.table.item(r, c)
+                row[col] = cell.text().strip() if cell else ""
+            avant = lues.get(row["Date"])
+            if avant is None:
+                # Journee inconnue du fichier : saisie si elle a des valeurs.
+                if any(row[col] for col in self.COLS[1:]):
+                    return True
+            elif any(row[col] != (avant.get(col) or "").strip()
+                     for col in self.COLS[1:]):
+                return True
+        return False
 
     def _set_status(self, msg: str, ok: bool = True) -> None:
         if self.status_label is None:

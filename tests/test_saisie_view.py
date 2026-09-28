@@ -695,3 +695,52 @@ def test_une_journee_modifiee_reste_bornee(vue):
     vue._enregistrer()
     lignes = {r["Date"]: r for r in dl.read_releves_raw(vue.data.releves_path)}
     assert lignes["02/05/2026"]["Prod_Jour"] == "18"
+
+
+# ---------------------------------------------------------------------------
+# Un import ne doit pas effacer en silence ce qui est tape mais pas encore
+# enregistre : il relit le fichier, l'ecrit, puis redessine le tableau.
+# ---------------------------------------------------------------------------
+
+def _csv_conso(tmp_path) -> str:
+    p = tmp_path / "conso.csv"
+    p.write_text("Date;Consommation (kWh)\n01/05/2026;4\n",
+                 encoding="utf-8")
+    return str(p)
+
+
+def test_import_previent_des_saisies_non_enregistrees(
+        vue, dialogue, fichier_choisi, tmp_path):
+    fichier_choisi["path"] = _csv_conso(tmp_path)
+    _cellule(vue, 0, "Prod_Jour", "17")      # tapee, pas enregistree
+    dialogue.reponse = dialogue.No
+
+    vue._importer_enedis()
+
+    # La question est posee, « Non » par defaut, et rien n'est importe.
+    assert len(dialogue.messages) == 1
+    assert "pas encore enregistr" in dialogue.messages[0]
+    assert dialogue.defauts[0] == QMessageBox.No
+    lignes = {r["Date"]: r for r in dl.read_releves_raw(vue.data.releves_path)}
+    assert lignes["01/05/2026"]["Conso_réseau_Jour"] == "3,1"
+    # La saisie est toujours dans le tableau.
+    assert vue.table.item(0, vue.COLS.index("Prod_Jour")).text() == "17"
+
+
+def test_import_sans_saisie_en_cours_ne_demande_rien_de_plus(
+        vue, dialogue, fichier_choisi, tmp_path):
+    fichier_choisi["path"] = _csv_conso(tmp_path)
+    dialogue.reponse = dialogue.No
+
+    vue._importer_enedis()
+
+    # Une seule question : le recapitulatif habituel de l'import.
+    assert len(dialogue.messages) == 1
+    assert "pas encore enregistr" not in dialogue.messages[0]
+
+
+def test_journee_videe_compte_comme_saisie_en_cours(vue):
+    # Vider une journee existante est une modification comme une autre.
+    assert not vue._saisies_non_enregistrees()
+    _cellule(vue, 1, "Prod_Jour", "")
+    assert vue._saisies_non_enregistrees()
