@@ -658,6 +658,24 @@ SORTES_RECALAGE = {
 }
 
 
+# Copies « avant-reglages » gardees par sorte, les plus recentes : autant
+# que les copies quotidiennes de config-local.yaml (app_desktop).
+COPIES_AVANT_REGLAGES = 30
+
+
+def _copie_avant_reglages(chemin: Path, dossier, prefixe: str) -> None:
+    """Copie datee de `chemin` avant de le reecrire, puis menage : seules
+    les COPIES_AVANT_REGLAGES plus recentes de ce prefixe restent. Il s'en
+    ajoutait une a chaque enregistrement, sans limite."""
+    dossier = Path(dossier)
+    dossier.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(chemin, dossier / f"{prefixe}{datetime.now():%Y%m%d-%H%M%S}.yaml")
+    copies = sorted(dossier.glob(f"{prefixe}*.yaml"),
+                    key=lambda f: f.stat().st_mtime, reverse=True)
+    for vieille in copies[COPIES_AVANT_REGLAGES:]:
+        vieille.unlink(missing_ok=True)
+
+
 def libelle_recalage(cle: str, acheteur: str | None = None) -> str:
     """Le libelle affiche d'une sorte de recalage. « Injection payee par »
     nomme l'acheteur declare : il disait « EDF OA » a tout le monde."""
@@ -822,11 +840,8 @@ def enregistrer_recalages(chemin, recalages: dict, dossier_sauvegardes) -> bool:
             "n'a été changé. Modifiez-le avec le Bloc-notes.")
 
     if existait:
-        dossier_sauvegardes = Path(dossier_sauvegardes)
-        dossier_sauvegardes.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(chemin, dossier_sauvegardes /
-                     ("config-local_avant-reglages_"
-                      f"{datetime.now():%Y%m%d-%H%M%S}.yaml"))
+        _copie_avant_reglages(chemin, dossier_sauvegardes,
+                              "config-local_avant-reglages_")
     temporaire = chemin.with_name(chemin.name + ".tmp")
     with open(temporaire, "w", encoding="utf-8", newline="") as fh:
         fh.write(nouveau)
@@ -875,10 +890,7 @@ def enregistrer_reglages(chemin: Path, v: dict, dossier_sauvegardes: Path,
 
     # Copie datee, puis ecriture par un fichier temporaire : une coupure en
     # plein enregistrement ne laisse jamais un config.yaml a moitie ecrit.
-    dossier_sauvegardes = Path(dossier_sauvegardes)
-    dossier_sauvegardes.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(chemin, dossier_sauvegardes /
-                 f"config_avant-reglages_{datetime.now():%Y%m%d-%H%M%S}.yaml")
+    _copie_avant_reglages(chemin, dossier_sauvegardes, "config_avant-reglages_")
     temporaire = chemin.with_name(chemin.name + ".tmp")
     with open(temporaire, "w", encoding="utf-8", newline="") as fh:
         fh.write(nouveau)

@@ -832,3 +832,28 @@ def test_le_libelle_du_recalage_nomme_l_acheteur():
     libelles = [ligne.sorte.itemText(i) for i in range(ligne.sorte.count())]
     assert "Injection payée par Solaire Coop" in libelles
     assert not any("EDF" in t for t in libelles)
+
+
+def test_les_copies_avant_reglages_ne_s_accumulent_pas(tmp_path):
+    # Une copie a chaque enregistrement de « Mes reglages », sans limite
+    # (revue du 28/09/2026). Comme les copies quotidiennes de
+    # config-local.yaml : les 30 plus recentes seulement.
+    import os
+    import time
+    dossier = tmp_path / "backups"
+    dossier.mkdir()
+    for i in range(35):
+        f = dossier / f"config_avant-reglages_202601{i:02d}-120000.yaml"
+        f.write_text("ancienne", encoding="utf-8")
+        os.utime(f, (time.time() - 10_000 + i, time.time() - 10_000 + i))
+    autre = dossier / "Releves-pv_20260101.csv"      # jamais touchee
+    autre.write_text("x", encoding="utf-8")
+    chemin = _fichier(tmp_path)
+    v = {**rg.lire_reglages(yaml.safe_load(ANCIEN)), "puissance_kwc": 9.0}
+    assert rg.enregistrer_reglages(chemin, v, dossier)
+    copies = list(dossier.glob("config_avant-reglages_*.yaml"))
+    assert len(copies) == 30
+    # La copie qu'on vient de faire est gardee, les plus vieilles parties.
+    assert any(c.read_text(encoding="utf-8") == ANCIEN for c in copies)
+    assert not (dossier / "config_avant-reglages_20260100-120000.yaml").exists()
+    assert autre.exists()
