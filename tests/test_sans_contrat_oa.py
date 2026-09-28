@@ -178,3 +178,25 @@ def test_sous_titre_des_annees_de_contrat_nomme_l_acheteur(
         assert "Solaire Coop" in win.sub_lbl.text()
     finally:
         win.close()
+
+
+# ── Années OA : la plus récente en haut (28/09/2026) ────────────────────────
+
+def _contrat_en_cours_de_releves(cfg):
+    # Le 01/06/2025 precede le contrat : une ligne « avant OA ».
+    cfg["installation"]["date_debut_contrat_oa"] = "2025-06-02"
+
+
+def test_annees_oa_la_plus_recente_en_haut(qapp, tmp_path, monkeypatch):
+    from PySide6.QtWidgets import QTableWidget
+    win = _fenetre(qapp, tmp_path, monkeypatch, _contrat_en_cours_de_releves)
+    try:
+        win._switch_view("oa")
+        table = win.views["oa"].findChildren(QTableWidget)[0]
+        premiere_colonne = [table.item(i, 0).text()
+                            for i in range(table.rowCount())]
+        # Comme la page TVA : l'annee la plus recente d'abord, et la periode
+        # d'avant-contrat, la plus ancienne, en dernier.
+        assert premiere_colonne == ["#2", "#1", "avant OA"]
+    finally:
+        win.close()

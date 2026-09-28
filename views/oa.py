@@ -111,9 +111,11 @@ class OAView(BaseView):
         tv.setContentsMargins(0, 0, 0, 0)
         cols = ["Année OA", "Période", "Prod (kWh)", "Auto (kWh)", "Inj (kWh)",
                 "Revenu (€)", "Prime (€)", "Éco (€)", "Bilan (€)"]
-        # La periode d'avant-contrat ouvre le tableau (mais pas le graphique,
-        # qui compare des annees OA entre elles).
-        lignes = ([avant_contrat] if avant_contrat else []) + rows
+        # L'annee la plus recente en haut, comme la page TVA (27/09/2026) :
+        # c'est elle qu'on vient voir. La periode d'avant-contrat, la plus
+        # ancienne, ferme donc le tableau (elle reste hors du graphique, qui
+        # compare des annees OA entre elles et garde l'ordre du temps).
+        lignes = list(reversed(rows)) + ([avant_contrat] if avant_contrat else [])
         table = QTableWidget(len(lignes), len(cols))
         table.setHorizontalHeaderLabels(cols)
         table.setAlternatingRowColors(True)
