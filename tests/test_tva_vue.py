@@ -66,3 +66,27 @@ def test_le_calcul_reste_chronologique():
     df = _releves([("2023-01-15", 100.0, 50.0), ("2024-01-15", 100.0, 50.0)])
     lignes = calc.lasm_par_annee(df, _lasm_plat())
     assert [ligne["annee"] for ligne in lignes] == [2023, 2024]
+
+
+def test_un_autre_acheteur_est_nomme_partout(qapp):
+    # La page disait « EDF OA » a qui vend a un autre acheteur (28/09/2026).
+    from PySide6.QtWidgets import QLabel
+    df = _releves([("2024-01-15", 100.0, 50.0), ("2024-12-31", 0.0, 0.0)])
+    data = SimpleNamespace(
+        df_brut=df, lasm=_lasm_plat(),
+        cfg={"sources": {"injection_facturee": [
+            {"debut": "2024-01-01", "fin": "2024-12-31", "total_kwh": 50}]}},
+        cycle_oa="01/01 → 31/12", acheteur="Solaire Coop",
+        d_acheteur="de Solaire Coop")
+    v = TvaView(data, LIGHT)
+    v.populate("")
+    textes = [lbl.text() for lbl in v.findChildren(QLabel)]
+    for table in v.findChildren(QTableWidget):
+        for i in range(table.rowCount()):
+            for j in range(table.columnCount()):
+                it = table.item(i, j)
+                if it is not None:
+                    textes += [it.text(), it.toolTip()]
+    tout = " ".join(textes)
+    assert "EDF OA" not in tout
+    assert "Solaire Coop" in tout

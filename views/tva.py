@@ -229,7 +229,7 @@ class TvaView(BaseView):
                 items[1].setForeground(QColor(self.theme["text_muted"]))
             if controle is not None:
                 items[6].setToolTip(
-                    f"Année EDF OA du {fmt_date_fr(controle['debut'])} au "
+                    f"Année de contrat du {fmt_date_fr(controle['debut'])} au "
                     f"{fmt_date_fr(controle['fin'])} : "
                     f"{_nombre(controle['releve_kwh'])} kWh relevés contre "
                     f"{_nombre(controle['facture_kwh'], 0)} kWh facturés.")
@@ -258,7 +258,7 @@ class TvaView(BaseView):
         if not controles:
             return
         self.layout_inner.addWidget(SectionTitle(
-            "Contrôle avec les factures EDF OA",
+            f"Contrôle avec les factures {self._d_acheteur()}",
             "Injection relevée face aux kWh réellement facturés, "
             f"année de contrat par année de contrat ({self.data.cycle_oa})",
         ))
@@ -316,12 +316,20 @@ class TvaView(BaseView):
     # ------------------------------------------------------------------
     # Notes de bas de page
     # ------------------------------------------------------------------
+    def _acheteur(self) -> str:
+        """A qui l'electricite est vendue (« EDF OA » si rien n'est dit)."""
+        return getattr(self.data, "acheteur", None) or "EDF OA"
+
+    def _d_acheteur(self) -> str:
+        """« d'EDF OA », « de Solaire Coop »."""
+        return getattr(self.data, "d_acheteur", None) or "d'EDF OA"
+
     def _notes(self, lignes: list[dict]) -> None:
         textes = [
             "Ce qui est taxable : seule l'électricité produite ET consommée "
             "sur place l'est, au titre de la livraison à soi-même "
-            "(art. 257-II-1-1° du CGI). Les ventes à EDF OA sont "
-            "autoliquidées — EDF déclare leur TVA — et la prime à "
+            f"(art. 257-II-1-1° du CGI). Les ventes à {self._acheteur()} "
+            "sont autoliquidées — l'acheteur déclare leur TVA — et la prime à "
             "l'autoconsommation est hors champ.",
             "Comment la base est calculée : chaque kWh autoconsommé est "
             "valorisé au tarif d'achat en vigueur le jour même — part "
@@ -331,7 +339,8 @@ class TvaView(BaseView):
             "D'où viennent les chiffres : des relevés quotidiens du fichier "
             "Releves-pv.csv, pris tels quels, sans le recalage sur factures "
             "appliqué dans les autres onglets. Le contrôle ci-dessus les "
-            "recoupe avec les autofacturations annuelles d'EDF OA.",
+            "recoupe avec les autofacturations annuelles "
+            f"{self._d_acheteur()}.",
         ]
         incompletes = [ligne for ligne in lignes
                        if ligne["jours_sans_injection"]]

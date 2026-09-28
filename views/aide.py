@@ -67,8 +67,8 @@ plus justes que la somme des relevés quotidiens. Ils se déclarent dans
 <b>Modifier mes réglages</b>, section <b>Recalages sur mes factures</b> :
 choisissez ce que vous recalez, la période, le total en kWh, et d'où il
 vient. L'écart est réparti sur les jours de la période.</p>
-<p>Le cas le plus utile pour un producteur : <b>Injection payée par EDF OA</b>.
-EDF OA paie sur l'index du compteur, qui diffère un peu de ce qu'annonce
+<p>Le cas le plus utile pour un producteur : <b>Injection payée par {acheteur}</b>.
+{acheteur} paie sur l'index du compteur, qui diffère un peu de ce qu'annonce
 l'onduleur — donner le total en kWh de votre autofacturation (pas le montant
 en euros) met l'application d'accord avec ce que vous avez réellement touché.</p>
 <p>Ces totaux s'écrivent dans <code>config-local.yaml</code>, à côté de
@@ -95,7 +95,7 @@ dernier.</p>
 depuis le début, et le graphique du remboursement de l'installation : ce
 qu'elle vous a rapporté face à ce qu'elle a coûté, avec l'année où elle sera
 remboursée au rythme actuel. La courbe fait une marche, marquée d'un point,
-à chaque versement de la prime à l'autoconsommation : EDF OA la paie d'un
+à chaque versement de la prime à l'autoconsommation : {acheteur} la paie d'un
 coup, à la date anniversaire du contrat. L'année du remboursement n'en dépend
 pas, la prime étant déduite une fois pour toutes du coût à rembourser. Le
 bilan net compte les ventes, les économies et les primes, moins le coût de
@@ -301,7 +301,7 @@ cas, l'onglet <b>TVA autoconsommation</b> ne vous servira à rien : laissez la
 section <code>tva_lasm</code> de <code>config.yaml</code> en commentaire, et
 il n'apparaîtra pas dans le menu.</p>
 <p><b>Ce qui est taxable, et ce qui ne l'est pas.</b> L'électricité vendue à
-EDF OA ne vous fait rien collecter : c'est EDF qui en déclare la TVA à votre
+{acheteur} ne vous fait rien collecter : c'est l'acheteur qui en déclare la TVA à votre
 place — on dit qu'elle est <i>autoliquidée</i> — et la prime à
 l'autoconsommation est hors champ. En revanche, l'électricité que vous
 produisez <b>et</b> consommez vous-même est taxable : c'est une <b>livraison à
@@ -325,7 +325,7 @@ importé), avec l'estimation au 31 décembre en petit. Ces chiffres-là ne sont
 pas à déclarer ; ils se figent une fois l'année terminée.</p>
 <p><b>Le recoupement avec vos factures.</b> Sous le tableau, l'application
 compare la somme de vos injections relevées aux kWh réellement facturés par
-EDF OA, année de contrat par année de contrat. C'est lui qui rend vos chiffres
+{acheteur}, année de contrat par année de contrat. C'est lui qui rend vos chiffres
 défendables : ils se retrouvent sur un document que vous n'écrivez pas
 vous-même. Il suppose que les totaux de vos autofacturations soient déclarés
 dans <code>config-local.yaml</code>.</p>
@@ -392,14 +392,14 @@ C'est l'acheteur le plus courant ; un autre se déclare dans <b>Mes
 réglages</b>.</p>
 <p><b>Année OA</b> — cycle annuel du contrat. {cycle_glossaire}</p>
 <p><b>Vente du surplus</b> — revenu tiré de l'électricité injectée et vendue à
-EDF OA.</p>
+{acheteur}.</p>
 <p><b>Prime à l'autoconsommation</b> — aide de l'État calculée selon la
 puissance installée (€/kWc), versée en une seule fois pour les contrats
 récents, sur cinq ans pour les plus anciens. Dans <b>Mes réglages</b>, vous
 la saisissez comme vous l'avez reçue : <b>en tout</b>, le montant versé avec
 votre première facture, ou <b>par kWc</b>. La ligne sous les cases affiche
 l'autre valeur, pour vérification.</p>
-<p><b>Autoliquidation</b> — mécanisme par lequel c'est l'acheteur, ici EDF OA,
+<p><b>Autoliquidation</b> — mécanisme par lequel c'est l'acheteur, ici {acheteur},
 qui déclare la TVA à votre place. Vous n'en collectez donc aucune sur vos
 ventes de surplus.</p>
 <p><b>Livraison à soi-même (LASM)</b> — le fait de consommer ce qu'on a
@@ -427,7 +427,7 @@ encore</b>, une fois compté tout ce que le solaire vous rapporte ou vous
 évite. Il passe au vert le jour où elle ne vous coûte plus rien.<br>
 Attention à ne pas le confondre avec ce qui sort réellement de votre poche :
 les économies ne sont pas encaissées. L'argent déboursé sur la période, c'est
-l'achat au réseau moins la vente à EDF OA. Les infobulles des quatre cartes du
+l'achat au réseau moins la vente à {acheteur}. Les infobulles des quatre cartes du
 tableau de bord donnent le détail, vos chiffres à l'appui.</p>
 <p><b>Abonnement</b> — part fixe de la facture d'électricité, payée chaque
 mois quelle que soit la consommation. Comptée dans les dépenses réseau.</p>
@@ -558,6 +558,9 @@ class AideView(BaseView):
             "puissance": fmt_kwc(self.data.puissance_kwc) or "puissance inconnue",
             "mise_en_service": fmt_date_fr(self.data.date_mise_en_service),
             "cycle_notice": cycle_notice,
+            # A qui l'electricite est vendue : la notice disait « EDF OA » a
+            # tous, meme a qui vend a un autre acheteur (28/09/2026).
+            "acheteur": getattr(self.data, "acheteur", None) or "EDF OA",
             "cycle_glossaire": cycle_glossaire,
             "bascule": f"{bascule:%d/%m/%Y}",
             "veille_bascule": f"{veille:%d/%m/%Y}",

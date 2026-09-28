@@ -48,7 +48,8 @@ def test_la_notice_renvoie_les_recalages_vers_la_fenetre():
     """Demande d'un utilisateur (18/09/2026) : ne plus imposer le Bloc-notes.
     Si la notice ne le dit pas, la fenetre ne sert a rien."""
     assert "Recalages sur mes factures" in NOTICE_HTML
-    assert "Injection payée par EDF OA" in NOTICE_HTML
+    # Le libelle nomme l'acheteur declare (EDF OA par defaut).
+    assert "Injection payée par {acheteur}" in NOTICE_HTML
 
 def test_la_notice_previent_pour_le_premier_jour_d_un_index():
     """Un utilisateur a perdu le jour de sa mise en service sans comprendre

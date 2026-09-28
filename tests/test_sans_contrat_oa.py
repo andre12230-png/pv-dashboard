@@ -200,3 +200,32 @@ def test_annees_oa_la_plus_recente_en_haut(qapp, tmp_path, monkeypatch):
         assert premiere_colonne == ["#2", "#1", "avant OA"]
     finally:
         win.close()
+
+
+# ── La Notice nomme l'acheteur réel (28/09/2026) ────────────────────────────
+
+def test_la_notice_nomme_l_acheteur_declare(qapp, tmp_path, monkeypatch):
+    win = _fenetre(qapp, tmp_path, monkeypatch, _autre_acheteur)
+    try:
+        win._switch_view("aide")
+        texte = " ".join(lbl.text() for lbl in
+                         win.views["aide"].findChildren(QLabel))
+        assert "Injection payée par Solaire Coop" in texte
+        assert "la vente à Solaire Coop" in texte
+        # EDF OA n'apparait plus que dans sa propre definition du glossaire.
+        assert texte.count("EDF OA") == 1
+        assert "EDF OA (Obligation d'Achat)" in texte
+    finally:
+        win.close()
+
+
+def test_chez_edf_oa_la_notice_ne_change_pas(qapp, tmp_path, monkeypatch):
+    win = _fenetre(qapp, tmp_path, monkeypatch, lambda cfg: None)
+    try:
+        win._switch_view("aide")
+        texte = " ".join(lbl.text() for lbl in
+                         win.views["aide"].findChildren(QLabel))
+        assert "Injection payée par EDF OA" in texte
+        assert "la vente à EDF OA" in texte
+    finally:
+        win.close()

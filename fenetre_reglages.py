@@ -30,6 +30,7 @@ from erreurs import erreur_en_clair
 from reglages import (
     SORTES_RECALAGE,
     ReglagesRefuses,
+    libelle_recalage,
     phrase_prime,
     prime_par_kwc_depuis_total,
     prime_totale,
@@ -75,15 +76,16 @@ class LigneRecalage(QWidget):
     facture.
     """
 
-    def __init__(self, cle: str, periode: dict, retirer):
+    def __init__(self, cle: str, periode: dict, retirer,
+                 acheteur: str = "EDF OA"):
         super().__init__()
         ligne = QHBoxLayout(self)
         ligne.setContentsMargins(0, 0, 0, 0)
         ligne.setSpacing(6)
 
         self.sorte = QComboBox()
-        for k, (libelle, _champ) in SORTES_RECALAGE.items():
-            self.sorte.addItem(libelle, k)
+        for k in SORTES_RECALAGE:
+            self.sorte.addItem(libelle_recalage(k, acheteur), k)
         self.sorte.setCurrentIndex(list(SORTES_RECALAGE).index(cle))
         self.sorte.setMinimumWidth(200)
         self.sorte.currentIndexChanged.connect(self._sorte_changee)
@@ -143,6 +145,8 @@ class FenetreReglages(QDialog):
         super().__init__(parent)
         self._enregistrer = enregistrer
         self._enregistrer_recalages = enregistrer_recalages
+        # Nomme dans les recalages (« Injection payee par ... »).
+        self._acheteur_nom = valeurs.get("acheteur") or "EDF OA"
         self.setWindowTitle(TITRE)
         self.setMinimumWidth(620)
         # Plus large quand les recalages sont la : leur rangee compte six
@@ -317,7 +321,8 @@ class FenetreReglages(QDialog):
             "Facultatif, et à manier avec soin. Ces lignes <b>réécrivent vos "
             "relevés</b> pour retomber sur le total d'une facture : l'écart "
             "est réparti sur les jours de la période.<br><br>"
-            "<b>Injection payée par EDF OA</b> : le total en kWh de "
+            f"<b>{libelle_recalage('injection_facturee', self._acheteur_nom)}"
+            "</b> : le total en kWh de "
             "votre autofacturation — pas le montant en euros. C'est ce que le "
             "compteur a compté, qui diffère un peu de ce qu'annonce "
             "l'onduleur.<br>"
@@ -363,7 +368,8 @@ class FenetreReglages(QDialog):
 
     def _ajouter_ligne(self, cle: str = "injection_facturee",
                        periode: dict | None = None) -> None:
-        ligne = LigneRecalage(cle, periode or {}, self._retirer_ligne)
+        ligne = LigneRecalage(cle, periode or {}, self._retirer_ligne,
+                              self._acheteur_nom)
         self._lignes.addWidget(ligne)
 
     def _retirer_ligne(self, ligne: LigneRecalage) -> None:

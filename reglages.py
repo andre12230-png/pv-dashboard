@@ -654,8 +654,14 @@ SORTES_RECALAGE = {
     "conso_reseau_douteuse": ("Jours douteux", None),
     "conso_reseau_recalee": ("Conso recalée sur facture", "total_kwh"),
     "conso_reseau_facturee": ("Conso connue par la facture", "total_kwh"),
-    "injection_facturee": ("Injection payée par EDF OA", "total_kwh"),
+    "injection_facturee": ("Injection payée par {acheteur}", "total_kwh"),
 }
+
+
+def libelle_recalage(cle: str, acheteur: str | None = None) -> str:
+    """Le libelle affiche d'une sorte de recalage. « Injection payee par »
+    nomme l'acheteur declare : il disait « EDF OA » a tout le monde."""
+    return SORTES_RECALAGE[cle][0].format(acheteur=acheteur or "EDF OA")
 
 
 def recalages_vides() -> dict:
@@ -765,7 +771,8 @@ def appliquer_recalages(texte: str, recalages: dict) -> str:
 
 def controler_recalages(recalages: dict) -> None:
     """Refuse une periode impossible, avec un message clair."""
-    for cle, (libelle, champ) in SORTES_RECALAGE.items():
+    for cle, (_libelle, champ) in SORTES_RECALAGE.items():
+        libelle = libelle_recalage(cle)
         for p in recalages.get(cle) or []:
             if _date(p["fin"]) < _date(p["debut"]):
                 raise ReglagesRefuses(

@@ -820,3 +820,15 @@ def test_la_reference_du_modele_suit_le_config_livre():
     periode = yaml.safe_load(MODELE)["tarifs_reseau"]["contrat_hphc"]["periodes"]
     assert len(periode) == 1
     assert rg.est_la_periode_du_modele(periode[0])
+
+
+def test_le_libelle_du_recalage_nomme_l_acheteur():
+    from fenetre_reglages import FenetreReglages
+    f = FenetreReglages({**VALEURS_FENETRE, "acheteur": "Solaire Coop"},
+                        lambda _v: None, recalages=rg.recalages_vides(),
+                        enregistrer_recalages=lambda _r: None)
+    f._ajouter_ligne()
+    ligne = f._lignes.itemAt(f._lignes.count() - 1).widget()
+    libelles = [ligne.sorte.itemText(i) for i in range(ligne.sorte.count())]
+    assert "Injection payée par Solaire Coop" in libelles
+    assert not any("EDF" in t for t in libelles)
