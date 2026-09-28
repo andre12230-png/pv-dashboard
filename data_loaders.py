@@ -495,6 +495,18 @@ def _fmt_kwh_fr(v: float, decimales: int = 3) -> str:
     return s.replace(".", ",")
 
 
+def _unite_annoncee(texte_bas: str) -> bool | None:
+    """L'unite que l'en-tete annonce : True (kWh), False (Wh), None (rien).
+
+    « (kWh) », « (en kWh) » ou « en kWh » ; la regle etait recopiee dans
+    quatre lecteurs, chacun avec sa variante."""
+    if "(kwh" in texte_bas or "en kwh" in texte_bas:
+        return True
+    if "(wh" in texte_bas or "en wh" in texte_bas:
+        return False
+    return None
+
+
 def _noter_unite_devinee(notes: list | None, en_kwh: bool) -> None:
     """L'en-tete ne dit pas l'unite : elle est deduite de la grandeur des
     valeurs. On le dit dans le recapitulatif -- une erreur multiplierait
@@ -606,12 +618,7 @@ def parse_enedis_csv_texte(texte: str, notes: list | None = None
     colonne = _type_de_donnees(texte)
 
     # Unite explicite dans les entetes ; None -> heuristique plus bas.
-    if "(kwh" in bas or "en kwh" in bas:
-        unite_kwh: bool | None = True
-    elif "(wh" in bas or "en wh" in bas:
-        unite_kwh = False
-    else:
-        unite_kwh = None
+    unite_kwh = _unite_annoncee(bas)
 
     brutes: list[tuple[str, float]] = []
     ecartees: list[str] = []
@@ -1046,11 +1053,8 @@ def parse_enedis_xlsx(path: str, notes: list | None = None
             if not brutes:
                 continue
             bas = " ".join(textes).lower()
-            if "(en kwh" in bas or "(kwh" in bas:
-                en_kwh = True
-            elif "(en wh" in bas or "(wh" in bas:
-                en_kwh = False
-            else:
+            en_kwh = _unite_annoncee(bas)
+            if en_kwh is None:
                 en_kwh = statistics.median(v for _, v in brutes) < 200
                 _noter_unite_devinee(notes, en_kwh)
             _noter_lignes_ecartees(notes, ecartees)
@@ -1151,11 +1155,8 @@ def _rapport_d_une_feuille(ws, notes: list | None
     # Unite : l'en-tete l'annonce presque toujours ("(kWh)"). Sinon, meme
     # repere que pour les autres imports -- une production journaliere
     # domestique depasse toujours 200 en Wh et reste en dessous en kWh.
-    if "(kwh" in entetes_bas:
-        en_kwh = True
-    elif "(wh" in entetes_bas:
-        en_kwh = False
-    else:
+    en_kwh = _unite_annoncee(entetes_bas)
+    if en_kwh is None:
         prods = [v for v in (_valeur_ligne(r, i) for _j, r in lignes_donnees
                              for i, c in cibles.items() if c == "Prod_Jour")
                  if v is not None]
@@ -1257,9 +1258,6 @@ def parse_enedis_fichier(path: str, notes: list | None = None
 # Date suivie eventuellement d'une heure : "2026-07-14 06:15:00 +0200",
 # "14/07/2026 06:15". On ne garde que le jour, les valeurs sont totalisees.
 _RE_DATE_HEURE_FR = re.compile(r"^(\d{1,2})/(\d{1,2})/(\d{4})")
-# Nombre au format anglo-saxon uniquement (point decimal) : utilise quand
-# le fichier est separe par des virgules, sinon "30,1" serait coupe en deux.
-_RE_NOMBRE_POINT = re.compile(r"^-?\d+(\.\d+)?$")
 
 
 def _parse_jour_any(s: str) -> str | None:
@@ -1299,7 +1297,7 @@ def _nombre_cellule(cell: str, virgule: bool) -> float | None:
     if not virgule:
         return _parse_nombre(cell)
     brut = cell.replace(" ", "").replace(" ", "")
-    return float(brut) if _RE_NOMBRE_POINT.match(brut) else None
+    return float(brut) if _RE_NOMBRE.match(brut) else None
 
 
 def parse_enphase_texte(texte: str, notes: list | None = None
@@ -1320,12 +1318,7 @@ def parse_enphase_texte(texte: str, notes: list | None = None
     dixieme comme les valeurs affichees par Enlighten et le reste du CSV.
     """
     bas = texte.lower()
-    if "(kwh" in bas or "en kwh" in bas:
-        unite_kwh: bool | None = True
-    elif "(wh" in bas or "en wh" in bas:
-        unite_kwh = False
-    else:
-        unite_kwh = None
+    unite_kwh = _unite_annoncee(bas)
 
     totaux: dict[str, float] = {}
     ecartees: list[str] = []

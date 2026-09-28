@@ -113,13 +113,13 @@ class TransactionsView(BaseView):
                 f"{credit:,.2f}".replace(",", " ").replace(".", ","), float(credit))
             credit_item.setTextAlignment(ALIGN_CENTER)
             if credit > 0:
-                credit_item.setForeground(self._color(self.theme["credit"]))
+                credit_item.setForeground(QColor(self.theme["credit"]))
 
             debit_item = _ItemTriable(
                 f"{debit:,.2f}".replace(",", " ").replace(".", ","), float(debit))
             debit_item.setTextAlignment(ALIGN_CENTER)
             if debit > 0:
-                debit_item.setForeground(self._color(self.theme["debit"]))
+                debit_item.setForeground(QColor(self.theme["debit"]))
 
             bilan_item = _ItemTriable(
                 f"{'+' if bilan >= 0 else '-'}{abs(bilan):,.2f}"
@@ -128,7 +128,7 @@ class TransactionsView(BaseView):
             )
             bilan_item.setTextAlignment(ALIGN_CENTER)
             color = self.theme["credit"] if bilan >= 0 else self.theme["debit"]
-            bilan_item.setForeground(self._color(color))
+            bilan_item.setForeground(QColor(color))
             f = QFont()
             f.setBold(True)
             bilan_item.setFont(f)
@@ -136,7 +136,7 @@ class TransactionsView(BaseView):
             cellules = [date_item, prod_item, auto_item, inj_item, sout_item]
             if avec_ve:
                 ve_item = _num_item(float(r.get("recharge_ve_kwh", 0.0) or 0.0))
-                ve_item.setForeground(self._color(self.theme["info_ink"]))
+                ve_item.setForeground(QColor(self.theme["info_ink"]))
                 cellules.append(ve_item)
             cellules += [credit_item, debit_item, bilan_item]
             for col, item in enumerate(cellules):
@@ -213,7 +213,7 @@ class TransactionsView(BaseView):
             it.setFont(gras)
             ligne.setItem(0, c, it)
         dernier = ligne.item(0, len(valeurs) - 1)
-        dernier.setForeground(self._color(
+        dernier.setForeground(QColor(
             self.theme["credit"] if bilan >= 0 else self.theme["debit"]))
         ligne.setFixedHeight(36)
         ligne.setStyleSheet(
@@ -222,5 +222,3 @@ class TransactionsView(BaseView):
             f"{self.theme['bg_panel_alt']}; }}")
         return ligne
 
-    def _color(self, hex_color: str):
-        return QColor(hex_color)

@@ -143,7 +143,7 @@ class OAView(BaseView):
             ]
             couleur_n = (self.theme["text_muted"] if r["n"] == 0
                          else self.theme["primary"])
-            items[0].setForeground(self._color(couleur_n))
+            items[0].setForeground(QColor(couleur_n))
             f = QFont()
             f.setBold(True)
             items[0].setFont(f)
@@ -152,7 +152,7 @@ class OAView(BaseView):
                     "Du raccordement au début du contrat de vente : "
                     "l'injection de cette période n'était pas rémunérée.")
             bilan_color = self.theme["credit"] if r["bilan"] >= 0 else self.theme["debit"]
-            items[-1].setForeground(self._color(bilan_color))
+            items[-1].setForeground(QColor(bilan_color))
             items[-1].setFont(f)
             for j in range(2, len(cols)):
                 items[j].setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -192,5 +192,3 @@ class OAView(BaseView):
             self.layout_inner.addWidget(note)
         self.layout_inner.addStretch(1)
 
-    def _color(self, hex_color: str):
-        return QColor(hex_color)

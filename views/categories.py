@@ -36,7 +36,7 @@ from views._helpers import (
     variation,
 )
 from views._sankey import Flux, Noeud, SankeyWidget
-from views.comparaison import date_limite_n1
+from views.comparaison import couper_aux_memes_dates
 
 # Comparaison N vs N-1 du bas de page : (colonne, libelle, unite, sens).
 # sens=+1 si une hausse est une bonne nouvelle.
@@ -330,10 +330,11 @@ class CategoriesView(BaseView):
         # comme dans l'onglet Comparaison N vs N-1 et au tableau de bord.
         # Face au mois entier, 13 jours de septembre affichaient « -44,8 % »
         # de production quand le tableau de bord annoncait « +24 % ».
-        limite = date_limite_n1(df_n, period, self.data.start_oa)
+        a_couper = not df_n1.empty
+        df_n1, limite = couper_aux_memes_dates(df_n, df_n1, period,
+                                               self.data.start_oa)
         suffixe_n = suffixe_n1 = ""
-        if limite is not None and not df_n1.empty:
-            df_n1 = df_n1[df_n1.index.normalize() <= limite]
+        if limite is not None and a_couper:
             suffixe_n = f" (au {df_n.index.max():%d/%m})"
             suffixe_n1 = f" (au {limite:%d/%m})"
         agg_n = agreger(df_n, cles)

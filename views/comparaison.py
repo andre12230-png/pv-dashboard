@@ -48,6 +48,20 @@ def fin_de_periode(period: str, start_oa) -> pd.Timestamp:
     return pd.Timestamp(int(period.split("-")[1]), 12, 31)
 
 
+def couper_aux_memes_dates(df_n: pd.DataFrame, df_n1: pd.DataFrame,
+                          period: str, start_oa
+                          ) -> tuple[pd.DataFrame, pd.Timestamp | None]:
+    """L'an passe, coupe aux memes dates quand la periode N est en cours.
+
+    Rend (df_n1 coupe, date limite) ; limite None = rien a couper. Une seule
+    regle pour les trois pages qui comparent a l'an passe (tableau de bord,
+    Repartition, Comparaison) : elles la recopiaient."""
+    limite = date_limite_n1(df_n, period, start_oa)
+    if limite is not None and not df_n1.empty:
+        df_n1 = df_n1[df_n1.index.normalize() <= limite]
+    return df_n1, limite
+
+
 def date_limite_n1(df_n: pd.DataFrame, period: str, start_oa) -> pd.Timestamp | None:
     """Date a laquelle couper l'an passe quand la periode N n'est pas finie.
 
@@ -214,9 +228,9 @@ class ComparaisonView(BaseView):
 
         # Periode en cours : l'an passe s'arrete a la meme date, et les
         # libelles le disent (« Septembre 2026 (au 09/09) »).
-        limite = date_limite_n1(df_n, period, self.data.start_oa)
+        df_n1, limite = couper_aux_memes_dates(df_n, df_n1, period,
+                                               self.data.start_oa)
         if limite is not None:
-            df_n1 = df_n1[df_n1.index.normalize() <= limite]
             label_n += f" (au {df_n.index.max().strftime('%d/%m')})"
             label_n1 += f" (au {limite.strftime('%d/%m')})"
 

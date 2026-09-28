@@ -37,7 +37,7 @@ from views._helpers import (
     notes_donnees,
     periode_precedente,
 )
-from views.comparaison import date_limite_n1
+from views.comparaison import couper_aux_memes_dates
 
 
 class DashboardView(BaseView):
@@ -267,9 +267,8 @@ class DashboardView(BaseView):
         if precedente is None:
             return None
         df_n1 = filter_period(self.data.df, precedente, self.data.start_oa)
-        limite = date_limite_n1(df, period, self.data.start_oa)
-        if limite is not None and not df_n1.empty:
-            df_n1 = df_n1[df_n1.index.normalize() <= limite]
+        df_n1, _limite = couper_aux_memes_dates(df, df_n1, period,
+                                                self.data.start_oa)
         base = float(df_n1["production_kwh"].sum()) if not df_n1.empty else 0.0
         if base <= 0:
             return None
