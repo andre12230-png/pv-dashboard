@@ -835,6 +835,30 @@ def test_revenu_oa_nul_avant_contrat(oa_surplus):
     assert out["revenu_vente_eur"].iloc[0] == 0.0            # avant contrat
     assert out["revenu_vente_eur"].iloc[1] == pytest.approx(1.3)  # apres
 
+
+def test_revenu_oa_nul_apres_la_fin_du_contrat(oa_surplus):
+    # Contrat de 20 ans commence le 01/07/2020 : dernier jour paye le
+    # 30/06/2040. Defaut d'origine : la duree etait lue mais n'arretait rien.
+    from datetime import date as date_type
+    idx = pd.DatetimeIndex(["2040-06-30", "2040-07-01", "2041-01-01"])
+    df = pd.DataFrame({"production_kwh": [20.0] * 3,
+                       "injection_kwh": [10.0] * 3}, index=idx)
+    out = calc.revenu_oa(df, oa_surplus, debut_contrat=date_type(2020, 7, 1))
+    assert out["revenu_vente_eur"].tolist() == pytest.approx([1.3, 0.0, 0.0])
+
+
+def test_revenu_oa_duree_zero_sans_fin(oa_surplus):
+    # Duree 0 (ou absente) : pas de fin connue, le revenu continue.
+    from dataclasses import replace
+    from datetime import date as date_type
+    oa = replace(oa_surplus, duree_contrat=0)
+    idx = pd.DatetimeIndex(["2060-01-01"])
+    df = pd.DataFrame({"production_kwh": [20.0], "injection_kwh": [10.0]},
+                      index=idx)
+    out = calc.revenu_oa(df, oa, debut_contrat=date_type(2020, 7, 1))
+    assert out["revenu_vente_eur"].iloc[0] == pytest.approx(1.3)
+
+
 def test_revenu_oa_surplus(oa_surplus):
     idx = pd.DatetimeIndex(["2025-06-01"])
     df = pd.DataFrame({"production_kwh": [20.0], "injection_kwh": [10.0]}, index=idx)

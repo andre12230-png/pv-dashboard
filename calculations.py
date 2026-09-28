@@ -487,7 +487,9 @@ def revenu_oa(df_daily: pd.DataFrame, oa: OAConfig,
     """Ajoute colonnes revenu_vente_eur (et prime calculee par an separement).
 
     Si debut_contrat est fourni, le revenu est nul avant cette date :
-    l'injection d'avant-contrat n'etait pas payee par EDF OA."""
+    l'injection d'avant-contrat n'etait pas payee par EDF OA. Il l'est
+    aussi a partir de la fin du contrat (debut + duree_contrat annees) ;
+    une duree nulle veut dire « pas de fin connue »."""
     out = df_daily.copy()
     if oa.type == "surplus":
         out["revenu_vente_eur"] = out["injection_kwh"] * oa.prix_kwh
@@ -496,7 +498,11 @@ def revenu_oa(df_daily: pd.DataFrame, oa: OAConfig,
     else:
         out["revenu_vente_eur"] = 0.0
     if debut_contrat is not None and not out.empty:
-        out.loc[out.index < pd.Timestamp(debut_contrat), "revenu_vente_eur"] = 0.0
+        debut = pd.Timestamp(debut_contrat)
+        out.loc[out.index < debut, "revenu_vente_eur"] = 0.0
+        if oa.duree_contrat > 0:
+            fin = debut + pd.DateOffset(years=oa.duree_contrat)
+            out.loc[out.index >= fin, "revenu_vente_eur"] = 0.0
     return out
 
 
