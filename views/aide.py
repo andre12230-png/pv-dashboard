@@ -343,7 +343,8 @@ Le bouton <b>💾 Sauvegarde externe</b>, en bas du menu de gauche, copie vos
 relevés et vos réglages sur le support de votre choix, dans un dossier daté,
 et vérifie chaque copie. Un fichier <code>LISEZMOI.txt</code>, déposé à côté,
 explique comment la remettre en service. Faites-le de temps en temps, par
-exemple après chaque import mensuel.</p>
+exemple après chaque import mensuel : au-delà de 30 jours sans sauvegarde
+externe, le tableau de bord vous le rappelle.</p>
 
 <h3 style="color:#1F3A6B">Bon à savoir</h3>
 <p>Toutes les données restent sur votre ordinateur. Après chaque enregistrement, les

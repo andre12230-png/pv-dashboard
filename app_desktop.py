@@ -683,6 +683,7 @@ class MainWindow(QMainWindow):
         self.views["saisie"].reload_callback = self._on_data_changed
         # Les deux portes d'entree de la fenetre « Mes reglages ».
         self.views["dashboard"].ouvrir_reglages = self._ouvrir_reglages
+        self.views["dashboard"].rappel_sauvegarde = self._rappel_sauvegarde
         self.views["settings"].ouvrir_reglages = self._ouvrir_reglages
         for key in [n[0] for n in NAV_ITEMS]:
             self.stack.addWidget(self.views[key])
@@ -884,6 +885,17 @@ class MainWindow(QMainWindow):
     # Dernier dossier choisi pour la sauvegarde externe, propose la fois
     # suivante (preferences de l'application, pas les donnees).
     CLE_DESTINATION_SAUVEGARDE = "sauvegarde/destination"
+    # Jour de la derniere sauvegarde externe reussie (AAAA-MM-JJ), pour le
+    # rappel du tableau de bord (28/09/2026).
+    CLE_DERNIERE_SAUVEGARDE = "sauvegarde/derniere"
+
+    def _rappel_sauvegarde(self) -> str | None:
+        """Le rappel de sauvegarde externe, commun aux trois applications.
+        Sans sauvegarde jamais faite, on compte depuis la premiere
+        utilisation (retenue par avis.py)."""
+        return sauvegarde_externe.rappel_sauvegarde_externe(
+            self.settings.value(self.CLE_DERNIERE_SAUVEGARDE) or None,
+            self.settings.value(avis.CLE_PREMIERE_UTILISATION) or None)
 
     def _sauvegarder_externe(self) -> None:
         """Copie les donnees sur une cle USB ou un disque choisi par
@@ -904,6 +916,8 @@ class MainWindow(QMainWindow):
                                 erreur_en_clair(e))
             return
         self.settings.setValue(self.CLE_DESTINATION_SAUVEGARDE, choisi)
+        self.settings.setValue(self.CLE_DERNIERE_SAUVEGARDE,
+                               date.today().isoformat())
         liste = "\n".join(f"  • {nom}" for nom in copies)
         QMessageBox.information(
             self, "Sauvegarde terminée",

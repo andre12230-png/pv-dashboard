@@ -43,6 +43,9 @@ from views.comparaison import date_limite_n1
 class DashboardView(BaseView):
     # Ouvre la fenetre « Mes reglages » ; branche par MainWindow.
     ouvrir_reglages = None
+    # Rend le rappel de sauvegarde externe, ou None ; branche par
+    # MainWindow (28/09/2026).
+    rappel_sauvegarde = None
 
     def populate(self, period: str) -> None:
         # Aucun releve du tout : premier lancement. Au lieu d'un bandeau
@@ -62,6 +65,9 @@ class DashboardView(BaseView):
         # Fraicheur en premier : on doit savoir si l'on regarde des chiffres
         # complets AVANT de les lire, pas apres.
         self.layout_inner.addWidget(self._bandeau_fraicheur())
+        bandeau = self._bandeau_sauvegarde()
+        if bandeau is not None:
+            self.layout_inner.addWidget(bandeau)
         if df.empty:
             self.layout_inner.addWidget(self._empty_card("Aucune donnée sur cette période."))
             return
@@ -427,6 +433,21 @@ class DashboardView(BaseView):
         fond = self.theme["warm_bg"] if en_retard else "transparent"
         lbl.setStyleSheet(
             f"color: {couleur}; background: {fond}; font-size: 11px; "
+            f"padding: 6px 10px; border-radius: 6px;")
+        return lbl
+
+    def _bandeau_sauvegarde(self) -> QLabel | None:
+        """Le rappel de sauvegarde externe, sous la fraicheur des donnees,
+        dans le meme style ; None s'il n'y a rien a dire."""
+        texte = self.rappel_sauvegarde() if callable(
+            self.rappel_sauvegarde) else None
+        if not texte:
+            return None
+        lbl = QLabel("💾  " + texte)
+        lbl.setWordWrap(True)
+        lbl.setStyleSheet(
+            f"color: {self.theme['warm_ink']}; "
+            f"background: {self.theme['warm_bg']}; font-size: 11px; "
             f"padding: 6px 10px; border-radius: 6px;")
         return lbl
 

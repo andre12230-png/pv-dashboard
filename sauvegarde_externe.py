@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import shutil
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 
@@ -107,3 +107,47 @@ def sauvegarder(fichiers: list[Path | None], destination: Path,
                 "comptez pas sur cette sauvegarde, et réessayez sur un autre "
                 "support.")
     return cible, noms
+
+
+# ---------- rappel de sauvegarde externe (28/09/2026) ----------
+# Commun aux trois applications. Chacune retient la date de sa derniere
+# sauvegarde externe reussie (dans ses propres reglages) et montre ce rappel
+# sur sa page d'accueil. Le texte est le meme partout.
+
+SEUIL_RAPPEL_JOURS = 30
+
+
+def rappel_sauvegarde_externe(derniere: str | None, depuis: str | None,
+                              aujourd_hui: date | None = None,
+                              seuil_jours: int = SEUIL_RAPPEL_JOURS
+                              ) -> str | None:
+    """Une phrase a afficher quand la derniere sauvegarde externe date de
+    `seuil_jours` ou plus, ou None s'il n'y a rien a dire.
+
+    `derniere` : date (AAAA-MM-JJ) de la derniere sauvegarde externe
+    reussie, None s'il n'y en a jamais eu. `depuis` : date a partir de
+    laquelle compter quand il n'y en a jamais eu (premiere utilisation de
+    l'application) ; sans elle, on se tait plutot que de relancer un
+    utilisateur qui vient d'installer l'application."""
+    aujourd_hui = aujourd_hui or date.today()
+    if derniere:
+        try:
+            jours = (aujourd_hui - date.fromisoformat(derniere[:10])).days
+        except ValueError:
+            return None
+        if jours < seuil_jours:
+            return None
+        return (f"Aucune sauvegarde externe depuis {jours} jours : le bouton "
+                "« 💾 Sauvegarde externe » copie vos données sur une clé USB "
+                "ou un disque, à l'abri d'une panne de cet ordinateur.")
+    if not depuis:
+        return None
+    try:
+        jours = (aujourd_hui - date.fromisoformat(depuis[:10])).days
+    except ValueError:
+        return None
+    if jours < seuil_jours:
+        return None
+    return ("Vos données n'ont encore jamais été copiées hors de cet "
+            "ordinateur : le bouton « 💾 Sauvegarde externe » les met sur une "
+            "clé USB ou un disque, à l'abri d'une panne.")

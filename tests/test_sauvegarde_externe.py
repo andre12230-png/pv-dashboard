@@ -134,3 +134,38 @@ def test_aucun_acces_reseau(module):
     for interdit in ("import urllib", "import http", "import socket",
                      "import requests", "QtNetwork", "import ssl"):
         assert interdit not in source, f"{module} : {interdit}"
+
+
+# ---------- rappel de sauvegarde externe (28/09/2026) ----------
+# Le meme dans les trois applications.
+
+def test_rappel_rien_avant_30_jours():
+    from datetime import date
+    assert se.rappel_sauvegarde_externe(
+        "2026-09-01", None, aujourd_hui=date(2026, 9, 30)) is None   # 29 j
+
+
+def test_rappel_au_bout_de_30_jours():
+    from datetime import date
+    phrase = se.rappel_sauvegarde_externe(
+        "2026-09-01", None, aujourd_hui=date(2026, 10, 1))
+    assert "depuis 30 jours" in phrase and "Sauvegarde externe" in phrase
+
+
+def test_rappel_jamais_faite_apres_30_jours_d_utilisation():
+    from datetime import date
+    assert se.rappel_sauvegarde_externe(
+        None, "2026-09-10", aujourd_hui=date(2026, 9, 30)) is None
+    phrase = se.rappel_sauvegarde_externe(
+        None, "2026-08-01", aujourd_hui=date(2026, 9, 30))
+    assert "jamais" in phrase
+
+
+def test_rappel_se_tait_sans_repere():
+    """Jamais faite, et on ne sait pas depuis quand l'appli sert : rien,
+    plutot que de relancer quelqu'un qui vient de l'installer."""
+    from datetime import date
+    assert se.rappel_sauvegarde_externe(
+        None, None, aujourd_hui=date(2030, 1, 1)) is None
+    assert se.rappel_sauvegarde_externe(
+        "illisible", None, aujourd_hui=date(2030, 1, 1)) is None
