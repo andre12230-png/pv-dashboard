@@ -64,6 +64,21 @@ def test_vente_totale_sans_prime(tmp_path, monkeypatch):
     assert data.df["revenu_vente_eur"].sum() > 0
 
 
+def test_vente_totale_rien_n_est_autoconsomme(tmp_path, monkeypatch):
+    # En vente totale, toute la production part au reseau par son propre
+    # compteur : la maison ne consomme que du reseau. Defaut d'origine : la
+    # production etait payee en entier ET la part non injectee comptee en
+    # economie, soit deux fois (ici 20 kWh vendus, dont 8 comptes en plus).
+    data = _donnees(tmp_path, monkeypatch, _vente_totale)
+    df = data.df
+    assert df["autoconsommation_kwh"].sum() == 0
+    assert df["economie_eur"].sum() == 0
+    assert (df["injection_kwh"] == df["production_kwh"]).all()
+    assert (df["consommation_kwh"] == df["soutirage_kwh"]).all()
+    assert df["bilan_jour_eur"].sum() == pytest.approx(
+        df["revenu_vente_eur"].sum() - df["cout_reseau_eur"].sum())
+
+
 def test_sans_revente_rien_n_est_vendu(tmp_path, monkeypatch):
     data = _donnees(tmp_path, monkeypatch, _sans_revente)
     assert data.start_oa is None

@@ -226,7 +226,8 @@ Plusieurs libellés sont acceptés : <code>Consommation HC (kWh)</code> et
 <code>Consommation HP (kWh)</code> (ceux d'Octopus), <code>Heures creuses</code>
 et <code>Heures pleines</code>, ou simplement <code>HC</code> et
 <code>HP</code>. La date reste en <b>première colonne</b>, le séparateur est le
-point-virgule, et une colonne de consommation totale est facultative :</p>
+point-virgule (la virgule et la tabulation passent aussi), et une colonne de
+consommation totale est facultative :</p>
 <pre>Date;Consommation (kWh);Consommation HC (kWh);Consommation HP (kWh)
 01/09/2026;12,3;5,1;7,2
 02/09/2026;11,8;4,9;6,9</pre>

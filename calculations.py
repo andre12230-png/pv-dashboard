@@ -467,6 +467,21 @@ class OAConfig:
     duree_contrat: int
 
 
+def applique_vente_totale(df_daily: pd.DataFrame) -> pd.DataFrame:
+    """En vente totale, toute la production part au reseau.
+
+    Elle passe par son propre compteur : la maison ne consomme que du
+    reseau. Rien n'est donc autoconsomme, quelle que soit l'injection
+    saisie (souvent 0, lue sur le compteur de la maison). Sans cela, la
+    production etait payee en entier ET la part non injectee comptee en
+    economie : deux fois."""
+    out = df_daily.copy()
+    out["injection_kwh"] = out["production_kwh"]
+    out["autoconsommation_kwh"] = 0.0
+    out["consommation_kwh"] = out["soutirage_kwh"]
+    return out
+
+
 def revenu_oa(df_daily: pd.DataFrame, oa: OAConfig,
               debut_contrat: date | None = None) -> pd.DataFrame:
     """Ajoute colonnes revenu_vente_eur (et prime calculee par an separement).

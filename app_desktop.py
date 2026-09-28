@@ -542,6 +542,10 @@ def build_dataset(cfg: dict) -> AppData:
     debut_contrat = cfg["installation"].get("date_debut_contrat_oa")
     start_oa = (pd.Timestamp(debut_contrat).date()
                 if vente != "aucune" and debut_contrat else None)
+    # Vente totale : rien n'est autoconsomme, toute la production est vendue.
+    if vente == "totale":
+        df = calc.applique_vente_totale(df)
+        df_brut = calc.applique_vente_totale(df_brut)
     # debut_contrat : pas de vente OA avant le debut du contrat (injection gratuite).
     df = calc.revenu_oa(df, oa, debut_contrat=start_oa)
     df = calc.cout_reseau_journalier(df, None, bleu, octopus)
