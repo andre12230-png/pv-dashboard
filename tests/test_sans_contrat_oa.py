@@ -252,3 +252,24 @@ def test_sans_part_hc_declaree_les_parametres_affichent_zero(
         assert "20,0 %" not in textes
     finally:
         win.close()
+
+
+def _apres_midi_sans_part(cfg):
+    contrat = cfg["tarifs_reseau"]["contrat_hphc"]
+    contrat.pop("part_hc_autoconso", None)
+    contrat["plages_hc"] = ["23:56-05:26", "14:26-16:56"]
+
+
+def test_sans_part_declaree_les_calculs_prennent_l_estimation(
+        tmp_path, monkeypatch):
+    data = _donnees(tmp_path, monkeypatch, _apres_midi_sans_part)
+    assert data.octopus.part_hc_autoconso == 0.24
+
+
+def test_parametres_disent_que_la_part_est_estimee(qapp, tmp_path, monkeypatch):
+    win = _fenetre(qapp, tmp_path, monkeypatch, _apres_midi_sans_part)
+    try:
+        textes = _textes(win, "settings")
+        assert "24,0 %" in textes and "ESTIM" in textes
+    finally:
+        win.close()

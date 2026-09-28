@@ -100,8 +100,10 @@ class SettingsView(BaseView):
                 f"HC {fmt_prix_kwh(p['prix_hc'])}")))
         octopus_rows += [
             ("Plages HC", " / ".join(octopus["plages_hc"])),
-            ("Part HC de l'autoconso (estimation)",
-             fmt_pct(octopus.get("part_hc_autoconso", 0.0) * 100)),
+            ("Part HC de l'autoconso",
+             fmt_pct(self.data.octopus.part_hc_autoconso * 100)
+             + ("" if octopus.get("part_hc_autoconso") is not None
+                else " — estimée d'après vos heures creuses")),
         ]
         # Les deux titres portaient les dates du contrat de l'auteur. Elles
         # viennent maintenant de la date de bascule declaree en config.

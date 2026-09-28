@@ -72,21 +72,27 @@ def _contrat(cfg: dict) -> dict:
     return cfg["tarifs_reseau"][section] if section else {}
 
 
-# Valeur appliquee par les calculs quand le fichier ne dit rien (voir
-# calculations.PART_HC_AUTOCONSO_PAR_DEFAUT) : la fenetre doit montrer la
-# meme. 0 depuis le 28/09/2026 (decision d'Andre) : les heures creuses
-# tombent le plus souvent la nuit, quand les panneaux ne produisent rien.
-# C'etait 20 % dans le code, et deja 0 dans le modele livre.
-PART_HC_PAR_DEFAUT = 0.0
+def _part_hc_estimee(contrat: dict) -> float:
+    """La part HC estimee d'apres les plages du fichier (0 si illisibles).
+
+    C'est ce que les calculs appliquent quand le fichier n'ecrit pas de part
+    (app_desktop.build_dataset) : la fenetre doit montrer la meme. Depuis
+    le 28/09/2026 ; avant, un nombre fixe (20 %, puis 0)."""
+    try:
+        return calc.estimer_part_hc_autoconso(calc.parse_plages_hc(
+            [str(p) for p in contrat.get("plages_hc") or []]))
+    except (ValueError, TypeError):
+        return 0.0
 
 
 def _part_hc(contrat: dict) -> float:
     """Part des kWh autoconsommes qu'on aurait payes en heures creuses.
 
     Un 0 ecrit dans le fichier est une vraie valeur (heures creuses toutes la
-    nuit) : on teste l'absence, pas la « faussete », d'ou le `is None`."""
+    nuit) : on teste l'absence, pas la « faussete », d'ou le `is None`.
+    Absente : l'estimation d'apres les plages."""
     valeur = contrat.get("part_hc_autoconso")
-    return PART_HC_PAR_DEFAUT if valeur is None else float(valeur)
+    return _part_hc_estimee(contrat) if valeur is None else float(valeur)
 
 
 def lire_reglages(cfg: dict) -> dict:
@@ -122,6 +128,10 @@ def lire_reglages(cfg: dict) -> dict:
         "prix_depuis": _date(derniere.get("debut") or aujourdhui),
         "plages_hc": [str(p) for p in (contrat.get("plages_hc") or [])],
         "part_hc_autoconso": _part_hc(contrat),
+        # Montree a cote de la case, meme quand une part est ecrite ; et
+        # « declaree » dit si la case vient du fichier ou de l'estimation.
+        "part_hc_estimee": _part_hc_estimee(contrat),
+        "part_hc_declaree": contrat.get("part_hc_autoconso") is not None,
     }
 
 
@@ -370,7 +380,8 @@ def reglages_attendus(cfg: dict, v: dict) -> dict:
             contrat[cle] = v[cle]
     if [str(p) for p in contrat.get("plages_hc") or []] != list(v["plages_hc"]):
         contrat["plages_hc"] = list(v["plages_hc"])
-    if _part_hc(contrat) != float(v["part_hc_autoconso"]):
+    if (v["part_hc_autoconso"] is not None
+            and _part_hc(contrat) != float(v["part_hc_autoconso"])):
         contrat["part_hc_autoconso"] = float(v["part_hc_autoconso"])
     nouvelles = _periodes_apres(contrat.get("periodes") or [], v)
     if nouvelles is not None:
@@ -488,7 +499,8 @@ def appliquer_reglages(texte: str, cfg: dict, v: dict) -> str:
             raise ReglagesRefuses("Réglage introuvable : plages_hc.")
         _remplacer_liste(lignes, k, list(v["plages_hc"]))
 
-    if _part_hc(contrat) != float(v["part_hc_autoconso"]):
+    if (v["part_hc_autoconso"] is not None
+            and _part_hc(contrat) != float(v["part_hc_autoconso"])):
         _poser_ou_ajouter(lignes, chemin_contrat, "part_hc_autoconso",
                           _nombre(v["part_hc_autoconso"]))
 
@@ -632,7 +644,8 @@ def controler(v: dict) -> None:
         raise ReglagesRefuses(
             "Heures creuses : écrivez chaque plage sous la forme "
             "22:00-06:00, et séparez-les par un point-virgule.") from exc
-    if not 0 <= float(v["part_hc_autoconso"]) <= 1:
+    if (v["part_hc_autoconso"] is not None
+            and not 0 <= float(v["part_hc_autoconso"]) <= 1):
         raise ReglagesRefuses(
             "La part de votre autoconsommation en heures creuses doit être "
             "comprise entre 0 et 100 %.")

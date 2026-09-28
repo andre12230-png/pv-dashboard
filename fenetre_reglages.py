@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+import calculations as calc
 from erreurs import erreur_en_clair
 from reglages import (
     SORTES_RECALAGE,
@@ -257,8 +258,28 @@ class FenetreReglages(QDialog):
         # n'a pas bouge, c'est la valeur lue, exacte, qui repart (voir
         # _part_hc).
         self._part_hc_lue = valeurs["part_hc_autoconso"]
+        # Part non ecrite dans le fichier : la case montre l'estimation, et
+        # tant qu'on n'y touche pas, rien n'est ecrit (voir _part_hc).
+        self._part_hc_declaree = valeurs.get("part_hc_declaree", True)
         self.part_hc = _nombre(self._part_hc_lue * 100, 0, " %", 100)
         self._part_hc_affichee = self.part_hc.value()
+        # L'estimation d'apres les plages, a cote de la case, et un bouton
+        # pour la reprendre. Elle suit les plages tapees.
+        self.estimation_hc = QLabel()
+        self.estimation_hc.setStyleSheet("color: #555555;")
+        self.bouton_estimation = QPushButton("Reprendre")
+        self.bouton_estimation.setToolTip(
+            "Mettre dans la case l'estimation d'après vos heures creuses.")
+        self.bouton_estimation.clicked.connect(self._reprendre_estimation)
+        self._estimation = 0.0
+        self.plages.textChanged.connect(self._maj_estimation)
+        self._maj_estimation()
+        ligne_part = QWidget()
+        rangee = QHBoxLayout(ligne_part)
+        rangee.setContentsMargins(0, 0, 0, 0)
+        rangee.addWidget(self.part_hc)
+        rangee.addWidget(self.estimation_hc, 1)
+        rangee.addWidget(self.bouton_estimation)
         v.addWidget(self._groupe("Mon fournisseur d'électricité", [
             ("Fournisseur", self.nom),
             ("Offre", self.offre),
@@ -267,7 +288,7 @@ class FenetreReglages(QDialog):
             ("Prix heures creuses", self.prix_hc),
             ("Heures creuses", self.plages),
             ("Ces prix s'appliquent depuis le", self.prix_depuis),
-            ("Autoconsommation en heures creuses", self.part_hc),
+            ("Autoconsommation en heures creuses", ligne_part),
         ], "Prix TTC, pour la puissance de votre compteur. En option Base "
            "(prix unique), mettez le même prix en heures pleines et en heures "
            "creuses. Vous êtes chez EDF ? Écrivez EDF : l'onglet de "
@@ -283,9 +304,11 @@ class FenetreReglages(QDialog):
            "<b>Autoconsommation en heures creuses</b> : la part du courant "
            "de vos panneaux que vous auriez payée au prix des heures creuses, "
            "s'il avait fallu l'acheter. Vos panneaux produisent le jour : si "
-           "toutes vos heures creuses sont la nuit, mettez 0 %. Avec une plage "
-           "l'après-midi, une partie de votre production tombe dedans — "
-           "20 % par exemple. Ce réglage sert à chiffrer ce que votre "
+           "toutes vos heures creuses sont la nuit, c'est 0 %. Avec une plage "
+           "l'après-midi, une partie de votre production tombe dedans. "
+           "L'estimation à côté part de vos plages et d'une journée de soleil "
+           "type ; « Reprendre » la met dans la case. Sans valeur de votre "
+           "part, c'est elle qui sert. Ce réglage chiffre ce que votre "
            "autoconsommation vous fait économiser."))
 
         # --- Recalages sur factures -------------------------------------
@@ -472,15 +495,36 @@ class FenetreReglages(QDialog):
         # un montant a toucher. On la masque.
         self.total_prime.setVisible(vente == "surplus")
 
-    def _part_hc(self) -> float:
-        """La part saisie, en fraction.
+    def _part_hc(self) -> float | None:
+        """La part saisie, en fraction ; None = ne rien ecrire.
 
         Case non touchee : la valeur lue, exacte. Un 0,225 du fichier
         s'affiche arrondi a 23 % ; enregistrer un autre reglage ne doit pas
-        le changer en 0,23 sans que l'utilisateur l'ait voulu."""
+        le changer en 0,23 sans que l'utilisateur l'ait voulu. Et si cette
+        valeur n'etait que l'estimation (rien d'ecrit), None : l'estimation
+        continue de suivre les plages au lieu d'etre figee."""
         if self.part_hc.value() == self._part_hc_affichee:
-            return self._part_hc_lue
+            return self._part_hc_lue if self._part_hc_declaree else None
         return round(self.part_hc.value() / 100, 4)
+
+    def _maj_estimation(self) -> None:
+        """Recalcule l'estimation d'apres les plages tapees."""
+        plages = [p.strip() for p in
+                  self.plages.text().replace(",", ";").split(";") if p.strip()]
+        try:
+            self._estimation = calc.estimer_part_hc_autoconso(
+                calc.parse_plages_hc(plages))
+        except (ValueError, TypeError):
+            self.estimation_hc.setText("Estimation : plages illisibles")
+            self.bouton_estimation.setEnabled(False)
+            return
+        self.estimation_hc.setText(
+            "Estimation d'après vos heures creuses : "
+            f"{round(self._estimation * 100)} %")
+        self.bouton_estimation.setEnabled(True)
+
+    def _reprendre_estimation(self) -> None:
+        self.part_hc.setValue(round(self._estimation * 100))
 
     def _on_enregistrer(self) -> None:
         try:

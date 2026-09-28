@@ -537,9 +537,13 @@ def build_dataset(cfg: dict) -> AppData:
     octopus = calc.OctopusConfig(
         periodes=calc.periodes_octopus(cfg_octopus),
         plages_hc=calc.parse_plages_hc(cfg_octopus["plages_hc"]),
-        # .get : les anciens config.yaml sans cette cle restent valides.
-        # 0 par defaut (28/09/2026), comme reglages.PART_HC_PAR_DEFAUT.
-        part_hc_autoconso=float(cfg_octopus.get("part_hc_autoconso", 0.0)),
+        # Sans part ecrite : estimee d'apres les plages HC (28/09/2026), la
+        # meme que montre « Mes reglages » (reglages._part_hc).
+        part_hc_autoconso=(
+            float(cfg_octopus["part_hc_autoconso"])
+            if cfg_octopus.get("part_hc_autoconso") is not None
+            else calc.estimer_part_hc_autoconso(
+                calc.parse_plages_hc(cfg_octopus["plages_hc"]))),
     )
 
     # Pas de vente, pas de contrat : ni date de debut, ni « annees OA ».

@@ -1216,3 +1216,35 @@ def test_jours_injection_estimee_sans_colonne_ne_plante_pas():
                       index=pd.to_datetime(["2025-01-14"]))
     assert not calc.jours_injection_estimee(df).any()
 
+
+
+# -----------------------------------------------------------------------------
+# Part HC de l'autoconsommation estimee d'apres les plages (28/09/2026)
+# -----------------------------------------------------------------------------
+
+def _estime(plages):
+    return calc.estimer_part_hc_autoconso(calc.parse_plages_hc(plages))
+
+
+def test_estimation_heures_creuses_la_nuit_seulement():
+    # Les panneaux ne produisent rien la nuit : aucune autoconsommation en HC.
+    assert _estime(["22:00-06:00"]) == 0.0
+    assert _estime(["23:56-05:26"]) == 0.0
+
+
+def test_estimation_avec_une_plage_l_apres_midi():
+    # Deux heures et demie l'apres-midi : environ un quart de la production.
+    part = _estime(["23:56-05:26", "14:26-16:56"])
+    assert 0.20 <= part <= 0.28
+
+
+def test_estimation_toute_la_journee_en_heures_creuses():
+    assert _estime(["05:00-23:00"]) == 1.0
+
+
+def test_estimation_une_plage_a_midi_pese_plus_que_le_soir():
+    assert _estime(["12:00-14:00"]) > _estime(["18:00-20:00"]) > 0
+
+
+def test_estimation_sans_plage():
+    assert _estime([]) == 0.0

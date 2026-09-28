@@ -9,7 +9,24 @@ from __future__ import annotations
 
 import os
 
+import pytest
+
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+
+@pytest.fixture(autouse=True)
+def date_de_bascule_remise():
+    """Remet la date de bascule HP/HC apres chaque test.
+
+    C'est un reglage global du module calculations, que build_dataset pose
+    d'apres la config : un test qui construit le jeu de donnees la laissait
+    changee pour les suivants. Trois tests de test_calculations echouaient
+    selon l'ordre de lancement (28/09/2026) ; l'ordre habituel le masquait.
+    """
+    import calculations
+    avant = calculations.CUTOFF_OCTOPUS
+    yield
+    calculations.CUTOFF_OCTOPUS = avant
 
 
 def pytest_sessionfinish(session, exitstatus):

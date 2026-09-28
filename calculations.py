@@ -19,6 +19,7 @@ Tarifs :
 from __future__ import annotations
 
 import calendar
+import math
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from decimal import ROUND_HALF_UP, Decimal
@@ -596,6 +597,48 @@ def _is_in_plage(t: time, plage: tuple[time, time]) -> bool:
         return start <= t < end
     # Plage qui traverse minuit
     return t >= start or t < end
+
+
+# Courbe solaire type pour estimer la part HC de l'autoconsommation (France,
+# vers 45 degres nord) : duree du jour en heures, midi solaire en heure
+# legale (heure d'hiver de novembre a mars), et poids de chaque mois dans la
+# production de l'annee. Une estimation, pas une mesure : les heures exactes
+# de production dependent du lieu et de l'orientation des panneaux.
+_DUREE_DU_JOUR = {1: 8.9, 2: 10.2, 3: 11.8, 4: 13.5, 5: 15.0, 6: 15.7,
+                  7: 15.3, 8: 14.0, 9: 12.4, 10: 10.8, 11: 9.4, 12: 8.6}
+_MIDI_SOLAIRE = {m: 12.7 if m in (1, 2, 3, 11, 12) else 13.7
+                 for m in range(1, 13)}
+_POIDS_DU_MOIS = {1: .04, 2: .06, 3: .09, 4: .11, 5: .12, 6: .13,
+                  7: .13, 8: .12, 9: .09, 10: .06, 11: .03, 12: .02}
+
+
+def estimer_part_hc_autoconso(plages: list[tuple[time, time]]) -> float:
+    """Part de la production solaire qui tombe dans les heures creuses.
+
+    Sert de valeur a part_hc_autoconso quand config.yaml n'en ecrit pas
+    (28/09/2026). La part HC de l'ACHAT au reseau ne convient pas : le
+    reseau sert surtout la nuit, justement parce que les panneaux couvrent
+    la journee. Ce qui compte, c'est quand le soleil produit : une courbe en
+    cloche du lever au coucher, mois par mois, ponderee par la production de
+    chaque mois. Heures creuses toutes la nuit : 0. Arrondi au pour cent.
+    """
+    if not plages:
+        return 0.0
+    total = dedans = 0.0
+    for mois, duree in _DUREE_DU_JOUR.items():
+        lever = _MIDI_SOLAIRE[mois] - duree / 2
+        prod_mois = hc_mois = 0.0
+        for minute in range(int(duree * 60)):
+            heure = lever + minute / 60
+            puissance = math.sin(math.pi * minute / (duree * 60))
+            prod_mois += puissance
+            h = int(heure) % 24
+            m = int(round((heure - int(heure)) * 60)) % 60
+            if any(_is_in_plage(time(h, m), p) for p in plages):
+                hc_mois += puissance
+        total += _POIDS_DU_MOIS[mois]
+        dedans += _POIDS_DU_MOIS[mois] * hc_mois / prod_mois
+    return round(dedans / total, 2)
 
 
 def is_hc(ts: pd.Timestamp, plages: list[tuple[time, time]]) -> bool:

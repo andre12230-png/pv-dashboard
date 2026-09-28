@@ -267,7 +267,10 @@ def test_la_fenetre_rend_ce_qu_on_lui_donne(qapp):
     from fenetre_reglages import FenetreReglages
     v = rg.lire_reglages(yaml.safe_load(ANCIEN))
     fenetre = FenetreReglages(v, lambda _v: None)
-    assert fenetre.valeurs() == v
+    # Les deux renseignements sur l'estimation ne s'ecrivent pas.
+    attendu = {k: x for k, x in v.items()
+               if k not in ("part_hc_estimee", "part_hc_declaree")}
+    assert fenetre.valeurs() == attendu
 
 
 def test_la_fenetre_reste_ouverte_si_l_enregistrement_est_refuse(qapp, monkeypatch):
@@ -665,8 +668,13 @@ def test_part_hc_absente_vaut_ce_que_l_application_utilise():
     # 28/09/2026 : les heures creuses tombent le plus souvent la nuit, quand
     # les panneaux ne produisent rien ; c'etait 20 %, et 0 dans le modele).
     # La fenetre doit montrer ce qui est reellement applique.
+    # Depuis, l'estimation d'apres les plages (celles d'ANCIEN ont une plage
+    # l'apres-midi).
     cfg = yaml.safe_load(_sans_part_hc(ANCIEN))
-    assert rg.lire_reglages(cfg)["part_hc_autoconso"] == 0.0
+    plages = cfg["tarifs_reseau"]["octopus_hphc"]["plages_hc"]
+    attendue = rg.calc.estimer_part_hc_autoconso(rg.calc.parse_plages_hc(plages))
+    assert attendue > 0
+    assert rg.lire_reglages(cfg)["part_hc_autoconso"] == attendue
 
 
 def test_changer_la_part_hc_ne_touche_que_sa_ligne():
@@ -859,3 +867,81 @@ def test_les_copies_avant_reglages_ne_s_accumulent_pas(tmp_path):
     assert any(c.read_text(encoding="utf-8") == ANCIEN for c in copies)
     assert not (dossier / "config_avant-reglages_20260100-120000.yaml").exists()
     assert autre.exists()
+
+
+# -----------------------------------------------------------------------------
+# Part HC estimee d'apres les plages quand le fichier n'en ecrit pas (28/09)
+# -----------------------------------------------------------------------------
+
+APRES_MIDI = ["23:56-05:26", "14:26-16:56"]
+
+
+def _avec_plages(texte: str, plages: list[str]) -> str:
+    """Remplace la liste des plages HC du fichier (une ligne par plage)."""
+    cfg = yaml.safe_load(texte)
+    anciennes = cfg["tarifs_reseau"][rg._section_contrat(cfg)]["plages_hc"]
+    for vieille in anciennes:
+        texte = texte.replace(f'      - "{vieille}"\n',
+                              "".join(f'      - "{p}"\n' for p in plages), 1)
+        plages = []
+    return texte
+
+
+def test_sans_ligne_la_part_est_estimee_d_apres_les_plages():
+    cfg = yaml.safe_load(_avec_plages(_sans_part_hc(ANCIEN), APRES_MIDI))
+    v = rg.lire_reglages(cfg)
+    assert v["part_hc_autoconso"] == 0.24
+    assert v["part_hc_estimee"] == 0.24
+    assert v["part_hc_declaree"] is False
+
+
+def test_une_part_ecrite_l_emporte_sur_l_estimation():
+    cfg = yaml.safe_load(_avec_plages(ANCIEN, APRES_MIDI))
+    v = rg.lire_reglages(cfg)
+    assert v["part_hc_autoconso"] == 0.20              # celle du fichier
+    assert v["part_hc_estimee"] == 0.24                # montree a cote
+    assert v["part_hc_declaree"] is True
+
+
+def test_part_non_touchee_et_non_ecrite_rien_n_est_ajoute():
+    # « None » : l'utilisateur n'a pas touche la case -> pas de ligne,
+    # l'estimation continue de suivre les plages.
+    texte = _avec_plages(_sans_part_hc(ANCIEN), APRES_MIDI)
+    cfg = yaml.safe_load(texte)
+    v = {**rg.lire_reglages(cfg), "part_hc_autoconso": None,
+         "plages_hc": ["23:56-05:26", "12:00-14:00"]}
+    rg.controler(v)
+    nouveau = rg.appliquer_reglages(texte, cfg, v)
+    assert "part_hc_autoconso" not in nouveau
+    assert '"12:00-14:00"' in nouveau
+
+
+def test_le_modele_livre_n_ecrit_plus_la_part():
+    # Sinon un nouvel utilisateur garderait 0 meme avec une plage
+    # l'apres-midi ; avec les plages du modele (la nuit), l'estimation vaut 0.
+    cfg = yaml.safe_load(MODELE)
+    assert "part_hc_autoconso" not in cfg["tarifs_reseau"]["contrat_hphc"]
+    assert rg.lire_reglages(cfg)["part_hc_autoconso"] == 0.0
+
+
+def test_la_fenetre_montre_l_estimation_et_la_reprend():
+    from fenetre_reglages import FenetreReglages
+    f = FenetreReglages({**VALEURS_FENETRE, "plages_hc": APRES_MIDI,
+                         "part_hc_autoconso": 0.20,
+                         "part_hc_estimee": 0.24, "part_hc_declaree": True},
+                        lambda _v: None)
+    assert "24 %" in f.estimation_hc.text()
+    # Elle suit les plages tapees.
+    f.plages.setText("22:00-06:00")
+    assert "0 %" in f.estimation_hc.text()
+    f.plages.setText(" ; ".join(APRES_MIDI))
+    f.bouton_estimation.click()
+    assert f.valeurs()["part_hc_autoconso"] == 0.24
+
+
+def test_la_fenetre_ne_fige_pas_une_estimation_non_touchee():
+    from fenetre_reglages import FenetreReglages
+    f = FenetreReglages({**VALEURS_FENETRE, "part_hc_autoconso": 0.24,
+                         "part_hc_estimee": 0.24, "part_hc_declaree": False},
+                        lambda _v: None)
+    assert f.valeurs()["part_hc_autoconso"] is None

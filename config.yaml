@@ -83,11 +83,11 @@ tarifs_reseau:
       # indiquees sur votre facture ou votre espace client.
       - "22:00-06:00"
     # Part des kWh autoconsommes qui seraient factures en heures creuses
-    # s'il fallait les acheter. L'autoconsommation a lieu en journee : seule
-    # une plage d'heures creuses l'apres-midi en capte une partie. Mettez 0
-    # si toutes vos heures creuses sont la nuit. Sert a valoriser l'economie
-    # d'autoconsommation.
-    part_hc_autoconso: 0.0
+    # s'il fallait les acheter. Sert a valoriser l'economie d'autoconsommation.
+    # Sans cette ligne, l'application l'estime d'apres les plages ci-dessus :
+    # 0 si elles sont toutes la nuit, environ un quart avec 2 h 30 l'apres-midi.
+    # Pour imposer votre valeur (ici 25 %), ajoutez :
+    #   part_hc_autoconso: 0.25
 
   # Reference de la vue de comparaison : ce qu'aurait coute le Tarif Bleu
   # d'EDF (tarif reglemente, le meme pour tous), en option Base et en option
