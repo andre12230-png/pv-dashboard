@@ -774,3 +774,20 @@ def test_import_vraisemblable_sans_alerte(vue, dialogue, fichier_choisi,
 
     assert "maximum vraisemblable" not in dialogue.messages[0]
     assert dialogue.defauts[0] == QMessageBox.Yes
+
+
+def test_enregistrer_sans_rien_toucher_ne_compte_aucune_modif(qapp, tmp_path):
+    # Note du 24/09/2026 : « 1,0 » relu puis reecrit « 1 » faisait annoncer
+    # « 1 modif ». Plus le cas depuis que les journees non touchees sont
+    # gardees telles quelles : ce test le garde.
+    csv = tmp_path / "Releves-pv.csv"
+    contenu = ("Date;Prod_Jour;Inj_Jour;Conso_réseau_Jour;Conso_HC;Conso_HP\n"
+               "01/05/2026;20,5;15,2;1,0;1,0;2,10\n")
+    csv.write_text(contenu, encoding="utf-8")
+    data = SimpleNamespace(releves_path=str(csv), current_period="all",
+                           puissance_kwc=6.0)
+    v = SaisieView(data, gui_theme.LIGHT)
+    v.populate("all")
+    assert v._enregistrer()
+    assert "0 modif" in v.status_label.text()
+    assert csv.read_text(encoding="utf-8") == contenu

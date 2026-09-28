@@ -265,6 +265,28 @@ def _texte_periode(ind: int, p: dict) -> list[str]:
 # Ce qui change : une seule fonction, appliquee au dict ET au texte
 # ----------------------------------------------------------------------
 
+# La periode de prix d'exemple du modele livre (config.yaml du depot) : la
+# meme depuis la premiere publication (15/09/2026). Ses prix sont inventes.
+# test_la_reference_du_modele_suit_le_config_livre la garde d'accord.
+PERIODE_DU_MODELE = {"debut": "2024-01-01", "abonnement": 20.0,
+                     "prix_hp": 0.22, "prix_hc": 0.16}
+
+
+def est_la_periode_du_modele(p: dict) -> bool:
+    """Cette periode est-elle celle, inventee, du modele livre ?
+
+    Jour de debut et trois prix identiques : un utilisateur qui aurait
+    vraiment ces prix a cette date n'y perd rien (ses prix restent les
+    memes), et c'est le seul moyen sur de reconnaitre le modele."""
+    try:
+        return (_date(p["debut"]).isoformat() == PERIODE_DU_MODELE["debut"]
+                and p.get("fin") in (None, "")
+                and all(float(p.get(c) or 0) == PERIODE_DU_MODELE[c]
+                        for c in ("abonnement", "prix_hp", "prix_hc")))
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
 def _periodes_apres(periodes: list[dict], v: dict) -> list[dict] | None:
     """Nouvelle liste de periodes, ou None si les prix n'ont pas change."""
     if not periodes:
@@ -283,6 +305,12 @@ def _periodes_apres(periodes: list[dict], v: dict) -> list[dict] | None:
             "Les périodes de prix de config.yaml ne sont pas rangées dans "
             "l'ordre des dates : modifiez-les avec le Bloc-notes.")
     depuis = _date(v["prix_depuis"])
+    if len(periodes) == 1 and est_la_periode_du_modele(derniere):
+        # Les prix d'exemple n'ont jamais ete les siens : les fermer la veille
+        # les laissait sur tous les mois d'avant (reste du 26/09/2026). Les
+        # vrais prix les remplacent ; avant leur date, c'est la periode la
+        # plus proche -- la sienne -- qui sert.
+        return [{"debut": depuis.isoformat(), "fin": None, **prix}]
     if depuis < debut and len(periodes) == 1:
         # Une seule periode (souvent celle du modele livre) : aucun historique
         # a proteger. Un contrat souscrit avant elle la fait simplement

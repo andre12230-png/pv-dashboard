@@ -787,3 +787,36 @@ def test_la_fenetre_grise_ce_qui_ne_sert_pas(qapp):
     assert fenetre.valeurs()["type_vente"] == "aucune"
     fenetre.type_vente.setCurrentIndex(fenetre.type_vente.findData("totale"))
     assert fenetre.prix_oa.isEnabled() and not fenetre.prime.isEnabled()
+
+
+# -----------------------------------------------------------------------------
+# Les prix d'exemple du modele ne restent pas sur les mois passes (28/09/2026)
+# -----------------------------------------------------------------------------
+
+def test_prix_du_modele_remplaces_et_non_gardes_sur_les_mois_d_avant():
+    # Reste du 26/09 : de vrais prix « depuis le 01/10/2026 » fermaient la
+    # periode d'exemple la veille, et ses prix inventes s'appliquaient a
+    # tous les mois d'avant.
+    nouveau, relu = _appliquer(MODELE, abonnement=18.0, prix_hp=0.20,
+                               prix_hc=0.15, prix_depuis=date(2026, 10, 1))
+    periodes = relu["tarifs_reseau"]["contrat_hphc"]["periodes"]
+    assert periodes == [{"debut": "2026-10-01", "fin": None, "abonnement": 18.0,
+                         "prix_hp": 0.20, "prix_hc": 0.15}]
+    assert _commentaires(nouveau) == _commentaires(MODELE)
+
+
+def test_une_vraie_periode_unique_garde_ses_prix_sur_les_mois_passes():
+    # Memes dates que le modele, mais d'autres prix : ce sont les siens.
+    a_moi = MODELE.replace("prix_hp: 0.2200", "prix_hp: 0.2300")
+    _, relu = _appliquer(a_moi, abonnement=18.0, prix_hp=0.20, prix_hc=0.15,
+                         prix_depuis=date(2026, 10, 1))
+    periodes = relu["tarifs_reseau"]["contrat_hphc"]["periodes"]
+    assert [p["debut"] for p in periodes] == ["2024-01-01", "2026-10-01"]
+    assert periodes[0]["prix_hp"] == 0.23
+    assert periodes[0]["fin"] == "2026-09-30"
+
+
+def test_la_reference_du_modele_suit_le_config_livre():
+    periode = yaml.safe_load(MODELE)["tarifs_reseau"]["contrat_hphc"]["periodes"]
+    assert len(periode) == 1
+    assert rg.est_la_periode_du_modele(periode[0])
