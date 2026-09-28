@@ -740,6 +740,9 @@ pv-dashboard/
 ├── app_data.py           # AppData : le jeu de donnees partage par les vues
 ├── calculations.py       # Calculs energetiques et financiers (pur metier)
 ├── data_loaders.py       # Lecture/ecriture Releves-pv.csv (atomique + .bak)
+├── imports_releves.py    #   ... lecture des fichiers a importer (Enedis,
+│                         #   fournisseur, onduleur, Enphase)
+├── lecture_recharges_ve.py #  ... le recharges.json de Recharges VE
 ├── gui_theme.py          # Theme clair + QSS + style matplotlib
 ├── gui_widgets.py        # Widgets reutilisables (cards, KPI, pill...)
 ├── reglages.py           # « Mes reglages » : lire et ecrire config.yaml
