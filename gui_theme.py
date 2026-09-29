@@ -283,10 +283,11 @@ QScrollArea > QWidget > QWidget {{
     background: {t["bg_app"]};
 }}
 
-/* Cards */
+/* Cards : coins de 4 px, comme Pecule et Recharges VE (29/09/2026 ;
+   c'etait 12 px). */
 QFrame#Card, QFrame.Card {{
     background: {t["bg_carte"]};
-    border-radius: 12px;
+    border-radius: 4px;
     border: 1px solid {t["cadre"]};
 }}
 QLabel#SectionTitle {{
@@ -302,24 +303,26 @@ QLabel#SectionSub {{
     background: transparent;
 }}
 
-/* KPI cards */
+/* KPI cards : trait de couleur de 3 px en HAUT, coins de 4 px, comme les
+   tuiles de Pecule et de Recharges VE (29/09/2026 ; c'etait un trait de
+   4 px a gauche et des coins de 12 px). */
 QFrame[role="kpi"] {{
     background: {t["bg_carte"]};
     border: 1px solid {t["cadre"]};
-    border-radius: 12px;
-    border-left-width: 4px;
+    border-radius: 4px;
+    border-top-width: 3px;
 }}
-QFrame[role="kpi"][variant="credit"]   {{ border-left-color: {t["credit"]}; }}
-QFrame[role="kpi"][variant="debit"]    {{ border-left-color: {t["debit"]}; }}
-QFrame[role="kpi"][variant="primary"]  {{ border-left-color: {t["primary"]}; }}
-QFrame[role="kpi"][variant="warm"]     {{ border-left-color: {t["warm"]}; }}
-QFrame[role="kpi"][variant="info"]     {{ border-left-color: {t["info"]}; }}
-QFrame[role="kpi"][variant="neutral"]  {{ border-left-color: {t["text_muted"]}; }}
-QFrame[role="kpi"][variant="prod"]     {{ border-left-color: {CHART_COLORS["production"]}; }}
-QFrame[role="kpi"][variant="solaire"]  {{ border-left-color: {CHART_COLORS["autoconso"]}; }}
-QFrame[role="kpi"][variant="vente"]    {{ border-left-color: {CHART_COLORS["injection"]}; }}
-QFrame[role="kpi"][variant="reseau"]   {{ border-left-color: {CHART_COLORS["soutirage"]}; }}
-QFrame[role="kpi"][variant="total"]    {{ border-left-color: {CHART_COLORS["primary"]}; }}
+QFrame[role="kpi"][variant="credit"]   {{ border-top-color: {t["credit"]}; }}
+QFrame[role="kpi"][variant="debit"]    {{ border-top-color: {t["debit"]}; }}
+QFrame[role="kpi"][variant="primary"]  {{ border-top-color: {t["primary"]}; }}
+QFrame[role="kpi"][variant="warm"]     {{ border-top-color: {t["warm"]}; }}
+QFrame[role="kpi"][variant="info"]     {{ border-top-color: {t["info"]}; }}
+QFrame[role="kpi"][variant="neutral"]  {{ border-top-color: {t["text_muted"]}; }}
+QFrame[role="kpi"][variant="prod"]     {{ border-top-color: {CHART_COLORS["production"]}; }}
+QFrame[role="kpi"][variant="solaire"]  {{ border-top-color: {CHART_COLORS["autoconso"]}; }}
+QFrame[role="kpi"][variant="vente"]    {{ border-top-color: {CHART_COLORS["injection"]}; }}
+QFrame[role="kpi"][variant="reseau"]   {{ border-top-color: {CHART_COLORS["soutirage"]}; }}
+QFrame[role="kpi"][variant="total"]    {{ border-top-color: {CHART_COLORS["primary"]}; }}
 
 QLabel#KpiLabel {{
     color: {t["text_muted"]};
@@ -345,7 +348,7 @@ QLabel#KpiSub {{
 QFrame[role="tile"] {{
     background: {t["bg_carte"]};
     border: 1px solid {t["cadre"]};
-    border-radius: 12px;
+    border-radius: 4px;
 }}
 QLabel#TileLabel {{
     color: {t["text_muted"]};
@@ -386,7 +389,7 @@ QWidget#PosteCell {{
 QFrame[role="account"] {{
     background: {t["bg_carte"]};
     border: 1px solid {t["cadre"]};
-    border-radius: 12px;
+    border-radius: 4px;
 }}
 QLabel#AccountName {{ font-size: 13px; font-weight: 600; background: transparent;
                       color: {t["text_primary"]}; }}
@@ -418,7 +421,7 @@ QTableWidget, QTableView {{
     alternate-background-color: {t["table_row_alt"]};
     gridline-color: {t["border"]};
     border: 1px solid {t["cadre"]};
-    border-radius: 8px;
+    border-radius: 4px;
     selection-background-color: {t["primary_bg"]};
     selection-color: {t["primary"]};
     color: {t["text_primary"]};

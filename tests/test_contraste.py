@@ -271,3 +271,21 @@ def test_selecteur_de_periode_a_l_allure_des_deux_autres_applis():
     assert _bloc(qss, "QDateEdit#PeriodSelector") == ""
     fleche = _bloc(qss, "QPushButton#PeriodArrow")
     assert "border" not in fleche and "26px" in fleche
+
+
+def test_cartes_a_coins_presque_droits_et_trait_en_haut_comme_pecule():
+    """29/09/2026 : cartes, tuiles et tableaux avaient des coins tres
+    arrondis (12 et 8 px) et les tuiles un trait de couleur a GAUCHE.
+    Pecule et Recharges VE : coins de 4 px, trait de 3 px en HAUT."""
+    import re as _re
+    qss = qss_for(LIGHT)
+    for selecteur in ('QFrame#Card, QFrame.Card', 'QFrame[role="kpi"]',
+                      'QFrame[role="tile"]', 'QFrame[role="account"]',
+                      'QTableWidget, QTableView'):
+        bloc = _bloc(qss, selecteur)
+        assert bloc, selecteur
+        rayon = _re.search(r"border-radius:\s*(\d+)px", bloc)
+        assert rayon and rayon.group(1) == "4", selecteur
+    kpi = _bloc(qss, 'QFrame[role="kpi"]')
+    assert "border-top-width: 3px" in kpi and "border-left-width" not in kpi
+    assert 'border-left-color' not in qss
