@@ -17,6 +17,7 @@ from views._helpers import (
     fmt_pct,
     label_mois_fr,
     mois_de_reference,
+    nombre_de_jours,
     options_annees,
     options_mois,
     period_options,
@@ -52,6 +53,7 @@ __all__ = [
     "options_mois",
     "period_options",
     "mois_de_reference",
+    "nombre_de_jours",
     "periode_voisine",
     # Vues
     "AccountsView",

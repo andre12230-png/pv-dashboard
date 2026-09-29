@@ -197,10 +197,16 @@ def label_mois_fr(periode_mensuelle) -> str:
 LIBELLES_GRANDEURS = {
     "Prod_Jour": "Production",
     "Inj_Jour": "Injection",
-    "Conso_réseau_Jour": "Conso réseau",
+    "Conso_réseau_Jour": "Consommation du réseau",
     "Conso_HC": "Heures creuses",
     "Conso_HP": "Heures pleines",
 }
+
+
+def nombre_de_jours(n: int) -> str:
+    """« 1 jour », « 1 614 jours » : accorde, milliers separes par une
+    espace comme les montants (barre d'etat ; c'etait « 1614 jour(s) »)."""
+    return f"{n:,}".replace(",", " ") + (" jours" if n > 1 else " jour")
 
 
 def _age_en_clair(jours: int) -> str:
@@ -252,7 +258,7 @@ def fraicheur_donnees(dernieres: dict, aujourdhui=None,
         return ("Données à jour — " + " · ".join(ages) + alerte), bool(alerte)
     return (
         "Données incomplètes — " + " · ".join(ages)
-        + ". Pensez a importer vos derniers relevés (boutons « Importer » "
+        + ". Pensez à importer vos derniers relevés (boutons « Importer » "
         "dans Saisie quotidienne)." + alerte
     ), True
 

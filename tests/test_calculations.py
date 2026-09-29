@@ -540,6 +540,29 @@ def test_fraicheur_en_retard():
     assert "Importer" in texte  # dit quoi faire
 
 
+def test_fraicheur_en_mots_entiers():
+    """29/09/2026 (relecture du Tableau de bord) : « Conso réseau » etait une
+    abreviation, et « Pensez a importer » avait perdu son accent."""
+    from views._helpers import fraicheur_donnees
+    texte, _ = fraicheur_donnees({
+        "Prod_Jour": date(2026, 7, 31),
+        "Conso_réseau_Jour": date(2026, 7, 20),
+    }, AUJOURDHUI)
+    assert "Consommation du réseau il y a 12 jours" in texte
+    assert "Conso " not in texte
+    assert "Pensez à importer" in texte
+
+
+def test_nombre_de_jours_en_toutes_lettres():
+    """Barre d'etat : « 1614 jour(s) » devient « 1 614 jours »."""
+    from views._helpers import nombre_de_jours
+    assert nombre_de_jours(1) == "1 jour"
+    assert nombre_de_jours(0) == "0 jour"
+    assert nombre_de_jours(28) == "28 jours"
+    # Meme separateur de milliers que les montants (fmt_eur) : une espace.
+    assert nombre_de_jours(1614) == "1 614 jours"
+
+
 def test_fraicheur_du_jour_meme():
     from views._helpers import fraicheur_donnees
     texte, en_retard = fraicheur_donnees(

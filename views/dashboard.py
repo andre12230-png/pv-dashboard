@@ -271,7 +271,7 @@ class DashboardView(BaseView):
 
     def _badge_n1(self, df: pd.DataFrame, period: str,
                   prod: float) -> QLabel | None:
-        """« +24 % vs septembre 2025 », calcule comme l'onglet Comparaison N
+        """« +24 % par rapport à septembre 2025 », calcule comme l'onglet Comparaison N
         vs N-1 : une periode en cours est comparee aux MEMES dates de l'an
         passe. None quand il n'y a rien a comparer."""
         precedente = periode_precedente(period)
@@ -285,7 +285,7 @@ class DashboardView(BaseView):
             return None
         ecart = (prod - base) / base * 100
         signe = "+" if ecart >= 0 else "−"
-        badge = QLabel(f"{signe}{abs(ecart):.0f} % vs "
+        badge = QLabel(f"{signe}{abs(ecart):.0f} % par rapport à "
                        f"{libelle_periode(precedente).lower()}")
         encre, fond = (("credit", "credit_bg") if ecart >= 0
                        else ("debit", "debit_bg"))

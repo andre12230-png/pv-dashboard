@@ -70,6 +70,7 @@ from views import (
     fmt_kwc,
     fmt_kwh,
     mois_de_reference,
+    nombre_de_jours,
     options_annees,
     options_mois,
     period_options,
@@ -1293,7 +1294,7 @@ class MainWindow(QMainWindow):
             jours = (date.today() - dernier).days
             age = f" - Dernier relevé {_age_court(jours)}"
         self.status_bar.showMessage(
-            f"  {len(self.data.df)} jour(s) - "
+            f"  {nombre_de_jours(len(self.data.df))} - "
             f"Production cumulée {fmt_kwh(self.data.df['production_kwh'].sum())}"
             f"{age} - Données : {self.data.releves_path}"
         )

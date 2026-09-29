@@ -82,7 +82,8 @@ def test_un_mois_en_cours_est_compare_aux_memes_dates(qapp):
     mois = df[df.index >= "2026-09-01"]
     badge = vue._badge_n1(mois, "month-2026-09", mois["production_kwh"].sum())
     assert isinstance(badge, QLabel)
-    assert badge.text() == "+20 % vs septembre 2025"
+    # « par rapport à » et non « vs » (anglicisme, relecture du 29/09/2026)
+    assert badge.text() == "+20 % par rapport à septembre 2025"
 
 
 def test_le_meilleur_jour_est_signale(qapp):
