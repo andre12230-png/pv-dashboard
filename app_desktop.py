@@ -134,6 +134,10 @@ LOG_PATH = BASE_DIR / "pv-dashboard.log"
 # config.yaml et ajoutee au titre de la fenetre. Ecrite en dur, elle
 # affichait "6 kWc" a tout le monde, quelle que soit l'installation suivie.
 APP_NAME = "Gestion Photovoltaique"
+# Le meme nom, tel qu'il s'affiche (titre de la fenetre, boites de message).
+# APP_NAME garde sa forme d'origine : c'est le nom de l'application pour Qt,
+# qu'il vaut mieux ne pas changer d'une version a l'autre (29/09/2026).
+NOM_AFFICHE = "Gestion Photovoltaïque"
 APP_VERSION = "1.51.7"
 
 
@@ -633,7 +637,7 @@ class MainWindow(QMainWindow):
         self.current_period = self._startup_period()
         self.data.current_period = self.current_period
         puissance = fmt_kwc(self.data.puissance_kwc)
-        titre = f"{APP_NAME} {puissance}".strip()
+        titre = f"{NOM_AFFICHE} {puissance}".strip()
         self.setWindowTitle(f"{titre} - v{APP_VERSION}")
         self.resize(1400, 900)
 
@@ -669,7 +673,7 @@ class MainWindow(QMainWindow):
         if saisie is None or not saisie.a_des_saisies_en_cours():
             return True
         reponse = QMessageBox.question(
-            self, APP_NAME,
+            self, NOM_AFFICHE,
             "Des valeurs tapées dans la Saisie quotidienne ne sont pas "
             f"encore enregistrées.\n\nLes enregistrer {avant} ?",
             QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
@@ -908,7 +912,7 @@ class MainWindow(QMainWindow):
             data = build_dataset(load_config())
         except Exception as exc:  # frontiere : l'utilisateur doit le savoir
             QMessageBox.warning(
-                self, APP_NAME,
+                self, NOM_AFFICHE,
                 "Réglages enregistrés, mais l'application n'a pas pu les "
                 f"relire :\n\n{erreur_en_clair(exc)}\n\nRelancez-la.")
             return
@@ -1281,7 +1285,7 @@ class MainWindow(QMainWindow):
             # echoue (config.yaml retouche au Bloc-notes, appli ouverte...).
             # On garde l'affichage precedent plutot que d'echouer sans un mot.
             QMessageBox.warning(
-                self, APP_NAME,
+                self, NOM_AFFICHE,
                 "Vos relevés sont enregistrés, mais l'application n'a pas pu "
                 f"les relire :\n\n{erreur_en_clair(exc)}\n\n"
                 "Corrigez config.yaml si vous l'avez modifié, puis relancez "
@@ -1352,7 +1356,7 @@ def annoncer_premier_lancement(parent: QWidget | None) -> None:
         return
     boite = QMessageBox(parent)
     boite.setIcon(QMessageBox.Information)
-    boite.setWindowTitle(APP_NAME)
+    boite.setWindowTitle(NOM_AFFICHE)
     boite.setText(
         "Bienvenue !\n\n"
         "Les réglages affichés sont ceux d'une installation d'exemple. "

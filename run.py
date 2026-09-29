@@ -81,7 +81,7 @@ def _make_splash() -> QSplashScreen:
     title_font.setPointSize(20)
     title_font.setBold(True)
     painter.setFont(title_font)
-    painter.drawText(0, 80, w, 40, Qt.AlignHCenter, "Gestion Photovoltaique")
+    painter.drawText(0, 80, w, 40, Qt.AlignHCenter, "Gestion Photovoltaïque")
 
     painter.setPen(QColor("#5A5A5A"))
     sub_font = QFont()
@@ -144,8 +144,8 @@ def main() -> int:
     verrou = prendre_le_verrou()
     if verrou is None:
         QMessageBox.warning(
-            None, "Gestion Photovoltaique",
-            "Gestion Photovoltaique est déjà ouvert.\n\n"
+            None, "Gestion Photovoltaïque",
+            "Gestion Photovoltaïque est déjà ouvert.\n\n"
             "Deux fenêtres ouvertes en même temps se réécrivent le même "
             "fichier de relevés : la dernière enregistrée effacerait les "
             "saisies de l'autre.\n\n"
@@ -174,7 +174,7 @@ def main() -> int:
         detail = erreur_en_clair(exc)
         QMessageBox.critical(
             None,
-            "Gestion Photovoltaique",
+            "Gestion Photovoltaïque",
             "Impossible de démarrer l'application.\n\n"
             f"{detail}\n\n"
             f"Trace complète dans {LOG_PATH}.",
