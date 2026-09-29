@@ -59,19 +59,19 @@ def test_l_onglet_obeit_au_selecteur_du_haut():
 
 def test_un_mois_est_compare_au_meme_mois_de_l_an_passe(vue):
     vue.refresh("month-2026-02")
-    assert any("Février 2026   vs   Février 2025" in t for t in textes(vue))
+    assert any("Février 2026 face à Février 2025" in t for t in textes(vue))
 
 
 def test_une_annee_est_comparee_a_la_precedente(vue):
     vue.refresh("year-2025")
-    assert any("Année 2025   vs   Année 2024" in t for t in textes(vue))
+    assert any("Année 2025 face à Année 2024" in t for t in textes(vue))
 
 
 def test_une_annee_oa_est_comparee_a_la_precedente(vue):
     # L'annee OA #2 court jusqu'au 11/05/2026 et le fichier s'arrete au
     # 28/02/2026 : elle est en cours, donc coupee a la meme date.
     vue.refresh("oa-2")
-    assert any("Année OA #2 (au 28/02)   vs   Année OA #1 (au 28/02)" in t
+    assert any("Année OA #2 (au 28/02) face à Année OA #1 (au 28/02)" in t
                for t in textes(vue))
 
 
@@ -96,7 +96,7 @@ def test_le_mois_en_cours_est_compare_aux_memes_jours(vue):
     """Un releve de 1 kWh par jour : 10 jours de chaque cote, pas 10 contre 28."""
     vue.data.df = vue.data.df[vue.data.df.index <= "2026-02-10"]
     vue.refresh("month-2026-02")
-    assert any("Février 2026 (au 10/02)   vs   Février 2025 (au 10/02)" in t
+    assert any("Février 2026 (au 10/02) face à Février 2025 (au 10/02)" in t
                for t in textes(vue))
     table = vue.container.findChildren(QTableWidget)[-1]
     assert table.item(0, 0).text().strip() == "Production"
@@ -123,7 +123,7 @@ def test_le_mode_journee_survit_a_son_propre_rafraichissement(vue):
     vue._activer_mode_jour(True)
     vue._changer_date(QDate(2026, 2, 14))
     assert vue.mode_jour
-    assert any("14/02/2026   vs   14/02/2025" in t for t in textes(vue))
+    assert any("14/02/2026 face à 14/02/2025" in t for t in textes(vue))
 
 
 def test_changer_de_periode_en_haut_quitte_le_mode_journee(vue):
@@ -132,7 +132,7 @@ def test_changer_de_periode_en_haut_quitte_le_mode_journee(vue):
     vue._activer_mode_jour(True)
     vue.refresh("month-2026-01")
     assert not vue.mode_jour
-    assert any("Janvier 2026   vs   Janvier 2025" in t for t in textes(vue))
+    assert any("Janvier 2026 face à Janvier 2025" in t for t in textes(vue))
 
 
 def test_le_calendrier_part_de_la_periode_choisie(vue):

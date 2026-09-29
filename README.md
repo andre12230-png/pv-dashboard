@@ -193,13 +193,13 @@ version.
 | Tableau de bord | Fraicheur des donnees ; tuiles « Autoproduction » (jauge) et « Production » (periode avec badge d'evolution sur l'an passe (memes dates) et mini-courbe) ; carte « Circulation de l'energie » : barres « ou va votre soleil » / « d'ou vient votre electricite » (part du vehicule en legende) ; bilan financier avec icones ; carte « Remboursement de l'installation » (meme calcul que la Synthese) ; production jour par jour (semaine par semaine sur un an, mois par mois au-dela) avec le meilleur jour en valeur |
 | Saisie quotidienne | Tableau editable pour ajouter / corriger les releves du jour |
 | Releves journaliers | Journal jour par jour : production, autoconsommee, injectee, achetee au reseau (et part du vehicule), recettes, depenses, bilan du jour ; ligne de totaux de la periode sous le tableau (a part, pour que le tri ne la deplace pas) |
-| Repartition energie | Taux d'autoconsommation, couverture solaire et bilan ; diagramme de flux (Sankey) production/reseau -> injection/consommation ; detail par poste avec prix au kWh ; comparaison N vs N-1 |
+| Repartition energie | Taux d'autoconsommation, couverture solaire et bilan ; diagramme de flux (Sankey) production/reseau -> injection/consommation ; detail par poste avec prix au kWh ; comparaison avec l'annee precedente |
 | Synthese financiere | 6 postes (Vente OA, Prime, Economies, Facture, Investissement, Bilan global) + graphique « Remboursement de l'installation » (ce qu'elle a rapporte face a son cout, projection au rythme actuel ; chaque versement de la prime, qui fait une marche dans la courbe, est marque d'un point et le dernier porte l'etiquette « Prime autoconso »). Le **bilan global** = ventes + economies + primes versees − cout de l'installation : la facture reseau n'y entre pas (on la paierait sans panneaux ; ce que les panneaux y changent est deja dans les economies). Meme calcul que la carte « Remboursement de l'installation » du tableau de bord (`amortissement()`) |
 | Annees OA | Recap par annee de contrat OA (de sa date de debut a la veille de son anniversaire). **Masquee sans revente** (`oa.type: aucune`) |
 | TVA autoconsommation | Base de la livraison a soi-meme par annee civile (ligne 5A du 3517-S), TVA due, et recoupement des injections relevees avec les factures EDF OA. **N'apparait que si la section `tva_lasm` est remplie** : elle ne concerne que les producteurs assujettis a la TVA |
 | Statistiques | Comparaisons annuelles, rendement kWh/kWc |
-| Comparaison N vs N-1 | La periode choisie en haut (mois, annee, annee OA) vs la meme periode un an plus tot (periode en cours : memes dates de N-1) ; bouton « Une journee precise » pour comparer un jour donne |
-| *Fournisseur* vs *reference* | Cout reel du contrat en cours vs simulation de l'offre de reference, options Base et HP/HC (depuis la bascule). Le libelle porte les noms declares en config : "Mon fournisseur vs EDF" avec le modele livre. **Masque quand le fournisseur declare est EDF** (`nom: "EDF"`) : comparer EDF a EDF n'a pas de sens |
+| Comparer a l'an passe | La periode choisie en haut (mois, annee, annee OA) face a la meme periode un an plus tot (periode en cours : memes dates de N-1) ; bouton « Une journee precise » pour comparer un jour donne |
+| *Fournisseur* ou *reference* | Cout reel du contrat en cours face a la simulation de l'offre de reference, options Base et HP/HC (depuis la bascule). Le libelle porte les noms declares en config : "Mon fournisseur ou EDF" avec le modele livre. **Masque quand le fournisseur declare est EDF** (`nom: "EDF"`) : comparer EDF a EDF n'a pas de sens |
 | Notice | Mode d'emploi et glossaire des termes |
 | Votre avis | Ouvre un court questionnaire en ligne dans le navigateur (probleme, idee), apres avoir copie la version. L'application n'envoie rien elle-meme. Une seule invitation, deux semaines apres le premier lancement |
 | Parametres | Vue lecture seule de la configuration, et la liste des recalages actifs ; bouton « Modifier mes reglages » |
@@ -480,7 +480,7 @@ garde une copie quotidienne dans `backups/` (les 30 dernieres).
   qu'il s'affiche — le court pour le menu de gauche, le long pour les titres
   (chez l'auteur : "Octopus" / "Octopus Go"). Idem pour `comparaison_edf`.
   Sans eux : "Mon contrat" et "Tarif de reference". Le bouton de
-  comparaison du menu porte ces noms : "Mon fournisseur vs EDF" avec le
+  comparaison du menu porte ces noms : "Mon fournisseur ou EDF" avec le
   modele livre
 - `tarifs_reseau.contrat_hphc` : plages horaires HC, et `periodes` =
   abonnement + prix HP + prix HC pour chaque periode de prix (les
@@ -768,8 +768,8 @@ pv-dashboard/
 │   ├── oa.py             #   Annees OA
 │   ├── tva.py            #   TVA autoconsommation (LASM, ligne 5A)
 │   ├── stats.py          #   Statistiques
-│   ├── comparaison.py    #   Comparaison N vs N-1
-│   ├── octopus_edf.py    #   Mon fournisseur vs EDF
+│   ├── comparaison.py    #   Comparer a l'an passe
+│   ├── octopus_edf.py    #   Mon fournisseur ou EDF
 │   ├── aide.py           #   Notice (mode d'emploi et glossaire)
 │   └── settings.py       #   Parametres
 │

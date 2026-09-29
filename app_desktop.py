@@ -569,7 +569,7 @@ def build_dataset(cfg: dict) -> AppData:
     df["bilan_jour_eur"] = (
         df["revenu_vente_eur"] + df["economie_eur"] - df["cout_reseau_eur"]
     )
-    # Grille EDF de reference (vue Octopus vs EDF), par periodes elle aussi.
+    # Grille EDF de reference (vue Octopus ou EDF), par periodes elle aussi.
     edf_ref = calc.periodes_edf(cfg["tarifs_reseau"].get("comparaison_edf", {}))
     # Grille de valorisation de l'autoconsommation pour la TVA. Facultative :
     # elle ne concerne que les producteurs assujettis a la TVA.
@@ -614,7 +614,7 @@ NAV_ITEMS = [
     ("oa",           "Années OA",            "CONTRATS",  "📅"),
     ("tva",          "TVA autoconsommation", None,        "🧾"),
     ("stats",        "Statistiques",         "ANALYSE",   "📊"),
-    ("comparaison",  "Comparaison N vs N-1", None,        "🔁"),
+    ("comparaison",  "Comparer à l'an passé", None,       "🔁"),
     # Libelle recalcule au demarrage a partir des noms de fournisseurs
     # declares en config (voir _libelle_comparaison).
     ("octopus_edf",  "Comparaison tarifs",   None,        "⚖️"),
@@ -766,14 +766,17 @@ class MainWindow(QMainWindow):
     LARGEUR_MAX_NAV = 22
 
     def _libelle_comparaison(self, court: bool) -> str:
-        """« Octopus vs EDF » chez l'auteur, autre chose ailleurs."""
+        """« Octopus ou EDF » chez l'auteur, autre chose ailleurs.
+
+        « ou » et non « vs » (anglicisme, relecture du 29/09/2026) : meme
+        longueur, donc aucun nom qui tenait dans le menu ne deborde."""
         mien, mon_offre = self.data.fournisseur
         autre, autre_offre = self.data.fournisseur_reference
         if court:
-            libelle = f"{mien} vs {autre}"
+            libelle = f"{mien} ou {autre}"
             return (libelle if len(libelle) <= self.LARGEUR_MAX_NAV
                     else "Comparaison tarifs")
-        return f"{mon_offre} vs {autre_offre}"
+        return f"{mon_offre} ou {autre_offre}"
 
     def _build_sidebar(self) -> QFrame:
         """Le bandeau de gauche, sur le modele de celui de Pecule (14/09/2026).
@@ -1124,8 +1127,8 @@ class MainWindow(QMainWindow):
             "tva":          ("TVA autoconsommation",
                              "Base ligne 5A de la déclaration CA12 / 3517-S"),
             "stats":        ("Statistiques", "Comparaisons annuelles et rendement"),
-            "comparaison":  ("Comparaison N vs N-1",
-                             "La période choisie vs la même période un an plus tôt"),
+            "comparaison":  ("Comparer à l'an passé",
+                             "La période choisie face à la même période un an plus tôt"),
             "octopus_edf":  (self._libelle_comparaison(court=False),
                              "Votre contrat face au Tarif Bleu d'EDF"),
             "aide":         ("Notice", "Mode d'emploi et glossaire des termes"),

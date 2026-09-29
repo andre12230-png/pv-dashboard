@@ -62,7 +62,7 @@ tarifs_reseau:
     # Nom de votre fournisseur, tel qu'il s'affiche. "nom" est le nom court,
     # celui du menu de gauche (place comptee) ; "offre" est le libelle
     # complet des titres et des cartes. Le bouton de comparaison du menu
-    # s'appellera "<nom> vs EDF". Sans eux : "Mon contrat".
+    # s'appellera "<nom> ou EDF". Sans eux : "Mon contrat".
     #
     # Vous etes chez EDF ? Ecrivez nom: "EDF". Le bouton de comparaison
     # disparait alors du menu : comparer EDF a EDF n'aurait pas de sens.

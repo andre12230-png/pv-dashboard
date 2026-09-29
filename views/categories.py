@@ -337,7 +337,7 @@ class CategoriesView(BaseView):
         agg_n = agreger(df_n, cles)
         agg_n1 = agreger(df_n1, cles)
 
-        titre = (f"{libelle_periode(period)}{suffixe_n} vs "
+        titre = (f"{libelle_periode(period)}{suffixe_n} face à "
                  f"{libelle_periode(precedente).lower()}{suffixe_n1}")
         v.addWidget(SectionTitle("Comparaison avec l'année précédente", titre))
 

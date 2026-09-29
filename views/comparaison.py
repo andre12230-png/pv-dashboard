@@ -260,7 +260,7 @@ class ComparaisonView(BaseView):
         entete_n = entete_n or label_n
         entete_n1 = entete_n1 or label_n1
         # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
-        card = Card(titre=titre, sous_titre=f"{label_n}   vs   {label_n1}")
+        card = Card(titre=titre, sous_titre=f"{label_n} face à {label_n1}")
         v = card.corps
         v.setContentsMargins(16, 10, 16, 14)
 

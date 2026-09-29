@@ -7,6 +7,8 @@ tableau de bord y plantait sans qu'aucun test ne le remarque.
 """
 from __future__ import annotations
 
+import re
+
 import shutil
 
 import pytest
@@ -86,7 +88,8 @@ def test_mes_reglages_de_bout_en_bout(fenetre_neuve, tmp_path):
     suivante = fenetre_neuve._fenetre_suivante
     assert suivante.data.puissance_kwc == 4.5
     # Le libelle suit l'emoji du bouton, comme dans Pecule.
-    assert suivante.nav_buttons["octopus_edf"].text().endswith("Engie vs EDF")
+    # « ou » et non « vs » (anglicisme, relecture du 29/09/2026)
+    assert suivante.nav_buttons["octopus_edf"].text().endswith("Engie ou EDF")
     assert "4,5 kWc" in suivante.findChild(QLabel, "BrandSub").text()
     suivante.close()
 
@@ -194,3 +197,20 @@ def test_avec_vehicule_la_rubrique_voiture_reste(qapp):
     champs = AideView._champs_installation(vue)
     assert "La part de la voiture" in champs["rubrique_voiture"]
     assert "Recharges VE" in champs["source_vehicule"]
+
+
+def test_plus_de_vs_dans_l_appli(fenetre_neuve):
+    """Relecture du 29/09/2026 : « vs » est un anglicisme. Ni le menu, ni
+    les titres de page, ni les textes des pages ne l'emploient."""
+    boutons = [b.text() for b in fenetre_neuve.nav_buttons.values()]
+    assert fenetre_neuve.nav_buttons["comparaison"].text().endswith(
+        "Comparer à l'an passé")
+    # Le mot seul, en minuscules comme en capitales (« VS EDF BASE »).
+    vs = re.compile(r"\bvs\b", re.IGNORECASE)
+    trouves = [t for t in boutons if vs.search(t)]
+    for cle in fenetre_neuve.views:
+        fenetre_neuve._switch_view(cle)
+        trouves += [f"{cle} : {lbl.text()[:80]}"
+                    for lbl in fenetre_neuve.findChildren(QLabel)
+                    if vs.search(lbl.text())]
+    assert not trouves, trouves

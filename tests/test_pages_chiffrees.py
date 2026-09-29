@@ -104,13 +104,13 @@ def test_fournisseur_vs_edf_ecarts_coherents(win):
             valeurs[textes[0]] = _euros(euros[0])
     actuel = next(v for k, v in valeurs.items() if "(actuel)" in k.lower())
     base = next(v for k, v in valeurs.items()
-                if k.upper().endswith("BASE") and not k.upper().startswith("VS"))
+                if k.upper().endswith("BASE") and not k.upper().startswith("PAR RAPPORT À"))
     hphc = next(v for k, v in valeurs.items()
-                if k.upper().endswith("HP/HC") and not k.upper().startswith("VS"))
+                if k.upper().endswith("HP/HC") and not k.upper().startswith("PAR RAPPORT À"))
     gain_base = next(v for k, v in valeurs.items()
-                     if k.upper().startswith("VS") and k.upper().endswith("BASE"))
+                     if k.upper().startswith("PAR RAPPORT À") and k.upper().endswith("BASE"))
     gain_hphc = next(v for k, v in valeurs.items()
-                     if k.upper().startswith("VS") and k.upper().endswith("HP/HC"))
+                     if k.upper().startswith("PAR RAPPORT À") and k.upper().endswith("HP/HC"))
     assert actuel > 0
     assert gain_base == pytest.approx(base - actuel, abs=0.01)
     assert gain_hphc == pytest.approx(hphc - actuel, abs=0.01)
@@ -125,3 +125,17 @@ def test_parametres_reprennent_la_configuration(win):
     assert "EDF OA" in textes
     assert "0,1000 €/kWh" in textes
     assert "en cours" in textes                      # periode de prix ouverte
+
+
+def test_plus_de_vs_sur_les_pages_chiffrees(win):
+    """Relecture du 29/09/2026 : « vs » est un anglicisme. Sur des pages
+    remplies de chiffres (les tuiles « VS EDF BASE » de la page fournisseur
+    n'existent qu'avec des releves), aucun texte ne l'emploie."""
+    vs = re.compile(r"\bvs\b", re.IGNORECASE)
+    trouves = []
+    for cle in win.views:
+        win._switch_view(cle)
+        trouves += [f"{cle} : {lbl.text()[:80]}"
+                    for lbl in win.views[cle].findChildren(QLabel)
+                    if vs.search(lbl.text())]
+    assert not trouves, trouves

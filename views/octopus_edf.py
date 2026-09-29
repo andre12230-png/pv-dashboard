@@ -16,7 +16,13 @@ from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
 from gui_widgets import Card, KpiCard, MplCanvas, SectionTitle, grid_row
 from views._base import BaseView
-from views._helpers import fmt_date_fr, fmt_eur, fmt_prix_kwh, label_mois_fr
+from views._helpers import (
+    fmt_date_fr,
+    fmt_eur,
+    fmt_prix_kwh,
+    label_mois_fr,
+    nombre_de_jours,
+)
 
 
 class OctopusEdfView(BaseView):
@@ -65,7 +71,7 @@ class OctopusEdfView(BaseView):
             depuis = (f"Depuis le passage en heures pleines / creuses du "
                       f"{bascule:%d/%m/%Y}")
         self.layout_inner.addWidget(SectionTitle(
-            f"{mon_offre} vs {autre_offre}", f"{depuis} - {jours} jour(s)",
+            f"{mon_offre} ou {autre_offre}", f"{depuis} - {nombre_de_jours(jours)}",
         ))
 
         self.layout_inner.addWidget(SectionTitle("Coût sur la période"))
@@ -80,10 +86,10 @@ class OctopusEdfView(BaseView):
 
         self.layout_inner.addWidget(SectionTitle(f"Économie (ou surcoût) avec {mien}"))
         self.layout_inner.addLayout(grid_row([
-            KpiCard(f"vs {autre} Base", fmt_eur(gain_base, signed=True),
+            KpiCard(f"Par rapport à {autre} Base", fmt_eur(gain_base, signed=True),
                     f"~{fmt_eur(gain_base * par_an, signed=True)}/an",
                     "credit" if gain_base >= 0 else "debit"),
-            KpiCard(f"vs {autre} HP/HC", fmt_eur(gain_hphc, signed=True),
+            KpiCard(f"Par rapport à {autre} HP/HC", fmt_eur(gain_hphc, signed=True),
                     f"~{fmt_eur(gain_hphc * par_an, signed=True)}/an",
                     "credit" if gain_hphc >= 0 else "debit"),
             KpiCard("Offre la moins chère", gagnant,

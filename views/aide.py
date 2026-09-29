@@ -107,7 +107,7 @@ déclarer sur l'électricité autoconsommée, année civile par année civile. S
 intérêt pour les autres : cet onglet n'apparaît dans le menu que si la
 section <code>tva_lasm</code> de <code>config.yaml</code> est remplie.</p>
 <p><b>Statistiques</b> — comparaison des années civiles et rendement.</p>
-<p><b>Comparaison N vs N-1</b> — compare la période choisie en haut à droite
+<p><b>Comparer à l'an passé</b> — compare la période choisie en haut à droite
 à la même période un an plus tôt : un mois au même mois de l'année d'avant,
 une année à la précédente, une année OA à l'année OA précédente. Sur « Toute la
 période », rien à comparer : l'onglet invite à choisir un mois ou une année.
@@ -575,7 +575,7 @@ class AideView(BaseView):
                 "(jamais modifié)." if a_vehicule else ""),
             "rubrique_voiture": RUBRIQUE_VOITURE if a_vehicule else "",
             # Nom de la vue de comparaison, qui porte celui des deux offres.
-            "comparaison": f"{self.data.fournisseur[1]} vs "
+            "comparaison": f"{self.data.fournisseur[1]} ou "
                            f"{self.data.fournisseur_reference[1]}",
         }
 

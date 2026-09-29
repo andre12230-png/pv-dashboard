@@ -53,7 +53,7 @@ def test_chaque_element_se_dessine_sans_erreur(qapp, fabrique):
 
 
 # -----------------------------------------------------------------------------
-# Le badge « +24 % vs septembre 2025 »
+# Le badge « +24 % par rapport à septembre 2025 »
 # -----------------------------------------------------------------------------
 
 
@@ -177,6 +177,29 @@ def test_sans_recharge_rien_ne_change(qapp):
     assert len(carte.findChildren(BarreRepartition)[1].segments) == 2
     textes = " ".join(lbl.text() for lbl in carte.findChildren(QLabel))
     assert "véhicule" not in textes
+
+
+def test_chaque_pourcentage_dit_de_quoi_il_est_la_part(qapp):
+    """Relecture du 29/09/2026 : « 38,3 % consomme sur place » et « 39,0 % de
+    soleil » portaient sur les memes kWh, rapportes l'un a la production,
+    l'autre a la consommation, sans le dire. Chaque legende nomme sa base."""
+    vue = _vue(_serie("2026-09-01", "2026-09-13", 20.0))
+    carte = vue._carte_repartition(121.3, 178.7, 186.7, 308.0, 40.4, 59.6,
+                                   39.4, 0.0)
+    textes = [lbl.text() for lbl in carte.findChildren(QLabel)]
+    assert ("Sur 300,0 kWh produits : 40,4 % consommés sur place, "
+            "59,6 % vendus") in textes
+    assert ("Sur 308,0 kWh consommés : 39,4 % de soleil, "
+            "60,6 % du réseau") in textes
+
+
+def test_la_jauge_ne_repete_pas_son_chiffre(qapp):
+    """Le 39 % de la jauge revenait dans la phrase d'a cote (« 39,0 % de ce
+    que la maison consomme… ») : la phrase explique, la jauge chiffre."""
+    carte = _vue(_serie("2026-09-01", "2026-09-13", 20.0))._carte_jauge(39.0)
+    textes = " ".join(lbl.text() for lbl in carte.findChildren(QLabel))
+    assert "vient de vos panneaux" in textes
+    assert "%" not in textes
 
 
 def test_pas_de_badge_sans_annee_precedente(qapp):

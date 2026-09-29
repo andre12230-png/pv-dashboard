@@ -212,8 +212,10 @@ class DashboardView(BaseView):
         col.setSpacing(4)
         titre = QLabel("AUTOPRODUCTION")
         titre.setObjectName("KpiLabel")
-        phrase = QLabel(f"{fmt_pct(ratio_ap)} de ce que la maison consomme "
-                        "vient de vos panneaux")
+        # La jauge donne le chiffre ; la phrase dit seulement ce qu'il
+        # mesure (le repeter faisait trois fois le meme 39 % a l'ecran).
+        phrase = QLabel("Part de ce que la maison consomme qui vient de vos "
+                        "panneaux")
         phrase.setWordWrap(True)
         phrase.setStyleSheet(
             f"color: {self.theme['text_secondary']}; font-size: 13px; "
@@ -335,9 +337,14 @@ class DashboardView(BaseView):
              if self.data.vend else
              [f"Injecté {fmt_kwh(inj)}", fmt_kwh(inj)], inj, CC["injection"]),
         ]))
-        v.addWidget(legende(f"{fmt_pct(ratio_ac)} consommé sur place · "
-                            f"{fmt_pct(ratio_inj)} "
-                            f"{'vendu' if self.data.vend else 'injecté'}"))
+        # Chaque legende nomme la base de ses pourcentages : la production
+        # ici, la consommation plus bas. Sans elle, « 38,3 % consomme sur
+        # place » et « 39,0 % de soleil » (memes kWh, bases differentes) se
+        # confondaient (relecture du 29/09/2026).
+        v.addWidget(legende(
+            f"Sur {fmt_kwh(auto + inj)} produits : {fmt_pct(ratio_ac)} "
+            f"consommés sur place, {fmt_pct(ratio_inj)} "
+            f"{'vendus' if self.data.vend else 'injectés'}"))
         v.addSpacing(8)
         v.addWidget(titre("D'où vient votre électricité"))
         avec_ve = ve > 0 and sout > 0
@@ -363,8 +370,8 @@ class DashboardView(BaseView):
             ]
         v.addWidget(BarreRepartition(segments))
         v.addWidget(legende(
-            f"{fmt_pct(ratio_ap)} de soleil · {fmt_pct(100 - ratio_ap)} du "
-            f"réseau, sur {fmt_kwh(conso)} consommés"))
+            f"Sur {fmt_kwh(conso)} consommés : {fmt_pct(ratio_ap)} de soleil, "
+            f"{fmt_pct(100 - ratio_ap)} du réseau"))
         if avec_ve:
             ligne_ve = (f"🚗 Recharge du véhicule : {fmt_kwh(ve)}, soit "
                         f"{fmt_pct(ve / sout * 100)} de l'électricité achetée "
