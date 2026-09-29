@@ -257,3 +257,17 @@ def test_survol_du_bouton_enregistrer_dans_la_palette():
     fond = _re.search(r"background:\s*(#[0-9A-Fa-f]{6})", bloc).group(1)
     assert fond.upper() == "#1F3A6B"
     assert contraste("#FFFFFF", fond) >= 4.5
+
+
+def test_selecteur_de_periode_a_l_allure_des_deux_autres_applis():
+    """29/09/2026 : les menus de la periode etaient arrondis (8 px) et sans
+    fleche ▾ (une regle de style sur un menu deroulant fait disparaitre la
+    fleche de Qt), et « Ce mois-ci » ressemblait a du texte. Pecule et
+    Recharges VE gardent l'allure standard (Fusion) : aucune regle propre
+    aux menus ni au bouton ; les fleches ‹ › ont seulement leur taille."""
+    qss = qss_for(LIGHT)
+    assert _bloc(qss, "QComboBox#PeriodSelector") == ""
+    assert _bloc(qss, "QPushButton#PeriodToday") == ""
+    assert _bloc(qss, "QDateEdit#PeriodSelector") == ""
+    fleche = _bloc(qss, "QPushButton#PeriodArrow")
+    assert "border" not in fleche and "26px" in fleche

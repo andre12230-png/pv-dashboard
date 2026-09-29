@@ -250,79 +250,20 @@ QPushButton#SaveBtn:hover {{
     border-color: {t["sb_brand"]};
 }}
 
-/* Selecteur de periode : deux menus encadres par deux fleches. Leur largeur
-   est fixee dans app_desktop.py — elle differe d'un menu a l'autre, alors que
-   tout le reste du look est commun. */
+/* Selecteur de periode : deux menus encadres par deux fleches, puis « Ce
+   mois-ci ». Allure standard de Qt (Fusion), comme Pecule et Recharges VE
+   (29/09/2026) : les regles arrondies d'avant faisaient disparaitre la
+   fleche des menus (toute regle de style sur un menu deroulant l'efface) et
+   donnaient a « Ce mois-ci » l'air d'un simple texte. Seules les fleches
+   ‹ › ont leur taille, celle de Recharges VE. La largeur des menus est
+   fixee dans app_desktop.py. Le calendrier de la vue Comparaison
+   (QDateEdit#PeriodSelector) garde lui aussi l'allure standard. */
 QPushButton#PeriodArrow {{
-    background: {t["bg_panel_alt"]};
-    border: 1px solid {t["cadre_controle"]};
-    border-radius: 8px;
-    padding: 4px 0;
-    min-width: 30px;
-    max-width: 30px;
-    color: {t["text_primary"]};
-    font-size: 17px;
-    font-weight: 600;
-}}
-QPushButton#PeriodArrow:hover {{
-    border-color: {t["primary"]};
-    color: {t["primary"]};
-}}
-QPushButton#PeriodArrow:disabled {{
-    color: {t["text_muted"]};
-    background: {t["bg_app"]};
-    border-color: {t["border"]};
-}}
-QPushButton#PeriodToday {{
-    background: {t["bg_panel_alt"]};
-    border: 1px solid {t["cadre_controle"]};
-    border-radius: 8px;
-    padding: 7px 12px;
-    color: {t["text_primary"]};
-}}
-QPushButton#PeriodToday:hover {{
-    border-color: {t["primary"]};
-    color: {t["primary"]};
-}}
-QPushButton#PeriodToday:disabled {{
-    color: {t["text_muted"]};
-    background: {t["bg_app"]};
-    border-color: {t["border"]};
-}}
-QComboBox#PeriodSelector {{
-    background: {t["bg_panel"]};
-    border: 1px solid {t["cadre_controle"]};
-    border-radius: 8px;
-    padding: 7px 12px;
-    color: {t["text_primary"]};
-}}
-QComboBox#PeriodSelector:hover {{
-    border-color: {t["primary"]};
-}}
-QComboBox#PeriodSelector:disabled {{
-    color: {t["text_muted"]};
-    background: {t["bg_app"]};
-    border-color: {t["border"]};
-}}
-QComboBox#PeriodSelector::drop-down {{
-    border: none;
-    width: 20px;
-}}
-/* Selecteur de jour (calendrier) de la vue Comparaison : meme look que
-   le combo de periode. */
-QDateEdit#PeriodSelector {{
-    background: {t["bg_panel"]};
-    border: 1px solid {t["cadre_controle"]};
-    border-radius: 8px;
-    padding: 7px 12px;
-    color: {t["text_primary"]};
-}}
-QDateEdit#PeriodSelector:hover {{
-    border-color: {t["primary"]};
-}}
-QDateEdit#PeriodSelector::drop-down {{
-    border: none;
-    width: 20px;
+    font-size: 13pt;
+    font-weight: bold;
+    min-width: 26px;
+    max-width: 26px;
+    padding: 0px;
 }}
 QComboBox QAbstractItemView {{
     background: {t["bg_panel"]};
