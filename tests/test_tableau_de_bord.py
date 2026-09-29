@@ -86,6 +86,33 @@ def test_un_mois_en_cours_est_compare_aux_memes_dates(qapp):
     assert badge.text() == "+20 % par rapport à septembre 2025"
 
 
+def _axe_des_jours(carte):
+    """Le trace matplotlib de la carte « Production jour par jour »."""
+    from gui_widgets import MplCanvas
+    return carte.findChildren(MplCanvas)[0].fig.axes[0]
+
+
+def test_un_mois_se_lit_jour_par_jour_a_plat(qapp):
+    """Charte du 29/09/2026 : raccourcir avant de tourner. Sur un seul mois,
+    chaque barre porte son numero de jour, a l'horizontale, sans en sauter ;
+    le mois est ecrit une fois sous l'axe (c'etait « 01/09 » a 45°, un jour
+    sur deux)."""
+    df = _serie("2026-09-01", "2026-09-28", 20.0)
+    ax = _axe_des_jours(_vue(df)._carte_production_jours(df))
+    etiquettes = ax.get_xticklabels()
+    assert [t.get_text() for t in etiquettes] == [str(j) for j in range(1, 29)]
+    assert all(t.get_rotation() == 0 for t in etiquettes)
+    assert ax.get_xlabel() == "Septembre 2026"
+
+
+def test_sur_deux_mois_la_date_garde_son_mois(qapp):
+    """A cheval sur deux mois, le jour seul serait ambigu : « 25/08 »."""
+    df = _serie("2026-08-20", "2026-09-13", 20.0)
+    ax = _axe_des_jours(_vue(df)._carte_production_jours(df))
+    textes = [t.get_text() for t in ax.get_xticklabels()]
+    assert textes[0] == "20/08" and all("/" in t for t in textes)
+
+
 def test_le_meilleur_jour_est_signale(qapp):
     """Etape 2 : la production jour par jour met en valeur le meilleur jour."""
     df = _serie("2026-09-01", "2026-09-13", 20.0)

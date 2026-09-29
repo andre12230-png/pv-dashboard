@@ -33,6 +33,7 @@ from views._helpers import (
     fmt_pct,
     fmt_prix_kwh,
     fraicheur_donnees,
+    label_mois_fr,
     libelle_periode,
     notes_donnees,
     periode_precedente,
@@ -604,11 +605,25 @@ class DashboardView(BaseView):
                                      decimales=1 if freq == "D" else 0)
         if meilleur is not None:
             textes[0][meilleur].set_fontweight("bold")
-        self._etiquettes_x(ax, serie.index, fmt_date)
+        if freq == "D" and serie.index.to_period("M").nunique() == 1:
+            self._jours_du_mois(ax, serie.index)
+        else:
+            self._etiquettes_x(ax, serie.index, fmt_date)
         ax.set_ylabel("kWh")
         canvas.fig.tight_layout()
         v.addWidget(canvas)
         return card
+
+    @staticmethod
+    def _jours_du_mois(ax, index) -> None:
+        """Un seul mois : le numero du jour sous chaque barre, a plat, et le
+        mois une fois sous l'axe. Charte (29/09/2026) : raccourcir avant de
+        tourner ; « 01/09 » penche a 45°, un jour sur deux, se lisait mal."""
+        x = np.arange(len(index))
+        ax.set_xticks(x)
+        ax.set_xticklabels([str(d.day) for d in index], rotation=0,
+                           fontsize=9)
+        ax.set_xlabel(label_mois_fr(index[0].to_period("M")))
 
     @staticmethod
     def _etiquettes_x(ax, index, fmt_date: str) -> None:
