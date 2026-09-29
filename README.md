@@ -631,7 +631,7 @@ code les fait bouger un jour, le test tombe. Faites de meme avec les votres.
   concernee est **terminee** (EDF OA facture a la date anniversaire, donc
   apres coup). L'annee en cours est affichee « a venir » dans les Annees OA
   sans entrer dans son bilan
-- **ROI** = (investissement − prime totale) ÷ gains **recurrents** annuels
+- **Temps de retour** (ex-« ROI ») = (investissement − prime totale) ÷ gains **recurrents** annuels
   (vente OA + economies). La prime n'etant versee que sur 5 ans, elle est
   deduite du capital a amortir au lieu d'etre comptee comme un revenu qui
   se repete. Le calcul suppose des gains maintenus au rythme observe

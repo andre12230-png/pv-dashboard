@@ -434,8 +434,8 @@ tableau de bord donnent le détail, vos chiffres à l'appui.</p>
 mois quelle que soit la consommation. Comptée dans les dépenses réseau.</p>
 <p><b>Amortissement</b> — moment où les gains cumulés égalent le coût de
 l'installation ({invest}).</p>
-<p><b>Retour sur investissement (ROI)</b> — durée estimée pour rembourser
-l'investissement initial.</p>
+<p><b>Temps de retour</b> — durée estimée pour rembourser l'investissement
+initial (on dit aussi « retour sur investissement »).</p>
 """
 
 

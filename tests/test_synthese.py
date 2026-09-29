@@ -85,7 +85,7 @@ def _prime_sur_le_graphique(donnees) -> tuple[list[str], int]:
     for canvas in vue.findChildren(MplCanvas):
         for ax in canvas.fig.axes:
             textes += [t.get_text() for t in ax.texts
-                       if "Prime autoconso" in t.get_text()]
+                       if "Prime à l'autoconsommation" in t.get_text()]
             points += sum(len(ligne.get_xdata()) for ligne in ax.lines
                           if ligne.get_gid() == "versements_prime")
     return textes, points
@@ -106,7 +106,8 @@ def test_prime_versee_en_une_fois(qapp, donnees):
                                prime_duree=1, duree_contrat=20)
     etiquettes, points = _prime_sur_le_graphique(donnees)
     assert points == 1
-    assert etiquettes == ["Prime autoconso\n" + fmt_eur(1440.0, signed=True)]
+    assert etiquettes == ["Prime à l'autoconsommation\n"
+                          + fmt_eur(1440.0, signed=True)]
 
 
 def test_pas_de_prime_avant_le_premier_versement(qapp, donnees):
@@ -153,3 +154,56 @@ def test_les_cartes_du_haut_ont_l_allure_des_tuiles(qapp, donnees):
     assert "border-top-width: 3px" in bloc
     assert 'QFrame[role="account"][variant="credit"]' in qss
     assert 'QFrame[role="account"][variant="debit"]' in qss
+
+
+def _labels(donnees, periode: str) -> list[str]:
+    from views.accounts import AccountsView
+    vue = AccountsView(donnees, LIGHT)
+    vue.refresh(periode)
+    return [lbl.text() for lbl in vue.findChildren(QLabel)]
+
+
+def test_la_part_de_la_periode_dit_laquelle(qapp, donnees):
+    """Relecture du 29/09/2026 : « +13,74 € sur période » ne disait pas
+    quelle periode, et sur « toute la periode » la ligne repetait le montant
+    juste au-dessus."""
+    mois = _labels(donnees, "month-2024-01")
+    assert "dont +31,00 € en janvier 2024" in mois          # 1 €/jour
+    assert "dont +62,00 € en janvier 2024" in mois          # 2 €/jour
+    assert "dont -155,00 € en janvier 2024" in mois         # 5 €/jour
+    tout = _labels(donnees, "all")
+    assert not any("sur période" in t or t.startswith("dont ") for t in tout)
+
+
+def test_ni_jargon_ni_abreviation(qapp, donnees):
+    import re
+    textes = _labels(donnees, "all")
+    joint = " | ".join(textes)
+    assert not re.search(r"\bROI\b", joint)
+    assert not re.search(r"\bautoconso\b", joint, re.IGNORECASE)
+    assert "anniv." not in joint
+    assert any("TEMPS DE RETOUR" in t.upper() for t in textes)
+    assert any("PRIME À L'AUTOCONSOMMATION" in t for t in textes)
+
+
+def test_un_seul_tiret_dans_les_sous_titres(qapp, donnees):
+    """« Recettes — surplus injecté » mais « Coût évité - kWh non achetés » :
+    un seul tiret, le long."""
+    from gui_widgets import AccountCard
+    from views.accounts import AccountsView
+    vue = AccountsView(donnees, LIGHT)
+    vue.refresh("all")
+    for carte in vue.findChildren(AccountCard):
+        for nom in ("AccountType", "AccountTrend"):
+            assert " - " not in carte.findChild(QLabel, nom).text()
+
+
+def test_graduations_avec_espace_des_milliers(qapp, donnees):
+    """L'axe du remboursement affichait « 10000 » ; les montants s'ecrivent
+    « 9 000,00 € »."""
+    from gui_widgets import MplCanvas
+    from views.accounts import AccountsView
+    vue = AccountsView(donnees, LIGHT)
+    vue.refresh("all")
+    ax = vue.findChildren(MplCanvas)[0].fig.axes[0]
+    assert ax.yaxis.get_major_formatter()(20000, 0) == "20 000"

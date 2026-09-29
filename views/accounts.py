@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import pandas as pd
+from matplotlib.ticker import FuncFormatter
 from PySide6.QtWidgets import QFrame, QLabel
 
 import calculations as calc
@@ -10,7 +11,14 @@ from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
 from gui_widgets import AccountCard, Card, KpiCard, MplCanvas, SectionTitle, grid_row
 from views._base import BaseView
-from views._helpers import amortissement, filter_period, fmt_date_fr, fmt_eur
+from views._helpers import (
+    PERIOD_ALL,
+    amortissement,
+    filter_period,
+    fmt_date_fr,
+    fmt_eur,
+    libelle_periode,
+)
 
 
 class AccountsView(BaseView):
@@ -56,32 +64,46 @@ class AccountsView(BaseView):
         ))
 
         date_mes = fmt_date_fr(cfg["installation"]["date_mise_en_service"])
+        # Les montants sont des cumuls ; la ligne du dessous donne la part de
+        # la periode choisie en haut, et la nomme (relecture du 29/09/2026 :
+        # « sur période » ne disait pas laquelle, et sur toute la periode elle
+        # repetait le montant). Sur toute la periode, elle se tait.
+        quand = self._quand(period)
+
+        def part(valeur: float, vide: str) -> str:
+            if not quand:
+                return ""
+            if abs(valeur) < 0.005:
+                return f"{vide} {quand}"
+            return f"dont {fmt_eur(valeur, signed=True)} {quand}"
+
         # Vente et prime n'apparaissent que si le contrat les prevoit.
         vente = [AccountCard(
             f"Vente {self.data.acheteur}",
             "Recettes — " + ("surplus injecté" if oa.type == "surplus"
                              else "production vendue"),
             fmt_eur(revenu_cum, signed=True),
-            f"+{fmt_eur(revenu_p)} sur période" if revenu_p > 0 else "Aucune recette",
+            part(revenu_p, "Aucune recette"),
             self.theme["credit"], "💶", "credit")] if self.data.vend else []
-        prime = [AccountCard("Prime autoconso",
+        prime = [AccountCard("Prime à l'autoconsommation",
                         f"Versée sur {oa.prime_duree} "
-                        f"an{'s' if oa.prime_duree > 1 else ''} (anniv. OA)",
+                        f"an{'s' if oa.prime_duree > 1 else ''}, à chaque "
+                        "anniversaire du contrat",
                         fmt_eur(prime_versee, signed=True),
                         f"{nb_oa}/{oa.prime_duree} "
-                        f"{accorde(oa.prime_duree, 'versement')} - "
+                        f"{accorde(oa.prime_duree, 'versement')} — "
                         f"total prévu {fmt_eur(prime_total)}",
                         self.theme["credit"], "🎁", "credit")] if oa.prime_duree else []
         accounts = vente + prime + [
-            AccountCard("Économies autoconso", "Coût évité - kWh non achetés",
+            AccountCard("Économies", "Coût évité — kWh non achetés",
                         fmt_eur(eco_cum, signed=True),
-                        f"+{fmt_eur(eco_p)} sur période" if eco_p > 0 else "Aucune économie",
+                        part(eco_p, "Aucune économie"),
                         self.theme["credit"], "🐷", "credit"),
-            AccountCard("Facture réseau", "Dépenses - électricité + abonnement",
+            AccountCard("Facture réseau", "Dépenses — électricité + abonnement",
                         fmt_eur(-cout_cum, signed=True),
-                        f"-{fmt_eur(cout_p)} sur période" if cout_p > 0 else "Aucune dépense",
+                        part(-cout_p, "Aucune dépense"),
                         self.theme["debit"], "🔌", "debit"),
-            AccountCard("Investissement", f"Achat installation - {date_mes}",
+            AccountCard("Investissement", f"Achat de l'installation — {date_mes}",
                         fmt_eur(-invest, signed=True),
                         "Amorti progressivement",
                         self.theme["debit"], "🏡", "debit"),
@@ -118,14 +140,16 @@ class AccountsView(BaseView):
                     + f", moyenne sur {_ans(annees)} "
                     + ("an" if annees < 2 else "ans"),
                     "credit"),
-            KpiCard("ROI estimé", f"{_ans(roi_an)} ans" if roi_an else "—",
+            # « Temps de retour » et non « ROI » (sigle anglais, relecture du
+            # 29/09/2026).
+            KpiCard("Temps de retour", f"{_ans(roi_an)} ans" if roi_an else "—",
                     f"{fmt_eur(reste_a_amortir)} à amortir"
                     + (f" (prime de {fmt_eur(prime_totale)} déduite)"
                        if prime_totale else ""), "primary"),
         ]))
         note = QLabel(
-            "Le ROI suppose que vos gains annuels restent au rythme observé "
-            "jusqu'ici."
+            "Le temps de retour suppose que vos gains annuels restent au "
+            "rythme observé jusqu'ici."
             + (" Il ne compte que les gains qui se répètent : la prime "
                "à l'autoconsommation, versée sur "
                f"{oa.prime_duree} an{'s' if oa.prime_duree > 1 else ''} "
@@ -138,6 +162,21 @@ class AccountsView(BaseView):
             f"color: {self.theme['text_muted']}; font-size: 11px; padding-top: 4px;")
         self.layout_inner.addWidget(note)
         self.layout_inner.addStretch(1)
+
+    @staticmethod
+    def _quand(period: str) -> str:
+        """La periode choisie, a glisser dans une phrase : « en septembre
+        2026 », « en 2025 », « sur l'année OA #2 » ; rien pour toute la
+        periode."""
+        if not period or period == PERIOD_ALL:
+            return ""
+        if period.startswith("month-"):
+            return "en " + libelle_periode(period).lower()
+        if period.startswith("year-"):
+            return "en " + period.split("-")[1]
+        if period.startswith("oa-"):
+            return "sur l'année OA #" + period.split("-")[1]
+        return ""
 
     def _recettes(self) -> str:
         """« ventes + économies + primes », selon ce que le contrat prévoit."""
@@ -208,7 +247,7 @@ class AccountsView(BaseView):
             n = len(mois_primes)
             detail = (fmt_eur(prime_an, signed=True) if n == 1
                       else f"{n} versements de {fmt_eur(prime_an)}")
-            ax.annotate(f"Prime autoconso\n{detail}",
+            ax.annotate(f"Prime à l'autoconsommation\n{detail}",
                         xy=(mois_primes[-1], y_primes[-1]), xytext=(0, 14),
                         textcoords="offset points", ha="center", va="bottom",
                         fontsize=8, color=self.theme["text_secondary"],
@@ -231,6 +270,10 @@ class AccountsView(BaseView):
                             fontsize=9, color=self.theme["text_secondary"])
         ax.set_ylim(0, invest * 1.15)
         ax.set_ylabel("€")
+        # « 10 000 » et non « 10000 » : les milliers separes comme dans les
+        # montants (relecture du 29/09/2026).
+        ax.yaxis.set_major_formatter(FuncFormatter(
+            lambda valeur, _pos: f"{valeur:,.0f}".replace(",", " ")))
         # Au milieu a gauche, la zone vide du graphique : en haut, la legende
         # chevauchait la ligne du cout de l'installation.
         ax.legend(loc="center left", frameon=False, fontsize=9)
