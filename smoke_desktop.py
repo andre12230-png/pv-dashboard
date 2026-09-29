@@ -20,6 +20,7 @@ from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QApplication
 
 import app_desktop
+from accords import pluriel
 from demo_releves import ecrire_releves_demo
 
 
@@ -28,7 +29,8 @@ def main():
     # n'est ecrit dans le dossier du projet (ni releves, ni sauvegardes).
     demo = Path(tempfile.mkdtemp(prefix="smoke_pv_"))
     shutil.copy2(app_desktop.CONFIG_PATH, demo / "config.yaml")
-    print(f"jeu : {ecrire_releves_demo(demo / 'Releves-pv.csv')} jours invente(s)")
+    nb_jours = ecrire_releves_demo(demo / "Releves-pv.csv")
+    print(f"jeu : {pluriel(nb_jours, 'jour inventé', 'jours inventés')}")
     app_desktop.BASE_DIR = demo
     app_desktop.CONFIG_PATH = demo / "config.yaml"
     app_desktop.CONFIG_LOCAL_PATH = demo / "config-local.yaml"   # absent : voulu
@@ -143,7 +145,7 @@ def main():
 
     print()
     if errors:
-        print(f"FAILED : {len(errors)} erreur(s)")
+        print(f"FAILED : {pluriel(len(errors), 'erreur')}")
         for k, e in errors:
             print(f"  - {k} : {e}")
         return 1

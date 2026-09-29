@@ -266,9 +266,9 @@ def test_write_raw_message_nomme_precisement_les_pertes(tmp_path):
         dl.write_releves_raw(p, rows)
 
     pertes = exc.value.pertes
-    assert "2 ligne(s)" in pertes
+    assert "2 lignes" in pertes
     assert "Conso_réseau_Jour" in pertes    # la colonne est nommee
-    assert "2 valeur(s)" in pertes          # et le compte aussi
+    assert "2 valeurs" in pertes            # et le compte aussi
 
 
 def test_write_raw_reduction_acceptee_si_demandee(tmp_path):

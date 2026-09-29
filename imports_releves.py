@@ -17,6 +17,8 @@ import re
 import statistics
 from datetime import date as _date
 
+from accords import accorde, pluriel
+
 # ----------------------------------------------------------------------
 # Import d'un export quotidien Enedis (consommation ou injection)
 # ----------------------------------------------------------------------
@@ -87,8 +89,10 @@ def _noter_lignes_ecartees(notes: list | None, jours: list[str]) -> None:
     lisible : elles sont ignorees, et on le dit au lieu de se taire."""
     if notes is None or not jours:
         return
-    notes.append(f"{len(jours)} ligne(s) datée(s) sans valeur lisible, "
-                 f"ignorée(s) (par exemple le {jours[0]}).")
+    n = len(jours)
+    notes.append(f"{pluriel(n, 'ligne')} {accorde(n, 'datée')} sans valeur "
+                 f"lisible, {accorde(n, 'ignorée')} (par exemple le "
+                 f"{jours[0]}).")
 
 
 def parse_enedis_csv(path: str) -> tuple[str, dict[str, str]]:
@@ -749,7 +753,8 @@ def _rapport_d_une_feuille(ws, notes: list | None
         return None
     if notes is not None and comparables and ecarts > comparables * 0.10:
         notes.append(
-            f"Attention : sur {comparables} jour(s), {ecarts} ont une "
+            f"Attention : sur {pluriel(comparables, 'jour')}, {ecarts} "
+            f"{accorde(ecarts, 'a', 'ont')} une "
             "autoconsommation qui ne vaut pas « production − exportation ». "
             "Les colonnes lues ne sont peut-être pas les bonnes : vérifiez "
             "quelques journées avant d'appliquer.")

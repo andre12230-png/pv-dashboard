@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 )
 
 import calculations as calc
+from accords import accorde, pluriel
 from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
 from gui_widgets import Card, KpiCard, MplCanvas, SectionTitle, grid_row
@@ -222,9 +223,10 @@ class TvaView(BaseView):
                     "31/12, obtenue à partir de la part d'autoconsommation "
                     "déjà atteinte à la même date les années précédentes.")
             if ligne["jours_sans_injection"]:
+                n = ligne["jours_sans_injection"]
                 items[1].setToolTip(
-                    f"{ligne['jours_sans_injection']} jour(s) sans relevé "
-                    "d'injection : toute leur production compte en "
+                    f"{pluriel(n, 'jour')} sans relevé d'injection : toute "
+                    f"{accorde(n, 'sa', 'leur')} production compte en "
                     "autoconsommation, ce qui tire ce chiffre vers le haut.")
                 items[1].setForeground(QColor(self.theme["text_muted"]))
             if controle is not None:

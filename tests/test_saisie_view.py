@@ -180,7 +180,7 @@ def test_le_dialogue_nomme_precisement_ce_qui_disparait(vue, dialogue):
     vue._enregistrer()
 
     message = dialogue.messages[0]
-    assert "2 ligne(s)" in message
+    assert "2 lignes" in message
     assert "Conso_réseau_Jour" in message
     # Le bouton par defaut doit etre Non : un Entree machinal ne detruit rien.
     assert dialogue.defauts[0] == QMessageBox.No
@@ -606,7 +606,7 @@ def test_le_recapitulatif_annonce_les_journees_laissees_au_reseau(
     vue._importer_enphase()
 
     message = dialogue.messages[0]
-    assert "1 journée(s) laissée(s) telle(s) quelle(s)" in message
+    assert "1 journée laissée telle quelle : déjà relevée" in message
     assert "gestionnaire de réseau" in message
 
 
@@ -624,7 +624,7 @@ def test_rapport_entierement_couvert_par_le_reseau_le_dit(
 
     message = dialogue.messages[0]
     assert "rien à compléter" in message
-    assert "2 journée(s) sont déjà relevées" in message
+    assert "les 2 journées sont déjà relevées" in message
 
 
 # ---------------------------------------------------------------------------

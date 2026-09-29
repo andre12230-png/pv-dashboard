@@ -8,7 +8,6 @@ tableau de bord y plantait sans qu'aucun test ne le remarque.
 from __future__ import annotations
 
 import re
-
 import shutil
 
 import pytest

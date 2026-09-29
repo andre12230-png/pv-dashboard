@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 import data_loaders as dl
+from accords import accorde, pluriel
 from app_data import AppData
 from erreurs import erreur_en_clair
 from gui_widgets import SectionTitle
@@ -197,7 +198,8 @@ class SaisieView(BaseView):
         self.layout_inner.addWidget(self.table, 1)
 
         texte_info = (
-            f"{len(self.toutes_lignes)} relevé(s) au total dans le fichier. "
+            f"{pluriel(len(self.toutes_lignes), 'relevé')} au total dans le "
+            "fichier. "
             f"Les {self.NB_LIGNES_AFFICHEES} derniers jours sont affichés "
             "(les autres sont préservés à la sauvegarde)."
         )
@@ -209,10 +211,15 @@ class SaisieView(BaseView):
             apercu = ", ".join(self._dates_illisibles[:3])
             if len(self._dates_illisibles) > 3:
                 apercu += " ..."
+            n = len(self._dates_illisibles)
             texte_info += (
-                f"\n⚠  {len(self._dates_illisibles)} date(s) illisible(s) : "
-                f"{apercu}. Ces journees n'entrent dans AUCUN calcul tant "
-                "que leur date n'est pas corrigée dans le tableau ci-dessus."
+                f"\n⚠  {pluriel(n, 'date')} {accorde(n, 'illisible')} : "
+                f"{apercu}. "
+                + ("Cette journée n'entre dans AUCUN calcul tant que sa date"
+                   if n == 1 else
+                   "Ces journées n'entrent dans AUCUN calcul tant que leur "
+                   "date")
+                + " n'est pas corrigée dans le tableau ci-dessus."
             )
 
         info = QLabel(texte_info)
@@ -442,9 +449,11 @@ class SaisieView(BaseView):
                 if respectees:
                     libelle = self.LIBELLES_IMPORT.get(colonne, colonne)
                     recap.append(
-                        f"  - {libelle} : rien à compléter, les {respectees} "
-                        "journée(s) sont déjà relevées par votre "
-                        "gestionnaire de réseau")
+                        f"  - {libelle} : rien à compléter, "
+                        + ("la journée est déjà relevée" if respectees == 1
+                           else f"les {respectees} journées sont déjà "
+                                "relevées")
+                        + " par votre gestionnaire de réseau")
                 continue
             # Garde-fou : une grandeur rangee dans la mauvaise colonne se
             # trahit par une injection superieure a la production.
@@ -460,12 +469,19 @@ class SaisieView(BaseView):
                 alertes.append(alerte)
             lignes, nb_n, nb_r, nb_i = dl.merge_import(lignes, colonne, valeurs)
             libelle = self.LIBELLES_IMPORT.get(colonne, colonne)
-            detail = (f"  - {libelle} : {len(valeurs)} jour(s) lus, {nb_n} "
-                      f"nouveau(x), {nb_r} remplacé(s), {nb_i} identique(s)")
+            nb_lus = len(valeurs)
+            detail = (f"  - {libelle} : {pluriel(nb_lus, 'jour')} "
+                      f"{accorde(nb_lus, 'lu')}, "
+                      f"{pluriel(nb_n, 'nouveau', 'nouveaux')}, "
+                      f"{nb_r} {accorde(nb_r, 'remplacé')}, "
+                      f"{nb_i} {accorde(nb_i, 'identique')}")
             if respectees:
-                detail += (f"\n      ({respectees} journée(s) laissée(s) "
-                           "telle(s) quelle(s) : déjà relevée(s) par votre "
-                           "gestionnaire de réseau)")
+                r = respectees
+                detail += (f"\n      ({pluriel(r, 'journée')} "
+                           f"{accorde(r, 'laissée')} "
+                           f"{accorde(r, 'telle quelle', 'telles quelles')} : "
+                           f"{accorde(r, 'déjà relevée', 'déjà relevées')} "
+                           "par votre gestionnaire de réseau)")
             recap.append(detail)
             total_nouveaux += nb_n
             total_remplaces += nb_r
@@ -512,8 +528,8 @@ class SaisieView(BaseView):
         if callable(self.reload_callback):
             self.reload_callback()
         self._set_status(
-            f"{titre} OK : {total_nouveaux} ajout(s), "
-            f"{total_remplaces} remplacement(s).", ok=True)
+            f"{titre} OK : {pluriel(total_nouveaux, 'ajout')}, "
+            f"{pluriel(total_remplaces, 'remplacement')}.", ok=True)
 
     def a_des_saisies_en_cours(self) -> bool:
         return self._saisies_non_enregistrees()
@@ -595,7 +611,8 @@ class SaisieView(BaseView):
         if videes:
             apercu = ", ".join(videes[:5]) + (" ..." if len(videes) > 5 else "")
             message += (
-                f"{len(videes)} journée(s) vidée(s) dans le tableau : "
+                f"{pluriel(len(videes), 'journée')} "
+                f"{accorde(len(videes), 'vidée')} dans le tableau : "
                 f"{apercu}\n\n")
         else:
             message += (
@@ -728,9 +745,11 @@ class SaisieView(BaseView):
 
         if doublons:
             # dict.fromkeys : dedoublonne en gardant l'ordre d'apparition.
-            dates = ", ".join(dict.fromkeys(doublons))
+            uniques = list(dict.fromkeys(doublons))
+            dates = ", ".join(uniques)
             erreurs.append(
-                f"date(s) en double dans le tableau : {dates} "
+                f"{accorde(len(uniques), 'date')} en double dans le "
+                f"tableau : {dates} "
                 "(une seule ligne par journée)")
 
         if erreurs:
@@ -795,8 +814,11 @@ class SaisieView(BaseView):
         # le message serait efface aussitot par la reconstruction.
         if callable(self.reload_callback):
             self.reload_callback()
-        message = f"OK : {nb_ajout} ajout(s), {nb_modif} modif(s)"
+        message = (f"OK : {pluriel(nb_ajout, 'ajout')}, "
+                   f"{pluriel(nb_modif, 'modification')}")
         if videes:
-            message += f", {len(videes)} effacement(s)"
-        self._set_status(message + " enregistre(s).", ok=True)
+            message += f", {pluriel(len(videes), 'effacement')}"
+        total = nb_ajout + nb_modif + len(videes)
+        self._set_status(message + (" enregistrés." if total > 1
+                                    else " enregistré."), ok=True)
         return True

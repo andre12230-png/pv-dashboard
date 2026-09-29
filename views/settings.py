@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
 )
 
 import calculations as calc
+from accords import pluriel
 from gui_widgets import Card, SectionTitle, grid_row
 from views._base import BaseView
 from views._helpers import fmt_date_fr, fmt_eur, fmt_kwc, fmt_pct, fmt_prix_kwh
@@ -148,7 +149,7 @@ class SettingsView(BaseView):
         for cle, libelle in self.RECALAGES:
             tranches = sources.get(cle) or []
             if tranches:
-                lignes.append((libelle, f"{len(tranches)} période(s)"))
+                lignes.append((libelle, pluriel(len(tranches), "période")))
         if not lignes:
             lignes = [("Aucun recalage déclaré",
                        "les relevés sont affichés tels que saisis")]

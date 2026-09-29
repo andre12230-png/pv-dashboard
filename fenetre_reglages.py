@@ -206,8 +206,12 @@ class FenetreReglages(QDialog):
             2, " €", 1_000_000)
         self.prime_duree = QSpinBox()
         self.prime_duree.setRange(1, 20)
-        self.prime_duree.setSuffix(" an(s)")
+        # « 1 an », « 5 ans » : le suffixe suit la valeur (c'etait « an(s) »).
+        self.prime_duree.valueChanged.connect(
+            lambda n: self.prime_duree.setSuffix(" an" if n <= 1 else " ans"))
         self.prime_duree.setValue(valeurs["prime_duree"])
+        self.prime_duree.setSuffix(
+            " an" if self.prime_duree.value() <= 1 else " ans")
         # Cette ligne montre l'unite que l'utilisateur n'a PAS sous les yeux,
         # et se recalcule a chaque frappe. Sans elle, on saisit son total dans
         # une case qui attend des euros par kWc, et l'installation parait

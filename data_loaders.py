@@ -38,6 +38,8 @@ from typing import Iterable
 
 import pandas as pd
 
+from accords import accorde, pluriel
+
 # Porte d'entree : tout ce qui a ete detache le 28/09/2026 reste
 # accessible ici (dl.parse_enedis_fichier, dl._parse_nombre...).
 from imports_releves import (  # noqa: F401
@@ -294,7 +296,9 @@ def read_releves_raw(path: str) -> list[dict[str, str]]:
     # releves detruites, et l'anomalie d'en-tete effacee du meme coup.
     if manquantes:
         raise ValueError(
-            f"{os.path.basename(path)} : colonne(s) introuvable(s) dans "
+            f"{os.path.basename(path)} : "
+            f"{accorde(len(manquantes), 'colonne')} "
+            f"{accorde(len(manquantes), 'introuvable')} dans "
             f"l'en-tete : {', '.join(manquantes)}.\n"
             f"En-tetes lus dans le fichier : {list(df.columns)}.\n"
             "Aucun des noms acceptes ne correspond. Le fichier n'est pas lu, "
@@ -611,7 +615,9 @@ def controle_apres_import(rows: list[dict[str, str]],
     if compares == 0 or suspects <= compares * 0.10:
         return None
     return (
-        f"Attention : sur {compares} jour(s) comparables, {suspects} auraient "
+        f"Attention : sur {pluriel(compares, 'jour')} "
+        f"{accorde(compares, 'comparable')}, {suspects} "
+        f"{accorde(suspects, 'aurait', 'auraient')} "
         f"une injection SUPERIEURE a la production.\n\n"
         + "\n".join("  - " + e for e in exemples)
         + "\n\nC'est impossible : on n'injecte que le surplus. Ce fichier "
@@ -644,7 +650,8 @@ def controle_vraisemblance(colonne: str, valeurs: dict[str, str],
         return None
     exemples = "\n".join(f"  - {jour} : {val} kWh" for jour, val in trop[:3])
     return (
-        f"Attention : {len(trop)} valeur(s) de {libelle} dépassent le maximum "
+        f"Attention : {pluriel(len(trop), 'valeur')} de {libelle} "
+        f"{accorde(len(trop), 'dépasse', 'dépassent')} le maximum "
         f"vraisemblable ({plafond:g} kWh par jour).\n\n{exemples}\n\n"
         "Une unité mal lue (des Wh pris pour des kWh) ou une colonne qui "
         "n'est pas la bonne donne ce genre de chiffres. Vérifiez le fichier "
@@ -729,15 +736,20 @@ def pertes_a_l_ecriture(path: str,
     lignes_apres, cols_apres = _volumetrie(rows)
 
     pertes: list[str] = []
+    total = 0
     if lignes_apres < lignes_avant:
-        pertes.append(f"{lignes_avant - lignes_apres} ligne(s)")
+        pertes.append(pluriel(lignes_avant - lignes_apres, "ligne"))
+        total += lignes_avant - lignes_apres
     for col, avant in cols_avant.items():
         manque = avant - cols_apres.get(col, 0)
         if manque > 0:
-            pertes.append(f"{manque} valeur(s) de {col}")
+            pertes.append(f"{pluriel(manque, 'valeur')} de {col}")
+            total += manque
     if not pertes:
         return None
-    return _enumere(pertes) + " vont etre supprimees"
+    # « 1 ligne va etre supprimee », « 2 lignes vont etre supprimees »
+    return _enumere(pertes) + (" va etre supprimee" if total == 1
+                               else " vont etre supprimees")
 
 
 def write_releves_raw(path: str, rows: list[dict[str, str]],

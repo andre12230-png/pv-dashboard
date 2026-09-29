@@ -6,6 +6,7 @@ from datetime import date as _date
 import pandas as pd
 
 import calculations as calc
+from accords import pluriel
 from gui_theme import COULEUR_DEFAVORABLE, COULEUR_FAVORABLE
 
 PERIOD_ALL = "all"
@@ -206,7 +207,7 @@ LIBELLES_GRANDEURS = {
 def nombre_de_jours(n: int) -> str:
     """« 1 jour », « 1 614 jours » : accorde, milliers separes par une
     espace comme les montants (barre d'etat ; c'etait « 1614 jour(s) »)."""
-    return f"{n:,}".replace(",", " ") + (" jours" if n > 1 else " jour")
+    return pluriel(n, "jour")    # la regle commune, dans accords.py
 
 
 def _age_en_clair(jours: int) -> str:
@@ -517,8 +518,7 @@ def libelle_periode(period: str) -> str:
 
 def _pluriel(n: int, mot: str) -> str:
     """« 1 journée », « 1 062 valeurs » -- milliers separes comme fmt_eur."""
-    nombre = f"{n:,}".replace(",", " ")
-    return f"{nombre} {mot}" + ("s" if n > 1 else "")
+    return pluriel(n, mot)       # la regle commune, dans accords.py
 
 
 # -----------------------------------------------------------------------------

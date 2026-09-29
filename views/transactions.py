@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
 )
 
+from accords import pluriel
 from gui_widgets import Card
 from views._base import BaseView
 from views._helpers import filter_period
@@ -42,7 +43,7 @@ class TransactionsView(BaseView):
 
         # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
         card = Card(titre="Relevés journaliers",
-                    sous_titre=f"{len(df)} jour(s) - 1 ligne = 1 journée "
+                    sous_titre=f"{pluriel(len(df), 'jour')} - 1 ligne = 1 journée "
                                "de production")
         v = card.corps
         v.setContentsMargins(0, 8, 0, 0)

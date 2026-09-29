@@ -945,3 +945,14 @@ def test_la_fenetre_ne_fige_pas_une_estimation_non_touchee():
                          "part_hc_estimee": 0.24, "part_hc_declaree": False},
                         lambda _v: None)
     assert f.valeurs()["part_hc_autoconso"] is None
+
+
+def test_la_duree_de_la_prime_s_accorde(fenetre):
+    """29/09/2026 : la case affichait « 5 an(s) ». Elle dit « 5 ans », et
+    « 1 an » quand on descend a un."""
+    case = fenetre(rg.recalages_vides()).prime_duree
+    assert case.text() == "5 ans"
+    case.setValue(1)
+    assert case.text() == "1 an"
+    case.setValue(2)
+    assert case.text() == "2 ans"

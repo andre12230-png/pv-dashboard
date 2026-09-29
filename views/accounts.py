@@ -5,6 +5,7 @@ import pandas as pd
 from PySide6.QtWidgets import QFrame, QLabel
 
 import calculations as calc
+from accords import accorde
 from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
 from gui_widgets import AccountCard, Card, KpiCard, MplCanvas, SectionTitle, grid_row
@@ -67,7 +68,8 @@ class AccountsView(BaseView):
                         f"Versée sur {oa.prime_duree} "
                         f"an{'s' if oa.prime_duree > 1 else ''} (anniv. OA)",
                         fmt_eur(prime_versee, signed=True),
-                        f"{nb_oa}/{oa.prime_duree} versement(s) - "
+                        f"{nb_oa}/{oa.prime_duree} "
+                        f"{accorde(oa.prime_duree, 'versement')} - "
                         f"total prévu {fmt_eur(prime_total)}",
                         self.theme["credit"], "🎁", "#dcfce7")] if oa.prime_duree else []
         accounts = vente + prime + [
@@ -111,7 +113,8 @@ class AccountsView(BaseView):
         self.layout_inner.addLayout(grid_row([
             KpiCard("Gains récurrents par an", fmt_eur(gains_an),
                     ("vente + économies" if self.data.vend else "économies")
-                    + f", moyenne sur {_ans(annees)} an(s)",
+                    + f", moyenne sur {_ans(annees)} "
+                    + ("an" if annees < 2 else "ans"),
                     "credit"),
             KpiCard("ROI estimé", f"{_ans(roi_an)} ans" if roi_an else "—",
                     f"{fmt_eur(reste_a_amortir)} à amortir"
