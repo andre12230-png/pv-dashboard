@@ -113,3 +113,18 @@ def test_pas_de_prime_avant_le_premier_versement(qapp, donnees):
     # Moins d'un an de donnees : aucune prime encore versee, aucune marche.
     donnees.df = donnees.df.loc[:"2023-03-31"]
     assert _prime_sur_le_graphique(donnees) == ([], 0)
+
+
+def test_le_bilan_net_ne_s_affiche_qu_une_fois(qapp, donnees):
+    """Relecture du 29/09/2026 : le bilan net figurait deux fois (carte
+    « Bilan net global » en haut, tuile « Bilan net actuel » en bas), meme
+    calcul, meme explication. On garde la carte du haut."""
+    from views.accounts import AccountsView
+    am = amortissement(donnees)
+    montant = fmt_eur(am["recupere"] - 20000.0, signed=True)
+    vue = AccountsView(donnees, LIGHT)
+    vue.refresh("all")
+    textes = [lbl.text() for lbl in vue.findChildren(QLabel)]
+    assert textes.count(montant) == 1
+    assert "Bilan net global" in textes
+    assert not any("BILAN NET ACTUEL" in t.upper() for t in textes)

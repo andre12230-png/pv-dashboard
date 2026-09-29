@@ -110,6 +110,8 @@ class AccountsView(BaseView):
         def _ans(x: float) -> str:
             return f"{x:.1f}".replace(".", ",")
 
+        # Le bilan net n'est plus repete ici : il est deja dans la carte
+        # « Bilan net global » du haut, meme calcul (relecture du 29/09/2026).
         self.layout_inner.addLayout(grid_row([
             KpiCard("Gains récurrents par an", fmt_eur(gains_an),
                     ("vente + économies" if self.data.vend else "économies")
@@ -120,9 +122,6 @@ class AccountsView(BaseView):
                     f"{fmt_eur(reste_a_amortir)} à amortir"
                     + (f" (prime de {fmt_eur(prime_totale)} déduite)"
                        if prime_totale else ""), "primary"),
-            KpiCard("Bilan net actuel", fmt_eur(bilan_global, signed=True),
-                    self._recettes() + " − installation",
-                    "credit" if bilan_global >= 0 else "debit"),
         ]))
         note = QLabel(
             "Le ROI suppose que vos gains annuels restent au rythme observé "
