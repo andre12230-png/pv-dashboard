@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QFrame, QLabel
 
 import calculations as calc
 from gui_theme import CHART_COLORS as CC
@@ -87,10 +87,10 @@ class OctopusEdfView(BaseView):
         self.layout_inner.addWidget(SectionTitle(f"Économie (ou surcoût) avec {mien}"))
         self.layout_inner.addLayout(grid_row([
             KpiCard(f"Par rapport à {autre} Base", fmt_eur(gain_base, signed=True),
-                    f"~{fmt_eur(gain_base * par_an, signed=True)}/an",
+                    f"soit environ {fmt_eur(gain_base * par_an, signed=True)} par an",
                     "credit" if gain_base >= 0 else "debit"),
             KpiCard(f"Par rapport à {autre} HP/HC", fmt_eur(gain_hphc, signed=True),
-                    f"~{fmt_eur(gain_hphc * par_an, signed=True)}/an",
+                    f"soit environ {fmt_eur(gain_hphc * par_an, signed=True)} par an",
                     "credit" if gain_hphc >= 0 else "debit"),
             KpiCard("Offre la moins chère", gagnant,
                     "sur la période analysée",
@@ -155,12 +155,10 @@ class OctopusEdfView(BaseView):
 
     def _carte_hypotheses(self, ref: list[dict], mon_offre: str,
                           autre_offre: str) -> QFrame:
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(20, 14, 20, 16)
-        titre = QLabel("Hypothèses du calcul")
-        titre.setStyleSheet("font-weight: 700; font-size: 13px;")
-        v.addWidget(titre)
+        # Titre dans le bandeau de la carte, comme les autres (29/09/2026 ;
+        # c'etait un texte gras dans le corps).
+        card = Card(titre="Hypothèses du calcul")
+        v = card.corps
         # Une phrase par grille de reference : elle change en cours d'annee
         # (revision du tarif reglemente au 1er fevrier et au 1er aout).
         grilles = " ".join(
