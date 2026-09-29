@@ -48,6 +48,32 @@ def test_barres_serrees_chiffres_debout():
     plt.close(fig)
 
 
+def _redimensionner(fig, largeur_pouces: float) -> None:
+    """Ce que fait Qt quand la fenetre change de taille : la figure prend la
+    taille du composant, puis matplotlib previent par un « resize_event »."""
+    from matplotlib.backend_bases import ResizeEvent
+    fig.set_size_inches(largeur_pouces, fig.get_figheight())
+    fig.canvas.callbacks.process("resize_event",
+                                 ResizeEvent("resize_event", fig.canvas))
+
+
+def test_le_choix_suit_la_taille_reelle_du_graphique():
+    """29/09/2026 : le choix a plat / debout se faisait une seule fois, sur
+    la taille theorique du graphique (8 pouces). A l'ecran, le graphique est
+    plus large et les chiffres restaient debout alors qu'ils tenaient. Le
+    choix se refait a chaque changement de taille, sur la vraie largeur des
+    chiffres et le vrai ecart entre deux barres."""
+    fig, ax = plt.subplots(figsize=(6, 3), dpi=100)
+    b = ax.bar(range(31), [10.7] * 31, 0.7)
+    chiffres_sur_barres(ax, [b], decimales=1)
+    assert {t.get_rotation() for t in ax.texts} == {90}     # trop serre
+    _redimensionner(fig, 20)
+    assert {t.get_rotation() for t in ax.texts} == {0}      # ca tient
+    _redimensionner(fig, 6)
+    assert {t.get_rotation() for t in ax.texts} == {90}     # et retour
+    plt.close(fig)
+
+
 # -----------------------------------------------------------------------------
 # Les graphiques des feuilles
 # -----------------------------------------------------------------------------

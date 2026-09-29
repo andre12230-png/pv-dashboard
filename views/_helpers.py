@@ -87,6 +87,10 @@ def chiffres_sur_barres(ax, groupes, decimales: int = 0) -> list[list]:
     debout et un peu plus petits. Demande de l'auteur du 15/09/2026 : les
     chiffres au-dessus de chaque barre, sur tous les graphiques en barres.
 
+    Le choix a plat / debout se refait a chaque changement de taille du
+    graphique (29/09/2026) : fait une seule fois, sur la taille theorique de
+    la figure, il laissait debout des chiffres qui tenaient a l'ecran.
+
     Renvoie les textes poses, groupe par groupe (pour en mettre un en gras).
     """
     barres = [b for groupe in groupes for b in groupe]
@@ -94,29 +98,53 @@ def chiffres_sur_barres(ax, groupes, decimales: int = 0) -> list[list]:
         return []
     etiquettes = [[nombre_barre(b.get_height(), decimales) for b in groupe]
                   for groupe in groupes]
-    plus_long = max(len(t) for groupe in etiquettes for t in groupe)
-
-    # Place disponible : l'ecart entre les centres de deux barres voisines,
-    # converti en pixels d'apres la largeur du trace.
+    textes = [ax.bar_label(groupe, labels=libelles, padding=2)
+              for groupe, libelles in zip(groupes, etiquettes, strict=True)]
     centres = sorted(b.get_x() + b.get_width() / 2 for b in barres)
-    ecarts = [b - a for a, b in zip(centres, centres[1:], strict=False) if b > a]
-    xmin, xmax = ax.get_xlim()
-    fig = ax.figure
-    px_par_unite = (fig.get_figwidth() * fig.dpi * ax.get_position().width
-                    / max(xmax - xmin, 1e-9))
-    place_px = min(ecarts) * px_par_unite if ecarts else float("inf")
-    # Largeur d'un chiffre ~ 0,6 fois la taille de la police (en pixels).
-    largeur_px = plus_long * 9 * 0.6 * fig.dpi / 72
-    debout = largeur_px > place_px
 
-    textes = []
-    for groupe, libelles in zip(groupes, etiquettes, strict=True):
-        textes.append(ax.bar_label(groupe, labels=libelles, padding=2,
-                                   rotation=90 if debout else 0,
-                                   fontsize=8 if debout else 9))
+    def orienter(_evenement=None) -> None:
+        _orienter_chiffres(ax, textes, centres)
+
+    orienter()
+    # Qt previent matplotlib a chaque changement de taille de la fenetre.
+    ax.figure.canvas.mpl_connect("resize_event", orienter)
+    return textes
+
+
+def _orienter_chiffres(ax, textes: list[list], centres: list[float]) -> None:
+    """Pose les chiffres a plat s'ils tiennent entre deux barres voisines, a
+    la taille ACTUELLE du graphique, debout (et un peu plus petits) sinon."""
+    tous = [t for groupe in textes for t in groupe if t.get_text()]
+    if not tous:
+        return
+    # Largeur reelle du plus long chiffre, mesure a plat en 9 points.
+    for t in tous:
+        t.set_rotation(0)
+        t.set_fontsize(9)
+    fig = ax.figure
+    get_renderer = getattr(fig.canvas, "get_renderer", None)
+    if get_renderer is not None:
+        rendu = get_renderer()
+        largeur_px = max(t.get_window_extent(renderer=rendu).width
+                         for t in tous)
+    else:   # sans moteur de rendu : estimation, ~0,6 fois la taille par signe
+        largeur_px = (max(len(t.get_text()) for t in tous)
+                      * 9 * 0.6 * fig.dpi / 72)
+    # Place disponible : le plus petit ecart entre deux centres de barres
+    # voisines, en pixels a l'ecran (get_xlim met les limites a jour).
+    ax.get_xlim()
+    xs = sorted({round(float(ax.transData.transform((c, 0))[0]), 3)
+                 for c in centres})
+    ecarts = [b - a for a, b in zip(xs, xs[1:], strict=False) if b > a]
+    place_px = min(ecarts) if ecarts else float("inf")
+    # Deux pixels d'air entre deux chiffres voisins.
+    debout = largeur_px + 2 > place_px
+    if debout:
+        for t in tous:
+            t.set_rotation(90)
+            t.set_fontsize(8)
     # Marge en haut : les chiffres des plus hautes barres ne sont pas coupes.
     ax.margins(y=0.20 if debout else 0.12)
-    return textes
 
 
 def amortissement(data) -> dict | None:
