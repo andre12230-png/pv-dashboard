@@ -107,7 +107,9 @@ def _titres_au_dessus(fenetre, vue: str) -> list[str]:
 
 
 @pytest.mark.parametrize("vue, periode, attendus", [
-    ("dashboard", None, ["PRODUCTION JOUR PAR JOUR"]),
+    ("dashboard", None, ["CIRCULATION DE L'ÉNERGIE",
+                         "REMBOURSEMENT DE L'INSTALLATION",
+                         "PRODUCTION JOUR PAR JOUR"]),
     ("categories", f"year-{date.today().year - 1}",
      ["CIRCULATION DE L'ÉNERGIE", "DÉTAIL PAR POSTE"]),
     ("accounts", "all", ["REMBOURSEMENT DE L'INSTALLATION"]),
@@ -124,6 +126,27 @@ def test_les_titres_de_carte_sont_dans_leur_bandeau(fenetre, vue, periode,
         assert titre in entetes, f"{vue} : « {titre} » absent de {entetes}"
         # ... et plus au-dessus de la carte.
         assert titre not in _titres_au_dessus(fenetre, vue), (vue, titre)
+
+
+def test_les_deux_chiffres_du_haut_sont_des_tuiles(fenetre):
+    """29/09/2026 (option B de l'auteur) : Autoproduction et Production sont
+    des chiffres cles, comme les tuiles du bilan : titre en petites
+    capitales dans la tuile, trait jaune (le soleil) de 3 px en haut."""
+    from PySide6.QtWidgets import QFrame
+    fenetre._switch_view("dashboard")
+    vue = fenetre.views["dashboard"]
+    trouves = {}
+    for tuile in vue.findChildren(QFrame):
+        if tuile.property("role") != "kpi":
+            continue
+        for libelle in tuile.findChildren(QLabel, "KpiLabel"):
+            if libelle.text() == "AUTOPRODUCTION":
+                trouves["autoproduction"] = tuile
+            elif libelle.text().startswith("PRODUCTION —"):
+                trouves["production"] = tuile
+    assert set(trouves) == {"autoproduction", "production"}, trouves
+    for tuile in trouves.values():
+        assert tuile.property("variant") == "prod"
 
 
 def test_un_titre_de_groupe_de_tuiles_reste_au_dessus(fenetre):

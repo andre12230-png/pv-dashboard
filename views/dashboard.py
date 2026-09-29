@@ -189,9 +189,20 @@ class DashboardView(BaseView):
     # ------------------------------------------------------------------
     # En-tete graphique
     # ------------------------------------------------------------------
+    @staticmethod
+    def _tuile_soleil() -> QFrame:
+        """Tuile des deux chiffres du haut : fond ivoire, trait jaune (le
+        soleil) de 3 px en haut, comme les tuiles du bilan (style
+        QFrame[role="kpi"] de gui_theme.py). Choix de l'auteur, 29/09/2026 :
+        ce sont des chiffres cles, pas des cartes a bandeau."""
+        tuile = QFrame()
+        tuile.setProperty("role", "kpi")
+        tuile.setProperty("variant", "prod")
+        return tuile
+
     def _carte_jauge(self, ratio_ap: float) -> QFrame:
         """La jauge d'autoproduction et sa phrase."""
-        card = Card()
+        card = self._tuile_soleil()
         h = QHBoxLayout(card)
         h.setContentsMargins(20, 16, 20, 16)
         h.setSpacing(18)
@@ -218,7 +229,7 @@ class DashboardView(BaseView):
                           prod: float) -> QFrame:
         """La production de la periode, sa comparaison a l'an dernier et
         l'allure de ses jours (ou semaines, ou mois selon la duree)."""
-        card = Card()
+        card = self._tuile_soleil()
         v = QVBoxLayout(card)
         v.setContentsMargins(20, 16, 20, 14)
         v.setSpacing(6)
@@ -293,10 +304,10 @@ class DashboardView(BaseView):
         propre ligne : reduite a une mention en petit texte gris, elle ne se
         voyait plus (remarque de l'auteur, 14/09/2026).
         """
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(20, 16, 20, 16)
-        v.setSpacing(6)
+        # Titre dans le bandeau bleute, comme la carte de la page Repartition
+        # energie qui montre la meme chose en detail (29/09/2026).
+        card = Card(titre="Circulation de l'énergie")
+        v = card.corps
 
         def titre(texte: str) -> QLabel:
             lbl = QLabel(texte)
@@ -494,23 +505,24 @@ class DashboardView(BaseView):
         if am is None or am["invest"] <= 0:
             return None
         ratio = am["recupere"] / am["invest"]
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(20, 14, 20, 16)
+        # Titre dans le bandeau bleute, du meme nom que la carte de la
+        # Synthese financiere (29/09/2026) ; le pourcentage a droite de la
+        # jauge.
+        card = Card(titre="Remboursement de l'installation",
+                    sous_titre="Depuis la mise en service, quelle que soit la "
+                               "période choisie.")
+        v = card.corps
         v.setSpacing(8)
-        tete = QHBoxLayout()
-        titre = QLabel("🏡 INSTALLATION REMBOURSÉE — DEPUIS LA MISE EN SERVICE")
-        titre.setObjectName("KpiLabel")
-        tete.addWidget(titre)
-        tete.addStretch(1)
+        ligne = QHBoxLayout()
+        ligne.setSpacing(12)
+        ligne.addWidget(BarMeter(min(ratio, 1.0), CC["autoconso"],
+                                 self.theme["border"], hauteur=12), stretch=1)
         pourcentage = QLabel(f"{min(ratio, 1.0) * 100:.0f} %")
         pourcentage.setStyleSheet(
             f"color: {self.theme['text_primary']}; font-size: 18px; "
             "font-weight: 700; background: transparent;")
-        tete.addWidget(pourcentage)
-        v.addLayout(tete)
-        v.addWidget(BarMeter(min(ratio, 1.0), CC["autoconso"],
-                             self.theme["border"], hauteur=12))
+        ligne.addWidget(pourcentage)
+        v.addLayout(ligne)
         sources = ([f"ventes à {self.data.acheteur}"] if self.data.vend else [])
         sources.append("économies")
         if self.data.oa.prime_duree:
