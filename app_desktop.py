@@ -32,6 +32,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QStackedWidget,
     QStatusBar,
     QVBoxLayout,
@@ -616,8 +617,12 @@ NAV_ITEMS = [
     # Libelle recalcule au demarrage a partir des noms de fournisseurs
     # declares en config (voir _libelle_comparaison).
     ("octopus_edf",  "Comparaison tarifs",   None,        "⚖️"),
-    ("aide",         "Notice",               "AUTRES",    "📖"),
-    ("settings",     "Paramètres",           None,        "⚙️"),
+    # Fin du menu comme dans Pecule (29/09/2026 ; c'etait une section
+    # « AUTRES ») : « MES DONNÉES » (💾 Sauvegarde externe, une action, posee
+    # par _build_sidebar juste avant RÉGLAGES), RÉGLAGES, puis AIDE, ou
+    # suivent les actions 💬 Votre avis et 🔄 Mise à jour.
+    ("settings",     "Paramètres",           "RÉGLAGES",  "⚙️"),
+    ("aide",         "Notice",               "AIDE",      "📖"),
 ]
 
 
@@ -706,7 +711,16 @@ class MainWindow(QMainWindow):
         h.setContentsMargins(0, 0, 0, 0)
         h.setSpacing(0)
 
-        h.addWidget(self._build_sidebar())
+        # Le bandeau defile, comme dans Pecule et Recharges VE (29/09/2026) :
+        # sans cela, la fenetre ne pouvait pas descendre sous la hauteur du
+        # menu (731 px), trop pour un portable 1366 x 768.
+        defilement = QScrollArea()
+        defilement.setWidget(self._build_sidebar())
+        defilement.setWidgetResizable(True)
+        defilement.setFrameShape(QFrame.NoFrame)
+        defilement.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        defilement.setFixedWidth(212)
+        h.addWidget(defilement)
 
         right = QVBoxLayout()
         right.setContentsMargins(0, 0, 0, 0)
@@ -771,7 +785,6 @@ class MainWindow(QMainWindow):
         """
         sidebar = QFrame()
         sidebar.setObjectName("Sidebar")
-        sidebar.setFixedWidth(212)
         v = QVBoxLayout(sidebar)
         v.setContentsMargins(10, 12, 10, 10)
         v.setSpacing(4)
@@ -792,6 +805,36 @@ class MainWindow(QMainWindow):
         self.nav_group.setExclusive(True)
         self.nav_buttons: dict[str, QPushButton] = {}
 
+        # Trois actions, pas des pages : hors du groupe de navigation, elles
+        # ne restent jamais « enfoncees ». Sauvegarde externe : les backups/
+        # restent sur le meme disque que les donnees. Mise a jour : repris
+        # de Pecule, sans aucun acces reseau. Creees ici, placees plus bas.
+        self.sauvegarde_btn = self._bouton_menu("💾 Sauvegarde externe")
+        self.sauvegarde_btn.setToolTip(
+            "Copier vos relevés et vos réglages sur une clé USB ou un disque")
+        self.sauvegarde_btn.clicked.connect(self._sauvegarder_externe)
+
+        self.maj_btn = self._bouton_menu("🔄 Mise à jour")
+        self.maj_btn.setToolTip(
+            "Voir s'il existe une version plus récente (dans votre navigateur)")
+        self.maj_btn.clicked.connect(self._ouvrir_mise_a_jour)
+
+        # « Votre avis » (repris de Pecule), comme dans Pecule : un bouton de
+        # la derniere section.
+        self.avis_btn = self._bouton_menu("💬 Votre avis")
+        self.avis_btn.setToolTip(
+            "Signaler un problème ou proposer une idée "
+            "(questionnaire en ligne, dans votre navigateur)")
+        self.avis_btn.clicked.connect(self._ouvrir_avis)
+
+        def titre_de_section(nom: str) -> None:
+            # Comme dans Pecule : un peu d'air, le titre souligne.
+            v.addSpacing(11)
+            sec = QLabel(nom)
+            sec.setObjectName("NavSection")
+            v.addWidget(sec)
+            v.addSpacing(2)
+
         # La section d'une entree est celle de la derniere entree qui en
         # declarait une, masquee ou non : un onglet cache ne doit jamais
         # emporter avec lui le titre de sa section.
@@ -805,12 +848,11 @@ class MainWindow(QMainWindow):
             if key == "octopus_edf":
                 label = self._libelle_comparaison(court=True)
             if section_courante != section_affichee:
-                # Comme dans Pecule : un peu d'air, le titre souligne.
-                v.addSpacing(11)
-                sec = QLabel(section_courante)
-                sec.setObjectName("NavSection")
-                v.addWidget(sec)
-                v.addSpacing(2)
+                # Comme dans Pecule, « MES DONNÉES » precede « RÉGLAGES ».
+                if section_courante == "RÉGLAGES":
+                    titre_de_section("MES DONNÉES")
+                    v.addWidget(self.sauvegarde_btn)
+                titre_de_section(section_courante)
                 section_affichee = section_courante
             btn = self._bouton_menu(f"{picto} {label}")
             btn.setCheckable(True)
@@ -819,30 +861,10 @@ class MainWindow(QMainWindow):
             self.nav_buttons[key] = btn
             v.addWidget(btn)
 
-        # Trois actions, pas des pages : hors du groupe de navigation, elles
-        # ne restent jamais « enfoncees ». Sauvegarde externe : les backups/
-        # restent sur le meme disque que les donnees. Mise a jour : repris
-        # de Pecule, sans aucun acces reseau.
-        self.sauvegarde_btn = self._bouton_menu("💾 Sauvegarde externe")
-        self.sauvegarde_btn.setToolTip(
-            "Copier vos relevés et vos réglages sur une clé USB ou un disque")
-        self.sauvegarde_btn.clicked.connect(self._sauvegarder_externe)
-        v.addWidget(self.sauvegarde_btn)
-
-        self.maj_btn = self._bouton_menu("🔄 Mise à jour")
-        self.maj_btn.setToolTip(
-            "Voir s'il existe une version plus récente (dans votre navigateur)")
-        self.maj_btn.clicked.connect(self._ouvrir_mise_a_jour)
-        v.addWidget(self.maj_btn)
-
-        # « Votre avis » (repris de Pecule), comme dans Pecule : un bouton de
-        # la derniere section.
-        self.avis_btn = self._bouton_menu("💬 Votre avis")
-        self.avis_btn.setToolTip(
-            "Signaler un problème ou proposer une idée "
-            "(questionnaire en ligne, dans votre navigateur)")
-        self.avis_btn.clicked.connect(self._ouvrir_avis)
+        # Fin de la section AIDE, dans l'ordre de Pecule : Notice (la page,
+        # juste au-dessus), Votre avis, Mise a jour.
         v.addWidget(self.avis_btn)
+        v.addWidget(self.maj_btn)
 
         # La version va en pied : utile pour une capture d'ecran ou un rapport
         # de bug, mais on ne la lit pas tous les jours.

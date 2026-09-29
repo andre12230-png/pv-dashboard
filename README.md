@@ -174,8 +174,10 @@ d'une annee OA se lisent en survolant son entree dans le menu.
 
 ## Le menu de gauche
 
-Les pages sont rangees en quatre sections — Principal, Contrats, Analyse,
-Autres — chacune avec un pictogramme, separees par un filet. Trois n'apparaissent
+Les pages sont rangees en six sections — Principal, Contrats, Analyse,
+Mes donnees (sauvegarde externe), Reglages, Aide (notice, votre avis, mise
+a jour), dans l'ordre de Pecule — chacune avec un pictogramme, separees par
+un filet. Le menu defile si la fenetre est basse. Trois n'apparaissent
 que si elles vous concernent : **Annees OA** (si vous vendez votre electricite :
 masquee avec `oa.type: aucune`), **TVA autoconsommation** (section `tva_lasm`
 remplie) et la **comparaison avec EDF** (fournisseur autre qu'EDF). Le bandeau reprend celui de Pecule : boutons rectangulaires, un

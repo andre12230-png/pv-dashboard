@@ -71,3 +71,72 @@ def test_les_libelles_du_menu_sont_accentues():
         for faute, correction in fautes.items():
             assert not re.search(rf"\b{faute}\b", label), \
                 f"« {label} » : écrire {correction}"
+
+
+# ---------- le bandeau construit (29/09/2026) ----------
+
+@pytest.fixture
+def fenetre(tmp_path, monkeypatch):
+    import yaml
+    from PySide6.QtCore import QSettings
+    from PySide6.QtWidgets import QApplication
+
+    import data_loaders as dl
+    QApplication.instance() or QApplication([])
+    cfg = yaml.safe_load(app_desktop.CONFIG_PATH.read_text(encoding="utf-8"))
+    (tmp_path / "config.yaml").write_text(
+        yaml.safe_dump(cfg, allow_unicode=True), encoding="utf-8")
+    monkeypatch.setattr(app_desktop, "BASE_DIR", tmp_path)
+    monkeypatch.setattr(app_desktop, "CONFIG_PATH", tmp_path / "config.yaml")
+    monkeypatch.setattr(app_desktop, "CONFIG_LOCAL_PATH",
+                        tmp_path / "config-local.yaml")
+    (tmp_path / "Releves-pv.csv").write_text(
+        ";".join(dl.RELEVES_HEADER) + "\n"
+        "01/06/2025;20;12;5;2;3\n02/06/2025;18;10;6;3;3\n", encoding="utf-8")
+    data = app_desktop.build_dataset(app_desktop.load_config())
+    prefs = QSettings(str(tmp_path / "prefs.ini"), QSettings.Format.IniFormat)
+    w = app_desktop.MainWindow(data, prefs)
+    yield w
+    w.close()
+
+
+def _bandeau_lu(fenetre) -> list[str]:
+    """Titres de section et libelles des boutons, dans l'ordre du bandeau."""
+    from PySide6.QtWidgets import QFrame
+    bandeau = fenetre.findChild(QFrame, "Sidebar")
+    disposition = bandeau.layout()
+    lus = []
+    for i in range(disposition.count()):
+        w = disposition.itemAt(i).widget()
+        if w is None:
+            continue
+        if w.objectName() == "NavSection":
+            lus.append(w.text())
+        elif w.objectName() == "NavItem":
+            lus.append(w.text().split(" ", 1)[1])      # sans l'emoji
+    return lus
+
+
+def test_fin_du_menu_comme_pecule(fenetre):
+    """29/09/2026 : la section « AUTRES » melangeait Notice, Parametres,
+    Sauvegarde externe, Mise a jour et Votre avis. La fin du menu suit
+    maintenant Pecule : MES DONNÉES, RÉGLAGES, AIDE (Notice, Votre avis,
+    Mise a jour)."""
+    lus = _bandeau_lu(fenetre)
+    fin = lus[lus.index("MES DONNÉES"):]
+    assert fin == ["MES DONNÉES", "Sauvegarde externe",
+                   "RÉGLAGES", "Paramètres",
+                   "AIDE", "Notice", "Votre avis", "Mise à jour"]
+    assert "AUTRES" not in lus
+
+
+def test_le_bandeau_defile_sur_un_petit_ecran(fenetre):
+    """Comme Pecule et Recharges VE : le bandeau est dans une zone qui
+    defile. Sans elle, la fenetre ne pouvait pas descendre sous la hauteur
+    du menu (731 px mesures le 29/09/2026), trop pour un portable 1366 x 768."""
+    from PySide6.QtWidgets import QFrame, QScrollArea
+    bandeau = fenetre.findChild(QFrame, "Sidebar")
+    zones = [z for z in fenetre.findChildren(QScrollArea)
+             if z.widget() is bandeau]
+    assert len(zones) == 1
+    assert fenetre.minimumSizeHint().height() < 690
