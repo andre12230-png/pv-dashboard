@@ -63,7 +63,7 @@ class AccountsView(BaseView):
                              else "production vendue"),
             fmt_eur(revenu_cum, signed=True),
             f"+{fmt_eur(revenu_p)} sur période" if revenu_p > 0 else "Aucune recette",
-            self.theme["credit"], "💶", "#dbeafe")] if self.data.vend else []
+            self.theme["credit"], "💶", "credit")] if self.data.vend else []
         prime = [AccountCard("Prime autoconso",
                         f"Versée sur {oa.prime_duree} "
                         f"an{'s' if oa.prime_duree > 1 else ''} (anniv. OA)",
@@ -71,26 +71,26 @@ class AccountsView(BaseView):
                         f"{nb_oa}/{oa.prime_duree} "
                         f"{accorde(oa.prime_duree, 'versement')} - "
                         f"total prévu {fmt_eur(prime_total)}",
-                        self.theme["credit"], "🎁", "#dcfce7")] if oa.prime_duree else []
+                        self.theme["credit"], "🎁", "credit")] if oa.prime_duree else []
         accounts = vente + prime + [
             AccountCard("Économies autoconso", "Coût évité - kWh non achetés",
                         fmt_eur(eco_cum, signed=True),
                         f"+{fmt_eur(eco_p)} sur période" if eco_p > 0 else "Aucune économie",
-                        self.theme["credit"], "🐷", "#d1fae5"),
+                        self.theme["credit"], "🐷", "credit"),
             AccountCard("Facture réseau", "Dépenses - électricité + abonnement",
                         fmt_eur(-cout_cum, signed=True),
                         f"-{fmt_eur(cout_p)} sur période" if cout_p > 0 else "Aucune dépense",
-                        self.theme["debit"], "🔌", "#fee2e2"),
+                        self.theme["debit"], "🔌", "debit"),
             AccountCard("Investissement", f"Achat installation - {date_mes}",
                         fmt_eur(-invest, signed=True),
                         "Amorti progressivement",
-                        self.theme["debit"], "🏡", "#e5e7eb"),
+                        self.theme["debit"], "🏡", "debit"),
             AccountCard("Bilan net global",
                         self._recettes().capitalize() + " − installation",
                         fmt_eur(bilan_global, signed=True),
                         "Amortissement atteint" if bilan_global >= 0 else "Amortissement en cours",
                         self.theme["credit"] if bilan_global >= 0 else self.theme["debit"],
-                        "⚖️", "#e0e7ff"),
+                        "⚖️", "credit" if bilan_global >= 0 else "debit"),
         ]
         # 2 lignes de 3 cartes
         for i in range(0, 6, 3):

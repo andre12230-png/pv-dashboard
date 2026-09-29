@@ -414,23 +414,22 @@ QWidget#PosteCell {{
     background: transparent;
 }}
 
-/* Account card */
+/* Cartes des postes financiers (Synthese) : l'allure des tuiles chiffrees,
+   trait de 3 px en haut et titre en petites capitales (29/09/2026). */
 QFrame[role="account"] {{
     background: {t["bg_carte"]};
     border: 1px solid {t["cadre"]};
     border-radius: 4px;
+    border-top-width: 3px;
 }}
-QLabel#AccountName {{ font-size: 13px; font-weight: 600; background: transparent;
-                      color: {t["text_primary"]}; }}
+QFrame[role="account"][variant="credit"]  {{ border-top-color: {t["credit"]}; }}
+QFrame[role="account"][variant="debit"]   {{ border-top-color: {t["debit"]}; }}
+QFrame[role="account"][variant="neutral"] {{ border-top-color: {t["text_muted"]}; }}
+QLabel#AccountName {{ font-size: 11px; font-weight: 700; letter-spacing: 1px;
+                      background: transparent; color: {t["text_muted"]}; }}
 QLabel#AccountType {{ font-size: 11px; color: {t["text_muted"]}; background: transparent; }}
 QLabel#AccountBalance {{ font-size: 22px; font-weight: 700; background: transparent; }}
 QLabel#AccountTrend   {{ font-size: 11px; color: {t["text_muted"]}; background: transparent; }}
-QLabel#AccountIcon {{
-    color: white; font-weight: 700; font-size: 12px;
-    border-radius: 8px; padding: 6px;
-    qproperty-alignment: AlignCenter;
-    min-width: 36px; min-height: 36px; max-width: 36px; max-height: 36px;
-}}
 
 /* Tags */
 QLabel[role="tag"] {{

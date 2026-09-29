@@ -93,47 +93,34 @@ class KpiCard(QFrame):
 
 
 class AccountCard(QFrame):
-    """Carte 'compte bancaire' : nom + type + solde + tendance + pastille."""
+    """Carte d'un poste financier : emoji et nom, precision, montant, detail.
+
+    Allure des tuiles chiffrees de la charte (29/09/2026) : trait de couleur
+    de 3 px en haut (`variant` : credit ou debit), titre en petites capitales
+    precede de son emoji. La pastille coloree autour de l'emoji est partie :
+    ses tons pastel n'etaient pas dans la palette commune.
+    """
 
     def __init__(self, name: str, type_label: str, balance: str, trend: str,
-                 trend_color: str, icon_text: str, icon_color: str,
+                 trend_color: str, icon_text: str, variant: str = "neutral",
                  parent: QWidget | None = None):
         super().__init__(parent)
         self.setObjectName("AccountCard")
-        _apply_props(self, role="account")
+        _apply_props(self, role="account", variant=variant)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.setMinimumHeight(140)
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(18, 14, 18, 14)
-        outer.setSpacing(6)
+        outer.setSpacing(4)
 
-        # Tete : nom/type a gauche, icone a droite
-        head = QHBoxLayout()
-        head.setSpacing(8)
-        text_col = QVBoxLayout()
-        text_col.setSpacing(2)
-        name_l = QLabel(name)
+        name_l = QLabel(f"{icon_text} {name.upper()}")
         name_l.setObjectName("AccountName")
         type_l = QLabel(type_label)
         type_l.setObjectName("AccountType")
-        text_col.addWidget(name_l)
-        text_col.addWidget(type_l)
-        head.addLayout(text_col, stretch=1)
-
-        icon = QLabel(icon_text)
-        icon.setObjectName("AccountIcon")
-        icon.setAlignment(Qt.AlignCenter)
-        # 20 px : la pastille porte un emoji (Synthese financiere, 14/09/2026),
-        # plus deux lettres ; a la taille par defaut il sortait minuscule.
-        icon.setStyleSheet(
-            f"background: {icon_color}; color: white; "
-            f"font-weight: 700; font-size: 20px; border-radius: 8px;"
-        )
-        icon.setFixedSize(38, 38)
-        head.addWidget(icon, alignment=Qt.AlignTop)
-
-        outer.addLayout(head)
+        type_l.setWordWrap(True)
+        outer.addWidget(name_l)
+        outer.addWidget(type_l)
 
         bal = QLabel(balance)
         bal.setObjectName("AccountBalance")

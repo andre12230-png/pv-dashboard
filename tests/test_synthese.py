@@ -63,7 +63,7 @@ def test_le_bilan_ne_soustrait_plus_la_facture_reseau(qapp, donnees):
 
 def test_la_facture_reseau_reste_affichee(qapp, donnees):
     textes = _textes_de_la_synthese(donnees)
-    assert "Facture réseau" in textes
+    assert "FACTURE RÉSEAU" in textes   # titre en petites capitales
     assert fmt_eur(-donnees.df["cout_reseau_eur"].sum(), signed=True) in textes
 
 
@@ -126,5 +126,30 @@ def test_le_bilan_net_ne_s_affiche_qu_une_fois(qapp, donnees):
     vue.refresh("all")
     textes = [lbl.text() for lbl in vue.findChildren(QLabel)]
     assert textes.count(montant) == 1
-    assert "Bilan net global" in textes
+    assert any("BILAN NET GLOBAL" in t for t in textes)
     assert not any("BILAN NET ACTUEL" in t.upper() for t in textes)
+
+
+def test_les_cartes_du_haut_ont_l_allure_des_tuiles(qapp, donnees):
+    """Relecture du 29/09/2026 : les six cartes du haut n'avaient ni le trait
+    de 3 px des tuiles chiffrees, ni leur titre en petites capitales, et
+    leurs pastilles d'icone etaient de tons pastel absents de la palette."""
+    import re
+
+    from gui_theme import qss_for
+    from gui_widgets import AccountCard
+    from views.accounts import AccountsView
+    vue = AccountsView(donnees, LIGHT)
+    vue.refresh("all")
+    cartes = vue.findChildren(AccountCard)
+    assert len(cartes) == 6
+    for carte in cartes:
+        assert carte.property("variant") in ("credit", "debit")
+        nom = carte.findChild(QLabel, "AccountName").text()
+        assert nom == nom.upper()
+        assert carte.findChild(QLabel, "AccountIcon") is None
+    qss = qss_for(LIGHT)
+    bloc = re.search(r'QFrame\[role="account"\]\s*\{([^}]*)\}', qss).group(1)
+    assert "border-top-width: 3px" in bloc
+    assert 'QFrame[role="account"][variant="credit"]' in qss
+    assert 'QFrame[role="account"][variant="debit"]' in qss
