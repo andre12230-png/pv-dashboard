@@ -17,10 +17,10 @@ from gui_theme import mpl_style
 from gui_widgets import Card, KpiCard, MplCanvas, SectionTitle, grid_row
 from views._base import BaseView
 from views._helpers import (
+    chiffres_sur_barres,
     fmt_date_fr,
     fmt_eur,
     fmt_prix_kwh,
-    label_mois_fr,
     nombre_de_jours,
 )
 
@@ -110,48 +110,56 @@ class OctopusEdfView(BaseView):
         v.setContentsMargins(16, 10, 16, 14)
         m = comp[["cout_octopus_eur", "cout_edf_hphc_eur",
                   "cout_edf_base_eur"]].resample("MS").sum()
+        # Un graphique par annee civile, la plus recente en haut, comme les
+        # tableaux de la page TVA (29/09/2026). Sur 33 mois dans un seul
+        # graphique, les trois montants de chaque mois se chevauchaient et
+        # les mois etaient ecrits debout ; l'auteur tient aux montants : on
+        # leur donne de la place. Meme echelle pour toutes les annees, pour
+        # qu'elles se comparent d'un coup d'oeil.
+        plafond = float(m.max().max()) if not m.empty else 0.0
+        for rang, annee in enumerate(sorted(set(m.index.year), reverse=True)):
+            v.addWidget(self._graphique_annee(
+                m[m.index.year == annee], annee, mien, autre, plafond,
+                avec_legende=(rang == 0)))
+        return card
 
-        canvas = MplCanvas(width=8, height=3.2, dpi=100)
+    MOIS_COURTS = ("janv.", "févr.", "mars", "avr.", "mai", "juin",
+                   "juil.", "août", "sept.", "oct.", "nov.", "déc.")
+
+    def _graphique_annee(self, mois: pd.DataFrame, annee: int, mien: str,
+                         autre: str, plafond: float,
+                         avec_legende: bool) -> MplCanvas:
+        """Les douze mois d'une annee : un emplacement par mois, meme vide
+        (une annee commencee en juin garde janvier a mai), les trois couts
+        cote a cote, chacun avec son montant."""
+        canvas = MplCanvas(width=8, height=2.8, dpi=100)
+        canvas.setMinimumHeight(250)
         canvas.apply_theme(mpl_style(self.theme))
         ax = canvas.fig.add_subplot(111)
-        x = np.arange(len(m.index))
-        w = 0.27
-        b1 = ax.bar(x - w, m["cout_octopus_eur"], w, label=mien,
+        x = np.array([d.month - 1 for d in mois.index])
+        w = 0.3
+        b1 = ax.bar(x - w, mois["cout_octopus_eur"], w, label=mien,
                     color=CC["primary"])
-        b2 = ax.bar(x, m["cout_edf_hphc_eur"], w, label=f"{autre} HP/HC",
+        b2 = ax.bar(x, mois["cout_edf_hphc_eur"], w, label=f"{autre} HP/HC",
                     color=CC["injection"])
-        b3 = ax.bar(x + w, m["cout_edf_base_eur"], w, label=f"{autre} Base",
+        b3 = ax.bar(x + w, mois["cout_edf_base_eur"], w, label=f"{autre} Base",
                     color="#94a3b8")
-        ax.set_xticks(x)
-        if len(m.index) > 12:
-            # Au-dela d'un an, les noms complets (« Janvier 2024 ») se
-            # chevauchaient sous l'axe : mois abrege et annee sur deux
-            # chiffres, poses debout (vu sur des donnees de 33 mois,
-            # 15/09/2026).
-            courts = ("janv.", "févr.", "mars", "avr.", "mai", "juin",
-                      "juil.", "août", "sept.", "oct.", "nov.", "déc.")
-            ax.set_xticklabels([f"{courts[d.month - 1]} {d:%y}" for d in m.index],
-                               rotation=90)
-        else:
-            ax.set_xticklabels([label_mois_fr(d.to_period("M")) for d in m.index],
-                               rotation=20, ha="right")
+        ax.set_xticks(range(12))
+        ax.set_xticklabels(self.MOIS_COURTS, rotation=0)
+        ax.set_xlim(-0.6, 11.6)
+        ax.set_title(str(annee), loc="left", fontsize=10, fontweight="bold")
         ax.set_ylabel("€")
-        # Legende au-dessus du trace : dedans, elle recouvrait les barres.
-        ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0),
-                  frameon=False, ncol=3)
-        # Les montants au-dessus des barres restent affiches (l'auteur y
-        # tient) : a l'horizontale jusqu'a un an ; au-dela, les trois chiffres
-        # d'un meme mois se chevaucheraient, on les pose debout, un peu plus
-        # petits. La marge du haut evite de couper ceux des plus hautes barres.
-        debout = len(m.index) > 12
-        for b in (b1, b2, b3):
-            ax.bar_label(b, fmt="%.0f", padding=2,
-                         rotation=90 if debout else 0,
-                         fontsize=8 if debout else 10)
-        ax.margins(y=0.18 if debout else 0.10)
+        if avec_legende:
+            # Au-dessus du trace : dedans, elle recouvrait les barres.
+            ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0),
+                      frameon=False, ncol=3)
+        # Les montants : a plat s'ils tiennent a l'ecran, debout sinon (regle
+        # commune). Hauteur fixe, commune a toutes les annees, avec de quoi
+        # loger les chiffres des plus hautes barres.
+        chiffres_sur_barres(ax, [b1, b2, b3])
+        ax.set_ylim(0, plafond * 1.25 if plafond > 0 else 1)
         canvas.fig.tight_layout()
-        v.addWidget(canvas)
-        return card
+        return canvas
 
     def _carte_hypotheses(self, ref: list[dict], mon_offre: str,
                           autre_offre: str) -> QFrame:
