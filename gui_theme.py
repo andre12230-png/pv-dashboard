@@ -244,8 +244,10 @@ QPushButton#SaveBtn {{
     font-weight: 700;
 }}
 QPushButton#SaveBtn:hover {{
-    background: #4338ca;
-    border-color: #4338ca;
+    /* Au survol, le bleu nuit de Pecule (29/09/2026 : c'etait un indigo
+       #4338ca, etranger a la palette commune). */
+    background: {t["sb_brand"]};
+    border-color: {t["sb_brand"]};
 }}
 
 /* Selecteur de periode : deux menus encadres par deux fleches. Leur largeur

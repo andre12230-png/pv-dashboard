@@ -245,3 +245,15 @@ def test_pas_de_theme_sombre():
     import gui_theme
     assert not hasattr(gui_theme, "DARK"), (
         "un thème sombre est réapparu dans gui_theme.py")
+
+
+def test_survol_du_bouton_enregistrer_dans_la_palette():
+    """29/09/2026 : le bouton « Enregistrer » de la Saisie passait au survol
+    en indigo #4338ca, une couleur étrangère à la palette commune. Il fonce
+    maintenant vers le bleu nuit de Pécule, texte blanc toujours lisible."""
+    import re as _re
+    bloc = _bloc(qss_for(LIGHT), "QPushButton#SaveBtn:hover")
+    assert bloc, "le survol du bouton Enregistrer a disparu"
+    fond = _re.search(r"background:\s*(#[0-9A-Fa-f]{6})", bloc).group(1)
+    assert fond.upper() == "#1F3A6B"
+    assert contraste("#FFFFFF", fond) >= 4.5
