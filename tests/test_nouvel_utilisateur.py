@@ -91,7 +91,8 @@ def test_yaml_mal_ecrit_donne_un_message_en_francais(tmp_path):
     with pytest.raises(RuntimeError) as erreur:
         app_desktop._lire_yaml(chemin)
     message = str(erreur.value)
-    assert "mal ecrit" in message
+    assert "est mal écrit" in message
+    assert "Vérifiez les deux-points" in message   # accents (29/09/2026)
     assert "ligne" in message
     # Le message technique de PyYAML ne doit pas ressortir tel quel.
     assert "mapping values" not in message

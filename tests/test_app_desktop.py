@@ -180,7 +180,7 @@ def test_rechargement_rate_apres_saisie_le_dit(monkeypatch):
     retoucher config.yaml au Bloc-notes. Une faute de frappe, appli ouverte,
     faisait echouer le rafraichissement apres un Enregistrer sans un mot."""
     def config_cassee():
-        raise RuntimeError("config.yaml est mal ecrit (ligne 12)")
+        raise RuntimeError("config.yaml est mal écrit (ligne 12)")
 
     avertissements = []
     monkeypatch.setattr(app_desktop, "load_config", config_cassee)

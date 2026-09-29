@@ -212,7 +212,7 @@ def _lire_yaml(chemin: Path) -> dict:
         if marque is not None:
             ligne = f" (ligne {marque.line + 1})"
         raise RuntimeError(
-            f"{chemin} est mal ecrit{ligne}. Verifiez les deux-points, "
+            f"{chemin} est mal écrit{ligne}. Vérifiez les deux-points, "
             "les tirets et l'alignement des lignes autour de cet endroit, "
             "puis relancez l'application."
         ) from exc
