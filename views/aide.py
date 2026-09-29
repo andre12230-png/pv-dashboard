@@ -352,7 +352,8 @@ revenir plusieurs semaines en arrière. Pour restaurer, fermez l'application et
 recopiez le fichier voulu sur <code>Releves-pv.csv</code>.</p>
 <p><b>Sur une clé USB ou un disque externe.</b> Toutes ces copies restent sur
 le même disque que vos données : si ce disque lâche, elles partent avec lui.
-Le bouton <b>💾 Sauvegarde externe</b>, en bas du menu de gauche, copie vos
+Le bouton <b>💾 Sauvegarde externe</b>, section <b>Mes données</b> du menu de
+gauche, copie vos
 relevés et vos réglages sur le support de votre choix, dans un dossier daté,
 et vérifie chaque copie. Un fichier <code>LISEZMOI.txt</code>, déposé à côté,
 explique comment la remettre en service. Faites-le de temps en temps, par
