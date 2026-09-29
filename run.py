@@ -23,7 +23,7 @@ from PySide6.QtGui import QColor, QFont, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QMessageBox, QSplashScreen
 
 from erreurs import erreur_en_clair
-from gui_theme import installer_traduction_qt
+from gui_theme import appliquer_style, installer_traduction_qt
 
 WIN_APP_ID = "pvdashboard.gestion.6kwc"
 
@@ -134,6 +134,11 @@ def main() -> int:
     # Tout de suite : le message « deja ouvert » ci-dessous a deja des
     # boutons fournis par Qt.
     installer_traduction_qt(app)
+    # Et deja les couleurs claires (29/09/2026) : sans cela, les messages
+    # « deja ouvert » et « Impossible de demarrer » gardaient la palette de
+    # Windows, textes blancs sur un poste regle en sombre. La fenetre
+    # principale reapplique le style ensuite, avec sa feuille de style.
+    appliquer_style(app)
 
     # Garde dans une variable jusqu'a la fin : relache, il ne protege plus.
     verrou = prendre_le_verrou()

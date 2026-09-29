@@ -198,6 +198,48 @@ def test_la_palette_ignore_le_mode_sombre_de_windows():
     app.setStyleSheet(ancienne_feuille)
 
 
+def test_le_message_deja_ouvert_est_deja_en_clair(monkeypatch):
+    """29/09/2026 : run.main() posait la palette claire seulement en
+    construisant la fenetre (MainWindow._apply_theme). Les boites « deja
+    ouvert » et « Impossible de demarrer », affichees avant, gardaient la
+    palette de Windows : textes blancs sur un poste regle en sombre.
+    Le theme doit etre pose avant le premier message."""
+    import os
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtGui import QColor, QPalette
+    from PySide6.QtWidgets import QApplication, QMessageBox
+
+    import run
+    app = QApplication.instance() or QApplication([])
+    ancienne_feuille = app.styleSheet()
+    ancienne_palette = app.palette()
+    ancien_style = app.style().name()
+    app.setStyleSheet("")
+    # Un poste regle en sombre : Qt fournit des textes blancs, style natif.
+    sombre = QPalette()
+    for role in (QPalette.WindowText, QPalette.Text, QPalette.ButtonText):
+        sombre.setColor(role, QColor("#FFFFFF"))
+    app.setPalette(sombre)
+    app.setStyle("Windows")
+
+    vu = {}
+
+    def boite(*_args, **_kwargs):
+        # Ce que la boite « deja ouvert » trouverait au moment de s'afficher.
+        vu["texte"] = app.palette().color(QPalette.WindowText).name()
+        vu["style"] = app.style().name().lower()
+        return QMessageBox.Ok
+    monkeypatch.setattr(run, "prendre_le_verrou", lambda: None)
+    monkeypatch.setattr(run.QMessageBox, "warning", boite)
+    try:
+        assert run.main() == 1
+    finally:
+        app.setStyle(ancien_style)
+        app.setPalette(ancienne_palette)
+        app.setStyleSheet(ancienne_feuille)
+    assert vu == {"texte": "#000000", "style": "fusion"}
+
+
 def test_pas_de_theme_sombre():
     """Un seul thème, le clair (décision du 14/09/2026)."""
     import gui_theme
