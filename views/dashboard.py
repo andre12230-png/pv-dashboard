@@ -551,11 +551,12 @@ class DashboardView(BaseView):
             # pandas date une semaine de son dimanche : on la date du lundi.
             serie.index = serie.index - pd.Timedelta(days=6)
 
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(16, 14, 16, 14)
+        # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026) ;
+        # le record du meilleur jour, juste dessous, a droite.
+        card = Card(titre=f"Production {titre}")
+        v = card.corps
+        v.setContentsMargins(16, 8, 16, 14)
         tete = QHBoxLayout()
-        tete.addWidget(SectionTitle(f"Production {titre}"))
         tete.addStretch(1)
         valeurs = serie.values
         meilleur = int(valeurs.argmax()) if len(valeurs) and valeurs.max() > 0 else None

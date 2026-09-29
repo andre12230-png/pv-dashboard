@@ -78,10 +78,10 @@ class OAView(BaseView):
             return
 
         # Bar chart
-        chart_card = Card()
-        cv = QVBoxLayout(chart_card)
-        cv.setContentsMargins(16, 14, 16, 14)
-        cv.addWidget(QLabel("Production / Autoconso / Injection par année OA"))
+        # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
+        chart_card = Card(titre="Production / Autoconso / Injection par année OA")
+        cv = chart_card.corps
+        cv.setContentsMargins(16, 10, 16, 14)
         canvas = MplCanvas(width=8, height=3.2, dpi=100)
         canvas.apply_theme(mpl_style(self.theme))
         ax = canvas.fig.add_subplot(111)

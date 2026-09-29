@@ -68,6 +68,9 @@ PAIRES = [
     ("debit", "bg_carte"),
     ("info_ink", "bg_carte"),
     ("primary", "bg_carte"),
+    # En-tete des cartes (29/09/2026), sur les deux bouts du degrade :
+    ("entete_texte", "entete_haut"),
+    ("entete_texte", "entete_bas"),
 ]
 
 

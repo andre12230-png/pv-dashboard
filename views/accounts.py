@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import pandas as pd
-from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QFrame, QLabel
 
 import calculations as calc
 from gui_theme import CHART_COLORS as CC
@@ -94,9 +94,6 @@ class AccountsView(BaseView):
         for i in range(0, 6, 3):
             self.layout_inner.addLayout(grid_row(accounts[i:i+3]))
 
-        self.layout_inner.addWidget(SectionTitle(
-            "Remboursement de l'installation",
-            "Ce qu'elle vous a rapporté, face à ce qu'elle a coûté"))
         self.layout_inner.addWidget(
             self._remboursement_card(df_total, prime_an, oa, invest, am))
 
@@ -159,9 +156,12 @@ class AccountsView(BaseView):
         figure plus : ce n'est pas un cout de l'installation (on la paierait
         sans panneaux), et les economies en tiennent deja compte.
         """
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(16, 14, 16, 14)
+        # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
+        card = Card(titre="Remboursement de l'installation",
+                    sous_titre="Ce qu'elle vous a rapporté, face à ce "
+                               "qu'elle a coûté")
+        v = card.corps
+        v.setContentsMargins(16, 10, 16, 14)
 
         monthly_rev = df_total["revenu_vente_eur"].resample("MS").sum().cumsum()
         monthly_eco = df_total["economie_eur"].resample("MS").sum().cumsum()

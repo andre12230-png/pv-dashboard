@@ -98,10 +98,10 @@ class OctopusEdfView(BaseView):
 
     def _chart_mensuel(self, comp: pd.DataFrame, mien: str,
                        autre: str) -> QFrame:
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(16, 14, 16, 14)
-        v.addWidget(SectionTitle("Coût mensuel comparé (€)"))
+        # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
+        card = Card(titre="Coût mensuel comparé (€)")
+        v = card.corps
+        v.setContentsMargins(16, 10, 16, 14)
         m = comp[["cout_octopus_eur", "cout_edf_hphc_eur",
                   "cout_edf_base_eur"]].resample("MS").sum()
 

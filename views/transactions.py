@@ -8,10 +8,9 @@ from PySide6.QtWidgets import (
     QLabel,
     QTableWidget,
     QTableWidgetItem,
-    QVBoxLayout,
 )
 
-from gui_widgets import Card, SectionTitle
+from gui_widgets import Card
 from views._base import BaseView
 from views._helpers import filter_period
 
@@ -41,14 +40,14 @@ class TransactionsView(BaseView):
             self.layout_inner.addStretch(1)
             return
 
-        self.layout_inner.addWidget(SectionTitle(
-            "Relevés journaliers",
-            f"{len(df)} jour(s) - 1 ligne = 1 journée de production",
-        ))
-
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(0, 0, 0, 0)
+        # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
+        card = Card(titre="Relevés journaliers",
+                    sous_titre=f"{len(df)} jour(s) - 1 ligne = 1 journée "
+                               "de production")
+        v = card.corps
+        v.setContentsMargins(0, 8, 0, 0)
+        # Le sous-titre garde un peu d'air a gauche ; le tableau, bord a bord.
+        v.itemAt(0).widget().setContentsMargins(12, 0, 12, 6)
 
         # Colonne vehicule seulement si la source est configuree et alimentee.
         avec_ve = ("recharge_ve_kwh" in df.columns

@@ -144,10 +144,10 @@ class TvaView(BaseView):
     # Graphique : TVA due par annee
     # ------------------------------------------------------------------
     def _graphique(self, lignes: list[dict]) -> None:
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(16, 14, 16, 14)
-        v.addWidget(QLabel("TVA due par année civile"))
+        # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
+        card = Card(titre="TVA due par année civile")
+        v = card.corps
+        v.setContentsMargins(16, 10, 16, 14)
         canvas = MplCanvas(width=8, height=2.8, dpi=100)
         canvas.apply_theme(mpl_style(self.theme))
         ax = canvas.fig.add_subplot(111)
@@ -257,14 +257,16 @@ class TvaView(BaseView):
         )
         if not controles:
             return
-        self.layout_inner.addWidget(SectionTitle(
-            f"Contrôle avec les factures {self._d_acheteur()}",
-            "Injection relevée face aux kWh réellement facturés, "
-            f"année de contrat par année de contrat ({self.data.cycle_oa})",
-        ))
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(0, 0, 0, 0)
+        # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
+        card = Card(
+            titre=f"Contrôle avec les factures {self._d_acheteur()}",
+            sous_titre="Injection relevée face aux kWh réellement facturés, "
+                       "année de contrat par année de contrat "
+                       f"({self.data.cycle_oa})")
+        v = card.corps
+        v.setContentsMargins(0, 8, 0, 0)
+        # Le sous-titre garde un peu d'air a gauche ; le tableau, bord a bord.
+        v.itemAt(0).widget().setContentsMargins(12, 0, 12, 6)
         cols = ["Période", "Relevé (kWh)", "Facturé (kWh)", "Écart (kWh)",
                 "Écart", "Jours estimés"]
         table = QTableWidget(len(controles), len(cols))

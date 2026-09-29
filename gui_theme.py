@@ -93,6 +93,12 @@ LIGHT = {
     "info_bg":        "#E8EEF7",
     "info_ink":       "#1F3A6B",
     "table_row_alt":  "#F5F5F0",
+    # En-tete des cartes (29/09/2026) : le bandeau degrade de Pecule, titre
+    # bleu nuit, filet dessous (comptesbudget/ui/views/bilan.py).
+    "entete_haut":    "#E8EEF7",
+    "entete_bas":     "#C9D6E8",
+    "entete_texte":   "#1F3A6B",
+    "entete_filet":   "#B0BFD3",
     "shadow":         "rgba(15, 23, 42, 0.06)",
     # Bandeau de gauche : celui de Pecule.
     "sb_bg":               "#ECE9D8",
@@ -289,6 +295,22 @@ QFrame#Card, QFrame.Card {{
     background: {t["bg_carte"]};
     border-radius: 4px;
     border: 1px solid {t["cadre"]};
+}}
+/* En-tete d'une carte titree (Card(titre=...)) : le bandeau degrade des
+   cartes de Pecule, bord a bord en haut de la carte (29/09/2026). Plus
+   precis que « QFrame#Card QLabel », qui le rendrait transparent. */
+QFrame#Card QLabel#CardHeader {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {t["entete_haut"]}, stop:1 {t["entete_bas"]});
+    color: {t["entete_texte"]};
+    font-size: 9pt;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    border: none;
+    border-bottom: 1px solid {t["entete_filet"]};
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
 }}
 QLabel#SectionTitle {{
     color: {t["text_secondary"]};

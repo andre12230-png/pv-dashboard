@@ -14,7 +14,6 @@ from PySide6.QtWidgets import (
     QPushButton,
     QTableWidget,
     QTableWidgetItem,
-    QVBoxLayout,
 )
 
 import calculations as calc
@@ -260,10 +259,10 @@ class ComparaisonView(BaseView):
         # entete_n/entete_n1 : en-tetes de colonnes courts (sinon = labels).
         entete_n = entete_n or label_n
         entete_n1 = entete_n1 or label_n1
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(16, 14, 16, 14)
-        v.addWidget(SectionTitle(titre, f"{label_n}   vs   {label_n1}"))
+        # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
+        card = Card(titre=titre, sous_titre=f"{label_n}   vs   {label_n1}")
+        v = card.corps
+        v.setContentsMargins(16, 10, 16, 14)
 
         table = QTableWidget(len(METRIQUES), 4)
         table.setHorizontalHeaderLabels(
@@ -312,10 +311,9 @@ class ComparaisonView(BaseView):
 
     def _chart(self, titre: str, agg_n: dict | None, agg_n1: dict | None,
                label_n: str, label_n1: str) -> QFrame:
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(16, 14, 16, 14)
-        v.addWidget(SectionTitle(titre))
+        card = Card(titre=titre)
+        v = card.corps
+        v.setContentsMargins(16, 10, 16, 14)
 
         metriques = [(c, label) for c, label, u, s in METRIQUES
                      if c in METRIQUES_ENERGIE]

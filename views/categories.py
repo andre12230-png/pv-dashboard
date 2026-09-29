@@ -69,16 +69,11 @@ class CategoriesView(BaseView):
             self._tuiles(period, prod, auto, conso, revenu, eco, cout))
 
         # 2) Diagramme de flux.
-        self.layout_inner.addWidget(SectionTitle(
-            "Circulation de l'énergie",
-            "Largeur des rubans proportionnelle aux kWh.",
-        ))
         self.layout_inner.addWidget(self._carte_sankey(prod, inj, sout, conso, auto))
 
         # 3) Detail chiffre.
         ve = df["recharge_ve_kwh"].sum() if "recharge_ve_kwh" in df.columns else 0.0
         ve_eur = df["recharge_ve_eur"].sum() if "recharge_ve_eur" in df.columns else 0.0
-        self.layout_inner.addWidget(SectionTitle("Détail par poste"))
         self.layout_inner.addWidget(
             self._detail_table(prod, auto, inj, sout, revenu, eco, cout, ve, ve_eur))
 
@@ -141,9 +136,11 @@ class CategoriesView(BaseView):
     # 2) Diagramme de flux
     # ------------------------------------------------------------------
     def _carte_sankey(self, prod, inj, sout, conso, auto) -> QFrame:
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(20, 16, 20, 16)
+        # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
+        card = Card(titre="Circulation de l'énergie",
+                    sous_titre="Largeur des rubans proportionnelle aux kWh.")
+        v = card.corps
+        v.setContentsMargins(20, 10, 20, 16)
 
         gauche = [
             Noeud("production", "Production solaire", prod, CC["production"]),
@@ -188,9 +185,9 @@ class CategoriesView(BaseView):
     # ------------------------------------------------------------------
     def _detail_table(self, prod, auto, inj, sout, revenu, eco, cout,
                       ve: float = 0.0, ve_eur: float = 0.0) -> QFrame:
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(20, 14, 20, 16)
+        card = Card(titre="Détail par poste")
+        v = card.corps
+        v.setContentsMargins(20, 12, 20, 16)
 
         grille = QGridLayout()
         grille.setHorizontalSpacing(18)

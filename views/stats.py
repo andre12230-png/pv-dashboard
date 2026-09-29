@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QFrame, QHBoxLayout
 
 from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
@@ -78,10 +78,10 @@ class StatsView(BaseView):
         self.layout_inner.addStretch(1)
 
     def _yearly_bars(self, yearly: pd.DataFrame, partielles: set[int]) -> QFrame:
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(16, 14, 16, 14)
-        v.addWidget(QLabel("Production par année civile"))
+        # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
+        card = Card(titre="Production par année civile")
+        v = card.corps
+        v.setContentsMargins(16, 10, 16, 14)
         canvas = MplCanvas(width=5, height=3.2, dpi=100)
         canvas.apply_theme(mpl_style(self.theme))
         ax = canvas.fig.add_subplot(111)
@@ -113,10 +113,10 @@ class StatsView(BaseView):
         return card
 
     def _monthly_lines(self, df: pd.DataFrame) -> QFrame:
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(16, 14, 16, 14)
-        v.addWidget(QLabel("Production mensuelle multi-années"))
+        # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
+        card = Card(titre="Production mensuelle multi-années")
+        v = card.corps
+        v.setContentsMargins(16, 10, 16, 14)
         df_m = df.copy()
         df_m["mois"] = df_m.index.month
         df_m["annee"] = df_m.index.year

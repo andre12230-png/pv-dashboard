@@ -147,12 +147,43 @@ class AccountCard(QFrame):
 
 
 class Card(QFrame):
-    """Carte conteneur generique. Posez un layout dedans."""
+    """Carte conteneur generique.
 
-    def __init__(self, parent: QWidget | None = None):
+    Sans titre : posez un layout dedans, comme avant.
+
+    Avec `titre` (29/09/2026) : la carte s'ouvre par le bandeau bleute des
+    cartes de Pecule (QLabel#CardHeader, style dans gui_theme.py), bord a
+    bord ; le contenu se range dans `carte.corps`, dont on peut regler les
+    marges. `sous_titre`, s'il y en a un, est la premiere ligne du corps.
+    """
+
+    def __init__(self, parent: QWidget | None = None, titre: str = "",
+                 sous_titre: str = ""):
         super().__init__(parent)
         self.setObjectName("Card")
         self.setProperty("class", "Card")
+        self.entete: QLabel | None = None
+        self.corps: QVBoxLayout | None = None
+        if not titre:
+            return
+        exterieur = QVBoxLayout(self)
+        exterieur.setContentsMargins(0, 0, 0, 0)
+        exterieur.setSpacing(0)
+        self.entete = QLabel(titre.upper())
+        self.entete.setObjectName("CardHeader")
+        # Le bandeau garde sa hauteur quand la carte s'etire (comme dans
+        # Recharges VE, composants.carte).
+        self.entete.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        exterieur.addWidget(self.entete)
+        self.corps = QVBoxLayout()
+        self.corps.setContentsMargins(16, 12, 16, 14)
+        self.corps.setSpacing(6)
+        exterieur.addLayout(self.corps, 1)
+        if sous_titre:
+            sous = QLabel(sous_titre)
+            sous.setObjectName("SectionSub")
+            sous.setWordWrap(True)
+            self.corps.addWidget(sous)
 
 
 class SectionTitle(QWidget):

@@ -460,11 +460,12 @@ class AideView(BaseView):
             carte = self._carte(corps)
             self._cibles.append(carte)
             self.layout_inner.addWidget(carte)
-        titre_glossaire = SectionTitle(
-            "Glossaire", "Définitions des termes employés")
-        self._cibles.append(titre_glossaire)
-        self.layout_inner.addWidget(titre_glossaire)
-        self.layout_inner.addWidget(self._carte(GLOSSAIRE_HTML.format(**champs)))
+        # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
+        glossaire = self._carte(GLOSSAIRE_HTML.format(**champs),
+                                titre="Glossaire",
+                                sous_titre="Définitions des termes employés")
+        self._cibles.append(glossaire)
+        self.layout_inner.addWidget(glossaire)
         self.layout_inner.addStretch(1)
 
     _TITRE_RUBRIQUE = re.compile(r"<h3[^>]*>(.*?)</h3>", re.S)
@@ -577,10 +578,11 @@ class AideView(BaseView):
                            f"{self.data.fournisseur_reference[1]}",
         }
 
-    def _carte(self, html: str) -> QFrame:
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(24, 18, 24, 22)
+    def _carte(self, html: str, titre: str = "",
+               sous_titre: str = "") -> QFrame:
+        card = Card(titre=titre, sous_titre=sous_titre)
+        v = card.corps if titre else QVBoxLayout(card)
+        v.setContentsMargins(24, 12 if titre else 18, 24, 22)
         lbl = QLabel(html)
         lbl.setTextFormat(Qt.RichText)
         lbl.setWordWrap(True)
