@@ -276,6 +276,35 @@ def test_selecteur_de_periode_a_l_allure_des_deux_autres_applis():
     assert "border" not in fleche and "26px" in fleche
 
 
+def _encre_la_plus_foncee(bouton) -> str:
+    """Couleur la plus sombre dessinee par un bouton : celle de son texte."""
+    image = bouton.grab().toImage()
+    couleurs = {image.pixelColor(x, y).name()
+                for x in range(image.width()) for y in range(image.height())}
+    return min(couleurs, key=_luminance)
+
+
+def test_un_bouton_desactive_s_ecrit_en_gris():
+    """29/09/2026 : « Ce mois-ci » et la fleche › etaient bien desactives sur
+    le mois en cours, mais restaient dessines en noir : la regle universelle
+    `QWidget { color: … }` ecrasait le gris de la palette. Un bouton
+    desactive doit s'ecrire dans le gris de la charte, #6B6B6B."""
+    import os
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtWidgets import QApplication, QPushButton
+
+    QApplication.instance() or QApplication([])
+    bouton = QPushButton("Ce mois-ci")
+    bouton.setStyleSheet(qss_for(LIGHT))
+    bouton.resize(110, 30)
+
+    # Actif : le texte est noir (le test voit bien le texte).
+    assert _encre_la_plus_foncee(bouton) == "#000000"
+    # Desactive : plus de noir, le gris des elements desactives.
+    bouton.setEnabled(False)
+    assert _encre_la_plus_foncee(bouton) == "#6b6b6b"
+
+
 # Les couleurs de serie sur lesquelles une barre de repartition ecrit son
 # libelle (Tableau de bord : « Ou va votre soleil », « D'ou vient votre
 # electricite »), plus le bleu de la part du vehicule.

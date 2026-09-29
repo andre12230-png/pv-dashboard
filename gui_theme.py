@@ -139,6 +139,13 @@ QWidget {{
     font-family: "Segoe UI", "Inter", sans-serif;
     font-size: 13px;
 }}
+/* Ce qui est desactive s'ecrit en gris, comme dans la palette (voir
+   palette_claire). Sans cette regle, la couleur imposee ci-dessus gardait en
+   noir « Ce mois-ci » et les fleches grisees : on les croyait cliquables
+   (29/09/2026). */
+QWidget:disabled {{
+    color: #6B6B6B;
+}}
 /* Les textes poses dans une carte prennent le fond de la carte. Sans cette
    regle, la regle universelle QWidget ci-dessus leur donnait le fond gris
    de la page : un bandeau gris derriere les titres de graphiques, les
