@@ -255,10 +255,29 @@ class BarMeter(QWidget):
         p.end()
 
 
+def _luminance(couleur: QColor) -> float:
+    """Luminance relative d'une couleur (formule WCAG), de 0 (noir) a 1."""
+    canaux = []
+    for c in (couleur.redF(), couleur.greenF(), couleur.blueF()):
+        canaux.append(c / 12.92 if c <= 0.03928
+                      else ((c + 0.055) / 1.055) ** 2.4)
+    r, g, b = canaux
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
 def _texte_lisible_sur(fond: QColor) -> QColor:
-    """Encre sombre sur une couleur claire, blanche sur une couleur foncee."""
-    clarte = 0.299 * fond.red() + 0.587 * fond.green() + 0.114 * fond.blue()
-    return QColor("#1c1917") if clarte > 150 else QColor("#ffffff")
+    """Noir ou blanc : celui des deux qui contraste le plus avec le fond.
+
+    On compare le vrai rapport de contraste (29/09/2026). L'ancienne regle
+    estimait seulement si le fond etait « clair » et ecrivait en blanc sur le
+    vert, le bleu et l'orange des graphiques : 3,4 a 3,9 pour 1, sous le
+    minimum de 4,5. Le noir y fait plus de 5.
+    """
+    l_fond = _luminance(fond)
+    contraste_noir = (l_fond + 0.05) / 0.05          # noir : luminance 0
+    contraste_blanc = 1.05 / (l_fond + 0.05)         # blanc : luminance 1
+    return QColor("#000000") if contraste_noir >= contraste_blanc \
+        else QColor("#ffffff")
 
 
 class Jauge(QWidget):

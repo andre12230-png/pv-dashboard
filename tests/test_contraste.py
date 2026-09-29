@@ -10,7 +10,7 @@ pour 1 sur blanc, et l'orange du bandeau "Donnees incompletes" a peine 2 pour
 
 import pytest
 
-from gui_theme import LIGHT
+from gui_theme import CHART_COLORS, LIGHT
 
 
 def _luminance(couleur: str) -> float:
@@ -274,6 +274,32 @@ def test_selecteur_de_periode_a_l_allure_des_deux_autres_applis():
     assert _bloc(qss, "QDateEdit#PeriodSelector") == ""
     fleche = _bloc(qss, "QPushButton#PeriodArrow")
     assert "border" not in fleche and "26px" in fleche
+
+
+# Les couleurs de serie sur lesquelles une barre de repartition ecrit son
+# libelle (Tableau de bord : « Ou va votre soleil », « D'ou vient votre
+# electricite »), plus le bleu de la part du vehicule.
+FONDS_DES_BARRES = [
+    CHART_COLORS["production"],
+    CHART_COLORS["autoconso"],
+    CHART_COLORS["injection"],
+    CHART_COLORS["soutirage"],
+    LIGHT["info"],
+]
+
+
+@pytest.mark.parametrize("fond", FONDS_DES_BARRES)
+def test_texte_des_barres_de_repartition_lisible(fond):
+    """29/09/2026 : le texte blanc des barres vert, bleu et orange ne faisait
+    que 3,4 a 3,9 pour 1. L'encre etait choisie sur une estimation de la
+    clarte du fond, pas sur le contraste reel : elle doit tenir 4,5 pour 1."""
+    from PySide6.QtGui import QColor
+
+    from gui_widgets import _texte_lisible_sur
+    encre = _texte_lisible_sur(QColor(fond)).name()
+    rapport = contraste(encre, fond)
+    assert rapport >= 4.5, (
+        f"texte {encre} sur {fond} : {rapport:.2f} pour 1, moins que 4,5")
 
 
 def test_cartes_a_coins_presque_droits_et_trait_en_haut_comme_pecule():
