@@ -101,7 +101,7 @@ def test_valeur_hors_plafond_refusee_avec_le_bon_plafond_par_colonne(vue):
     _cellule(vue, 1, "Prod_Jour", "251")
     vue._enregistrer()
     assert dl.read_releves_raw(vue.data.releves_path)[2]["Prod_Jour"] == "19"
-    assert "depasse" in vue.status_label.text()
+    assert "dépasse" in vue.status_label.text()
 
 
 def test_conso_hivernale_elevee_reste_acceptee(vue):

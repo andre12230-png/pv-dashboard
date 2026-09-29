@@ -151,7 +151,7 @@ def _type_de_donnees(texte: str) -> str:
         conso = [m for m in _MOTS_CONSO if m in bas]
         if inj and conso:
             raise ValueError(
-                f"Type de donnees ambigu : {ou} mentionne a la fois "
+                f"Type de données ambigu : {ou} mentionne à la fois "
                 f"{' / '.join(inj)} et {' / '.join(conso)}. Impossible de "
                 "savoir s'il s'agit de l'injection ou de la consommation. "
                 "Utilisez le classeur Excel Enedis, qui indique clairement "
@@ -164,11 +164,11 @@ def _type_de_donnees(texte: str) -> str:
         if conso:
             return "Conso_réseau_Jour"
     raise ValueError(
-        "Type de donnees introuvable : l'en-tete du fichier ne mentionne ni "
+        "Type de données introuvable : l'en-tête du fichier ne mentionne ni "
         "'injection'/'production' ni 'consommation', et l'application refuse "
         "de deviner dans quelle colonne ranger ces valeurs. Tout export "
         "quotidien 'date + valeur' convient -- Enedis, un fournisseur ou un "
-        "onduleur -- pourvu que son en-tete dise de quelle grandeur il "
+        "onduleur -- pourvu que son en-tête dise de quelle grandeur il "
         "s'agit."
     )
 
@@ -211,7 +211,7 @@ def parse_enedis_csv_texte(texte: str, notes: list | None = None
     if not brutes:
         raise ValueError(
             "Aucune ligne 'date;valeur' reconnue. Attendu : un export "
-            "quotidien Enedis (une date et un nombre par ligne, separes "
+            "quotidien Enedis (une date et un nombre par ligne, séparés "
             "par des points-virgules, des virgules ou des tabulations)."
         )
 
@@ -327,8 +327,8 @@ def parse_octopus_suivi_conso(texte: str, notes: list | None = None
                 raise ValueError(
                     f"Colonne {colonne_manquante} introuvable : ce fichier "
                     f"donne les heures {presente}, mais pas les heures "
-                    f"{manquante}. Pour importer le detail, il faut les deux "
-                    "colonnes, nommees par exemple 'Consommation HC (kWh)' "
+                    f"{manquante}. Pour importer le détail, il faut les deux "
+                    "colonnes, nommées par exemple 'Consommation HC (kWh)' "
                     "et 'Consommation HP (kWh)', ou simplement 'HC' et 'HP'."
                 )
             continue
@@ -634,7 +634,7 @@ def parse_enedis_xlsx(path: str, notes: list | None = None
         raise ValueError(
             "Aucune feuille 'Consommation' ou 'Production' avec des lignes "
             "'date + valeur' dans ce classeur. Attendu : le classeur Excel "
-            "d'un gestionnaire de reseau (Enedis) ou un export equivalent."
+            "d'un gestionnaire de réseau (Enedis) ou un export équivalent."
         )
     return resultat
 
@@ -909,7 +909,7 @@ def parse_enphase_texte(texte: str, notes: list | None = None
     if not totaux:
         raise ValueError(
             "Aucune ligne 'date;valeur' reconnue. Attendu : la production "
-            "journaliere de votre onduleur -- par exemple le rapport "
+            "journalière de votre onduleur -- par exemple le rapport "
             "Enphase 'Energie mensuelle' (Enlighten > Menu > Systeme > "
             "Rapports), ou le rapport d'onduleur au format Excel."
         )
@@ -975,8 +975,8 @@ def _lire_archive(path: str, notes: list | None) -> dict[str, str]:
         if not noms:
             raise ValueError(
                 "Cette archive ne contient aucun fichier .csv. "
-                "Attendu : un releve de production, par exemple le "
-                "rapport Enphase recu par email.")
+                "Attendu : un relevé de production, par exemple le "
+                "rapport Enphase reçu par e-mail.")
         contenus = [(nom, _decode_texte(zf.read(nom))) for nom in noms]
 
     valeurs: dict[str, str] = {}

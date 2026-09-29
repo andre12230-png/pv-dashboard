@@ -159,7 +159,7 @@ def load_releves_pv(path: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     if date_col is None or prod_col is None:
         raise ValueError(
             f"Releves-pv.csv non reconnu ({path}). "
-            f"Colonnes trouvees : {list(df.columns)}"
+            f"Colonnes trouvées : {list(df.columns)}"
         )
 
     def _to_num(series: pd.Series) -> pd.Series:
@@ -299,13 +299,13 @@ def read_releves_raw(path: str) -> list[dict[str, str]]:
             f"{os.path.basename(path)} : "
             f"{accorde(len(manquantes), 'colonne')} "
             f"{accorde(len(manquantes), 'introuvable')} dans "
-            f"l'en-tete : {', '.join(manquantes)}.\n"
-            f"En-tetes lus dans le fichier : {list(df.columns)}.\n"
-            "Aucun des noms acceptes ne correspond. Le fichier n'est pas lu, "
-            "car une colonne lue vide serait effacee au premier "
+            f"l'en-tête : {', '.join(manquantes)}.\n"
+            f"En-têtes lus dans le fichier : {list(df.columns)}.\n"
+            "Aucun des noms acceptés ne correspond. Le fichier n'est pas lu, "
+            "car une colonne lue vide serait effacée au premier "
             "enregistrement.\n"
-            "Cause la plus frequente : le fichier a ete ouvert puis "
-            "reenregistre par Excel, qui a abime les accents de l'en-tete."
+            "Cause la plus fréquente : le fichier a été ouvert puis "
+            "réenregistré par Excel, qui a abîmé les accents de l'en-tête."
         )
 
     # Colonne par colonne, et non ligne par ligne : iterrows fabriquait un
@@ -451,7 +451,7 @@ def normalise_date_saisie(texte: str, aujourdhui: _date | None = None) -> str:
     jour = _parse_date_any(texte)
     if jour is None:
         raise ValueError(
-            f"date '{texte}' incomplete ou mal formee "
+            f"date '{texte}' incomplète ou mal formée "
             "(attendu JJ/MM/AAAA, par exemple 30/07/2026)")
 
     # Une date dans le futur n'est pas un releve : c'est une faute de frappe
@@ -463,7 +463,7 @@ def normalise_date_saisie(texte: str, aujourdhui: _date | None = None) -> str:
     if _date(y, m, d) > reference:
         raise ValueError(
             f"date '{jour}' dans le futur : nous sommes le "
-            f"{reference:%d/%m/%Y}, un releve ne peut pas la porter")
+            f"{reference:%d/%m/%Y}, un relevé ne peut pas la porter")
     return jour
 
 
@@ -499,12 +499,12 @@ def normalise_nombre_saisie(texte: str, colonne: str = "",
         raise ValueError(f"valeur '{texte}'{ou} : nombre non exploitable")
     if nombre < 0:
         raise ValueError(
-            f"valeur '{texte}'{ou} : un releve en kWh ne peut pas etre negatif")
+            f"valeur '{texte}'{ou} : un relevé en kWh ne peut pas être négatif")
     if nombre > plafond:
         raise ValueError(
-            f"valeur '{texte}'{ou} : {_fmt_kwh_fr(nombre)} kWh depasse le "
+            f"valeur '{texte}'{ou} : {_fmt_kwh_fr(nombre)} kWh dépasse le "
             f"maximum plausible de {_fmt_kwh_fr(plafond)} kWh pour une "
-            "journee (virgule oubliee ?)")
+            "journée (virgule oubliée ?)")
     # On rend la valeur NORMALISEE, pas le texte tape. Avant, '22, 1' etait
     # accepte puis ecrit tel quel dans le CSV : a la relecture, plus rien ne
     # savait le lire et la journee valait 0 kWh -- pire qu'une case vide, qui
@@ -611,14 +611,14 @@ def controle_apres_import(rows: list[dict[str, str]],
         if inj > prod * 1.05:  # 5 % de tolerance (arrondis, pas de mesure)
             suspects += 1
             if len(exemples) < 3:
-                exemples.append(f"{jour} : {val} injecte pour {prod:g} produit")
+                exemples.append(f"{jour} : {val} injecté pour {prod:g} produit")
     if compares == 0 or suspects <= compares * 0.10:
         return None
     return (
         f"Attention : sur {pluriel(compares, 'jour')} "
         f"{accorde(compares, 'comparable')}, {suspects} "
         f"{accorde(suspects, 'aurait', 'auraient')} "
-        f"une injection SUPERIEURE a la production.\n\n"
+        f"une injection SUPÉRIEURE à la production.\n\n"
         + "\n".join("  - " + e for e in exemples)
         + "\n\nC'est impossible : on n'injecte que le surplus. Ce fichier "
         "contient probablement une autre grandeur (une consommation ?) "
@@ -673,8 +673,8 @@ class ReductionRefusee(ValueError):
     def __init__(self, pertes: str):
         self.pertes = pertes
         super().__init__(
-            f"Enregistrement refuse : {pertes}. "
-            "Si cet effacement est voulu, il doit etre confirme."
+            f"Enregistrement refusé : {pertes}. "
+            "Si cet effacement est voulu, il doit être confirmé."
         )
 
 
@@ -748,8 +748,8 @@ def pertes_a_l_ecriture(path: str,
     if not pertes:
         return None
     # « 1 ligne va etre supprimee », « 2 lignes vont etre supprimees »
-    return _enumere(pertes) + (" va etre supprimee" if total == 1
-                               else " vont etre supprimees")
+    return _enumere(pertes) + (" va être supprimée" if total == 1
+                               else " vont être supprimées")
 
 
 def write_releves_raw(path: str, rows: list[dict[str, str]],

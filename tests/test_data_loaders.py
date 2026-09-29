@@ -360,7 +360,7 @@ def test_parse_enedis_unite_devinee(tmp_path):
 def test_parse_enedis_type_inconnu(tmp_path):
     p = tmp_path / "autre.csv"
     p.write_text("Date;Truc\n2026-06-01;5\n", encoding="utf-8")
-    with pytest.raises(ValueError, match="Type de donnees"):
+    with pytest.raises(ValueError, match="Type de données"):
         dl.parse_enedis_csv(str(p))
 
 
@@ -1586,3 +1586,18 @@ def test_read_raw_meme_resultat_que_la_lecture_ligne_a_ligne(tmp_path):
     assert dl.read_releves_raw(str(p)) == attendu
     assert [r["Date"] for r in attendu] == ["01/05/2026", "02/05/2026",
                                             "03/05/2026"]
+
+
+def test_les_messages_de_saisie_gardent_leurs_accents():
+    """29/09/2026 : plusieurs messages de lecture et de saisie etaient ecrits
+    sans accents (« etre negatif », « depasse », « journee »)."""
+    with pytest.raises(ValueError) as negatif:
+        dl.normalise_nombre_saisie("-3", "Prod_Jour")
+    assert "un relevé en kWh ne peut pas être négatif" in str(negatif.value)
+    with pytest.raises(ValueError) as trop:
+        dl.normalise_nombre_saisie("251", "Prod_Jour")
+    assert "dépasse" in str(trop.value)
+    assert "journée (virgule oubliée ?)" in str(trop.value)
+    refus = dl.ReductionRefusee("2 lignes")
+    assert str(refus).startswith("Enregistrement refusé : 2 lignes.")
+    assert "il doit être confirmé." in str(refus)
