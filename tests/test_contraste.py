@@ -347,3 +347,16 @@ def test_cartes_a_coins_presque_droits_et_trait_en_haut_comme_pecule():
     kpi = _bloc(qss, 'QFrame[role="kpi"]')
     assert "border-top-width: 3px" in kpi and "border-left-width" not in kpi
     assert 'border-left-color' not in qss
+
+
+@pytest.mark.parametrize("sens, ecart", [(+1, 5.0), (+1, -5.0),
+                                         (-1, 5.0), (-1, -5.0)])
+def test_la_colonne_variation_se_lit(sens, ecart):
+    """30/09/2026 : la colonne « Variation » (Comparer à l'an passé,
+    Répartition énergie) s'écrivait dans les couleurs vives des graphiques :
+    3,1 à 3,9 pour 1. Même teinte, variante foncée pour écrire."""
+    from views._helpers import variation
+    _texte, couleur = variation(ecart, 100.0, str, sens, LIGHT)
+    # Cases blanches, lignes alternées, fond ivoire des cartes.
+    for fond in ("#FFFFFF", "#F5F5F0", LIGHT["bg_carte"]):
+        assert contraste(couleur, fond) >= 4.5, (couleur, fond)

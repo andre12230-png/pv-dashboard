@@ -561,12 +561,14 @@ CHART_COLORS = {
     "primary":       "#1F3A6B",
 }
 
-# Couleurs de signe pour les montants et les variations (+ favorable /
-# - defavorable). On reutilise le vert et l'orange de la palette plutot que le
-# couple vert/rouge, pour ne pas reintroduire ailleurs le probleme qu'on vient
-# de corriger dans les graphiques.
-COULEUR_FAVORABLE = CHART_COLORS["autoconso"]
-COULEUR_DEFAVORABLE = CHART_COLORS["soutirage"]
+# Encre des variations ecrites (colonne « Variation » : + favorable /
+# - defavorable). Les teintes du vert et de l'orange des graphiques plutot
+# que le couple vert/rouge, pour que les daltoniens les distinguent ; mais
+# assombries pour ECRIRE (30/09/2026) : les couleurs vives #199e70 et
+# #d95926 ne faisaient que 3,1 a 3,9 pour 1 sur les lignes du tableau. Au
+# moins 4,8 sur blanc, ivoire et lignes alternees (tests/test_contraste.py).
+COULEUR_FAVORABLE = "#137b57"    # #199e70 assombri (x 0,78)
+COULEUR_DEFAVORABLE = "#b44a20"  # #d95926 assombri (x 0,83)
 
 
 def palette_claire() -> QPalette:
