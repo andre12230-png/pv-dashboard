@@ -28,7 +28,7 @@ from pathlib import Path
 PROJET = Path(__file__).resolve().parent.parent
 
 ANCIENS_NOMS = re.compile(
-    r"Soutirage réseau|Achetée|Conso réseau|Consommation du réseau"
+    r"[Ss]outirage réseau|Injection et soutirage|Achetée|Conso réseau|Consommation du réseau"
     r"|Conso H[CP]|Autoconsommée|Injectée|Injection vendue|Injection réseau"
     r"|(?<![\w_])[Aa]utoconso(?![\w_])")
 

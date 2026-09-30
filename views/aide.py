@@ -23,7 +23,7 @@ from views._helpers import fmt_date_fr, fmt_kwc
 # Rubrique affichee seulement si un fichier de recharges du vehicule
 # est lu : les autres utilisateurs n'ont rien a en faire.
 RUBRIQUE_VOITURE = """<h3 style="color:#1F3A6B">La part de la voiture</h3>
-<p>Le soutirage réseau mélange deux choses très différentes : ce que consomme
+<p>L'achat au réseau mélange deux choses très différentes : ce que consomme
 la maison et ce que prend la voiture. L'application les sépare — sous la
 barre <b>D'où vient votre électricité</b> du Tableau de bord, colonne
 <b>dont véhicule</b> dans les Relevés journaliers, et deux sous-lignes dans
@@ -287,7 +287,7 @@ combien de journées ont été laissées telles quelles.</p>
 <p>Ci-dessous les sources de l'installation suivie ici ; les vôtres peuvent
 être différentes, les imports s'en accommodent.</p>
 <p><b>Production</b> : l'application ou le site de votre onduleur.<br>
-<b>Injection et soutirage</b> : le gestionnaire de réseau, ici Enedis
+<b>Injection et achat au réseau</b> : le gestionnaire de réseau, ici Enedis
 (mon-compte-particulier.enedis.fr), grâce au compteur Linky — c'est la source
 commune à tous les foyers français, quel que soit le fournisseur.<br>
 <b>Heures creuses et heures pleines</b> : l'espace client du <b>fournisseur</b>
