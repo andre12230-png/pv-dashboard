@@ -210,3 +210,12 @@ def test_la_notice_se_lit_en_lignes_courtes(win):
               if lbl.wordWrap() and len(lbl.text()) > 300]
     assert textes
     assert all(lbl.maximumWidth() <= 780 for lbl in textes)
+
+
+def test_parametres_prix_de_rachat(win):
+    """30/09/2026 : Mes reglages disait « Prix de rachat du kWh », Parametres
+    « Prix d'achat du kWh ». Un nom par chose ; « achat » designe l'electricite
+    achetee au reseau."""
+    textes = _textes(win, "settings")
+    assert "Prix de rachat du kWh" in textes
+    assert "Prix d'achat du kWh" not in textes

@@ -68,7 +68,9 @@ class SettingsView(BaseView):
                 ("Type", "Vente du surplus" if oa.type == "surplus"
                  else "Vente de toute la production"),
                 ("Acheteur", self.data.acheteur),
-                ("Prix d'achat du kWh", fmt_prix_kwh(oa.prix_kwh)),
+                # « rachat », comme dans Mes reglages : « achat » designe
+                # l'electricite achetee au reseau (30/09/2026).
+                ("Prix de rachat du kWh", fmt_prix_kwh(oa.prix_kwh)),
             ]
             if oa.type == "surplus":
                 contrat += [

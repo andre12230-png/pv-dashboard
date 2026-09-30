@@ -956,3 +956,11 @@ def test_la_duree_de_la_prime_s_accorde(fenetre):
     assert case.text() == "1 an"
     case.setValue(2)
     assert case.text() == "2 ans"
+
+
+def test_les_montants_ont_l_espace_des_milliers(fenetre):
+    """30/09/2026 : « 15000 € » dans la case, « 2 280 € » dans le texte juste
+    dessous. Les cases separent les milliers, comme partout."""
+    import re
+    case = fenetre(rg.recalages_vides()).cout
+    assert re.fullmatch(r"15\s000 €", case.text()), case.text()

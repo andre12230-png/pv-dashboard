@@ -50,6 +50,9 @@ def _nombre(valeur: float, decimales: int, suffixe: str,
     case.setDecimals(decimales)
     case.setRange(0, maximum)
     case.setSuffix(suffixe)
+    # « 15 000 € » et non « 15000 € » : les milliers separes, comme dans
+    # le texte juste dessous et partout ailleurs (30/09/2026).
+    case.setGroupSeparatorShown(True)
     case.setValue(valeur)
     case.setMinimumWidth(140)
     return case
