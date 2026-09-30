@@ -185,3 +185,28 @@ def test_annees_oa_les_en_tetes_ne_sont_pas_coupes(win):
     colonne = next(j for j, nom in enumerate(noms) if nom.startswith("Autoconsommation"))
     assert entete.sectionResizeMode(colonne) == QHeaderView.ResizeToContents
     assert entete.sectionResizeMode(colonne + 1) == QHeaderView.Stretch
+
+
+def test_milliers_separes_dans_les_annees_oa():
+    """« 2354,4 » : les milliers se separent, comme partout ailleurs."""
+    from views.oa import nombre_fr
+    assert nombre_fr(2354.4) == "2 354,4"
+    assert nombre_fr(856.25) == "856,2" or nombre_fr(856.25) == "856,3"
+
+
+def test_un_bilan_nul_ne_prend_ni_signe_ni_couleur():
+    """Relevés : « +0,00 » en vert pour une journée à l'équilibre."""
+    from views.transactions import texte_bilan
+    assert texte_bilan(0.004) == ("0,00", "text_primary")
+    assert texte_bilan(1.27) == ("+1,27", "credit")
+    assert texte_bilan(-1.27) == ("-1,27", "debit")
+
+
+def test_la_notice_se_lit_en_lignes_courtes(win):
+    """Des lignes de ~170 signes a 1280 px : le texte de chaque rubrique ne
+    depasse plus 780 px de large (~110 signes)."""
+    win._switch_view("aide")
+    textes = [lbl for lbl in win.views["aide"].findChildren(QLabel)
+              if lbl.wordWrap() and len(lbl.text()) > 300]
+    assert textes
+    assert all(lbl.maximumWidth() <= 780 for lbl in textes)

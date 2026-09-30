@@ -504,6 +504,7 @@ class AideView(BaseView):
         lbl = QLabel(liens)
         lbl.setTextFormat(Qt.RichText)
         lbl.setWordWrap(True)
+        lbl.setMaximumWidth(780)     # comme le texte des rubriques
         lbl.setTextInteractionFlags(Qt.LinksAccessibleByMouse)
         lbl.setStyleSheet("font-size: 13px; line-height: 160%;")
         lbl.linkActivated.connect(self._aller_a)
@@ -586,6 +587,9 @@ class AideView(BaseView):
         lbl = QLabel(html)
         lbl.setTextFormat(Qt.RichText)
         lbl.setWordWrap(True)
+        # Au plus 780 px : a 1280 px, les lignes faisaient ~170 signes, trop
+        # longues pour suivre le texte d'un bout a l'autre (30/09/2026).
+        lbl.setMaximumWidth(780)
         lbl.setStyleSheet(
             f"color: {self.theme['text_secondary']}; font-size: 13px;")
         v.addWidget(lbl)

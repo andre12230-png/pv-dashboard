@@ -16,6 +16,18 @@ from views._base import BaseView
 from views._helpers import filter_period
 
 
+def texte_bilan(bilan: float) -> tuple[str, str]:
+    """Texte du bilan d'une journee et cle de sa couleur dans le theme.
+
+    Une journee a l'equilibre s'ecrit « 0,00 », sans signe ni couleur :
+    « +0,00 » en vert laissait croire a un gain (30/09/2026)."""
+    if round(bilan, 2) == 0:
+        return "0,00", "text_primary"
+    texte = (f"{'+' if bilan > 0 else '-'}{abs(bilan):,.2f}"
+             .replace(",", " ").replace(".", ","))
+    return texte, "credit" if bilan > 0 else "debit"
+
+
 class _ItemTriable(QTableWidgetItem):
     """Cellule de tableau qui se trie sur une valeur (date ou nombre) plutot
     que sur le texte affiche : sans cela Qt trie alphabetiquement et
@@ -43,8 +55,8 @@ class TransactionsView(BaseView):
 
         # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
         card = Card(titre="Relevés journaliers",
-                    sous_titre=f"{pluriel(len(df), 'jour')} - 1 ligne = 1 journée "
-                               "de production")
+                    sous_titre=f"{pluriel(len(df), 'jour')} — une ligne par "
+                               "journée de production")
         v = card.corps
         v.setContentsMargins(0, 8, 0, 0)
         # Le sous-titre garde un peu d'air a gauche ; le tableau, bord a bord.
@@ -121,14 +133,10 @@ class TransactionsView(BaseView):
             if debit > 0:
                 debit_item.setForeground(QColor(self.theme["debit"]))
 
-            bilan_item = _ItemTriable(
-                f"{'+' if bilan >= 0 else '-'}{abs(bilan):,.2f}"
-                .replace(",", " ").replace(".", ","),
-                float(bilan),
-            )
+            texte, couleur = texte_bilan(bilan)
+            bilan_item = _ItemTriable(texte, float(bilan))
             bilan_item.setTextAlignment(ALIGN_CENTER)
-            color = self.theme["credit"] if bilan >= 0 else self.theme["debit"]
-            bilan_item.setForeground(QColor(color))
+            bilan_item.setForeground(QColor(self.theme[couleur]))
             f = QFont()
             f.setBold(True)
             bilan_item.setFont(f)

@@ -1116,7 +1116,8 @@ class MainWindow(QMainWindow):
         titles = {
             "dashboard":    ("Tableau de bord", "Vue d'ensemble de votre installation"),
             "saisie":       ("Saisie quotidienne", "Ajouter ou corriger les relevés d'un jour"),
-            "transactions": ("Relevés journaliers", "Production, injection et conso jour par jour"),
+            "transactions": ("Relevés journaliers",
+                             "Production, injection et achat au réseau, jour par jour"),
             "categories":   ("Répartition énergie", "D'où vient et où va chaque kWh"),
             "accounts":     ("Synthèse financière", "Revenus, économies et dépenses électricité"),
             "oa":           ("Années OA",
@@ -1296,11 +1297,12 @@ class MainWindow(QMainWindow):
         age = ""
         if dernier is not None:
             jours = (date.today() - dernier).days
-            age = f" - Dernier relevé {_age_court(jours)}"
+            age = f" · Dernier relevé {_age_court(jours)}"
+        # Des « · » plutot que des « - » (relecture du 30/09/2026).
         self.status_bar.showMessage(
-            f"  {nombre_de_jours(len(self.data.df))} - "
+            f"  {nombre_de_jours(len(self.data.df))} · "
             f"Production cumulée {fmt_kwh(self.data.df['production_kwh'].sum())}"
-            f"{age} - Données : {self.data.releves_path}"
+            f"{age} · Données : {self.data.releves_path}"
         )
 
     def _on_data_changed(self) -> None:

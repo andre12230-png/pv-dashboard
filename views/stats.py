@@ -57,16 +57,16 @@ class StatsView(BaseView):
 
         self.layout_inner.addWidget(SectionTitle(
             "Rendement spécifique (kWh / kWc / an)",
-            f"Référence France : 900-1200 kWh/kWc/an - {texte_moyenne}",
+            f"Référence France : 900 à 1 200 kWh/kWc/an — {texte_moyenne}",
         ))
         cards = []
         for y, v in rendement.items():
             if int(y) in partielles:
                 g = df[df.index.year == int(y)]
                 cards.append(KpiCard(
-                    f"Année {int(y)} - partielle", f"{int(v)}",
+                    f"Année {int(y)} — partielle", f"{int(v)}",
                     f"du {g.index.min().strftime('%d/%m')} "
-                    f"au {g.index.max().strftime('%d/%m')} - hors moyenne",
+                    f"au {g.index.max().strftime('%d/%m')} — hors moyenne",
                     "neutral"))
             else:
                 cards.append(KpiCard(

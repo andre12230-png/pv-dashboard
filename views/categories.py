@@ -360,7 +360,7 @@ class CategoriesView(BaseView):
             txt, couleur = variation(val_n - val_n1, val_n1, fmt, sens,
                                      self.theme)
             carte = KpiCard(label, fmt(val_n),
-                            f"{txt}\nN-1 : {fmt(val_n1)}",
+                            f"{txt}\nL'an passé : {fmt(val_n1)}",
                             variant=self._variant(cle, val_n))
             carte.sub.setStyleSheet(
                 f"color: {couleur}; font-size: 11px; font-weight: 600; "

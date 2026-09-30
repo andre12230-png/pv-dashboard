@@ -79,3 +79,35 @@ def test_le_motif_reconnait_les_anciens_noms():
     for texte in ("part_hc_autoconso", "Autoconsommation", "Achat au réseau",
                   "Acheté au réseau", "Injection", "Vendu à EDF OA"):
         assert not ANCIENS_NOMS.search(texte), texte
+
+
+# --- Details d'ecriture (relecture du 30/09/2026) ------------------------------
+
+def _textes_affiches():
+    """(fichier:ligne, texte) de chaque chaine affichee de l'application."""
+    for fichier in _fichiers_de_l_application():
+        if fichier.name == "gui_theme.py":          # feuille de style, pas du texte
+            continue
+        arbre = ast.parse(fichier.read_text(encoding="utf-8"))
+        docs = _docstrings(arbre)
+        for noeud in ast.walk(arbre):
+            if (isinstance(noeud, ast.Constant) and isinstance(noeud.value, str)
+                    and id(noeud) not in docs):
+                yield f"{fichier.relative_to(PROJET)}:{noeud.lineno}", noeud.value
+
+
+def test_pas_de_tiret_court_comme_separateur():
+    """« 29 jours - 1 ligne », « Année 2026 - partielle » : le tiret long
+    « — » ou un point median « · ». Seule exception : le numero de version du
+    titre de la fenetre (« … - v1.52.7 »), convention des trois applis."""
+    trouves = [f"{ou} {texte.strip()[:60]!r}" for ou, texte in _textes_affiches()
+               # Pas les puces en debut de ligne (« \n  - element »).
+               if re.search(r"(?<![ \n]) - (?!v)", texte)]
+    assert not trouves, "\n".join(trouves)
+
+
+def test_pas_de_n_moins_1():
+    """« N-1 : 254,0 kWh » : on dit « l'an passé »."""
+    trouves = [f"{ou} {texte.strip()[:60]!r}" for ou, texte in _textes_affiches()
+               if re.search(r"\bN-1\b", texte)]
+    assert not trouves, "\n".join(trouves)

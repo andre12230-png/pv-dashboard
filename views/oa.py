@@ -21,6 +21,12 @@ from views._base import BaseView
 from views._helpers import chiffres_sur_barres
 
 
+def nombre_fr(valeur: float) -> str:
+    """« 2 354,4 » : une decimale, milliers separes par une espace, comme
+    partout ailleurs (c'etait « 2354,4 », 30/09/2026)."""
+    return f"{valeur:,.1f}".replace(",", " ").replace(".", ",")
+
+
 class OAView(BaseView):
     utilise_periode = False  # recap de TOUS les cycles OA, quelle que soit la periode
 
@@ -133,9 +139,9 @@ class OAView(BaseView):
             items = [
                 QTableWidgetItem("avant OA" if r["n"] == 0 else f"#{r['n']}"),
                 QTableWidgetItem(r["periode"]),
-                QTableWidgetItem(f"{r['prod']:.1f}".replace(".", ",")),
-                QTableWidgetItem(f"{r['auto']:.1f}".replace(".", ",")),
-                QTableWidgetItem(f"{r['inj']:.1f}".replace(".", ",")),
+                QTableWidgetItem(nombre_fr(r["prod"])),
+                QTableWidgetItem(nombre_fr(r["auto"])),
+                QTableWidgetItem(nombre_fr(r["inj"])),
                 QTableWidgetItem(f"{r['revenu']:.2f}".replace(".", ",")),
                 QTableWidgetItem(prime_txt),
                 QTableWidgetItem(f"{r['eco']:.2f}".replace(".", ",")),

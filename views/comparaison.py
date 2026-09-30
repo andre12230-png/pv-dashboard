@@ -213,7 +213,7 @@ class ComparaisonView(BaseView):
         blocs.addStretch(1)
         self.layout_inner.addLayout(blocs)
         self.layout_inner.addWidget(self._chart(
-            "Cumul annuel - énergie", cumul_n, cumul_n1,
+            "Cumul annuel — énergie", cumul_n, cumul_n1,
             str(d.year), str(d_prev.year)))
 
     def _rendre_periode(self, df: pd.DataFrame, period: str) -> None:
@@ -295,7 +295,7 @@ class ComparaisonView(BaseView):
                 txt, couleur = variation(val_n - val_n1, val_n1, fmt, sens,
                                          self.theme)
             else:
-                txt, couleur = "donnée N-1 absente", self.theme["text_muted"]
+                txt, couleur = "pas de donnée l'an passé", self.theme["text_muted"]
             it_var = QTableWidgetItem(txt)
             it_var.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
             it_var.setForeground(QColor(couleur))
