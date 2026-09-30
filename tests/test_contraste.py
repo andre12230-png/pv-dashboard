@@ -305,6 +305,32 @@ def test_un_bouton_desactive_s_ecrit_en_gris():
     assert _encre_la_plus_foncee(bouton) == "#6b6b6b"
 
 
+def test_les_cases_de_saisie_sont_blanches():
+    """30/09/2026 : la regle universelle `QWidget { background: … }` donnait
+    aux cases de saisie le fond beige de la page ; posees sur une carte
+    ivoire, elles semblaient grisees. La charte les veut blanches : on voit
+    ou taper."""
+    import os
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtWidgets import (
+        QApplication,
+        QDateEdit,
+        QDoubleSpinBox,
+        QLineEdit,
+        QSpinBox,
+    )
+
+    QApplication.instance() or QApplication([])
+    for classe in (QLineEdit, QSpinBox, QDoubleSpinBox, QDateEdit):
+        case = classe()
+        case.setStyleSheet(qss_for(LIGHT))
+        case.resize(160, 28)
+        image = case.grab().toImage()
+        # Au milieu de la case, a gauche des fleches, la ou l'on tape.
+        fond = image.pixelColor(80, 20).name()
+        assert fond == "#ffffff", f"{classe.__name__} : fond {fond}"
+
+
 # Les couleurs de serie sur lesquelles une barre de repartition ecrit son
 # libelle (Tableau de bord : « Ou va votre soleil », « D'ou vient votre
 # electricite »), plus le bleu de la part du vehicule.

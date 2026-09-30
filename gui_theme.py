@@ -146,6 +146,13 @@ QWidget {{
 QWidget:disabled {{
     color: #6B6B6B;
 }}
+/* Les cases de saisie sont blanches : on voit ou taper (charte). Sans cette
+   regle, la regle universelle QWidget leur donnait le fond beige de la page
+   et, sur une carte ivoire, elles semblaient grisees (30/09/2026). Les menus
+   deroulants ne sont pas concernes : ils gardent l'allure standard. */
+QLineEdit, QAbstractSpinBox {{
+    background: #FFFFFF;
+}}
 /* Les textes poses dans une carte prennent le fond de la carte. Sans cette
    regle, la regle universelle QWidget ci-dessus leur donnait le fond gris
    de la page : un bandeau gris derriere les titres de graphiques, les
