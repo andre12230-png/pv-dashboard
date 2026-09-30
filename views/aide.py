@@ -269,7 +269,7 @@ lisible, ignorées ; les fichiers lus dans une archive <code>.zip</code>, qui le
 sont tous. Si deux fichiers d'une archive donnent deux productions différentes
 pour le même jour, rien n'est importé. Et des valeurs au-delà du maximum
 vraisemblable (les mêmes limites qu'à la saisie) déclenchent une alerte en tête
-du récapitulatif, avec « Non » proposé par défaut : c'est la trace typique d'une
+du récapitulatif, avec « Annuler » proposé par défaut : c'est la trace typique d'une
 unité mal lue.</p>
 <p>Le même bouton accepte aussi le <b>classeur Excel</b> publié par le portail
 de votre onduleur (« rapport de centrale » chez Huawei et semblables), une

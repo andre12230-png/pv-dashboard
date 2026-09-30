@@ -325,7 +325,7 @@ colonne :
   production** du meme jour — c'est physiquement impossible, on
   n'injecte que le surplus. Au-dela de 10 % de jours douteux, un
   avertissement s'affiche avant le recapitulatif et le bouton par
-  defaut devient « Non ».
+  defaut devient « Annuler ».
 
 ### Importer la production
 
