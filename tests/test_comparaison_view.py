@@ -59,19 +59,19 @@ def test_l_onglet_obeit_au_selecteur_du_haut():
 
 def test_un_mois_est_compare_au_meme_mois_de_l_an_passe(vue):
     vue.refresh("month-2026-02")
-    assert any("Février 2026 face à Février 2025" in t for t in textes(vue))
+    assert any("Février 2026 face à février 2025" in t for t in textes(vue))
 
 
 def test_une_annee_est_comparee_a_la_precedente(vue):
     vue.refresh("year-2025")
-    assert any("Année 2025 face à Année 2024" in t for t in textes(vue))
+    assert any("Année 2025 face à année 2024" in t for t in textes(vue))
 
 
 def test_une_annee_oa_est_comparee_a_la_precedente(vue):
     # L'annee OA #2 court jusqu'au 11/05/2026 et le fichier s'arrete au
     # 28/02/2026 : elle est en cours, donc coupee a la meme date.
     vue.refresh("oa-2")
-    assert any("Année OA #2 (au 28/02) face à Année OA #1 (au 28/02)" in t
+    assert any("Année OA #2 (au 28/02) face à année OA #1 (au 28/02)" in t
                for t in textes(vue))
 
 
@@ -96,7 +96,7 @@ def test_le_mois_en_cours_est_compare_aux_memes_jours(vue):
     """Un releve de 1 kWh par jour : 10 jours de chaque cote, pas 10 contre 28."""
     vue.data.df = vue.data.df[vue.data.df.index <= "2026-02-10"]
     vue.refresh("month-2026-02")
-    assert any("Février 2026 (au 10/02) face à Février 2025 (au 10/02)" in t
+    assert any("Février 2026 (au 10/02) face à février 2025 (au 10/02)" in t
                for t in textes(vue))
     table = vue.container.findChildren(QTableWidget)[-1]
     assert table.item(0, 0).text().strip() == "Production"
@@ -132,7 +132,7 @@ def test_changer_de_periode_en_haut_quitte_le_mode_journee(vue):
     vue._activer_mode_jour(True)
     vue.refresh("month-2026-01")
     assert not vue.mode_jour
-    assert any("Janvier 2026 face à Janvier 2025" in t for t in textes(vue))
+    assert any("Janvier 2026 face à janvier 2025" in t for t in textes(vue))
 
 
 def test_le_calendrier_part_de_la_periode_choisie(vue):
@@ -194,3 +194,29 @@ def test_graphique_sans_n_moins_1_et_chiffres_francais(vue_annuelle):
     legende = [t.get_text() for t in ax.get_legend().get_texts()]
     assert legende == ["Année 2024", "Année 2025"]
     assert "3 650" in [t.get_text() for t in ax.texts]
+
+
+def test_pas_de_pourcentage_nul():
+    """« +0,18 € (+0,0 %) » : un pourcentage arrondi a zero n'apprend rien."""
+    from views._helpers import fmt_eur, variation
+    texte, _ = variation(0.18, -419.95, fmt_eur, +1, LIGHT)
+    assert texte == "+0,18 €"
+    texte, _ = variation(-55.0, 2765.0, str, +1, LIGHT)
+    assert "%" in texte                      # -2,0 % : garde son pourcentage
+
+
+def test_l_explication_n_est_pas_repetee(vue_annuelle):
+    """Le titre et le sous-titre de la page disent deja ce que la page
+    compare : le titre de section qui le redisait est retire."""
+    tous = " | ".join(textes(vue_annuelle))
+    assert "COMPARAISON AVEC L'ANNÉE PRÉCÉDENTE" not in tous.upper()
+    assert "Compare la période choisie" not in tous
+
+
+def test_le_tableau_a_la_hauteur_de_ses_lignes(vue_annuelle):
+    """Une bande vide d'une soixantaine de pixels restait sous la derniere
+    ligne (hauteur calculee a 38 px par ligne)."""
+    table = vue_annuelle.container.findChildren(QTableWidget)[0]
+    contenu = (table.horizontalHeader().sizeHint().height()
+               + sum(table.rowHeight(r) for r in range(table.rowCount())))
+    assert table.height() - contenu <= 2 * table.frameWidth() + 2

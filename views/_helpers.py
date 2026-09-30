@@ -520,8 +520,11 @@ def variation(delta: float, base: float | None, fmt, sens: int,
     abs_str = fmt(abs(delta))
     if base is not None and abs(base) > 1e-9:
         pct = abs(delta) / abs(base) * 100
-        pct_str = f"{pct:.1f}".replace(".", ",")
-        return f"{signe}{abs_str}  ({signe}{pct_str} %)", couleur
+        # « (+0,0 %) » n'apprend rien : pas de pourcentage arrondi a zero
+        # (30/09/2026).
+        if round(pct, 1) > 0:
+            pct_str = f"{pct:.1f}".replace(".", ",")
+            return f"{signe}{abs_str}  ({signe}{pct_str} %)", couleur
     return f"{signe}{abs_str}", couleur
 
 

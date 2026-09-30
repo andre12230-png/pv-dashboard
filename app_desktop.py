@@ -1128,7 +1128,8 @@ class MainWindow(QMainWindow):
                              "Base ligne 5A de la déclaration CA12 / 3517-S"),
             "stats":        ("Statistiques", "Comparaisons annuelles et rendement"),
             "comparaison":  ("Comparer à l'an passé",
-                             "La période choisie face à la même période un an plus tôt"),
+                             "Le mois, l'année ou l'année OA choisis en haut, "
+                             "face à la même période un an plus tôt"),
             "octopus_edf":  (self._libelle_comparaison(court=False),
                              "Votre contrat face au Tarif Bleu d'EDF"),
             "aide":         ("Notice", "Mode d'emploi et glossaire des termes"),

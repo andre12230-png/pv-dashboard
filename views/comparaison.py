@@ -20,7 +20,7 @@ import calculations as calc
 from app_data import AppData
 from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
-from gui_widgets import Card, MplCanvas, SectionTitle
+from gui_widgets import Card, MplCanvas
 from views._base import BaseView
 from views._helpers import (
     METRIQUES,
@@ -112,11 +112,8 @@ class ComparaisonView(BaseView):
             self.layout_inner.addWidget(self._empty_card("Aucune donnée disponible."))
             return
 
-        self.layout_inner.addWidget(SectionTitle(
-            "Comparaison avec l'année précédente",
-            "Compare la période choisie en haut à droite (mois, année ou "
-            "année OA) à la même période un an plus tôt.",
-        ))
+        # Pas de titre de section : le titre et le sous-titre de la page
+        # disent deja ce qu'elle compare (relecture du 30/09/2026).
 
         # Bandeau : le bouton « Une journee precise », et son calendrier
         # quand il est enfonce.
@@ -261,7 +258,10 @@ class ComparaisonView(BaseView):
         entete_n = entete_n or label_n
         entete_n1 = entete_n1 or label_n1
         # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
-        card = Card(titre=titre, sous_titre=f"{label_n} face à {label_n1}")
+        # Au milieu de la phrase, la seconde periode perd sa majuscule :
+        # « Septembre 2026 face à septembre 2025 » (30/09/2026).
+        suite = label_n1[:1].lower() + label_n1[1:]
+        card = Card(titre=titre, sous_titre=f"{label_n} face à {suite}")
         v = card.corps
         v.setContentsMargins(16, 10, 16, 14)
 
@@ -306,7 +306,13 @@ class ComparaisonView(BaseView):
             for c, it in enumerate([it_label, it_n1, it_n, it_var]):
                 table.setItem(r, c, it)
 
-        table.setFixedHeight(36 + len(METRIQUES) * 38)
+        # La hauteur exacte des lignes : a 38 px par ligne, une bande vide
+        # d'une soixantaine de pixels restait dessous (30/09/2026).
+        table.resizeRowsToContents()
+        table.setFixedHeight(
+            table.horizontalHeader().sizeHint().height()
+            + sum(table.rowHeight(r) for r in range(table.rowCount()))
+            + 2 * table.frameWidth())
         v.addWidget(table)
         return card
 
