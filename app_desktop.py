@@ -1125,7 +1125,8 @@ class MainWindow(QMainWindow):
                              else f"Suivi de votre contrat avec "
                                   f"{self.data.acheteur}"),
             "tva":          ("TVA autoconsommation",
-                             "Base ligne 5A de la déclaration CA12 / 3517-S"),
+                             "Livraison à soi-même — ligne 5A de la "
+                             "déclaration CA12 / 3517-S"),
             "stats":        ("Statistiques", "Comparaisons annuelles et rendement"),
             "comparaison":  ("Comparer à l'an passé",
                              "Le mois, l'année ou l'année OA choisis en haut, "

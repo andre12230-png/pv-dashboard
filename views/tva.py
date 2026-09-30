@@ -21,14 +21,13 @@ from PySide6.QtWidgets import (
     QLabel,
     QTableWidget,
     QTableWidgetItem,
-    QVBoxLayout,
 )
 
 import calculations as calc
 from accords import accorde, pluriel
 from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
-from gui_widgets import Card, KpiCard, MplCanvas, SectionTitle, grid_row
+from gui_widgets import Card, KpiCard, MplCanvas, grid_row
 from views._base import BaseView
 from views._helpers import chiffres_sur_barres, fmt_date_fr, fmt_pct
 
@@ -88,12 +87,8 @@ class TvaView(BaseView):
     utilise_periode = False
 
     def populate(self, period: str) -> None:
-        # Sans titre : il redisait celui de la page (30/09/2026).
-        self.layout_inner.addWidget(SectionTitle(
-            "",
-            "Livraison à soi-même — ligne 5A de la déclaration CA12 / 3517-S",
-        ))
-
+        # Ni titre ni phrase d'en-tete : le sous-titre de la page dit deja
+        # « Livraison à soi-même — ligne 5A… » (30/09/2026).
         if self.data.lasm is None:
             self.layout_inner.addWidget(self._empty_card(
                 "Aucune grille tarifaire n'est déclarée pour la TVA.\n\n"
@@ -179,12 +174,24 @@ class TvaView(BaseView):
     # Tableau principal : une ligne par annee civile
     # ------------------------------------------------------------------
     def _tableau_annees(self, lignes: list[dict]) -> None:
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(0, 0, 0, 0)
+        # Titre dans le bandeau, comme les autres cartes. L'avertissement sur
+        # l'annee estimee se lit ici, pres du chiffre, et non plus en derniere
+        # note de bas de page (relecture du 30/09/2026).
+        estimation = ""
+        if any(ligne["estimation"] for ligne in lignes):
+            estimation = (
+                "L'année en cours est une estimation, pas un montant à "
+                "déclarer : elle prolonge l'autoconsommation déjà relevée "
+                "jusqu'au 31/12, d'après la part atteinte à la même date les "
+                "années précédentes. Elle se fige une fois l'année terminée.")
+        card = Card(titre="Détail par année civile", sous_titre=estimation)
+        v = card.corps
+        v.setContentsMargins(0, 8 if estimation else 0, 0, 0)
+        if estimation:
+            v.itemAt(0).widget().setContentsMargins(12, 0, 12, 6)
         cols = ["Année", "Autoconsommation (kWh)", "Part d'autoconsommation",
                 "Prix moyen (€/kWh)", "Base ligne 5A (€)", "TVA due (€)",
-                "Contrôle EDF"]
+                "Écart avec les factures"]
         table = QTableWidget(len(lignes), len(cols))
         table.setHorizontalHeaderLabels(cols)
         table.setAlternatingRowColors(True)
@@ -230,6 +237,11 @@ class TvaView(BaseView):
                     f"{accorde(n, 'sa', 'leur')} production compte en "
                     "autoconsommation, ce qui tire ce chiffre vers le haut.")
                 items[1].setForeground(QColor(self.theme["text_muted"]))
+            if controle is not None and controle["ecart_pct"] is not None:
+                # Meme lecture que dans le tableau du controle, dessous.
+                items[6].setForeground(QColor(
+                    self._couleur_ecart(controle["ecart_pct"])))
+                items[6].setFont(gras)
             if controle is not None:
                 items[6].setToolTip(
                     f"Année de contrat du {fmt_date_fr(controle['debut'])} au "
@@ -246,9 +258,27 @@ class TvaView(BaseView):
         header = table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.Stretch)
         header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        table.setFixedHeight(40 + len(lignes) * 36)
+        self._hauteur_exacte(table)
         v.addWidget(table)
         self.layout_inner.addWidget(card)
+
+    # Sous ce seuil, l'ecart avec les factures est l'ordre de grandeur d'un
+    # decalage d'heure de releve d'index. Au-dela, il y a une vraie difference
+    # a comprendre avant de s'appuyer sur ces chiffres.
+    SEUIL_ECART_PCT = 1.0
+
+    def _couleur_ecart(self, pct: float) -> str:
+        return (self.theme["credit"] if abs(pct) < self.SEUIL_ECART_PCT
+                else self.theme["debit"])
+
+    @staticmethod
+    def _hauteur_exacte(table: QTableWidget) -> None:
+        """La hauteur des lignes, sans bande vide dessous (30/09/2026)."""
+        table.resizeRowsToContents()
+        table.setFixedHeight(
+            table.horizontalHeader().sizeHint().height()
+            + sum(table.rowHeight(r) for r in range(table.rowCount()))
+            + 2 * table.frameWidth())
 
     # ------------------------------------------------------------------
     # Controle de coherence avec les factures EDF OA
@@ -265,7 +295,9 @@ class TvaView(BaseView):
             titre=f"Contrôle avec les factures {self._d_acheteur()}",
             sous_titre="Injection relevée face aux kWh réellement facturés, "
                        "année de contrat par année de contrat "
-                       f"({self.data.cycle_oa})")
+                       f"({self.data.cycle_oa}). Un écart de moins de 1 % "
+                       "est normal (en vert) ; au-delà (en rouge), il reste "
+                       "à comprendre avant de s'appuyer sur ces chiffres.")
         v = card.corps
         v.setContentsMargins(0, 8, 0, 0)
         # Le sous-titre garde un peu d'air a gauche ; le tableau, bord a bord.
@@ -294,13 +326,9 @@ class TvaView(BaseView):
                                  else f"{pct:+.2f} %".replace(".", ",")),
                 QTableWidgetItem(str(ligne["jours_estimes"] or "—")),
             ]
-            # Vert tant que le recoupement tient sous 1 %, l'ordre de grandeur
-            # d'un decalage d'heure de relevé d'index. Au-dela, il y a une
-            # vraie difference a comprendre avant de s'appuyer sur ces chiffres.
+            # Vert sous le seuil, rouge au-dela (voir SEUIL_ECART_PCT).
             if pct is not None:
-                couleur = (self.theme["credit"] if abs(pct) < 1.0
-                           else self.theme["debit"])
-                items[4].setForeground(QColor(couleur))
+                items[4].setForeground(QColor(self._couleur_ecart(pct)))
                 items[4].setFont(gras)
             if ligne["source"]:
                 items[0].setToolTip(ligne["source"])
@@ -314,7 +342,7 @@ class TvaView(BaseView):
         header = table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.Stretch)
         header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        table.setFixedHeight(40 + len(controles) * 36)
+        self._hauteur_exacte(table)
         v.addWidget(table)
         self.layout_inner.addWidget(card)
 
@@ -331,7 +359,8 @@ class TvaView(BaseView):
 
     def _notes(self, lignes: list[dict]) -> None:
         textes = [
-            "Ce qui est taxable : seule l'électricité produite ET consommée "
+            "Ce qui est taxable : seule l'électricité à la fois produite et "
+            "consommée "
             "sur place l'est, au titre de la livraison à soi-même "
             f"(art. 257-II-1-1° du CGI). Les ventes à {self._acheteur()} "
             "sont autoliquidées — l'acheteur déclare leur TVA — et la prime à "
@@ -357,14 +386,11 @@ class TvaView(BaseView):
                 "Attention : certaines années comptent des jours sans relevé "
                 f"d'injection — {detail}. Toute la production de ces jours-là "
                 "est comptée en autoconsommation, ce qui majore la base.")
-        if any(ligne["estimation"] for ligne in lignes):
-            textes.append(
-                "L'année en cours est une ESTIMATION, pas un montant à "
-                "déclarer : elle prolonge l'autoconsommation déjà relevée "
-                "jusqu'au 31/12, d'après la part atteinte à la même date les "
-                "années précédentes. Elle se fige une fois l'année terminée.")
         note = QLabel("\n\n".join("• " + t for t in textes))
         note.setWordWrap(True)
+        # Au plus 780 px, comme la Notice : a 1280 px les lignes faisaient
+        # ~200 signes (30/09/2026).
+        note.setMaximumWidth(780)
         note.setStyleSheet(
             f"color: {self.theme['text_muted']}; font-size: 11px; "
             "padding-top: 6px;")

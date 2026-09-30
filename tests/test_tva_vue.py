@@ -60,6 +60,73 @@ def test_les_deux_tableaux_commencent_par_l_annee_la_plus_recente(vue):
     assert periodes[-1].startswith("01/01/2023")
 
 
+# --- Relecture du 30/09/2026 ----------------------------------------------
+
+def _labels(vue) -> list:
+    from PySide6.QtWidgets import QLabel
+    return vue.findChildren(QLabel)
+
+
+def test_la_page_ne_redit_pas_son_sous_titre(vue):
+    """« … ligne 5A de la déclaration CA12 / 3517-S » figurait sous le titre
+    de la page ET en tete du contenu."""
+    assert not [lbl.text() for lbl in _labels(vue)
+                if "ligne 5A de la déclaration" in lbl.text()]
+
+
+def test_les_notes_se_lisent_en_lignes_courtes(vue):
+    """Des lignes de ~200 signes a 1280 px : pas plus de 780 px de large,
+    comme la Notice. Et plus de mots en capitales pour insister."""
+    notes = [lbl for lbl in _labels(vue) if "Ce qui est taxable" in lbl.text()]
+    assert len(notes) == 1
+    assert notes[0].maximumWidth() <= 780
+    assert "ESTIMATION" not in notes[0].text()
+    assert " ET " not in notes[0].text()
+
+
+def test_l_avertissement_d_estimation_est_pres_du_tableau(vue):
+    """Il etait la derniere des notes de bas de page : il passe en sous-titre
+    du tableau des annees, la ou se lit le chiffre estime."""
+    avertissements = [lbl for lbl in _labels(vue)
+                      if "pas un montant à déclarer" in lbl.text()]
+    assert len(avertissements) == 1
+    assert avertissements[0].objectName() == "SectionSub"
+
+
+def test_le_tableau_des_annees_a_son_bandeau(vue):
+    bandeaux = [lbl.text() for lbl in _labels(vue)
+                if lbl.objectName() == "CardHeader"]
+    assert "DÉTAIL PAR ANNÉE CIVILE" in bandeaux
+
+
+def test_les_tableaux_n_ont_pas_de_bande_vide(vue):
+    for table in vue.findChildren(QTableWidget):
+        attendu = (table.horizontalHeader().sizeHint().height()
+                   + sum(table.rowHeight(r) for r in range(table.rowCount()))
+                   + 2 * table.frameWidth())
+        assert table.height() == attendu
+
+
+def test_le_seuil_du_controle_est_ecrit(vue):
+    """Vert sous 1 %, rouge au-dela : la couleur portait seule le verdict."""
+    assert [lbl for lbl in _labels(vue)
+            if lbl.objectName() == "SectionSub" and "1 %" in lbl.text()]
+
+
+def test_l_ecart_avec_les_factures_se_lit_pareil_dans_les_deux_tableaux(vue):
+    """La colonne s'appelait « Contrôle EDF » (acheteur ecrit en dur) et son
+    pourcentage restait noir, quand le tableau du dessous le colore."""
+    annees, controle = vue.findChildren(QTableWidget)
+    entetes = [annees.horizontalHeaderItem(j).text()
+               for j in range(annees.columnCount())]
+    assert "Contrôle EDF" not in entetes
+    assert entetes[-1] == "Écart avec les factures"
+    # 2024 : 50 kWh releves pour 50 factures, ecart nul, donc vert.
+    ligne_2024 = _premiere_colonne(annees).index("2024")
+    ecart = annees.item(ligne_2024, annees.columnCount() - 1)
+    assert ecart.foreground().color().name() == LIGHT["credit"].lower()
+
+
 def test_le_calcul_reste_chronologique():
     """Seul l'affichage s'inverse : le calcul rend toujours les annees dans
     l'ordre, le graphique et les tuiles en dependent."""
