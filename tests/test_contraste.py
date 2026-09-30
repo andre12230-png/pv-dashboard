@@ -423,3 +423,34 @@ def test_le_diagramme_de_flux_ecrit_lisiblement(monkeypatch):
     assert encres, "le diagramme n'a rien ecrit"
     for trace in set(encres):
         assert contraste(trace, LIGHT["bg_carte"]) >= 4.5, trace
+
+
+# --- Les unites gardent leur ecriture (30/09/2026) ----------------------------
+
+def test_les_capitales_epargnent_les_unites():
+    from gui_widgets import capitales
+    assert (capitales("Rendement spécifique (kWh / kWc / an)")
+            == "RENDEMENT SPÉCIFIQUE (kWh / kWc / AN)")
+    assert capitales("Prix d'achat en €/kWh") == "PRIX D'ACHAT EN €/kWh"
+    assert capitales("Coût mensuel comparé (€)") == "COÛT MENSUEL COMPARÉ (€)"
+
+
+def test_les_titres_en_capitales_gardent_leurs_unites():
+    import os
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtWidgets import QApplication, QLabel
+
+    from gui_widgets import Card, KpiCard, SectionTitle
+    QApplication.instance() or QApplication([])
+    section = SectionTitle("Rendement spécifique (kWh / kWc / an)")
+    assert section.findChild(QLabel, "SectionTitle").text() == \
+        "RENDEMENT SPÉCIFIQUE (kWh / kWc / AN)"
+    assert Card(titre="Production (kWh)").entete.text() == "PRODUCTION (kWh)"
+    assert KpiCard("Production (kWh)", "12").label.text() == "PRODUCTION (kWh)"
+
+
+def test_les_en_tetes_de_tableaux_ne_sont_plus_forces_en_capitales():
+    """Comme Pécule : « Production (kWh) » et non « PRODUCTION (KWH) »."""
+    qss = qss_for(LIGHT)
+    assert "text-transform" not in _bloc(qss, "QHeaderView::section")
+    assert "text-transform" not in _bloc(qss, "QLabel#GridHeader")

@@ -4,6 +4,7 @@ Composants PySide6 reutilisables pour l'appli desktop PV.
 
 from __future__ import annotations
 
+import re
 from typing import Iterable
 
 import matplotlib
@@ -25,6 +26,19 @@ from matplotlib.figure import Figure
 # ----------------------------------------------------------------------
 # Helpers
 # ----------------------------------------------------------------------
+
+# Les unites qu'une mise en capitales ne doit pas toucher : « KWH » ne veut
+# rien dire, le k de kilo s'ecrit en minuscule.
+_UNITES = re.compile(r"(€/kWh|kWh/kWc|kWh|MWh|kWc|Wh|kW)")
+
+
+def capitales(texte: str) -> str:
+    """Le texte en capitales, unites epargnees (30/09/2026) :
+    « Rendement spécifique (kWh / kWc / an) » donne
+    « RENDEMENT SPÉCIFIQUE (kWh / kWc / AN) », et non « (KWH / KWC / AN) »."""
+    return "".join(morceau if _UNITES.fullmatch(morceau) else morceau.upper()
+                   for morceau in _UNITES.split(texte))
+
 
 def _apply_props(widget: QWidget, **props) -> None:
     for k, v in props.items():
@@ -78,7 +92,7 @@ class KpiCard(QFrame):
         layout.setContentsMargins(18, 14, 18, 14)
         layout.setSpacing(4)
 
-        self.label = QLabel(label.upper())
+        self.label = QLabel(capitales(label))
         self.label.setObjectName("KpiLabel")
         self.value = QLabel(value)
         self.value.setObjectName("KpiValue")
@@ -114,7 +128,7 @@ class AccountCard(QFrame):
         outer.setContentsMargins(18, 14, 18, 14)
         outer.setSpacing(4)
 
-        name_l = QLabel(f"{icon_text} {name.upper()}")
+        name_l = QLabel(f"{icon_text} {capitales(name)}")
         name_l.setObjectName("AccountName")
         type_l = QLabel(type_label)
         type_l.setObjectName("AccountType")
@@ -156,7 +170,7 @@ class Card(QFrame):
         exterieur = QVBoxLayout(self)
         exterieur.setContentsMargins(0, 0, 0, 0)
         exterieur.setSpacing(0)
-        self.entete = QLabel(titre.upper())
+        self.entete = QLabel(capitales(titre))
         self.entete.setObjectName("CardHeader")
         # Le bandeau garde sa hauteur quand la carte s'etire (comme dans
         # Recharges VE, composants.carte).
@@ -181,7 +195,7 @@ class SectionTitle(QWidget):
         v = QVBoxLayout(self)
         v.setContentsMargins(0, 4, 0, 8)
         v.setSpacing(2)
-        t = QLabel(title.upper())
+        t = QLabel(capitales(title))
         t.setObjectName("SectionTitle")
         v.addWidget(t)
         if sub:
@@ -454,7 +468,7 @@ class KpiTile(QFrame):
         v.setContentsMargins(20, 16, 20, 16)
         v.setSpacing(8)
 
-        lab = QLabel(label.upper())
+        lab = QLabel(capitales(label))
         lab.setObjectName("TileLabel")
         v.addWidget(lab)
 

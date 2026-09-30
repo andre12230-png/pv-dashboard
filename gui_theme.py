@@ -404,7 +404,6 @@ QLabel#GridHeader {{
     color: {t["text_secondary"]};
     font-size: 11px;
     font-weight: 700;
-    text-transform: uppercase;
     background: transparent;
 }}
 QLabel#GridCell {{
@@ -462,7 +461,6 @@ QHeaderView::section {{
     border-bottom: 1px solid {t["border_strong"]};
     font-weight: 600;
     font-size: 11px;
-    text-transform: uppercase;
 }}
 QTableCornerButton::section {{
     background: {t["bg_panel_alt"]};
