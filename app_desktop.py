@@ -49,6 +49,7 @@ from app_data import AppData
 from erreurs import erreur_en_clair
 from fenetre_reglages import FenetreReglages
 from gui_theme import LIGHT, appliquer_style, mpl_style, qss_for
+from gui_widgets import demander_enregistrement
 from views import (
     MOIS_TOUS,
     PERIOD_ALL,
@@ -678,12 +679,10 @@ class MainWindow(QMainWindow):
         saisie = self.views.get("saisie")
         if saisie is None or not saisie.a_des_saisies_en_cours():
             return True
-        reponse = QMessageBox.question(
+        reponse = demander_enregistrement(
             self, NOM_AFFICHE,
             "Des valeurs tapées dans la Saisie quotidienne ne sont pas "
-            f"encore enregistrées.\n\nLes enregistrer {avant} ?",
-            QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
-            QMessageBox.Cancel)
+            f"encore enregistrées.\n\nLes enregistrer {avant} ?")
         if reponse == QMessageBox.Cancel:
             return False
         if reponse == QMessageBox.Save and not saisie._enregistrer():

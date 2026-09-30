@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
+    QMessageBox,
     QSizePolicy,
     QVBoxLayout,
     QWidget,
@@ -38,6 +39,22 @@ def capitales(texte: str) -> str:
     « RENDEMENT SPÉCIFIQUE (kWh / kWc / AN) », et non « (KWH / KWC / AN) »."""
     return "".join(morceau if _UNITES.fullmatch(morceau) else morceau.upper()
                    for morceau in _UNITES.split(texte))
+
+
+def demander_enregistrement(parent, titre: str, message: str):
+    """Alerte « saisie non enregistree » : Enregistrer / Ne pas enregistrer /
+    Annuler, Annuler par defaut (charte). Rend QMessageBox.Save, Discard ou
+    Cancel.
+
+    La traduction de Qt ecrivait « Ne pas tenir compte » sur le bouton du
+    milieu, moins clair (30/09/2026) : on le renomme."""
+    boite = QMessageBox(QMessageBox.Question, titre, message,
+                        QMessageBox.Save | QMessageBox.Discard
+                        | QMessageBox.Cancel, parent)
+    boite.button(QMessageBox.Discard).setText("Ne pas enregistrer")
+    boite.setDefaultButton(QMessageBox.Cancel)
+    reponse = boite.exec()
+    return QMessageBox.StandardButton(reponse)
 
 
 def _apply_props(widget: QWidget, **props) -> None:

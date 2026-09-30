@@ -108,6 +108,11 @@ class _FauxQMessageBox:
 def dialogue(monkeypatch):
     _FauxQMessageBox.questions = []
     monkeypatch.setattr(app_desktop, "QMessageBox", _FauxQMessageBox)
+    # L'alerte passe par demander_enregistrement (30/09/2026).
+    monkeypatch.setattr(
+        app_desktop, "demander_enregistrement",
+        lambda parent, titre, message: _FauxQMessageBox.question(
+            parent, titre, message))
     return _FauxQMessageBox
 
 
@@ -203,3 +208,23 @@ def test_reglages_sans_saisie_ne_demande_rien(win, dialogue, reglages):
     win._ouvrir_reglages()
     assert reglages.ouvertures == 1
     assert dialogue.questions == []
+
+
+def test_l_alerte_dit_ne_pas_enregistrer(qapp, monkeypatch):
+    """30/09/2026 : la traduction de Qt ecrivait « Ne pas tenir compte ». La
+    charte veut « Enregistrer / Ne pas enregistrer / Annuler », Annuler par
+    defaut."""
+    from gui_widgets import demander_enregistrement
+    vu = {}
+
+    def regarder(self):
+        vu["boutons"] = [b.text().replace("&", "") for b in self.buttons()]
+        vu["defaut_est_annuler"] = (self.defaultButton()
+                                    is self.button(QMessageBox.Cancel))
+        return QMessageBox.Cancel
+    monkeypatch.setattr(QMessageBox, "exec", regarder)
+    reponse = demander_enregistrement(None, "Titre", "Des valeurs tapées…")
+    assert reponse == QMessageBox.Cancel
+    assert "Ne pas enregistrer" in vu["boutons"]
+    assert not any("tenir compte" in b for b in vu["boutons"])
+    assert vu["defaut_est_annuler"]      # « Annuler » une fois traduit
