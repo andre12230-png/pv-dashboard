@@ -24,6 +24,16 @@ MOIS_FR = [
 # Formatage
 # -----------------------------------------------------------------------------
 
+def fmt_kwh_seul(x: float) -> str:
+    """Toujours en kWh, milliers separes : « 3 650,0 kWh ». Pour un tableau
+    ou des valeurs et leurs ecarts se lisent cote a cote : fmt_kwh passe en
+    MWh au-dela de 1 000 kWh et melait « 2,76 MWh » et « -55,0 kWh » sur une
+    meme ligne (30/09/2026)."""
+    if x is None or pd.isna(x):
+        return "—"
+    return f"{x:,.1f}".replace(",", " ").replace(".", ",") + " kWh"
+
+
 def fmt_kwh(x: float) -> str:
     if x is None or pd.isna(x):
         return "—"
@@ -472,9 +482,11 @@ METRIQUES = [
     ("production_kwh",       "Production",          "kwh", +1),
     ("autoconsommation_kwh", "Autoconsommation",    "kwh", +1),
     ("injection_kwh",        "Injection vendue",    "kwh", +1),
-    ("soutirage_kwh",        "Soutirage réseau",    "kwh", -1),
+    # Libelles en clair (30/09/2026 : « Soutirage réseau », « Économies
+    # autoconso ») ; « Consommation du réseau » comme la ligne de fraicheur.
+    ("soutirage_kwh",        "Consommation du réseau", "kwh", -1),
     ("revenu_vente_eur",     "Revenus vente OA",    "eur", +1),
-    ("economie_eur",         "Économies autoconso", "eur", +1),
+    ("economie_eur",         "Économies",           "eur", +1),
     ("cout_reseau_eur",      "Dépenses réseau",     "eur", -1),
     ("bilan_jour_eur",       "Bilan net",           "eur", +1),
 ]

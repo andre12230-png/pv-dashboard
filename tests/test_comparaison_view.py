@@ -147,3 +147,50 @@ def test_le_bouton_journee_existe(vue):
     vue.refresh("month-2026-02")
     assert any(b.text() == "Une journée précise"
                for b in vue.container.findChildren(QPushButton))
+
+
+# --- Relecture du 30/09/2026 -------------------------------------------------
+
+@pytest.fixture
+def vue_annuelle(qapp):
+    """10 unites par jour en 2024 et 2025 : des totaux annuels au-dela de
+    1 000 kWh (3 660 en 2024, annee bissextile, et 3 650 en 2025)."""
+    jours = pd.date_range("2024-01-01", "2025-12-31", freq="D")
+    df = pd.DataFrame({cle: 10.0 for cle, *_ in METRIQUES}, index=jours)
+    df["annee_oa"] = 1
+    v = ComparaisonView(SimpleNamespace(df=df, start_oa=DEBUT_OA), LIGHT)
+    v.refresh("year-2025")
+    yield v
+    v.deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+
+
+def _cellules(vue) -> list[list[str]]:
+    table = vue.container.findChildren(QTableWidget)[0]
+    return [[table.item(r, c).text().strip() if table.item(r, c) else ""
+             for c in range(table.columnCount())]
+            for r in range(table.rowCount())]
+
+
+def test_une_seule_unite_dans_le_tableau(vue_annuelle):
+    """« 2,76 MWh », « 2,71 MWh » puis « -55,0 kWh » sur la meme ligne :
+    tout en kWh, milliers separes."""
+    lignes = _cellules(vue_annuelle)
+    assert not any("MWh" in t for ligne in lignes for t in ligne)
+    production = next(ligne for ligne in lignes if ligne[0] == "Production")
+    assert production[1:3] == ["3 660,0 kWh", "3 650,0 kWh"]
+
+
+def test_libelles_sans_jargon(vue_annuelle):
+    noms = [ligne[0] for ligne in _cellules(vue_annuelle)]
+    assert "Économies" in noms and "Consommation du réseau" in noms
+    assert not any("autoconso" in n.lower().split() or "Soutirage" in n
+                   for n in noms)
+
+
+def test_graphique_sans_n_moins_1_et_chiffres_francais(vue_annuelle):
+    from gui_widgets import MplCanvas
+    ax = vue_annuelle.container.findChildren(MplCanvas)[0].fig.axes[0]
+    legende = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert legende == ["Année 2024", "Année 2025"]
+    assert "3 650" in [t.get_text() for t in ax.texts]

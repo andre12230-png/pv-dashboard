@@ -27,10 +27,11 @@ from views._helpers import (
     METRIQUES_ENERGIE,
     PERIOD_ALL,
     agreger,
+    chiffres_sur_barres,
     filter_period,
     fmt_date_fr,
     fmt_eur,
-    fmt_kwh,
+    fmt_kwh_seul,
     libelle_periode,
     periode_precedente,
     variation,
@@ -280,7 +281,7 @@ class ComparaisonView(BaseView):
             hh.setSectionResizeMode(i, QHeaderView.ResizeToContents)
 
         for r, (cle, label, unite, sens) in enumerate(METRIQUES):
-            fmt = fmt_kwh if unite == "kwh" else fmt_eur
+            fmt = fmt_kwh_seul if unite == "kwh" else fmt_eur
             val_n = agg_n[cle] if agg_n else None
             val_n1 = agg_n1[cle] if agg_n1 else None
 
@@ -329,17 +330,19 @@ class ComparaisonView(BaseView):
         ax = canvas.fig.add_subplot(111)
         x = np.arange(len(metriques))
         w = 0.36
-        b1 = ax.bar(x - w / 2, vals_n1, w, label=f"{label_n1} (N-1)", color="#94a3b8")
-        b2 = ax.bar(x + w / 2, vals_n, w, label=f"{label_n} (N)", color=CC["production"])
+        # Legende sans « (N-1) » / « (N) » : les periodes se nomment
+        # elles-memes (30/09/2026).
+        b1 = ax.bar(x - w / 2, vals_n1, w, label=label_n1, color="#94a3b8")
+        b2 = ax.bar(x + w / 2, vals_n, w, label=label_n, color=CC["production"])
         ax.set_xticks(x)
         ax.set_xticklabels(labels)
         ax.set_ylabel("kWh")
         # Legende au-dessus du trace, comme sur les autres graphiques.
         ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0),
                   frameon=False, ncol=2)
-        ax.bar_label(b1, fmt="%.0f", padding=2)
-        ax.bar_label(b2, fmt="%.0f", padding=2)
-        ax.margins(y=0.15)
+        # Chiffres a la francaise (« 2 765 »), a plat s'ils tiennent : la
+        # regle commune des graphiques.
+        chiffres_sur_barres(ax, [b1, b2])
         canvas.fig.tight_layout()
         v.addWidget(canvas)
         return card
