@@ -187,6 +187,28 @@ def test_annees_oa_les_en_tetes_ne_sont_pas_coupes(win):
     assert entete.sectionResizeMode(colonne + 1) == QHeaderView.Stretch
 
 
+def test_annees_oa_les_numeros_ne_ressemblent_pas_a_des_liens(win):
+    """30/09/2026 : « #1 » s'ecrivait en bleu gras, comme un lien cliquable
+    (meme defaut que les annees de la page TVA)."""
+    from gui_theme import LIGHT
+    win._switch_view("oa")
+    table = win.views["oa"].findChildren(QTableWidget)[0]
+    for i in range(table.rowCount()):
+        couleur = table.item(i, 0).foreground().color().name()
+        assert couleur != LIGHT["primary"].lower()
+
+
+def test_annees_oa_pas_de_bande_vide_sous_le_tableau(win):
+    win._switch_view("oa")
+    table = win.views["oa"].findChildren(QTableWidget)[0]
+    attendu = (table.horizontalHeader().sizeHint().height()
+               + sum(table.rowHeight(r) for r in range(table.rowCount()))
+               + 2 * table.frameWidth())
+    assert table.height() == attendu
+    # Toutes les lignes ont la meme hauteur (« à venir » ne passe pas a la ligne).
+    assert len({table.rowHeight(r) for r in range(table.rowCount())}) == 1
+
+
 def test_milliers_separes_dans_les_annees_oa():
     """« 2354,4 » : les milliers se separent, comme partout ailleurs."""
     from views.oa import nombre_fr

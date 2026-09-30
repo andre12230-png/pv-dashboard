@@ -88,6 +88,16 @@ def nombre_barre(x, decimales: int = 0) -> str:
     return f"{float(x):,.{decimales}f}".replace(",", " ").replace(".", ",")
 
 
+def hauteur_exacte(table) -> None:
+    """Donne a un tableau la hauteur de ses lignes, sans bande vide dessous
+    (30/09/2026 : a 36 px par ligne comptee d'avance, il en restait une)."""
+    table.resizeRowsToContents()
+    table.setFixedHeight(
+        table.horizontalHeader().sizeHint().height()
+        + sum(table.rowHeight(r) for r in range(table.rowCount()))
+        + 2 * table.frameWidth())
+
+
 def du_au(debut, fin) -> str:
     """« du 01/01/2025 au 31/12/2025 » : une periode entre deux dates, sans
     fleche (relecture du 30/09/2026)."""

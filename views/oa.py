@@ -10,7 +10,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QTableWidget,
     QTableWidgetItem,
-    QVBoxLayout,
 )
 
 import calculations as calc
@@ -18,7 +17,7 @@ from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
 from gui_widgets import Card, MplCanvas, SectionTitle
 from views._base import BaseView
-from views._helpers import chiffres_sur_barres, du_au
+from views._helpers import chiffres_sur_barres, du_au, hauteur_exacte
 
 
 def nombre_fr(valeur: float) -> str:
@@ -112,8 +111,9 @@ class OAView(BaseView):
         self.layout_inner.addWidget(chart_card)
 
         # Tableau
-        table_card = Card()
-        tv = QVBoxLayout(table_card)
+        # Titre dans le bandeau, comme les autres cartes (30/09/2026).
+        table_card = Card(titre="Détail par année OA")
+        tv = table_card.corps
         tv.setContentsMargins(0, 0, 0, 0)
         cols = ["Année OA", "Période", "Production\n(kWh)",
                 "Autoconsommation\n(kWh)", "Injection\n(kWh)", "Revenu\n(€)",
@@ -148,8 +148,10 @@ class OAView(BaseView):
                     f"{'+' if r['bilan'] >= 0 else '-'}{abs(r['bilan']):.2f}"
                     .replace(".", ",")),
             ]
+            # En noir : en bleu gras, le numero passait pour un lien
+            # cliquable (30/09/2026).
             couleur_n = (self.theme["text_muted"] if r["n"] == 0
-                         else self.theme["primary"])
+                         else self.theme["text_primary"])
             items[0].setForeground(QColor(couleur_n))
             f = QFont()
             f.setBold(True)
@@ -175,7 +177,10 @@ class OAView(BaseView):
         # « Autoconsommation » en toutes lettres (30/09/2026) : a part egale,
         # sa colonne etait trop etroite et l'en-tete coupe.
         header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        table.setFixedHeight(40 + len(lignes) * 36)
+        # Une ligne par annee, toutes de la meme hauteur : sans cela,
+        # « (180,00 à venir) » etait mesure comme s'il passait a la ligne.
+        table.setWordWrap(False)
+        hauteur_exacte(table)
         tv.addWidget(table)
         self.layout_inner.addWidget(table_card)
 
@@ -197,6 +202,8 @@ class OAView(BaseView):
         if legendes:
             note = QLabel("\n".join(legendes))
             note.setWordWrap(True)
+            # Lignes courtes, comme la Notice et la page TVA.
+            note.setMaximumWidth(780)
             note.setStyleSheet(
                 f"color: {self.theme['text_muted']}; font-size: 11px; padding-top: 6px;")
             self.layout_inner.addWidget(note)
