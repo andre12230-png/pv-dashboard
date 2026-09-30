@@ -126,12 +126,19 @@ class StatsView(BaseView):
         canvas.apply_theme(mpl_style(self.theme))
         ax = canvas.fig.add_subplot(111)
         palette = ["#f59e0b", "#0ea5e9", "#16a34a", "#7c3aed", "#ef4444", "#06b6d4"]
+        # La couleur ne porte jamais seule le sens (charte, 30/09/2026) :
+        # chaque annee a aussi son trait et sa forme de point.
+        traits = ["-", "--", "-.", ":"]
+        points = ["o", "s", "^", "D", "v", "P"]
         for i, col in enumerate(pivot.columns):
-            ax.plot(pivot.index, pivot[col], marker="o", lw=2,
+            ax.plot(pivot.index, pivot[col], lw=2,
+                    ls=traits[i % len(traits)], marker=points[i % len(points)],
                     color=palette[i % len(palette)], label=str(col))
         ax.set_xticks(range(1, 13))
-        ax.set_xticklabels(["Jan", "Fév", "Mar", "Avr", "Mai", "Juin",
-                            "Juil", "Août", "Sep", "Oct", "Nov", "Déc"])
+        # Les mois comme sur les autres pages (« janv. », « sept. »).
+        ax.set_xticklabels(["janv.", "févr.", "mars", "avr.", "mai", "juin",
+                            "juil.", "août", "sept.", "oct.", "nov.", "déc."],
+                           fontsize=9)
         ax.set_ylabel("Production (kWh)")
         # Legende au-dessus du trace : en haut a droite, elle recouvrait les
         # points d'aout et de septembre (audit du 14/09/2026).

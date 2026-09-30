@@ -374,11 +374,19 @@ QLabel#KpiSub {{
 
 /* Tuiles KPI (rangee du haut de "Repartition energie") : meme carte que
    KpiCard mais chiffre nettement plus gros, car c'est le seul contenu. */
+/* Tuiles de la rangee du haut (Repartition energie) : trait de 3 px en
+   haut, comme toute tuile chiffree (charte, 30/09/2026). */
 QFrame[role="tile"] {{
     background: {t["bg_carte"]};
     border: 1px solid {t["cadre"]};
     border-radius: 4px;
+    border-top-width: 3px;
 }}
+QFrame[role="tile"][variant="solaire"] {{ border-top-color: {CHART_COLORS["autoconso"]}; }}
+QFrame[role="tile"][variant="prod"]    {{ border-top-color: {CHART_COLORS["production"]}; }}
+QFrame[role="tile"][variant="credit"]  {{ border-top-color: {t["credit"]}; }}
+QFrame[role="tile"][variant="debit"]   {{ border-top-color: {t["debit"]}; }}
+QFrame[role="tile"][variant="neutral"] {{ border-top-color: {t["text_muted"]}; }}
 QLabel#TileLabel {{
     color: {t["text_muted"]};
     font-size: 11px;

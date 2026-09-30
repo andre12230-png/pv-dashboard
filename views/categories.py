@@ -98,13 +98,13 @@ class CategoriesView(BaseView):
             "Taux d'autoconsommation", fmt_pct(taux),
             self._paire_kwh(auto, prod, "produits"),
             ratio=taux / 100, bar_color=CC["autoconso"],
-            track_color=self.theme["border"]))
+            track_color=self.theme["border"], variant="solaire"))
 
         h.addWidget(KpiTile(
             "Couverture solaire", fmt_pct(couverture),
             self._paire_kwh(auto, conso, "consommés"),
             ratio=couverture / 100, bar_color=CC["autoconso"],
-            track_color=self.theme["border"]))
+            track_color=self.theme["border"], variant="prod"))
 
         h.addWidget(KpiTile(
             self._titre_bilan(period), fmt_eur(bilan, signed=True),
@@ -112,7 +112,8 @@ class CategoriesView(BaseView):
             f"− {fmt_eur(cout)} d'achat",
             # Encre, pas couleur vive : c'est du texte (30/09/2026).
             value_color=COULEUR_FAVORABLE if bilan >= 0 else COULEUR_DEFAVORABLE,
-            track_color=self.theme["border"]))
+            track_color=self.theme["border"],
+            variant="credit" if bilan >= 0 else "debit"))
         return h
 
     def _titre_bilan(self, period: str) -> str:

@@ -126,3 +126,36 @@ def test_statistiques_annuelles_chiffrees(qapp):
     ax = _axes(vue._yearly_bars(annees, set()))[0]
     assert "7 812" in _textes(ax) and "5 300" in _textes(ax)
     assert len(ax.texts) == 8
+
+
+def test_les_courbes_des_annees_se_distinguent_sans_la_couleur(qapp):
+    """30/09/2026 : les courbes 2024, 2025, 2026 ne differaient que par leur
+    couleur (meme trait, memes points ronds). Chaque annee a maintenant son
+    trait et sa forme de point ; les mois s'ecrivent comme ailleurs."""
+    from gui_theme import LIGHT
+    from views.stats import StatsView
+    jours = pd.date_range("2024-01-01", "2026-09-28", freq="D")
+    df = pd.DataFrame({"production_kwh": 10.0}, index=jours)
+    vue = StatsView.__new__(StatsView)
+    vue.theme = LIGHT
+    ax = _axes(vue._monthly_lines(df))[0]
+    courbes = ax.get_lines()
+    assert len(courbes) == 3
+    assert len({c.get_marker() for c in courbes}) == 3
+    assert len({c.get_linestyle() for c in courbes}) == 3
+    assert [t.get_text() for t in ax.get_xticklabels()] == [
+        "janv.", "févr.", "mars", "avr.", "mai", "juin",
+        "juil.", "août", "sept.", "oct.", "nov.", "déc."]
+
+
+def test_les_tuiles_de_la_repartition_ont_leur_trait(qapp):
+    """30/09/2026 : les trois tuiles du haut de la Repartition energie
+    n'avaient pas le trait de 3 px des tuiles chiffrees (charte)."""
+    import re as _re
+
+    from gui_theme import LIGHT, qss_for
+    qss = qss_for(LIGHT)
+    bloc = _re.search(r'QFrame\[role="tile"\]\s*\{([^}]*)\}', qss).group(1)
+    assert "border-top-width: 3px" in bloc
+    for variante in ("solaire", "prod", "credit", "debit"):
+        assert f'QFrame[role="tile"][variant="{variante}"]' in qss

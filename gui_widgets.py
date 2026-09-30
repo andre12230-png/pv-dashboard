@@ -462,10 +462,12 @@ class KpiTile(QFrame):
                  bar_color: str | None = None,
                  track_color: str = "#1f2937",
                  hauteur: int = 140,
+                 variant: str = "neutral",
                  parent: QWidget | None = None):
         super().__init__(parent)
         self.setObjectName("KpiTile")
-        _apply_props(self, role="tile")
+        # variant : couleur du trait de 3 px en haut (charte, 30/09/2026).
+        _apply_props(self, role="tile", variant=variant)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.setFixedHeight(hauteur)
 
