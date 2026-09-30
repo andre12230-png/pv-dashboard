@@ -117,7 +117,7 @@ def _titres_au_dessus(fenetre, vue: str) -> list[str]:
     ("aide", None, ["GLOSSAIRE"]),
     ("stats", None, ["PRODUCTION PAR ANNÉE CIVILE",
                      "PRODUCTION MENSUELLE MULTI-ANNÉES"]),
-    ("oa", None, ["PRODUCTION / AUTOCONSO / INJECTION PAR ANNÉE OA"]),
+    ("oa", None, ["PRODUCTION, AUTOCONSOMMATION ET INJECTION PAR ANNÉE OA"]),
     ("octopus_edf", None, ["COÛT MENSUEL COMPARÉ (€)", "HYPOTHÈSES DU CALCUL"]),
 ])
 def test_les_titres_de_carte_sont_dans_leur_bandeau(fenetre, vue, periode,

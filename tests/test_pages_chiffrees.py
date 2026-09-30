@@ -83,8 +83,8 @@ def test_annees_oa_revenu_egal_injection_fois_prix(win):
     entetes = [table.horizontalHeaderItem(j).text()
                for j in range(table.columnCount())]
     ligne = 0                                      # une seule annee OA
-    inj = table.item(ligne, entetes.index("Inj (kWh)")).text()
-    revenu = table.item(ligne, entetes.index("Revenu (€)")).text()
+    inj = table.item(ligne, entetes.index("Injection\n(kWh)")).text()
+    revenu = table.item(ligne, entetes.index("Revenu\n(€)")).text()
     assert inj == "33,0"
     assert revenu == f"{INJECTION * 0.10:.2f}".replace(".", ",")    # 3,30
 
@@ -170,3 +170,18 @@ def test_la_repartition_ecrit_lisiblement(win):
             if rapport < 4.5:
                 trouves.append(f"{lbl.text()!r} {couleur.group(1)} {rapport:.2f}")
     assert not trouves, trouves
+
+
+def test_annees_oa_les_en_tetes_ne_sont_pas_coupes(win):
+    """30/09/2026 : en toutes lettres, « Autoconsommation » etait coupe
+    (« utoconsommatio ») : les colonnes se partageaient la largeur a parts
+    egales. Elles la partagent toujours (sinon un grand vide, audit du
+    14/09/2026), sauf celle-la, qui prend la largeur de son en-tete."""
+    from PySide6.QtWidgets import QHeaderView
+    win._switch_view("oa")
+    table = win.views["oa"].findChildren(QTableWidget)[0]
+    entete = table.horizontalHeader()
+    noms = [table.horizontalHeaderItem(j).text() for j in range(table.columnCount())]
+    colonne = next(j for j, nom in enumerate(noms) if nom.startswith("Autoconsommation"))
+    assert entete.sectionResizeMode(colonne) == QHeaderView.ResizeToContents
+    assert entete.sectionResizeMode(colonne + 1) == QHeaderView.Stretch

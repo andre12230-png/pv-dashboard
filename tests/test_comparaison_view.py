@@ -183,7 +183,7 @@ def test_une_seule_unite_dans_le_tableau(vue_annuelle):
 
 def test_libelles_sans_jargon(vue_annuelle):
     noms = [ligne[0] for ligne in _cellules(vue_annuelle)]
-    assert "Économies" in noms and "Consommation du réseau" in noms
+    assert "Économies" in noms and "Achat au réseau" in noms
     assert not any("autoconso" in n.lower().split() or "Soutirage" in n
                    for n in noms)
 

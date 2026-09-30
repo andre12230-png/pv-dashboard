@@ -236,7 +236,7 @@ def label_mois_fr(periode_mensuelle) -> str:
 LIBELLES_GRANDEURS = {
     "Prod_Jour": "Production",
     "Inj_Jour": "Injection",
-    "Conso_réseau_Jour": "Consommation du réseau",
+    "Conso_réseau_Jour": "Achat au réseau",
     "Conso_HC": "Heures creuses",
     "Conso_HP": "Heures pleines",
 }
@@ -481,10 +481,10 @@ def filter_period(df: pd.DataFrame, period: str, start_oa) -> pd.DataFrame:
 METRIQUES = [
     ("production_kwh",       "Production",          "kwh", +1),
     ("autoconsommation_kwh", "Autoconsommation",    "kwh", +1),
-    ("injection_kwh",        "Injection vendue",    "kwh", +1),
+    ("injection_kwh",        "Injection",           "kwh", +1),
     # Libelles en clair (30/09/2026 : « Soutirage réseau », « Économies
     # autoconso ») ; « Consommation du réseau » comme la ligne de fraicheur.
-    ("soutirage_kwh",        "Consommation du réseau", "kwh", -1),
+    ("soutirage_kwh",        "Achat au réseau",     "kwh", -1),
     ("revenu_vente_eur",     "Revenus vente OA",    "eur", +1),
     ("economie_eur",         "Économies",           "eur", +1),
     ("cout_reseau_eur",      "Dépenses réseau",     "eur", -1),

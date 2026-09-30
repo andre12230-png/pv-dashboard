@@ -91,11 +91,11 @@ class StatsView(BaseView):
         b1 = ax.bar(xs - 1.5*w, yearly["production_kwh"], w,
                     label="Production", color=CC["production"])
         b2 = ax.bar(xs - 0.5*w, yearly["autoconsommation_kwh"], w,
-                    label="Autoconsommée", color=CC["autoconso"])
+                    label="Autoconsommation", color=CC["autoconso"])
         b3 = ax.bar(xs + 0.5*w, yearly["injection_kwh"], w,
-                    label="Injectée", color=CC["injection"])
+                    label="Injection", color=CC["injection"])
         b4 = ax.bar(xs + 1.5*w, yearly["soutirage_kwh"], w,
-                    label="Achetée", color=CC["soutirage"])
+                    label="Achat au réseau", color=CC["soutirage"])
         # Le chiffre de chaque barre (demande du 15/09/2026).
         chiffres_sur_barres(ax, [b1, b2, b3, b4])
         ax.set_xticks(xs)

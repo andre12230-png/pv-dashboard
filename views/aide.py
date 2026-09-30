@@ -235,9 +235,9 @@ consommation totale est facultative :</p>
 01/09/2026;12,3;5,1;7,2
 02/09/2026;11,8;4,9;6,9</pre>
 <p>Si le fichier ne porte <b>qu'une</b> des deux colonnes, l'application le dit
-et n'importe rien, plutôt que de laisser ces kWh grossir la consommation réseau
-sans prévenir. Et pour quelques jours seulement, les colonnes <b>Conso HC</b> et
-<b>Conso HP</b> se remplissent aussi à la main dans le tableau de l'onglet
+et n'importe rien, plutôt que de laisser ces kWh grossir l'achat au réseau
+sans prévenir. Et pour quelques jours seulement, les colonnes <b>Heures creuses</b>
+et <b>Heures pleines</b> se remplissent aussi à la main dans le tableau de l'onglet
 Saisie quotidienne.</p>
 <p>L'import ne crée <b>jamais de doublon</b> : les jours nouveaux sont ajoutés,
 les dates déjà présentes sont mises à jour (seule la colonne concernée est
@@ -379,10 +379,11 @@ conditions idéales. Votre installation fait {puissance}.</p>
 vous, sans passer par le réseau.</p>
 <p><b>Injection</b> — part de la production envoyée (et vendue) au réseau
 électrique.</p>
-<p><b>Soutirage réseau</b> — électricité achetée au réseau quand les panneaux
-ne suffisent pas (nuit, mauvais temps).</p>
+<p><b>Achat au réseau</b> — électricité achetée au réseau quand les panneaux
+ne suffisent pas (nuit, mauvais temps). Enedis l'appelle « soutirage » ou
+« consommation ».</p>
 <p><b>Consommation totale</b> — tout ce que vous consommez : autoconsommation
-+ soutirage réseau.</p>
++ achat au réseau.</p>
 <p><b>Taux d'autoconsommation</b> — part de la production que vous consommez
 vous-même (autoconsommation ÷ production).</p>
 <p><b>Taux d'autoproduction</b> — part de vos besoins couverte par le solaire

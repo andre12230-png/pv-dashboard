@@ -548,7 +548,7 @@ def test_fraicheur_en_mots_entiers():
         "Prod_Jour": date(2026, 7, 31),
         "Conso_réseau_Jour": date(2026, 7, 20),
     }, AUJOURDHUI)
-    assert "Consommation du réseau il y a 12 jours" in texte
+    assert "Achat au réseau il y a 12 jours" in texte
     assert "Conso " not in texte
     assert "Pensez à importer" in texte
 

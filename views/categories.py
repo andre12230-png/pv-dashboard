@@ -146,10 +146,10 @@ class CategoriesView(BaseView):
 
         gauche = [
             Noeud("production", "Production solaire", prod, CC["production"]),
-            Noeud("soutirage", "Soutirage réseau", sout, CC["soutirage"]),
+            Noeud("soutirage", "Achat au réseau", sout, CC["soutirage"]),
         ]
         droite = [
-            Noeud("injection", "Injection réseau", inj, CC["injection"]),
+            Noeud("injection", "Injection", inj, CC["injection"]),
             Noeud("consommation", "Consommation foyer", conso, CC["primary"]),
         ]
         # Chaque ruban porte son nom et sa couleur. C'est la seule facon de
@@ -232,7 +232,7 @@ class CategoriesView(BaseView):
         # Bloc production : ce que les panneaux fabriquent, et ou ca va.
         poste("Production solaire", CC["production"], prod)
         poste("Autoconsommation", CC["autoconso"], auto, eco)
-        poste("Injection réseau (vente OA)", CC["injection"], inj, revenu)
+        poste("Injection", CC["injection"], inj, revenu)
 
         # Filet de separation : sans lui, on additionne machinalement les six
         # lignes et on croit a une consommation de 1 262 kWh.
@@ -240,7 +240,7 @@ class CategoriesView(BaseView):
         ligne += 1
 
         # Bloc consommation : ce qu'on achete au reseau, et a quoi ca sert.
-        poste("Soutirage réseau (achat)", CC["soutirage"], sout, -cout)
+        poste("Achat au réseau", CC["soutirage"], sout, -cout)
         if ve > 0:
             # Le cout de la recharge vient de l'appli recharges-ve (vraies
             # plages horaires, presque tout en heures creuses) ; le reste du

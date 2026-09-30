@@ -181,7 +181,7 @@ class TvaView(BaseView):
         card = Card()
         v = QVBoxLayout(card)
         v.setContentsMargins(0, 0, 0, 0)
-        cols = ["Année", "Autoconso (kWh)", "Part autoconso",
+        cols = ["Année", "Autoconsommation (kWh)", "Part d'autoconsommation",
                 "Prix moyen (€/kWh)", "Base ligne 5A (€)", "TVA due (€)",
                 "Contrôle EDF"]
         table = QTableWidget(len(lignes), len(cols))

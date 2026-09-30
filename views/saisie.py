@@ -57,7 +57,8 @@ class SaisieView(BaseView):
     COLS = ["Date", "Prod_Jour", "Inj_Jour",
             "Conso_réseau_Jour", "Conso_HC", "Conso_HP"]
     HEADERS_AFFICHE = ["Date", "Production\n(kWh)", "Injection\n(kWh)",
-                       "Conso réseau\n(kWh)", "Conso HC\n(kWh)", "Conso HP\n(kWh)"]
+                       "Achat au réseau\n(kWh)", "Heures creuses\n(kWh)",
+                       "Heures pleines\n(kWh)"]
     NB_LIGNES_AFFICHEES = 30
 
     def __init__(self, data: AppData, theme: dict, parent=None):
@@ -364,9 +365,9 @@ class SaisieView(BaseView):
     LIBELLES_IMPORT = {
         "Prod_Jour": "Production",
         "Inj_Jour": "Injection",
-        "Conso_réseau_Jour": "Conso réseau",
-        "Conso_HC": "Conso heures creuses",
-        "Conso_HP": "Conso heures pleines",
+        "Conso_réseau_Jour": "Achat au réseau",
+        "Conso_HC": "Heures creuses",
+        "Conso_HP": "Heures pleines",
     }
 
     def _importer_fichier(self, source: str, libelle_dialogue: str,

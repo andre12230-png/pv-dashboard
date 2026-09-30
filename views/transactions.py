@@ -57,8 +57,8 @@ class TransactionsView(BaseView):
         # (audit du 14/09/2026).
         colonnes = [
             "Date",
-            "Production\n(kWh)", "Autoconsommée\n(kWh)", "Injectée\n(kWh)",
-            "Achetée au réseau\n(kWh)",
+            "Production\n(kWh)", "Autoconsommation\n(kWh)", "Injection\n(kWh)",
+            "Achat au réseau\n(kWh)",
         ]
         if avec_ve:
             colonnes.append("dont véhicule\n(kWh)")
@@ -150,13 +150,13 @@ class TransactionsView(BaseView):
         legendes = []
         if "releve_incomplet" in df.columns and (df["releve_incomplet"] > 0).any():
             legendes.append(
-                "* sur Injectée / Autoconsommée : pas de relevé d'injection "
+                "* sur Injection / Autoconsommation : pas de relevé d'injection "
                 "Enedis ce jour-là "
                 "— injection estimée d'après vos ratios mensuels observés."
             )
         if "conso_absente" in df.columns and (df["conso_absente"] > 0).any():
             legendes.append(
-                "* sur Achetée au réseau : pas de relevé de consommation ce "
+                "* sur Achat au réseau : pas de relevé de consommation ce "
                 "jour-là (données hors des 36 mois conservés par Enedis, ou "
                 "panne du compteur) — si vous avez déclaré le total de la "
                 "facture de la période (Mes réglages), il est réparti sur ses "

@@ -101,7 +101,7 @@ class SettingsView(BaseView):
                 f"HC {fmt_prix_kwh(p['prix_hc'])}")))
         octopus_rows += [
             ("Plages HC", " / ".join(octopus["plages_hc"])),
-            ("Part HC de l'autoconso",
+            ("Part de l'autoconsommation en heures creuses",
              fmt_pct(self.data.octopus.part_hc_autoconso * 100)
              + ("" if octopus.get("part_hc_autoconso") is not None
                 else " — estimée d'après vos heures creuses")),

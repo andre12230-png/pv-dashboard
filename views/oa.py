@@ -79,7 +79,7 @@ class OAView(BaseView):
 
         # Bar chart
         # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
-        chart_card = Card(titre="Production / Autoconso / Injection par année OA")
+        chart_card = Card(titre="Production, autoconsommation et injection par année OA")
         cv = chart_card.corps
         cv.setContentsMargins(16, 10, 16, 14)
         canvas = MplCanvas(width=8, height=3.2, dpi=100)
@@ -90,7 +90,7 @@ class OAView(BaseView):
         b1 = ax.bar(xs - w, [r["prod"] for r in rows], w,
                     label="Production", color=CC["production"])
         b2 = ax.bar(xs, [r["auto"] for r in rows], w,
-                    label="Autoconso", color=CC["autoconso"])
+                    label="Autoconsommation", color=CC["autoconso"])
         b3 = ax.bar(xs + w, [r["inj"] for r in rows], w,
                     label="Injection", color=CC["injection"])
         ax.set_xticks(xs)
@@ -109,8 +109,9 @@ class OAView(BaseView):
         table_card = Card()
         tv = QVBoxLayout(table_card)
         tv.setContentsMargins(0, 0, 0, 0)
-        cols = ["Année OA", "Période", "Prod (kWh)", "Auto (kWh)", "Inj (kWh)",
-                "Revenu (€)", "Prime (€)", "Éco (€)", "Bilan (€)"]
+        cols = ["Année OA", "Période", "Production\n(kWh)",
+                "Autoconsommation\n(kWh)", "Injection\n(kWh)", "Revenu\n(€)",
+                "Prime\n(€)", "Économies\n(€)", "Bilan\n(€)"]
         # L'annee la plus recente en haut, comme la page TVA (27/09/2026) :
         # c'est elle qu'on vient voir. La periode d'avant-contrat, la plus
         # ancienne, ferme donc le tableau (elle reste hors du graphique, qui
@@ -165,6 +166,9 @@ class OAView(BaseView):
         header.setSectionResizeMode(QHeaderView.Stretch)
         header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        # « Autoconsommation » en toutes lettres (30/09/2026) : a part egale,
+        # sa colonne etait trop etroite et l'en-tete coupe.
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
         table.setFixedHeight(40 + len(lignes) * 36)
         tv.addWidget(table)
         self.layout_inner.addWidget(table_card)
