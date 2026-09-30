@@ -14,7 +14,7 @@ import calculations as calc
 from accords import pluriel
 from gui_widgets import Card, SectionTitle, grid_row
 from views._base import BaseView
-from views._helpers import fmt_date_fr, fmt_eur, fmt_kwc, fmt_pct, fmt_prix_kwh
+from views._helpers import du_au, fmt_date_fr, fmt_eur, fmt_kwc, fmt_pct, fmt_prix_kwh
 
 
 def _duree_ans(n) -> str:
@@ -85,18 +85,18 @@ class SettingsView(BaseView):
         ]
         self.layout_inner.addLayout(grid_row(cards))
 
-        bleu_abo_rows = [(f"Abonn. {fmt_date_fr(t['debut'])} → {fmt_date_fr(t['fin'])}",
+        bleu_abo_rows = [(f"Abonn. {du_au(t['debut'], t['fin'])}",
                           f"{fmt_eur(t['montant'])} / mois")
                          for t in (bleu.get("abonnement_par_periode") or [])]
-        bleu_rows = [(f"kWh {fmt_date_fr(t['debut'])} → {fmt_date_fr(t['fin'])}",
+        bleu_rows = [(f"kWh {du_au(t['debut'], t['fin'])}",
                       fmt_prix_kwh(t["prix"]))
                      for t in (bleu.get("prix_kwh_par_periode") or [])]
         # Une ligne par periode de prix Octopus : les tarifs changent en cours
         # de contrat (revalorisation du 01/08/2026), l'ecran les montre tous.
         octopus_rows = []
         for p in calc.periodes_octopus(octopus):
-            fin = fmt_date_fr(p["fin"]) if p.get("fin") else "en cours"
-            libelle = f"{fmt_date_fr(p['debut'])} → {fin}"
+            libelle = (du_au(p["debut"], p["fin"]) if p.get("fin")
+                       else f"Depuis le {fmt_date_fr(p['debut'])}, en cours")
             octopus_rows.append((libelle, (
                 f"abonnement {fmt_eur(p['abonnement'])}/mois · "
                 f"HP {fmt_prix_kwh(p['prix_hp'])} · "

@@ -88,7 +88,14 @@ def nombre_barre(x, decimales: int = 0) -> str:
     return f"{float(x):,.{decimales}f}".replace(",", " ").replace(".", ",")
 
 
-def chiffres_sur_barres(ax, groupes, decimales: int = 0) -> list[list]:
+def du_au(debut, fin) -> str:
+    """« du 01/01/2025 au 31/12/2025 » : une periode entre deux dates, sans
+    fleche (relecture du 30/09/2026)."""
+    return f"du {fmt_date_fr(debut)} au {fmt_date_fr(fin)}"
+
+
+def chiffres_sur_barres(ax, groupes, decimales: int = 0,
+                        unite: str = "") -> list[list]:
     """Ecrit la valeur au-dessus de chaque barre d'un graphique matplotlib.
 
     `groupes` : les series de barres (ce que renvoie chaque ax.bar). Meme
@@ -101,13 +108,18 @@ def chiffres_sur_barres(ax, groupes, decimales: int = 0) -> list[list]:
     graphique (29/09/2026) : fait une seule fois, sur la taille theorique de
     la figure, il laissait debout des chiffres qui tenaient a l'ecran.
 
+    `unite` (« € ») s'ecrit apres chaque chiffre, quand l'axe ne la dit pas.
+
     Renvoie les textes poses, groupe par groupe (pour en mettre un en gras).
     """
     barres = [b for groupe in groupes for b in groupe]
     if not barres:
         return []
-    etiquettes = [[nombre_barre(b.get_height(), decimales) for b in groupe]
-                  for groupe in groupes]
+    def etiquette(barre) -> str:
+        chiffre = nombre_barre(barre.get_height(), decimales)
+        return f"{chiffre} {unite}" if chiffre and unite else chiffre
+
+    etiquettes = [[etiquette(b) for b in groupe] for groupe in groupes]
     textes = [ax.bar_label(groupe, labels=libelles, padding=2)
               for groupe, libelles in zip(groupes, etiquettes, strict=True)]
     centres = sorted(b.get_x() + b.get_width() / 2 for b in barres)

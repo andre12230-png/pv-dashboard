@@ -41,7 +41,7 @@ def vue(qapp):
         df_brut=df,
         lasm=_lasm_plat(),
         cfg={"sources": {"injection_facturee": factures}},
-        cycle_oa="01/01 → 31/12",
+        cycle_oa="du 01/01 au 31/12",
     )
     v = TvaView(data, LIGHT)
     v.populate("")
@@ -56,8 +56,8 @@ def test_les_deux_tableaux_commencent_par_l_annee_la_plus_recente(vue):
     annees, controle = vue.findChildren(QTableWidget)
     assert _premiere_colonne(annees) == ["2025 (estimé)", "2024", "2023"]
     periodes = _premiere_colonne(controle)
-    assert periodes[0].startswith("01/01/2024")
-    assert periodes[-1].startswith("01/01/2023")
+    assert periodes[0].startswith("du 01/01/2024")
+    assert periodes[-1].startswith("du 01/01/2023")
 
 
 # --- Relecture du 30/09/2026 ----------------------------------------------
@@ -127,6 +127,35 @@ def test_l_ecart_avec_les_factures_se_lit_pareil_dans_les_deux_tableaux(vue):
     assert ecart.foreground().color().name() == LIGHT["credit"].lower()
 
 
+def test_le_graphique_ecrit_des_euros_a_plat(vue):
+    """Le « € » etait couche le long de l'axe, et les chiffres des barres
+    n'avaient pas d'unite."""
+    from matplotlib.colors import to_hex
+
+    from gui_theme import CHART_COLORS
+    from gui_widgets import MplCanvas
+    ax = vue.findChildren(MplCanvas)[0].fig.axes[0]
+    assert ax.get_ylabel() == ""
+    chiffres = [t.get_text() for t in ax.texts if t.get_text()]
+    assert chiffres and all(c.endswith(" €") for c in chiffres)
+    # La TVA due n'est pas de l'autoconsommation : pas son vert.
+    couleurs = {to_hex(b.get_facecolor()) for b in ax.patches}
+    assert to_hex(CHART_COLORS["autoconso"]) not in couleurs
+
+
+def test_les_annees_ne_ressemblent_pas_a_des_liens(vue):
+    """Les annees closes s'ecrivaient en bleu gras, comme un lien cliquable."""
+    annees = vue.findChildren(QTableWidget)[0]
+    for i in range(annees.rowCount()):
+        couleur = annees.item(i, 0).foreground().color().name()
+        assert couleur != LIGHT["primary"].lower()
+
+
+def test_les_periodes_s_ecrivent_du_au(vue):
+    controle = vue.findChildren(QTableWidget)[1]
+    assert _premiere_colonne(controle)[0] == "du 01/01/2024 au 31/12/2024"
+
+
 def test_le_calcul_reste_chronologique():
     """Seul l'affichage s'inverse : le calcul rend toujours les annees dans
     l'ordre, le graphique et les tuiles en dependent."""
@@ -143,7 +172,7 @@ def test_un_autre_acheteur_est_nomme_partout(qapp):
         df_brut=df, lasm=_lasm_plat(),
         cfg={"sources": {"injection_facturee": [
             {"debut": "2024-01-01", "fin": "2024-12-31", "total_kwh": 50}]}},
-        cycle_oa="01/01 → 31/12", acheteur="Solaire Coop",
+        cycle_oa="du 01/01 au 31/12", acheteur="Solaire Coop",
         d_acheteur="de Solaire Coop")
     v = TvaView(data, LIGHT)
     v.populate("")

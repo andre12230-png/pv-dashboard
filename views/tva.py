@@ -25,11 +25,10 @@ from PySide6.QtWidgets import (
 
 import calculations as calc
 from accords import accorde, pluriel
-from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
 from gui_widgets import Card, KpiCard, MplCanvas, grid_row
 from views._base import BaseView
-from views._helpers import chiffres_sur_barres, fmt_date_fr, fmt_pct
+from views._helpers import chiffres_sur_barres, du_au, fmt_date_fr, fmt_pct
 
 
 def _nombre(x: float, decimales: int = 1) -> str:
@@ -152,7 +151,9 @@ class TvaView(BaseView):
         hauteurs = [ligne["tva_due_eur"] for ligne in lignes]
         # L'annee en cours est projetee : hachures et transparence pour qu'on
         # ne la lise pas comme un montant acquis.
-        couleurs = [CC["autoconso"] for _ in lignes]
+        # Le bleu de la charte, et non le vert de l'autoconsommation : la
+        # TVA due n'est pas un flux d'energie (30/09/2026).
+        couleurs = [self.theme["primary"] for _ in lignes]
         barres = ax.bar(xs, hauteurs, 0.55, color=couleurs)
         for barre, ligne in zip(barres, lignes, strict=True):
             if ligne["estimation"]:
@@ -160,12 +161,13 @@ class TvaView(BaseView):
                 barre.set_hatch("//")
         # Le montant de chaque annee au-dessus de sa barre (demande du
         # 15/09/2026).
-        chiffres_sur_barres(ax, [barres])
+        # L'unite sur chaque chiffre : le « € » couche le long de l'axe se
+        # lisait mal.
+        chiffres_sur_barres(ax, [barres], unite="€")
         ax.set_xticks(xs)
         ax.set_xticklabels([
             f"{ligne['annee']}\n(estimé)" if ligne["estimation"]
             else str(ligne["annee"]) for ligne in lignes])
-        ax.set_ylabel("€")
         canvas.fig.tight_layout()
         v.addWidget(canvas)
         self.layout_inner.addWidget(card)
@@ -222,7 +224,7 @@ class TvaView(BaseView):
             items[0].setFont(gras)
             items[0].setForeground(QColor(
                 self.theme["text_muted"] if ligne["estimation"]
-                else self.theme["primary"]))
+                else self.theme["text_primary"]))
             items[4].setFont(gras)
             items[5].setFont(gras)
             if ligne["estimation"]:
@@ -317,8 +319,7 @@ class TvaView(BaseView):
         for i, ligne in enumerate(reversed(controles)):
             pct = ligne["ecart_pct"]
             items = [
-                QTableWidgetItem(f"{fmt_date_fr(ligne['debut'])} → "
-                                 f"{fmt_date_fr(ligne['fin'])}"),
+                QTableWidgetItem(du_au(ligne["debut"], ligne["fin"])),
                 QTableWidgetItem(_nombre(ligne["releve_kwh"])),
                 QTableWidgetItem(_nombre(ligne["facture_kwh"], 0)),
                 QTableWidgetItem(f"{ligne['ecart_kwh']:+.1f}".replace(".", ",")),

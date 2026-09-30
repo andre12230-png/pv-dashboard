@@ -18,7 +18,7 @@ from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
 from gui_widgets import Card, MplCanvas, SectionTitle
 from views._base import BaseView
-from views._helpers import chiffres_sur_barres
+from views._helpers import chiffres_sur_barres, du_au
 
 
 def nombre_fr(valeur: float) -> str:
@@ -43,8 +43,7 @@ class OAView(BaseView):
                 # bien que le tableau ne totalisait pas toute la production.
                 avant_contrat = {
                     "n": 0,
-                    "periode": f"{g.index.min().strftime('%d/%m/%Y')} → "
-                               f"{g.index.max().strftime('%d/%m/%Y')}",
+                    "periode": du_au(g.index.min(), g.index.max()),
                     "prod": g["production_kwh"].sum(),
                     "auto": g["autoconsommation_kwh"].sum(),
                     "inj":  g["injection_kwh"].sum(),
@@ -63,7 +62,7 @@ class OAView(BaseView):
             prime = prime_an if versee else 0.0
             rows.append({
                 "n": int(n_oa),
-                "periode": f"{d.strftime('%d/%m/%Y')} → {f.strftime('%d/%m/%Y')}",
+                "periode": du_au(d, f),
                 "prod": g["production_kwh"].sum(),
                 "auto": g["autoconsommation_kwh"].sum(),
                 "inj":  g["injection_kwh"].sum(),

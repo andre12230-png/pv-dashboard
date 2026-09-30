@@ -114,16 +114,16 @@ class AppData:
 
     @property
     def cycle_oa(self) -> str:
-        """Bornes de l'annee OA, jour et mois : '20/05 → 19/05'.
+        """Bornes de l'annee OA, jour et mois : 'du 20/05 au 19/05'.
 
         Elle commence a la date de debut du contrat et finit la veille, un an
-        plus tard. Les ecrans affichaient en dur '28/06 → 27/06', le cycle du
+        plus tard. Les ecrans affichaient en dur '28/06 -> 27/06', le cycle du
         contrat de l'auteur, a tous les utilisateurs.
         """
         if self.start_oa is None:
             return ""
         veille = self.start_oa - timedelta(days=1)
-        return f"{self.start_oa:%d/%m} → {veille:%d/%m}"
+        return f"du {self.start_oa:%d/%m} au {veille:%d/%m}"
 
     @property
     def date_mise_en_service(self) -> str:

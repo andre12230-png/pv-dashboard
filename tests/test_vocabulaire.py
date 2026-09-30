@@ -106,6 +106,15 @@ def test_pas_de_tiret_court_comme_separateur():
     assert not trouves, "\n".join(trouves)
 
 
+def test_pas_de_fleche_entre_deux_dates():
+    """« 01/01/2025 → 31/12/2025 » : on ecrit « du 01/01/2025 au 31/12/2025 »,
+    comme partout ailleurs (relecture de la page TVA, 30/09/2026). La touche
+    du raccourci « Ctrl+→ » n'est pas concernee."""
+    trouves = [f"{ou} {texte.strip()[:60]!r}" for ou, texte in _textes_affiches()
+               if " → " in texte]
+    assert not trouves, "\n".join(trouves)
+
+
 def test_pas_de_n_moins_1():
     """« N-1 : 254,0 kWh » : on dit « l'an passé »."""
     trouves = [f"{ou} {texte.strip()[:60]!r}" for ou, texte in _textes_affiches()
