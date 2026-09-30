@@ -524,8 +524,8 @@ garde une copie quotidienne dans `backups/` (les 30 dernieres).
 Le cycle OA commence a la **date de debut de votre contrat** et dure un an.
 Par exemple, pour un contrat qui debute le 1er juillet 2024 :
 
-- Annee OA #1 : 01/07/2024 → 30/06/2025
-- Annee OA #2 : 01/07/2025 → 30/06/2026
+- Annee OA #1 : du 01/07/2024 au 30/06/2025
+- Annee OA #2 : du 01/07/2025 au 30/06/2026
 - etc.
 
 EDF OA verse une fois par an la somme correspondant a la production
