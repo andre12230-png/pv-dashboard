@@ -17,7 +17,7 @@ from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
 from gui_widgets import Card, MplCanvas, SectionTitle
 from views._base import BaseView
-from views._helpers import chiffres_sur_barres, du_au, hauteur_exacte
+from views._helpers import chiffres_sur_barres, du_au, hauteur_exacte, poser_texte_court
 
 
 def nombre_fr(valeur: float) -> str:
@@ -177,6 +177,9 @@ class OAView(BaseView):
         # « Autoconsommation » en toutes lettres (30/09/2026) : a part egale,
         # sa colonne etait trop etroite et l'en-tete coupe.
         header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        # La prime aussi : « (180,00 à venir) » est plus long qu'un montant
+        # et sortait coupe (« (180,00 à v… »).
+        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
         # Une ligne par annee, toutes de la meme hauteur : sans cela,
         # « (180,00 à venir) » etait mesure comme s'il passait a la ligne.
         table.setWordWrap(False)
@@ -201,11 +204,9 @@ class OAView(BaseView):
             )
         if legendes:
             note = QLabel("\n".join(legendes))
-            note.setWordWrap(True)
             # Lignes courtes, comme la Notice et la page TVA.
-            note.setMaximumWidth(780)
             note.setStyleSheet(
                 f"color: {self.theme['text_muted']}; font-size: 11px; padding-top: 6px;")
-            self.layout_inner.addWidget(note)
+            poser_texte_court(self.layout_inner, note)
         self.layout_inner.addStretch(1)
 

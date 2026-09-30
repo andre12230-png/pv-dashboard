@@ -271,9 +271,9 @@ Pour **effacer une journee**, videz toutes ses cases et enregistrez :
 l'app demande confirmation, puis retire la ligne du fichier (une ligne
 vide ferait un jour fantome a 0 kWh dans les statistiques).
 
-### Importer conso et injection
+### Importer achat au reseau et injection
 
-Le bouton **Importer conso / injection...** (onglet Saisie quotidienne)
+Le bouton **Importer achat au reseau / injection...** (onglet Saisie quotidienne)
 charge un releve quotidien de ce que le compteur a echange avec le reseau.
 **Aucune obligation d'etre chez les memes fournisseurs que l'auteur** : tout
 export "date + valeur" passe (voir plus bas). Les trois sources habituelles :

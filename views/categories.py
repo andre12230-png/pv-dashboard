@@ -318,7 +318,7 @@ class CategoriesView(BaseView):
         v.setSpacing(0)
 
         if precedente is None:
-            v.addWidget(SectionTitle("Comparaison avec l'année précédente"))
+            v.addWidget(SectionTitle("Comparaison avec l'an passé"))
             v.addWidget(self._empty_card(
                 "Choisissez un mois ou une année dans le menu déroulant "
                 "en haut pour comparer avec la même période l'an dernier."))
@@ -343,7 +343,7 @@ class CategoriesView(BaseView):
 
         titre = (f"{libelle_periode(period)}{suffixe_n} face à "
                  f"{libelle_periode(precedente).lower()}{suffixe_n1}")
-        v.addWidget(SectionTitle("Comparaison avec l'année précédente", titre))
+        v.addWidget(SectionTitle("Comparaison avec l'an passé", titre))
 
         if agg_n1 is None:
             v.addWidget(self._empty_card(

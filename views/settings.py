@@ -42,11 +42,14 @@ class SettingsView(BaseView):
         # Sans titre : il redisait celui de la page (30/09/2026).
         self.layout_inner.addWidget(SectionTitle(
             "",
-            "Bouton « Modifier mes réglages », ou, pour tout le reste, "
-            f"config.yaml avec le Bloc-notes (dans {dossier}).",
+            "Pour changer ces valeurs, cliquez sur « Modifier mes "
+            "réglages ». Les réglages plus rares se changent dans le fichier "
+            f"config.yaml, avec le Bloc-notes (dossier {dossier}).",
         ))
         if callable(self.ouvrir_reglages):
             bouton = QPushButton("Modifier mes réglages")
+            # La meme allure que les boutons de la Saisie (30/09/2026).
+            bouton.setObjectName("ActionBtn")
             bouton.setCursor(Qt.PointingHandCursor)
             bouton.clicked.connect(self.ouvrir_reglages)
             self.layout_inner.addWidget(bouton, alignment=Qt.AlignLeft)

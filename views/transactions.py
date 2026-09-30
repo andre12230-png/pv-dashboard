@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QTableWidget,
     QTableWidgetItem,
+    QVBoxLayout,
 )
 
 from accords import pluriel
@@ -53,14 +54,18 @@ class TransactionsView(BaseView):
             self.layout_inner.addStretch(1)
             return
 
-        # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
-        card = Card(titre="Relevés journaliers",
-                    sous_titre=f"{pluriel(len(df), 'jour')} — une ligne par "
-                               "journée de production")
-        v = card.corps
+        # Pas de bandeau : il redisait le titre de la page (30/09/2026). La
+        # phrase qui compte les jours reste, en tete de la carte.
+        card = Card()
+        v = QVBoxLayout(card)
         v.setContentsMargins(0, 8, 0, 0)
-        # Le sous-titre garde un peu d'air a gauche ; le tableau, bord a bord.
-        v.itemAt(0).widget().setContentsMargins(12, 0, 12, 6)
+        v.setSpacing(6)
+        compte = QLabel(f"{pluriel(len(df), 'jour')} — une ligne par "
+                        "journée de production")
+        compte.setObjectName("SectionSub")
+        # Un peu d'air a gauche ; le tableau, lui, va bord a bord.
+        compte.setContentsMargins(12, 0, 12, 6)
+        v.addWidget(compte)
 
         # Colonne vehicule seulement si la source est configuree et alimentee.
         avec_ve = ("recharge_ve_kwh" in df.columns
@@ -88,7 +93,12 @@ class TransactionsView(BaseView):
         for i in range(len(colonnes)):
             header.setSectionResizeMode(i, QHeaderView.Stretch)
 
-        ALIGN_CENTER = Qt.AlignHCenter | Qt.AlignVCenter
+        # Nombres a droite, comme dans la Saisie et la charte (ils etaient
+        # centres, 30/09/2026) ; la date a gauche. Les en-tetes suivent.
+        ALIGN_DROITE = Qt.AlignRight | Qt.AlignVCenter
+        ALIGN_GAUCHE = Qt.AlignLeft | Qt.AlignVCenter
+        for i in range(1, len(colonnes)):
+            table.horizontalHeaderItem(i).setTextAlignment(ALIGN_DROITE)
 
         def _num_item(value: float, decimals: int = 1,
                       estime: bool = False) -> QTableWidgetItem:
@@ -97,7 +107,7 @@ class TransactionsView(BaseView):
             # d'un calcul plutot que relevee.
             txt = f"{value:.{decimals}f}".replace(".", ",") + (" *" if estime else "")
             it = _ItemTriable(txt, float(value))
-            it.setTextAlignment(ALIGN_CENTER)
+            it.setTextAlignment(ALIGN_DROITE)
             if estime:
                 it.setToolTip("Valeur estimée : ce jour n'a pas de relevé.")
             return it
@@ -114,7 +124,7 @@ class TransactionsView(BaseView):
             sout_estime = float(r.get("conso_absente", 0) or 0) > 0
 
             date_item = _ItemTriable(d.strftime("%d/%m/%Y"), d)
-            date_item.setTextAlignment(ALIGN_CENTER)
+            date_item.setTextAlignment(ALIGN_GAUCHE)
 
             prod_item = _num_item(r["production_kwh"])
             auto_item = _num_item(r["autoconsommation_kwh"], estime=inj_estimee)
@@ -123,19 +133,19 @@ class TransactionsView(BaseView):
 
             credit_item = _ItemTriable(
                 f"{credit:,.2f}".replace(",", " ").replace(".", ","), float(credit))
-            credit_item.setTextAlignment(ALIGN_CENTER)
+            credit_item.setTextAlignment(ALIGN_DROITE)
             if credit > 0:
                 credit_item.setForeground(QColor(self.theme["credit"]))
 
             debit_item = _ItemTriable(
                 f"{debit:,.2f}".replace(",", " ").replace(".", ","), float(debit))
-            debit_item.setTextAlignment(ALIGN_CENTER)
+            debit_item.setTextAlignment(ALIGN_DROITE)
             if debit > 0:
                 debit_item.setForeground(QColor(self.theme["debit"]))
 
             texte, couleur = texte_bilan(bilan)
             bilan_item = _ItemTriable(texte, float(bilan))
-            bilan_item.setTextAlignment(ALIGN_CENTER)
+            bilan_item.setTextAlignment(ALIGN_DROITE)
             bilan_item.setForeground(QColor(self.theme[couleur]))
             f = QFont()
             f.setBold(True)
@@ -217,7 +227,8 @@ class TransactionsView(BaseView):
         gras.setBold(True)
         for c, texte in enumerate(valeurs):
             it = QTableWidgetItem(texte)
-            it.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            it.setTextAlignment((Qt.AlignLeft if c == 0 else Qt.AlignRight)
+                                | Qt.AlignVCenter)
             it.setFont(gras)
             ligne.setItem(0, c, it)
         dernier = ligne.item(0, len(valeurs) - 1)

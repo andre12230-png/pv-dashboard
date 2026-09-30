@@ -28,7 +28,7 @@ from accords import accorde, pluriel
 from gui_theme import mpl_style
 from gui_widgets import Card, KpiCard, MplCanvas, grid_row
 from views._base import BaseView
-from views._helpers import chiffres_sur_barres, du_au, fmt_date_fr, fmt_pct
+from views._helpers import chiffres_sur_barres, du_au, fmt_date_fr, fmt_pct, poser_texte_court
 
 
 def _nombre(x: float, decimales: int = 1) -> str:
@@ -388,11 +388,9 @@ class TvaView(BaseView):
                 f"d'injection — {detail}. Toute la production de ces jours-là "
                 "est comptée en autoconsommation, ce qui majore la base.")
         note = QLabel("\n\n".join("• " + t for t in textes))
-        note.setWordWrap(True)
         # Au plus 780 px, comme la Notice : a 1280 px les lignes faisaient
         # ~200 signes (30/09/2026).
-        note.setMaximumWidth(780)
         note.setStyleSheet(
             f"color: {self.theme['text_muted']}; font-size: 11px; "
             "padding-top: 6px;")
-        self.layout_inner.addWidget(note)
+        poser_texte_court(self.layout_inner, note)

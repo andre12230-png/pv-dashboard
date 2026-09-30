@@ -947,7 +947,7 @@ def parse_enphase_fichier(path: str, notes: list | None = None
                 "(une ligne par jour, des colonnes « Production PV », "
                 "« Exportation », « Importation »).\n\nS'il vient de votre "
                 "gestionnaire de réseau, importez-le avec le bouton "
-                "« Importer conso / injection… ».")
+                "« Importer achat au réseau / injection… ».")
         return rapport
 
     if path.lower().endswith(".zip"):

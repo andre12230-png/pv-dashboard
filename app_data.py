@@ -79,6 +79,23 @@ class AppData:
         """L'offre servant de point de comparaison : ('EDF', 'EDF Tarif Bleu')."""
         return self._nom_offre("comparaison_edf", "Tarif de référence")
 
+    # Au-dela de cette longueur, deux noms de fournisseurs ne tiennent plus
+    # dans le menu (largeur fixe de 212 px) : on retombe sur un libelle
+    # generique plutot que sur un texte coupe au milieu.
+    LARGEUR_MAX_NAV = 22
+
+    @property
+    def libelle_comparaison(self) -> str:
+        """Le nom de la page qui compare le contrat a l'offre de reference :
+        « Octopus ou EDF » chez l'auteur. Le meme dans le menu, en titre de la
+        page et dans la Notice (30/09/2026 : le menu disait « Mon fournisseur
+        ou EDF » et la page « Mon offre HP/HC ou EDF Tarif Bleu »).
+
+        « ou » et non « vs » (anglicisme, relecture du 29/09/2026)."""
+        libelle = f"{self.fournisseur[0]} ou {self.fournisseur_reference[0]}"
+        return (libelle if len(libelle) <= self.LARGEUR_MAX_NAV
+                else "Comparaison tarifs")
+
     @property
     def meme_fournisseur_que_la_reference(self) -> bool:
         """Vrai quand le contrat en cours est chez le fournisseur de reference

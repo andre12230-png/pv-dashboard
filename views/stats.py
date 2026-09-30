@@ -65,7 +65,7 @@ class StatsView(BaseView):
                 g = df[df.index.year == int(y)]
                 cards.append(KpiCard(
                     f"Année {int(y)} — partielle", f"{int(v)}",
-                    f"du {g.index.min().strftime('%d/%m')} "
+                    f"kWh/kWc — du {g.index.min().strftime('%d/%m')} "
                     f"au {g.index.max().strftime('%d/%m')} — hors moyenne",
                     "neutral"))
             else:
@@ -79,7 +79,9 @@ class StatsView(BaseView):
 
     def _yearly_bars(self, yearly: pd.DataFrame, partielles: set[int]) -> QFrame:
         # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
-        card = Card(titre="Production par année civile")
+        # « Énergie » : le graphique montre quatre grandeurs, pas la seule
+        # production (30/09/2026).
+        card = Card(titre="Énergie par année civile")
         v = card.corps
         v.setContentsMargins(16, 10, 16, 14)
         canvas = MplCanvas(width=5, height=3.2, dpi=100)
@@ -114,7 +116,7 @@ class StatsView(BaseView):
 
     def _monthly_lines(self, df: pd.DataFrame) -> QFrame:
         # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
-        card = Card(titre="Production mensuelle multi-années")
+        card = Card(titre="Production mensuelle, année par année")
         v = card.corps
         v.setContentsMargins(16, 10, 16, 14)
         df_m = df.copy()

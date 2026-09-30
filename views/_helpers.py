@@ -88,6 +88,26 @@ def nombre_barre(x, decimales: int = 0) -> str:
     return f"{float(x):,.{decimales}f}".replace(",", " ").replace(".", ",")
 
 
+def poser_texte_court(colonne, texte, largeur: int = 780) -> None:
+    """Pose dans une colonne un texte qui passe a la ligne, limite a
+    `largeur` pixels (~110 signes : au-dela, l'oeil perd la ligne).
+
+    La limite seule (`setMaximumWidth`) coupait le texte : pose tel quel dans
+    une colonne plus large que lui, il recevait la hauteur calculee pour la
+    largeur de la colonne, donc pour moins de lignes (Notice, 30/09/2026).
+    Dans une ligne, avec un vide a sa droite, Qt calcule sa hauteur pour sa
+    largeur reelle."""
+    from PySide6.QtWidgets import QHBoxLayout
+    texte.setWordWrap(True)
+    texte.setMaximumWidth(largeur)
+    ligne = QHBoxLayout()
+    ligne.setContentsMargins(0, 0, 0, 0)
+    ligne.setSpacing(0)
+    ligne.addWidget(texte, 1)
+    ligne.addStretch(0)
+    colonne.addLayout(ligne)
+
+
 def hauteur_exacte(table) -> None:
     """Donne a un tableau la hauteur de ses lignes, sans bande vide dessous
     (30/09/2026 : a 36 px par ligne comptee d'avance, il en restait une)."""
@@ -540,7 +560,9 @@ def variation(delta: float, base: float | None, fmt, sens: int,
     couleur = COULEUR_FAVORABLE if favorable else COULEUR_DEFAVORABLE
     signe = "+" if delta > 0 else "-"
     abs_str = fmt(abs(delta))
-    if base is not None and abs(base) > 1e-9:
+    # Pas de pourcentage sur une base negative (30/09/2026) : « -73,3 % »
+    # pour un bilan passe de -9,86 € a -17,08 € ne se comprend pas.
+    if base is not None and base > 1e-9:
         pct = abs(delta) / abs(base) * 100
         # « (+0,0 %) » n'apprend rien : pas de pourcentage arrondi a zero
         # (30/09/2026).

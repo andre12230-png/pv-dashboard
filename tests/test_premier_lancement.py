@@ -191,7 +191,8 @@ def test_avec_vehicule_la_rubrique_voiture_reste(qapp):
         cfg={}, df=pd.DataFrame(columns=["recharge_ve_kwh"]),
         start_oa="2024-01-01", dossier_donnees="", puissance_kwc=6.0,
         date_mise_en_service="2024-01-01",
-        fournisseur=("F", "Offre F"), fournisseur_reference=("EDF", "Tarif Bleu")))
+        fournisseur=("F", "Offre F"), fournisseur_reference=("EDF", "Tarif Bleu"),
+        libelle_comparaison="F ou EDF"))
     vue.data.cfg = {"installation": {"cout_total_eur": 1000.0}}
     champs = AideView._champs_installation(vue)
     assert "La part de la voiture" in champs["rubrique_voiture"]

@@ -246,6 +246,9 @@ class SectionTitle(QWidget):
         if sub:
             s = QLabel(sub)
             s.setObjectName("SectionSub")
+            # La phrase passe a la ligne : sur une seule, une phrase un peu
+            # longue elargissait la page au-dela de la fenetre (30/09/2026).
+            s.setWordWrap(True)
             v.addWidget(s)
 
 

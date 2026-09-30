@@ -13,12 +13,12 @@ import re
 
 import pandas as pd
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout
 
 import calculations as calc
 from gui_widgets import Card
 from views._base import BaseView
-from views._helpers import fmt_date_fr, fmt_kwc
+from views._helpers import fmt_date_fr, fmt_kwc, poser_texte_court
 
 # Rubrique affichee seulement si un fichier de recharges du vehicule
 # est lu : les autres utilisateurs n'ont rien a en faire.
@@ -177,8 +177,8 @@ négatives sont refusées elles aussi.</p>
 l'application demande confirmation, puis retire la ligne du fichier. L'ancienne
 version reste dans le <code>.bak</code>.</p>
 
-<h3 style="color:#1F3A6B">Importer conso et injection</h3>
-<p>Le bouton <b>Importer conso / injection…</b> (onglet Saisie quotidienne)
+<h3 style="color:#1F3A6B">Importer achat au réseau et injection</h3>
+<p>Le bouton <b>Importer achat au réseau / injection…</b> (onglet Saisie quotidienne)
 charge d'un coup ce que votre compteur a échangé avec le réseau. Deux fichiers
 sont utiles, et se complètent :</p>
 <ul>
@@ -509,7 +509,7 @@ class AideView(BaseView):
         lbl.setTextInteractionFlags(Qt.LinksAccessibleByMouse)
         lbl.setStyleSheet("font-size: 13px; line-height: 160%;")
         lbl.linkActivated.connect(self._aller_a)
-        self._poser_texte(v, lbl)
+        poser_texte_court(v, lbl)
         return card
 
     def _aller_a(self, lien: str) -> None:
@@ -580,8 +580,7 @@ class AideView(BaseView):
                 "(jamais modifié)." if a_vehicule else ""),
             "rubrique_voiture": RUBRIQUE_VOITURE if a_vehicule else "",
             # Nom de la vue de comparaison, qui porte celui des deux offres.
-            "comparaison": f"{self.data.fournisseur[1]} ou "
-                           f"{self.data.fournisseur_reference[1]}",
+            "comparaison": self.data.libelle_comparaison,
         }
 
     def _carte(self, html: str, titre: str = "",
@@ -597,21 +596,5 @@ class AideView(BaseView):
         lbl.setMaximumWidth(780)
         lbl.setStyleSheet(
             f"color: {self.theme['text_secondary']}; font-size: 13px;")
-        self._poser_texte(v, lbl)
+        poser_texte_court(v, lbl)
         return card
-
-    @staticmethod
-    def _poser_texte(colonne, lbl: QLabel) -> None:
-        """Pose un texte a largeur limitee sans qu'il soit coupe.
-
-        Pose tel quel dans la colonne de la carte, plus large que lui, le
-        texte recevait la hauteur calculee pour la largeur de la carte : moins
-        de lignes qu'il n'en faut a 780 px, et la fin de la rubrique
-        disparaissait (30/09/2026). Dans une ligne, avec un vide a sa droite,
-        Qt calcule sa hauteur pour sa largeur reelle."""
-        ligne = QHBoxLayout()
-        ligne.setContentsMargins(0, 0, 0, 0)
-        ligne.setSpacing(0)
-        ligne.addWidget(lbl, 1)
-        ligne.addStretch(0)
-        colonne.addLayout(ligne)

@@ -22,6 +22,7 @@ from views._helpers import (
     fmt_eur,
     fmt_prix_kwh,
     nombre_de_jours,
+    poser_texte_court,
 )
 
 
@@ -77,8 +78,9 @@ class OctopusEdfView(BaseView):
 
         self.layout_inner.addWidget(SectionTitle("Coût sur la période"))
         self.layout_inner.addLayout(grid_row([
-            KpiCard(f"{mon_offre} (actuel)", fmt_eur(cout_octopus),
-                    "votre contrat", "primary"),
+            # « (actuel) » s'accordait au hasard avec le nom de l'offre.
+            KpiCard(f"{mon_offre} — votre contrat", fmt_eur(cout_octopus),
+                    "contrat en cours", "primary"),
             KpiCard(f"{autre} Base", fmt_eur(cout_base),
                     "option prix unique", "neutral"),
             KpiCard(f"{autre} HP/HC", fmt_eur(cout_hphc),
@@ -148,8 +150,9 @@ class OctopusEdfView(BaseView):
         ax.set_xticks(range(12))
         ax.set_xticklabels(self.MOIS_COURTS, rotation=0)
         ax.set_xlim(-0.6, 11.6)
+        # Pas de « € » couche le long de l'axe : le titre de la carte dit
+        # deja l'unite (30/09/2026).
         ax.set_title(str(annee), loc="left", fontsize=10, fontweight="bold")
-        ax.set_ylabel("€")
         if avec_legende:
             # Au-dessus du trace : dedans, elle recouvrait les barres.
             ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0),
@@ -188,7 +191,6 @@ class OctopusEdfView(BaseView):
             "est donc indicatif. Valeurs modifiables dans config.yaml, section "
             "comparaison_edf."
         )
-        txt.setWordWrap(True)
         txt.setStyleSheet(f"color: {self.theme['text_muted']}; font-size: 12px;")
-        v.addWidget(txt)
+        poser_texte_court(v, txt)
         return card

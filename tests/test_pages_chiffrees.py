@@ -102,7 +102,7 @@ def test_fournisseur_vs_edf_ecarts_coherents(win):
         euros = [t for t in textes if re.fullmatch(r"[+\-−]?[\d  ]+,\d\d €", t)]
         if euros:
             valeurs[textes[0]] = _euros(euros[0])
-    actuel = next(v for k, v in valeurs.items() if "(actuel)" in k.lower())
+    actuel = next(v for k, v in valeurs.items() if "votre contrat" in k.lower())
     base = next(v for k, v in valeurs.items()
                 if k.upper().endswith("BASE") and not k.upper().startswith("PAR RAPPORT À"))
     hphc = next(v for k, v in valeurs.items()
@@ -185,6 +185,9 @@ def test_annees_oa_les_en_tetes_ne_sont_pas_coupes(win):
     colonne = next(j for j, nom in enumerate(noms) if nom.startswith("Autoconsommation"))
     assert entete.sectionResizeMode(colonne) == QHeaderView.ResizeToContents
     assert entete.sectionResizeMode(colonne + 1) == QHeaderView.Stretch
+    # La prime « (180,00 à venir) » prend elle aussi la largeur de son texte.
+    prime = next(j for j, nom in enumerate(noms) if nom.startswith("Prime"))
+    assert entete.sectionResizeMode(prime) == QHeaderView.ResizeToContents
 
 
 def test_annees_oa_les_numeros_ne_ressemblent_pas_a_des_liens(win):

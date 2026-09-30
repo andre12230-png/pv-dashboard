@@ -18,6 +18,7 @@ from views._helpers import (
     fmt_date_fr,
     fmt_eur,
     libelle_periode,
+    poser_texte_court,
 )
 
 
@@ -157,10 +158,9 @@ class AccountsView(BaseView):
                "au lieu d'être comptée comme un revenu perpétuel."
                if oa.prime_duree else "")
         )
-        note.setWordWrap(True)
         note.setStyleSheet(
             f"color: {self.theme['text_muted']}; font-size: 11px; padding-top: 4px;")
-        self.layout_inner.addWidget(note)
+        poser_texte_court(self.layout_inner, note)
         self.layout_inner.addStretch(1)
 
     @staticmethod
@@ -269,11 +269,11 @@ class AccountsView(BaseView):
                             textcoords="offset points", ha="center",
                             fontsize=9, color=self.theme["text_secondary"])
         ax.set_ylim(0, invest * 1.15)
-        ax.set_ylabel("€")
-        # « 10 000 » et non « 10000 » : les milliers separes comme dans les
-        # montants (relecture du 29/09/2026).
+        # « 10 000 € » : les milliers separes comme dans les montants
+        # (relecture du 29/09/2026), et l'unite sur chaque graduation plutot
+        # qu'un « € » couche le long de l'axe (30/09/2026).
         ax.yaxis.set_major_formatter(FuncFormatter(
-            lambda valeur, _pos: f"{valeur:,.0f}".replace(",", " ")))
+            lambda valeur, _pos: f"{valeur:,.0f} €".replace(",", " ")))
         # Au milieu a gauche, la zone vide du graphique : en haut, la legende
         # chevauchait la ligne du cout de l'installation.
         ax.legend(loc="center left", frameon=False, fontsize=9)

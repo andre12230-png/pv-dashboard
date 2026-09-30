@@ -468,6 +468,13 @@ QTableWidget, QTableView {{
     selection-color: {t["primary"]};
     color: {t["text_primary"]};
 }}
+/* Le meme retrait que les en-tetes : sans lui, un nombre aligne a droite
+   touchait le bord de sa colonne, et celui de la carte dans la derniere
+   (30/09/2026). */
+QTableWidget::item {{
+    padding-left: 10px;
+    padding-right: 10px;
+}}
 QHeaderView::section {{
     background: {t["bg_panel_alt"]};
     color: {t["text_secondary"]};

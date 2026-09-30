@@ -99,8 +99,9 @@ class SaisieView(BaseView):
         # Sans titre : il redisait celui de la page (30/09/2026).
         self.layout_inner.addWidget(SectionTitle(
             "",
-            "Éditez les valeurs puis cliquez sur Enregistrer. "
-            "Décimales avec virgule. Cases vides autorisées.",
+            "La première ligne, sur fond orangé, attend les relevés du "
+            "jour. Modifiez les valeurs puis cliquez sur Enregistrer. "
+            "Décimales avec virgule ; une case peut rester vide.",
         ))
 
         # Bandeau d'actions
@@ -122,13 +123,13 @@ class SaisieView(BaseView):
         # deux lecteurs acceptent tout export « date + valeur ». Ils
         # disent maintenant CE QU'ILS IMPORTENT, les marques restant en
         # exemple dans l'infobulle.
-        btn_importer = QPushButton("Importer conso / injection...")
+        btn_importer = QPushButton("Importer achat au réseau / injection...")
         btn_importer.setObjectName("ActionBtn")
         btn_importer.setCursor(Qt.PointingHandCursor)
         btn_importer.setToolTip(
             "Ce que votre compteur a échangé avec le réseau.\n\n"
-            "Classeur Excel Enedis (conso réseau + injection),\n"
-            "export d'index quotidiens Enedis (conso, détail\n"
+            "Classeur Excel Enedis (achat au réseau + injection),\n"
+            "export d'index quotidiens Enedis (achat au réseau, détail\n"
             "heures creuses / pleines ET injection), CSV\n"
             "'suivi_conso' de votre fournisseur, ou tout export\n"
             "CSV « date + valeur » d'une seule grandeur.")
@@ -332,7 +333,7 @@ class SaisieView(BaseView):
         c'est l'espace client Octopus qui le fournit, avec les euros.
         Enedis ne connait pas les prix."""
         self._importer_fichier(
-            source="conso / injection",
+            source="achat au réseau / injection",
             libelle_dialogue="Importer un relevé de consommation ou d'injection",
             filtre="Relevés réseau (*.xlsx *.csv);;Tous les fichiers (*)",
             parser=dl.parse_enedis_fichier,

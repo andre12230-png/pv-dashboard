@@ -30,6 +30,7 @@ PROJET = Path(__file__).resolve().parent.parent
 ANCIENS_NOMS = re.compile(
     r"[Ss]outirage réseau|Injection et soutirage|Achetée|Conso réseau|Consommation du réseau"
     r"|Conso H[CP]|Autoconsommée|Injectée|Injection vendue|Injection réseau"
+    r"|[Cc]onso / injection|[Cc]onso et injection|[Cc]onso réseau \+"
     r"|(?<![\w_])[Aa]utoconso(?![\w_])")
 
 

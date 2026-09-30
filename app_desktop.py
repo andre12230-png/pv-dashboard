@@ -617,7 +617,7 @@ NAV_ITEMS = [
     ("stats",        "Statistiques",         "ANALYSE",   "📊"),
     ("comparaison",  "Comparer à l'an passé", None,       "🔁"),
     # Libelle recalcule au demarrage a partir des noms de fournisseurs
-    # declares en config (voir _libelle_comparaison).
+    # declares en config (voir AppData.libelle_comparaison).
     ("octopus_edf",  "Comparaison tarifs",   None,        "⚖️"),
     # Fin du menu comme dans Pecule (29/09/2026 ; c'etait une section
     # « AUTRES ») : « MES DONNÉES » (💾 Sauvegarde externe, une action, posee
@@ -759,24 +759,6 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.status_bar)
         self._update_status_bar()
 
-    # Au-dela de cette longueur, deux noms de fournisseurs ne tiennent plus
-    # dans le menu (largeur fixe de 212 px) : on retombe sur un libelle
-    # generique plutot que sur un texte coupe au milieu.
-    LARGEUR_MAX_NAV = 22
-
-    def _libelle_comparaison(self, court: bool) -> str:
-        """« Octopus ou EDF » chez l'auteur, autre chose ailleurs.
-
-        « ou » et non « vs » (anglicisme, relecture du 29/09/2026) : meme
-        longueur, donc aucun nom qui tenait dans le menu ne deborde."""
-        mien, mon_offre = self.data.fournisseur
-        autre, autre_offre = self.data.fournisseur_reference
-        if court:
-            libelle = f"{mien} ou {autre}"
-            return (libelle if len(libelle) <= self.LARGEUR_MAX_NAV
-                    else "Comparaison tarifs")
-        return f"{mon_offre} ou {autre_offre}"
-
     def _build_sidebar(self) -> QFrame:
         """Le bandeau de gauche, sur le modele de celui de Pecule (14/09/2026).
 
@@ -849,7 +831,7 @@ class MainWindow(QMainWindow):
             if not self._entree_visible(key):
                 continue
             if key == "octopus_edf":
-                label = self._libelle_comparaison(court=True)
+                label = self.data.libelle_comparaison
             if section_courante != section_affichee:
                 # Comme dans Pecule, « MES DONNÉES » precede « RÉGLAGES ».
                 if section_courante == "RÉGLAGES":
@@ -1131,8 +1113,11 @@ class MainWindow(QMainWindow):
             "comparaison":  ("Comparer à l'an passé",
                              "Le mois, l'année ou l'année OA choisis en haut, "
                              "face à la même période un an plus tôt"),
-            "octopus_edf":  (self._libelle_comparaison(court=False),
-                             "Votre contrat face au Tarif Bleu d'EDF"),
+            # Le nom du menu, pour arriver la ou l'on a clique ; les noms
+            # complets des deux offres en sous-titre (30/09/2026).
+            "octopus_edf":  (self.data.libelle_comparaison,
+                             f"{self.data.fournisseur[1]} face à "
+                             f"{self.data.fournisseur_reference[1]}"),
             "aide":         ("Notice", "Mode d'emploi et glossaire des termes"),
             "settings":     ("Paramètres", "Configuration de l'application"),
         }
