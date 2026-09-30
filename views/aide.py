@@ -327,7 +327,8 @@ pas à déclarer ; ils se figent une fois l'année terminée.</p>
 compare la somme de vos injections relevées aux kWh réellement facturés par
 {acheteur}, année de contrat par année de contrat. C'est lui qui rend vos chiffres
 défendables : ils se retrouvent sur un document que vous n'écrivez pas
-vous-même. Il suppose que les totaux de vos autofacturations soient déclarés
+vous-même. Un écart de moins de 1 % est normal (en vert) ; au-delà (en rouge),
+il reste à comprendre. Il suppose que les totaux de vos autofacturations soient déclarés
 dans <code>config-local.yaml</code>.</p>
 <p><b>Deux réserves, affichées en clair.</b> Les journées <b>sans relevé
 d'injection</b> comptent toute leur production en autoconsommation, ce qui
