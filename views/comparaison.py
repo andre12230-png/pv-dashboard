@@ -210,7 +210,9 @@ class ComparaisonView(BaseView):
             f"01/01 au {fmt_date_fr(d)}", f"01/01 au {fmt_date_fr(d_prev)}",
             cumul_n, cumul_n1,
             entete_n=str(d.year), entete_n1=str(d_prev.year)))
-        blocs.addStretch(1)
+        # Pas de ressort a droite : il gardait la place, les deux cartes
+        # restaient a 256 px et les colonnes de valeurs etaient coupees
+        # (30/09/2026). Les deux cartes se partagent la largeur.
         self.layout_inner.addLayout(blocs)
         self.layout_inner.addWidget(self._chart(
             "Cumul annuel — énergie", cumul_n, cumul_n1,

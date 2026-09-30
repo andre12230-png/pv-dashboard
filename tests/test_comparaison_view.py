@@ -220,3 +220,27 @@ def test_le_tableau_a_la_hauteur_de_ses_lignes(vue_annuelle):
     contenu = (table.horizontalHeader().sizeHint().height()
                + sum(table.rowHeight(r) for r in range(table.rowCount())))
     assert table.height() - contenu <= 2 * table.frameWidth() + 2
+
+
+def test_le_mode_journee_montre_toutes_ses_colonnes(vue):
+    """30/09/2026 : en mode « Une journée précise », les deux tableaux
+    n'affichaient que la colonne « Indicateur » : un ressort a droite des
+    deux cartes gardait la place, les tableaux restaient a 256 px et leurs
+    colonnes de valeurs etaient coupees (pas de defilement horizontal)."""
+    vue.refresh("month-2026-02")
+    vue._activer_mode_jour(True)
+    vue.resize(1000, 900)
+    vue.show()
+    for _ in range(5):
+        # Les tableaux du mode « mois » sont effaces (deleteLater) avant
+        # qu'on compte ceux du mode journee.
+        QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+        QCoreApplication.processEvents()
+    tableaux = vue.container.findChildren(QTableWidget)
+    assert len(tableaux) == 2
+    for table in tableaux:
+        entete = table.horizontalHeader()
+        largeur = sum(entete.sectionSize(j) for j in range(table.columnCount()))
+        assert largeur <= table.viewport().width() + 1, (
+            largeur, table.viewport().width())
+    vue.hide()
