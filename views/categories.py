@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
 )
 
 from gui_theme import CHART_COLORS as CC
+from gui_theme import COULEUR_DEFAVORABLE, COULEUR_FAVORABLE
 from gui_widgets import Card, KpiCard, KpiTile, SectionTitle, police_tabulaire
 from views._base import BaseView
 from views._helpers import (
@@ -109,7 +110,8 @@ class CategoriesView(BaseView):
             self._titre_bilan(period), fmt_eur(bilan, signed=True),
             f"{fmt_eur(credits, signed=True)} de crédits "
             f"− {fmt_eur(cout)} d'achat",
-            value_color=CC["autoconso"] if bilan >= 0 else CC["soutirage"],
+            # Encre, pas couleur vive : c'est du texte (30/09/2026).
+            value_color=COULEUR_FAVORABLE if bilan >= 0 else COULEUR_DEFAVORABLE,
             track_color=self.theme["border"]))
         return h
 
@@ -218,8 +220,9 @@ class CategoriesView(BaseView):
             if montant is None:
                 grille.addWidget(self._cellule_nombre("—"), ligne, 3)
             else:
-                couleur_montant = (CC["autoconso"] if montant >= 0
-                                   else CC["soutirage"])
+                # Encre, pas couleur vive : c'est du texte (30/09/2026).
+                couleur_montant = (COULEUR_FAVORABLE if montant >= 0
+                                   else COULEUR_DEFAVORABLE)
                 grille.addWidget(
                     self._cellule_nombre(fmt_eur(montant, signed=True),
                                          couleur_montant, gras=True),

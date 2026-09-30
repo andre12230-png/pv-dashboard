@@ -360,3 +360,66 @@ def test_la_colonne_variation_se_lit(sens, ecart):
     # Cases blanches, lignes alternées, fond ivoire des cartes.
     for fond in ("#FFFFFF", "#F5F5F0", LIGHT["bg_carte"]):
         assert contraste(couleur, fond) >= 4.5, (couleur, fond)
+
+
+# --- Encre des couleurs de graphiques (30/09/2026) ---------------------------
+# Les couleurs vives des series servent aux barres ; pour ECRIRE, la meme
+# teinte assombrie (charte : couleur vive pour une barre, encre pour ecrire).
+
+@pytest.mark.parametrize("serie", sorted(CHART_COLORS))
+def test_l_encre_de_chaque_serie_se_lit(serie):
+    from gui_theme import encre
+    trace = encre(CHART_COLORS[serie])
+    for fond in ("#FFFFFF", "#F5F5F0", LIGHT["bg_carte"]):
+        assert contraste(trace, fond) >= 4.5, (serie, trace, fond)
+
+
+def test_l_encre_garde_la_teinte():
+    import colorsys
+
+    from gui_theme import encre
+
+    def teinte(c):
+        r, g, b = (int(c[i:i + 2], 16) / 255 for i in (1, 3, 5))
+        return colorsys.rgb_to_hsv(r, g, b)[0]
+    for couleur in CHART_COLORS.values():
+        assert abs(teinte(encre(couleur)) - teinte(couleur)) < 0.02, couleur
+    # Une couleur deja assez foncee ne bouge pas.
+    assert encre("#1F3A6B").lower() == "#1f3a6b"
+
+
+def test_le_diagramme_de_flux_ecrit_lisiblement(monkeypatch):
+    """Les chiffres des noeuds et des rubans s'ecrivaient dans la couleur de
+    leur serie : le jaune de la production faisait 1,83 pour 1."""
+    import os
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtGui import QPainter
+    from PySide6.QtWidgets import QApplication
+
+    from views._sankey import Flux, Noeud, SankeyWidget
+    QApplication.instance() or QApplication([])
+    encres = []
+    origine = QPainter.drawText
+
+    def noter(self, *args):
+        encres.append(self.pen().color().name())
+        return origine(self, *args)
+    monkeypatch.setattr(QPainter, "drawText", noter)
+    gauche = [Noeud("production", "Production solaire", 237.1,
+                    CHART_COLORS["production"]),
+              Noeud("soutirage", "Soutirage réseau", 171.4,
+                    CHART_COLORS["soutirage"])]
+    droite = [Noeud("injection", "Injection réseau", 140.8,
+                    CHART_COLORS["injection"]),
+              Noeud("consommation", "Consommation foyer", 267.7,
+                    CHART_COLORS["primary"])]
+    flux = [Flux("production", "injection", 140.8, "Vendu au réseau"),
+            Flux("production", "consommation", 96.3, "Autoconsommation",
+                 CHART_COLORS["autoconso"]),
+            Flux("soutirage", "consommation", 171.4, "Acheté au réseau")]
+    widget = SankeyWidget(gauche, droite, flux, LIGHT)
+    widget.resize(1000, 300)
+    widget.grab()
+    assert encres, "le diagramme n'a rien ecrit"
+    for trace in set(encres):
+        assert contraste(trace, LIGHT["bg_carte"]) >= 4.5, trace

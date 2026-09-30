@@ -561,14 +561,54 @@ CHART_COLORS = {
     "primary":       "#1F3A6B",
 }
 
+def _luminance(couleur: str) -> float:
+    """Luminance relative d'une couleur « #rrggbb » (formule WCAG)."""
+    canaux = []
+    for i in (1, 3, 5):
+        c = int(couleur[i:i + 2], 16) / 255
+        canaux.append(c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4)
+    r, g, b = canaux
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def _contraste(a: str, b: str) -> float:
+    clair, fonce = sorted((_luminance(a), _luminance(b)), reverse=True)
+    return (clair + 0.05) / (fonce + 0.05)
+
+
+# Les fonds sur lesquels on ecrit : cases blanches, lignes alternees des
+# tableaux, ivoire des cartes.
+_FONDS_D_ECRITURE = ("#FFFFFF", "#F5F5F0", "#FAF8F1")
+
+
+def encre(couleur: str, seuil: float = 4.8) -> str:
+    """La meme teinte, assombrie juste assez pour ECRIRE (30/09/2026).
+
+    Charte : couleur vive pour une barre, variante foncee pour ecrire. Les
+    couleurs des series (jaune 1,83 pour 1, vert, bleu, orange 3,2 a 3,9)
+    ecrivaient des chiffres presque illisibles. On multiplie les trois
+    composantes par un meme facteur, ce qui garde la teinte, jusqu'a
+    atteindre le seuil sur les trois fonds. Une couleur deja assez foncee
+    ne bouge pas.
+    """
+    r, g, b = (int(couleur[i:i + 2], 16) for i in (1, 3, 5))
+    facteur = 1.0
+    while facteur > 0:
+        trace = "#%02x%02x%02x" % (round(r * facteur), round(g * facteur),
+                                    round(b * facteur))
+        if min(_contraste(trace, f) for f in _FONDS_D_ECRITURE) >= seuil:
+            return couleur if facteur == 1.0 else trace
+        facteur = round(facteur - 0.01, 2)
+    return "#000000"
+
+
 # Encre des variations ecrites (colonne « Variation » : + favorable /
 # - defavorable). Les teintes du vert et de l'orange des graphiques plutot
 # que le couple vert/rouge, pour que les daltoniens les distinguent ; mais
 # assombries pour ECRIRE (30/09/2026) : les couleurs vives #199e70 et
-# #d95926 ne faisaient que 3,1 a 3,9 pour 1 sur les lignes du tableau. Au
-# moins 4,8 sur blanc, ivoire et lignes alternees (tests/test_contraste.py).
-COULEUR_FAVORABLE = "#137b57"    # #199e70 assombri (x 0,78)
-COULEUR_DEFAVORABLE = "#b44a20"  # #d95926 assombri (x 0,83)
+# #d95926 ne faisaient que 3,1 a 3,9 pour 1 sur les lignes du tableau.
+COULEUR_FAVORABLE = encre(CHART_COLORS["autoconso"])     # #137b57
+COULEUR_DEFAVORABLE = encre(CHART_COLORS["soutirage"])   # #b44a20
 
 
 def palette_claire() -> QPalette:

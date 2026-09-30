@@ -148,3 +148,25 @@ def test_l_estimation_annuelle_se_lit_en_toutes_lettres(win):
     assert "~" not in textes and "€/an" not in textes
     assert textes.count("soit environ ") == 2
     assert " € par an" in textes
+
+
+def test_la_repartition_ecrit_lisiblement(win):
+    """30/09/2026 : la colonne « Impact » et le « Bilan » s'ecrivaient dans
+    les couleurs vives des graphiques (3,2 a 3,9 pour 1). Tout texte colore
+    de la page doit tenir 4,5 sur l'ivoire des cartes."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parent))
+    from test_contraste import contraste
+
+    from gui_theme import LIGHT
+    win._switch_view("categories")
+    trouves = []
+    for lbl in win.views["categories"].findChildren(QLabel):
+        couleur = re.search(r"(?<![-\w])color:\s*(#[0-9A-Fa-f]{6})",
+                            lbl.styleSheet())
+        if lbl.text() and couleur:
+            rapport = contraste(couleur.group(1), LIGHT["bg_carte"])
+            if rapport < 4.5:
+                trouves.append(f"{lbl.text()!r} {couleur.group(1)} {rapport:.2f}")
+    assert not trouves, trouves

@@ -27,6 +27,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import QSizePolicy, QWidget
 
+from gui_theme import encre
 from gui_widgets import police_tabulaire
 
 # Geometrie (en pixels)
@@ -360,7 +361,9 @@ class SankeyWidget(QWidget):
                    Qt.AlignHCenter | Qt.AlignVCenter, f.libelle)
 
         p.setFont(police_val)
-        p.setPen(teinte)
+        # La teinte du ruban, assombrie pour ecrire (30/09/2026) : la couleur
+        # vive ne faisait que 3,2 a 3,6 pour 1 sur la pastille ivoire.
+        p.setPen(QColor(encre(teinte.name())))
         p.drawText(QRectF(zone.x(), zone.y() + 4 + h_nom, zone.width(), h_val),
                    Qt.AlignHCenter | Qt.AlignVCenter, txt_val)
 
@@ -380,6 +383,8 @@ class SankeyWidget(QWidget):
                    alignement | Qt.AlignVCenter, n.libelle)
 
         p.setFont(police_val)
-        p.setPen(QColor(n.couleur))
+        # La couleur du noeud, assombrie pour ecrire (30/09/2026) : le jaune
+        # de la production ne faisait que 1,83 pour 1.
+        p.setPen(QColor(encre(n.couleur)))
         p.drawText(QRectF(zone.x(), y + h_nom, zone.width(), h_nom),
                    alignement | Qt.AlignVCenter, self._valeur_txt(n.valeur))
