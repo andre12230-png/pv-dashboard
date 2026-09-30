@@ -29,6 +29,21 @@ def date_de_bascule_remise():
     calculations.CUTOFF_OCTOPUS = avant
 
 
+def detruire(widget) -> None:
+    """Ferme ET detruit une fenetre de test, tout de suite.
+
+    `close()` seul la cache sans la liberer : ses widgets restent en vie
+    jusqu'a la fin de la session. Or chaque `QApplication.setStyleSheet`
+    (toute nouvelle fenetre en pose une) repolit TOUS les widgets vivants :
+    la suite ralentissait de plus en plus, jusqu'a depasser le delai du
+    controle de livraison (30/09/2026, 17 min pour 872 tests).
+    """
+    from PySide6.QtCore import QCoreApplication, QEvent
+    widget.close()
+    widget.deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+
+
 def pytest_sessionfinish(session, exitstatus):
     """Detruit les fenetres Qt restantes AVANT que Python ne s'arrete.
 

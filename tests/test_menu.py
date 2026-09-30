@@ -16,6 +16,8 @@ import pytest
 
 pytest.importorskip("PySide6")
 
+from conftest import detruire  # noqa: E402
+
 import app_desktop  # noqa: E402
 
 SOURCE = Path(app_desktop.__file__).read_text(encoding="utf-8")
@@ -97,7 +99,7 @@ def fenetre(tmp_path, monkeypatch):
     prefs = QSettings(str(tmp_path / "prefs.ini"), QSettings.Format.IniFormat)
     w = app_desktop.MainWindow(data, prefs)
     yield w
-    w.close()
+    detruire(w)
 
 
 def _bandeau_lu(fenetre) -> list[str]:

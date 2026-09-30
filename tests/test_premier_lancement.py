@@ -14,6 +14,7 @@ import pytest
 
 pytest.importorskip("PySide6")
 
+from conftest import detruire  # noqa: E402
 from PySide6.QtCore import QSettings  # noqa: E402
 from PySide6.QtWidgets import QApplication, QLabel  # noqa: E402
 
@@ -41,7 +42,7 @@ def fenetre_neuve(qapp, tmp_path, monkeypatch):
     prefs = QSettings(str(tmp_path / "prefs.ini"), QSettings.Format.IniFormat)
     win = app_desktop.MainWindow(data, prefs)
     yield win
-    win.close()
+    detruire(win)
 
 
 def test_chaque_ecran_s_ouvre_sans_releve(fenetre_neuve):
@@ -90,7 +91,7 @@ def test_mes_reglages_de_bout_en_bout(fenetre_neuve, tmp_path):
     # « ou » et non « vs » (anglicisme, relecture du 29/09/2026)
     assert suivante.nav_buttons["octopus_edf"].text().endswith("Engie ou EDF")
     assert "4,5 kWc" in suivante.findChild(QLabel, "BrandSub").text()
-    suivante.close()
+    detruire(suivante)
 
 
 def test_le_titre_du_menu_ne_porte_plus_la_puissance(fenetre_neuve):
@@ -134,7 +135,7 @@ def test_production_seule_le_tableau_de_bord_dit_ce_qui_manque(
         assert "2 journées de production" in textes
         assert "Enedis" in textes
     finally:
-        win.close()
+        detruire(win)
 
 
 def test_sans_ancien_tarif_les_journees_anciennes_ont_un_prix(

@@ -14,6 +14,7 @@ import yaml
 
 pytest.importorskip("PySide6")
 
+from conftest import detruire  # noqa: E402
 from PySide6.QtCore import QSettings  # noqa: E402
 from PySide6.QtWidgets import QApplication, QLabel  # noqa: E402
 
@@ -103,7 +104,7 @@ def test_sans_revente_chaque_ecran_s_ouvre(qapp, tmp_path, monkeypatch):
                               if lbl.objectName() == "BrandSub")
         assert "OA" not in sous_titre
     finally:
-        win.close()
+        detruire(win)
 
 
 def test_type_de_vente_inconnu_refuse_en_francais():
@@ -145,7 +146,7 @@ def test_un_autre_acheteur_est_nomme(qapp, tmp_path, monkeypatch):
         assert "PRIME AUTOCONSO" not in synthese      # vente totale : pas de prime
         assert "EDF OA" not in _textes(win, "settings")
     finally:
-        win.close()
+        detruire(win)
 
 
 def test_sans_revente_pas_de_vente_affichee(qapp, tmp_path, monkeypatch):
@@ -157,7 +158,7 @@ def test_sans_revente_pas_de_vente_affichee(qapp, tmp_path, monkeypatch):
         synthese = _textes(win, "accounts")
         assert "VENTE" not in synthese and "PRIME AUTOCONSO" not in synthese
     finally:
-        win.close()
+        detruire(win)
 
 
 def test_par_defaut_toujours_edf_oa(qapp, tmp_path, monkeypatch):
@@ -166,7 +167,7 @@ def test_par_defaut_toujours_edf_oa(qapp, tmp_path, monkeypatch):
     try:
         assert "VENTE À EDF OA" in _textes(win, "dashboard")
     finally:
-        win.close()
+        detruire(win)
 
 
 def test_sous_titre_des_annees_de_contrat_nomme_l_acheteur(
@@ -177,7 +178,7 @@ def test_sous_titre_des_annees_de_contrat_nomme_l_acheteur(
         assert "EDF" not in win.sub_lbl.text()
         assert "Solaire Coop" in win.sub_lbl.text()
     finally:
-        win.close()
+        detruire(win)
 
 
 # ── Années OA : la plus récente en haut (28/09/2026) ────────────────────────
@@ -199,7 +200,7 @@ def test_annees_oa_la_plus_recente_en_haut(qapp, tmp_path, monkeypatch):
         # d'avant-contrat, la plus ancienne, en dernier.
         assert premiere_colonne == ["#2", "#1", "avant OA"]
     finally:
-        win.close()
+        detruire(win)
 
 
 # ── La Notice nomme l'acheteur réel (28/09/2026) ────────────────────────────
@@ -216,7 +217,7 @@ def test_la_notice_nomme_l_acheteur_declare(qapp, tmp_path, monkeypatch):
         assert texte.count("EDF OA") == 1
         assert "EDF OA (Obligation d'Achat)" in texte
     finally:
-        win.close()
+        detruire(win)
 
 
 def test_chez_edf_oa_la_notice_ne_change_pas(qapp, tmp_path, monkeypatch):
@@ -228,7 +229,7 @@ def test_chez_edf_oa_la_notice_ne_change_pas(qapp, tmp_path, monkeypatch):
         assert "Injection payée par EDF OA" in texte
         assert "la vente à EDF OA" in texte
     finally:
-        win.close()
+        detruire(win)
 
 
 # ── Part HC de l'autoconsommation : 0 % par defaut (28/09/2026) ─────────────
@@ -251,7 +252,7 @@ def test_sans_part_hc_declaree_les_parametres_affichent_zero(
         assert "0,0 %" in textes
         assert "20,0 %" not in textes
     finally:
-        win.close()
+        detruire(win)
 
 
 def _apres_midi_sans_part(cfg):
@@ -272,4 +273,4 @@ def test_parametres_disent_que_la_part_est_estimee(qapp, tmp_path, monkeypatch):
         textes = _textes(win, "settings")
         assert "24,0 %" in textes and "ESTIM" in textes
     finally:
-        win.close()
+        detruire(win)

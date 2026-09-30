@@ -13,6 +13,7 @@ import yaml
 
 pytest.importorskip("PySide6")
 
+from conftest import detruire  # noqa: E402
 from PySide6.QtCore import QSettings  # noqa: E402
 from PySide6.QtWidgets import QApplication, QMessageBox  # noqa: E402
 
@@ -46,7 +47,7 @@ def win(qapp, tmp_path, monkeypatch):
     # Fermeture de fin de test : plus de saisie en cours, pas de question.
     w.views["saisie"]._cache_mtime = None
     w.views["saisie"].refresh(w.current_period)
-    w.close()
+    detruire(w)
 
 
 def _taper(win, texte: str) -> None:

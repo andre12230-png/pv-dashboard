@@ -16,6 +16,7 @@ import yaml
 
 pytest.importorskip("PySide6")
 
+from conftest import detruire  # noqa: E402
 from PySide6.QtCore import QSettings  # noqa: E402
 from PySide6.QtWidgets import QApplication, QLabel, QTableWidget  # noqa: E402
 
@@ -53,7 +54,7 @@ def win(qapp, tmp_path, monkeypatch):
     w = app_desktop.MainWindow(data, prefs)
     w._appliquer_periode("all")
     yield w
-    w.close()
+    detruire(w)
 
 
 def _textes(win, cle: str) -> str:

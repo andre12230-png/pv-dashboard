@@ -18,6 +18,7 @@ import pytest
 
 pytest.importorskip("PySide6")
 
+from conftest import detruire  # noqa: E402
 from PySide6.QtCore import QSettings  # noqa: E402
 from PySide6.QtWidgets import (  # noqa: E402
     QApplication,
@@ -99,4 +100,4 @@ def test_mes_reglages_range_ses_cases_dans_des_cartes(qapp):
                             "MON FOURNISSEUR D'ÉLECTRICITÉ",
                             "RECALAGES SUR MES FACTURES"]
     finally:
-        fenetre.close()
+        detruire(fenetre)

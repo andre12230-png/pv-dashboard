@@ -17,6 +17,7 @@ import pytest
 
 pytest.importorskip("PySide6")
 
+from conftest import detruire  # noqa: E402
 from PySide6.QtCore import QSettings  # noqa: E402
 from PySide6.QtWidgets import QApplication, QLabel  # noqa: E402
 
@@ -88,7 +89,7 @@ def fenetre(qapp, tmp_path_factory):
         prefs = QSettings(str(dossier / "prefs.ini"), QSettings.Format.IniFormat)
         w = app_desktop.MainWindow(data, prefs)
         yield w
-        w.close()
+        detruire(w)
     finally:
         (app_desktop.BASE_DIR, app_desktop.CONFIG_PATH,
          app_desktop.CONFIG_LOCAL_PATH) = anciens
