@@ -114,7 +114,8 @@ def _titres_au_dessus(fenetre, vue: str) -> list[str]:
      ["CIRCULATION DE L'ÉNERGIE", "DÉTAIL PAR POSTE"]),
     ("accounts", "all", ["REMBOURSEMENT DE L'INSTALLATION"]),
     ("transactions", "all", ["RELEVÉS JOURNALIERS"]),
-    ("aide", None, ["GLOSSAIRE"]),
+    ("aide", None, ["SOMMAIRE", "À QUOI SERT L'APPLICATION", "GLOSSAIRE"]),
+    ("settings", None, ["INSTALLATION", "RECALAGES SUR FACTURES"]),
     ("stats", None, ["PRODUCTION PAR ANNÉE CIVILE",
                      "PRODUCTION MENSUELLE MULTI-ANNÉES"]),
     ("oa", None, ["PRODUCTION, AUTOCONSOMMATION ET INJECTION PAR ANNÉE OA"]),
@@ -156,3 +157,25 @@ def test_un_titre_de_groupe_de_tuiles_reste_au_dessus(fenetre):
     fenetre._switch_view("dashboard")
     assert "BILAN FINANCIER DE LA PÉRIODE" in _titres_au_dessus(
         fenetre, "dashboard")
+
+
+# Relecture du 30/09/2026 : un titre de section qui redit celui de la page.
+TITRES_REPETES = {
+    "saisie": "SAISIE QUOTIDIENNE",
+    "oa": "ANNÉES OA",
+    "settings": "PARAMÈTRES",
+    "aide": "NOTICE D'UTILISATION",
+    "octopus_edf": "MON OFFRE HP/HC OU EDF TARIF BLEU",
+}
+
+
+@pytest.mark.parametrize("vue, titre", sorted(TITRES_REPETES.items()))
+def test_pas_de_titre_de_section_qui_redit_la_page(fenetre, vue, titre):
+    assert titre not in _titres_au_dessus(fenetre, vue) + _entetes(fenetre, vue)
+
+
+def test_la_notice_n_a_plus_de_titre_dans_le_texte(fenetre):
+    """Le titre de chaque rubrique est dans son bandeau, plus dans le texte."""
+    fenetre._switch_view("aide")
+    assert not any("<h3" in lbl.text()
+                   for lbl in fenetre.views["aide"].findChildren(QLabel))

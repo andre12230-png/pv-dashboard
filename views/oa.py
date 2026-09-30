@@ -68,9 +68,10 @@ class OAView(BaseView):
                 "bilan": g["bilan_jour_eur"].sum() + prime,
             })
 
+        # Sans titre : il redisait celui de la page (30/09/2026).
         self.layout_inner.addWidget(SectionTitle(
-            "Années OA",
-            f"Découpage {self.data.cycle_oa} - contrat sur {oa.duree_contrat} ans",
+            "",
+            f"Découpage {self.data.cycle_oa} — contrat sur {oa.duree_contrat} ans",
         ))
 
         if not rows and not avant_contrat:

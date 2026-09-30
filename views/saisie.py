@@ -96,8 +96,9 @@ class SaisieView(BaseView):
             self._dates_illisibles = dl.dates_illisibles(path)
             self._cache_mtime = mtime
 
+        # Sans titre : il redisait celui de la page (30/09/2026).
         self.layout_inner.addWidget(SectionTitle(
-            "Saisie quotidienne",
+            "",
             "Éditez les valeurs puis cliquez sur Enregistrer. "
             "Décimales avec virgule. Cases vides autorisées.",
         ))

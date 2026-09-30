@@ -16,7 +16,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout
 
 import calculations as calc
-from gui_widgets import Card, SectionTitle
+from gui_widgets import Card
 from views._base import BaseView
 from views._helpers import fmt_date_fr, fmt_kwc
 
@@ -450,16 +450,18 @@ class AideView(BaseView):
         # source de verite, pas un chiffre fige dans le texte. La notice
         # decrivait sinon l'installation de son auteur a tous ses lecteurs.
         champs = self._champs_installation()
-        self.layout_inner.addWidget(SectionTitle(
-            "Notice d'utilisation", "Comment utiliser l'application"))
+        # Pas de titre de section : « Notice d'utilisation — Comment utiliser
+        # l'application » redisait le titre et le sous-titre de la page.
         # Une carte par rubrique, et un sommaire qui y mene : la notice etait
         # un seul long bloc de texte (audit du 14/09/2026).
         rubriques = self._decouper(NOTICE_HTML.format(**champs))
         self.layout_inner.addWidget(
             self._sommaire([titre for titre, _ in rubriques] + ["Glossaire"]))
         self._cibles = []
-        for _, corps in rubriques:
-            carte = self._carte(corps)
+        for titre, corps in rubriques:
+            # Titre dans le bandeau, retire du texte (30/09/2026).
+            carte = self._carte(self._TITRE_RUBRIQUE.sub("", corps, count=1),
+                                titre=titre)
             self._cibles.append(carte)
             self.layout_inner.addWidget(carte)
         # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
@@ -489,15 +491,11 @@ class AideView(BaseView):
     def _sommaire(self, titres: list[str]) -> QFrame:
         """Les titres des rubriques, en liens : un clic fait defiler la page
         jusqu'a la rubrique."""
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(24, 14, 24, 16)
+        # Titre dans le bandeau, comme les autres cartes (30/09/2026).
+        card = Card(titre="Sommaire")
+        v = card.corps
+        v.setContentsMargins(24, 10, 24, 16)
         v.setSpacing(6)
-        entete = QLabel("Sommaire")
-        entete.setStyleSheet(
-            f"color: {self.theme['text_primary']}; font-size: 14px; "
-            "font-weight: 700;")
-        v.addWidget(entete)
         couleur = self.theme["primary"]
         liens = " &nbsp;·&nbsp; ".join(
             f'<a href="{i}" style="color: {couleur}; text-decoration: none;">'

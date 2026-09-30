@@ -188,16 +188,21 @@ class Card(QFrame):
 
 
 class SectionTitle(QWidget):
-    """Petit bandeau 'TITRE' + sous-texte optionnel."""
+    """Petit bandeau 'TITRE' + sous-texte optionnel.
+
+    Sans titre (« ») : la phrase d'explication seule. Sert quand le titre
+    redirait celui de la page (relecture du 30/09/2026).
+    """
 
     def __init__(self, title: str, sub: str = "", parent: QWidget | None = None):
         super().__init__(parent)
         v = QVBoxLayout(self)
         v.setContentsMargins(0, 4, 0, 8)
         v.setSpacing(2)
-        t = QLabel(capitales(title))
-        t.setObjectName("SectionTitle")
-        v.addWidget(t)
+        if title:
+            t = QLabel(capitales(title))
+            t.setObjectName("SectionTitle")
+            v.addWidget(t)
         if sub:
             s = QLabel(sub)
             s.setObjectName("SectionSub")

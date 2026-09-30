@@ -88,8 +88,9 @@ class TvaView(BaseView):
     utilise_periode = False
 
     def populate(self, period: str) -> None:
+        # Sans titre : il redisait celui de la page (30/09/2026).
         self.layout_inner.addWidget(SectionTitle(
-            "TVA sur l'autoconsommation",
+            "",
             "Livraison à soi-même — ligne 5A de la déclaration CA12 / 3517-S",
         ))
 

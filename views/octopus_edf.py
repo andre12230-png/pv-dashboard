@@ -70,8 +70,9 @@ class OctopusEdfView(BaseView):
         else:
             depuis = (f"Depuis le passage en heures pleines / creuses du "
                       f"{bascule:%d/%m/%Y}")
+        # Sans titre : il redisait celui de la page (30/09/2026).
         self.layout_inner.addWidget(SectionTitle(
-            f"{mon_offre} ou {autre_offre}", f"{depuis} - {nombre_de_jours(jours)}",
+            "", f"{depuis} — {nombre_de_jours(jours)}",
         ))
 
         self.layout_inner.addWidget(SectionTitle("Coût sur la période"))

@@ -8,7 +8,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QVBoxLayout,
 )
 
 import calculations as calc
@@ -40,8 +39,9 @@ class SettingsView(BaseView):
         # Le chemin exact : une fois l'application installee, le dossier des
         # donnees est cache dans %LOCALAPPDATA%, loin du programme.
         dossier = self.data.dossier_donnees or "le dossier de l'application"
+        # Sans titre : il redisait celui de la page (30/09/2026).
         self.layout_inner.addWidget(SectionTitle(
-            "Paramètres",
+            "",
             "Bouton « Modifier mes réglages », ou, pour tout le reste, "
             f"config.yaml avec le Bloc-notes (dans {dossier}).",
         ))
@@ -154,9 +154,10 @@ class SettingsView(BaseView):
             lignes = [("Aucun recalage déclaré",
                        "les relevés sont affichés tels que saisis")]
         return self._kv_card(
-            "Recalages sur factures (config-local.yaml)", lignes)
+            "Recalages sur factures", lignes,
+            sous_titre="Déclarés dans le fichier config-local.yaml")
 
-    def _kv_card(self, title: str, kvs) -> QFrame:
+    def _kv_card(self, title: str, kvs, sous_titre: str = "") -> QFrame:
         """Une carte « libelle : valeur », en liste simple.
 
         Chaque ligne etait enfermee dans de petits cadres gris (un QWidget
@@ -164,13 +165,11 @@ class SettingsView(BaseView):
         brouillon (audit du 14/09/2026). Desormais, des lignes separees par
         un simple filet.
         """
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(20, 16, 20, 14)
+        # Titre dans le bandeau de la carte, comme les autres (30/09/2026).
+        card = Card(titre=title, sous_titre=sous_titre)
+        v = card.corps
+        v.setContentsMargins(20, 10, 20, 14)
         v.setSpacing(0)
-        t = QLabel(title)
-        t.setStyleSheet("font-weight: 700; font-size: 14px; padding-bottom: 8px;")
-        v.addWidget(t)
         for i, (k, val) in enumerate(kvs):
             if i:
                 filet = QFrame()
