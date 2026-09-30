@@ -57,6 +57,29 @@ def demander_enregistrement(parent, titre: str, message: str):
     return QMessageBox.StandardButton(reponse)
 
 
+def confirmer(parent, titre: str, message: str, action: str, *,
+              annuler_par_defaut: bool = True,
+              avertissement: bool = False) -> bool:
+    """Demande une confirmation avec un bouton qui dit l'action (« Appliquer
+    l'import ») et « Annuler », au lieu de « Oui / Non » (charte, 30/09/2026).
+
+    Rend True si l'action est choisie. `annuler_par_defaut` : un Entree
+    machinal ne fait rien. `avertissement` : panneau d'avertissement, pour
+    ce qui peut faire perdre des donnees."""
+    boite = QMessageBox(parent)
+    boite.setIcon(QMessageBox.Warning if avertissement
+                  else QMessageBox.Question)
+    boite.setWindowTitle(titre)
+    boite.setText(message)
+    bouton_action = boite.addButton(action, QMessageBox.AcceptRole)
+    bouton_annuler = boite.addButton("Annuler", QMessageBox.RejectRole)
+    boite.setDefaultButton(bouton_annuler if annuler_par_defaut
+                           else bouton_action)
+    boite.setEscapeButton(bouton_annuler)
+    boite.exec()
+    return boite.clickedButton() is bouton_action
+
+
 def _apply_props(widget: QWidget, **props) -> None:
     for k, v in props.items():
         widget.setProperty(k, v)

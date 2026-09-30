@@ -14,7 +14,6 @@ from PySide6.QtWidgets import (
     QDialog,
     QDoubleSpinBox,
     QFormLayout,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -28,6 +27,7 @@ from PySide6.QtWidgets import (
 
 import calculations as calc
 from erreurs import erreur_en_clair
+from gui_widgets import Card
 from reglages import (
     SORTES_RECALAGE,
     ReglagesRefuses,
@@ -342,10 +342,10 @@ class FenetreReglages(QDialog):
         tout.addWidget(defilement, stretch=1)
         tout.addLayout(boutons)
 
-    def _groupe_recalages(self, recalages: dict) -> QGroupBox:
+    def _groupe_recalages(self, recalages: dict) -> Card:
         """Le tableau des recalages : une ligne par periode, plus un bouton."""
-        groupe = QGroupBox("Recalages sur mes factures")
-        dehors = QVBoxLayout(groupe)
+        groupe = Card(titre="Recalages sur mes factures")
+        dehors = groupe.corps
 
         note = QLabel(
             "Facultatif, et à manier avec soin. Ces lignes <b>réécrivent vos "
@@ -452,9 +452,12 @@ class FenetreReglages(QDialog):
             self.prime.setMaximum(10_000)
         self._montrer_total_prime()
 
-    def _groupe(self, titre: str, champs, aide: str) -> QGroupBox:
-        groupe = QGroupBox(titre)
-        form = QFormLayout(groupe)
+    def _groupe(self, titre: str, champs, aide: str) -> Card:
+        # Une carte a bandeau, comme sur les ecrans, et non plus un cadre
+        # gris titre au-dessus (relecture des fenetres, 30/09/2026).
+        groupe = Card(titre=titre)
+        form = QFormLayout()
+        groupe.corps.addLayout(form)
         form.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)
         form.setHorizontalSpacing(14)
         for libelle, case in champs:

@@ -24,7 +24,7 @@ import data_loaders as dl
 from accords import accorde, pluriel
 from app_data import AppData
 from erreurs import erreur_en_clair
-from gui_widgets import SectionTitle
+from gui_widgets import SectionTitle, confirmer
 from views._base import BaseView
 from views._helpers import phrase_import
 
@@ -395,15 +395,13 @@ class SaisieView(BaseView):
         # L'import relit le fichier, l'ecrit, puis redessine ce tableau : ce
         # qui est tape mais pas enregistre disparaissait sans un mot.
         if self._saisies_non_enregistrees():
-            reponse = QMessageBox.question(
-                self, titre,
-                "Des valeurs tapées dans le tableau ne sont pas encore "
-                "enregistrées. L'import va les effacer.\n\n"
-                "Pour les garder, répondez Non, cliquez sur Enregistrer, "
-                "puis relancez l'import.\n\n"
-                "Importer quand même ?",
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            if reponse != QMessageBox.Yes:
+            if not confirmer(
+                    self, titre,
+                    "Des valeurs tapées dans le tableau ne sont pas encore "
+                    "enregistrées. L'import va les effacer.\n\n"
+                    "Pour les garder, cliquez sur Annuler, puis sur "
+                    "Enregistrer, et relancez l'import.",
+                    "Importer quand même", avertissement=True):
                 self._set_status("Import annulé : enregistrez d'abord vos "
                                  "saisies.", ok=False)
                 return
@@ -510,13 +508,10 @@ class SaisieView(BaseView):
             message += "\n\n" + "\n\n".join(remarques)
         if alertes:
             message = "\n\n".join(alertes) + "\n\n" + ("-" * 40) + "\n\n" + message
-        message += ("\n\nAppliquer ? Une sauvegarde de l'ancienne version est "
-                    "conservée.")
-        reponse = QMessageBox.question(
-            self, titre, message,
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No if alertes else QMessageBox.Yes)
-        if reponse != QMessageBox.Yes:
+        message += ("\n\nUne sauvegarde de l'ancienne version est conservée.")
+        if not confirmer(self, titre, message, "Appliquer l'import",
+                         annuler_par_defaut=bool(alertes),
+                         avertissement=bool(alertes)):
             self._set_status("Import annulé.", ok=False)
             return
 
@@ -622,13 +617,11 @@ class SaisieView(BaseView):
                 "a donc probablement été lu incompletement (synchronisation "
                 "interrompue, fichier verrouille) : enregistrer maintenant "
                 "effacerait pour de bon ce qui n'a pas été lu.\n\n"
-                "Dans le doute, repondez Non, puis cliquez sur Recharger.\n\n")
-        message += "L'ancienne version restera dans le .bak.\n\nContinuer ?"
+                "Dans le doute, cliquez sur Annuler, puis sur Recharger.\n\n")
+        message += "L'ancienne version restera dans le .bak."
 
-        reponse = QMessageBox.question(
-            self, "Suppression de données", message,
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        return reponse == QMessageBox.Yes
+        return confirmer(self, "Suppression de données", message,
+                         "Enregistrer quand même", avertissement=True)
 
     def _enregistrer(self) -> bool:
         """Ecrit le tableau dans le fichier. Rend True si c'est fait."""

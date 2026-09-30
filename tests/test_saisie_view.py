@@ -155,6 +155,15 @@ def dialogue(monkeypatch):
     _FauxQMessageBox.critiques = []
     _FauxQMessageBox.reponse = QMessageBox.No
     monkeypatch.setattr(saisie_module, "QMessageBox", _FauxQMessageBox)
+
+    # Les confirmations passent par confirmer (30/09/2026) : « Oui » vaut
+    # le bouton d'action, « Non » vaut Annuler.
+    def faux_confirmer(parent, titre, message, action, *,
+                       annuler_par_defaut=True, avertissement=False):
+        defaut = QMessageBox.No if annuler_par_defaut else QMessageBox.Yes
+        return _FauxQMessageBox.question(
+            parent, titre, message, None, defaut) == QMessageBox.Yes
+    monkeypatch.setattr(saisie_module, "confirmer", faux_confirmer)
     return _FauxQMessageBox
 
 

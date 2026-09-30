@@ -160,6 +160,8 @@ def inviter(parent, settings: QSettings, aujourdhui: date, version: str) -> None
     reste la pour qui changerait d'avis."""
     settings.setValue(CLE_INVITATION_FAITE, aujourdhui.isoformat())
     boite = QMessageBox(parent)
+    # Une icone, comme les autres boites de l'appli (30/09/2026).
+    boite.setIcon(QMessageBox.Question)
     boite.setWindowTitle(TITRE)
     boite.setTextFormat(Qt.RichText)
     boite.setText(
