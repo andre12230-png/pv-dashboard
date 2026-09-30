@@ -200,20 +200,20 @@ class ComparaisonView(BaseView):
         cumul_n1 = agreger(df[(df.index >= pd.Timestamp(d_prev.year, 1, 1))
                               & (df.index <= d_prev)])
 
-        blocs = QHBoxLayout()
-        blocs.setSpacing(14)
-        blocs.addWidget(self._bloc(
+        # Les deux tableaux l'un sous l'autre, chacun sur toute la largeur
+        # (30/09/2026). Cote a cote, avec un ressort a droite, ils restaient
+        # a 256 px et leurs colonnes de valeurs etaient coupees ; meme en se
+        # partageant la largeur, ils ne tenaient qu'au pixel pres a 1280 px.
+        # Empiles, ils tiennent a toutes les tailles et leurs colonnes
+        # s'alignent pour comparer la journee au cumul.
+        self.layout_inner.addWidget(self._bloc(
             "Journée",
             fmt_date_fr(d), fmt_date_fr(d_prev), agg_n, agg_n1))
-        blocs.addWidget(self._bloc(
+        self.layout_inner.addWidget(self._bloc(
             "Cumul depuis le 1er janvier",
             f"01/01 au {fmt_date_fr(d)}", f"01/01 au {fmt_date_fr(d_prev)}",
             cumul_n, cumul_n1,
             entete_n=str(d.year), entete_n1=str(d_prev.year)))
-        # Pas de ressort a droite : il gardait la place, les deux cartes
-        # restaient a 256 px et les colonnes de valeurs etaient coupees
-        # (30/09/2026). Les deux cartes se partagent la largeur.
-        self.layout_inner.addLayout(blocs)
         self.layout_inner.addWidget(self._chart(
             "Cumul annuel — énergie", cumul_n, cumul_n1,
             str(d.year), str(d_prev.year)))
