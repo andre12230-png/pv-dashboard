@@ -234,6 +234,36 @@ def test_la_notice_se_lit_en_lignes_courtes(win):
     assert all(lbl.maximumWidth() <= 780 for lbl in textes)
 
 
+def test_la_notice_ne_coupe_pas_son_texte(win, qapp):
+    """30/09/2026 : la largeur limitee a 780 px coupait la fin de presque
+    toutes les rubriques — la hauteur etait calculee pour la largeur de la
+    carte, plus grande, donc pour moins de lignes. Chaque texte doit recevoir
+    la hauteur que sa largeur reelle demande."""
+    from PySide6.QtCore import Qt
+    win.setAttribute(Qt.WA_DontShowOnScreen, True)
+    for largeur, hauteur in ((1280, 900), (1366, 728), (1920, 1040)):
+        win.resize(largeur, hauteur)
+        win.show()
+        win._switch_view("aide")
+        for _ in range(20):
+            qapp.processEvents()
+        coupes = []
+        for lbl in win.views["aide"].findChildren(QLabel):
+            if lbl.wordWrap() and lbl.isVisible():
+                besoin = lbl.heightForWidth(lbl.width())
+                if lbl.height() < besoin - 2:
+                    coupes.append((lbl.text()[:30], lbl.height(), besoin))
+        assert not coupes, (largeur, coupes)
+
+
+def test_la_notice_ne_dit_pas_annee_suivante_a_tort(win):
+    """Un contrat qui commence un 1er janvier court du 01/01 au 31/12 de la
+    MEME annee : la notice ajoutait « de l'année suivante » a tous."""
+    textes = _textes(win, "aide")
+    assert "du 01/01 au 31/12" in textes
+    assert "31/12 de l'année suivante" not in textes
+
+
 def test_parametres_prix_de_rachat(win):
     """30/09/2026 : Mes reglages disait « Prix de rachat du kWh », Parametres
     « Prix d'achat du kWh ». Un nom par chose ; « achat » designe l'electricite

@@ -13,7 +13,7 @@ import re
 
 import pandas as pd
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
 
 import calculations as calc
 from gui_widgets import Card
@@ -509,7 +509,7 @@ class AideView(BaseView):
         lbl.setTextInteractionFlags(Qt.LinksAccessibleByMouse)
         lbl.setStyleSheet("font-size: 13px; line-height: 160%;")
         lbl.linkActivated.connect(self._aller_a)
-        v.addWidget(lbl)
+        self._poser_texte(v, lbl)
         return card
 
     def _aller_a(self, lien: str) -> None:
@@ -529,7 +529,11 @@ class AideView(BaseView):
         if self.data.start_oa is not None:
             debut_oa = pd.Timestamp(self.data.start_oa)
             veille_oa = debut_oa - pd.Timedelta(days=1)
-            cycle = f"du {debut_oa:%d/%m} au {veille_oa:%d/%m} de l'année suivante"
+            cycle = f"du {debut_oa:%d/%m} au {veille_oa:%d/%m}"
+            # Un contrat qui commence un 1er janvier finit le 31/12 de la
+            # meme annee : « de l'année suivante » serait faux (30/09/2026).
+            if (debut_oa.day, debut_oa.month) != (1, 1):
+                cycle += " de l'année suivante"
             cycle_notice = f"({cycle})"
             cycle_glossaire = f"Le vôtre va {cycle}."
         else:
@@ -593,5 +597,21 @@ class AideView(BaseView):
         lbl.setMaximumWidth(780)
         lbl.setStyleSheet(
             f"color: {self.theme['text_secondary']}; font-size: 13px;")
-        v.addWidget(lbl)
+        self._poser_texte(v, lbl)
         return card
+
+    @staticmethod
+    def _poser_texte(colonne, lbl: QLabel) -> None:
+        """Pose un texte a largeur limitee sans qu'il soit coupe.
+
+        Pose tel quel dans la colonne de la carte, plus large que lui, le
+        texte recevait la hauteur calculee pour la largeur de la carte : moins
+        de lignes qu'il n'en faut a 780 px, et la fin de la rubrique
+        disparaissait (30/09/2026). Dans une ligne, avec un vide a sa droite,
+        Qt calcule sa hauteur pour sa largeur reelle."""
+        ligne = QHBoxLayout()
+        ligne.setContentsMargins(0, 0, 0, 0)
+        ligne.setSpacing(0)
+        ligne.addWidget(lbl, 1)
+        ligne.addStretch(0)
+        colonne.addLayout(ligne)
