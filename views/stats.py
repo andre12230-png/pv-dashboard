@@ -3,13 +3,30 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from PySide6.QtWidgets import QFrame, QHBoxLayout
+from matplotlib.ticker import FuncFormatter
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QSizePolicy
 
 from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
 from gui_widgets import Card, KpiCard, MplCanvas, SectionTitle, grid_row
 from views._base import BaseView
 from views._helpers import chiffres_sur_barres
+
+
+def milliers(valeur: float) -> str:
+    """« 1 181 » et non « 1181 » : les milliers separes, comme partout
+    ailleurs (relecture du 01/10/2026)."""
+    return f"{valeur:,.0f}".replace(",", " ")
+
+
+# Graduations des axes en kWh : « 8 000 » et non « 8000 ».
+AXE_MILLIERS = FuncFormatter(lambda valeur, _pos: milliers(valeur))
+
+# Une couleur par annee, foncee : sans chiffre a cote, une courbe tient au
+# moins 3 pour 1 sur l'ivoire des cartes (charte). L'orange et le bleu clair
+# d'avant ne faisaient que 2,0 et 2,6 (01/10/2026).
+COULEURS_ANNEES = ["#b45309", "#0369a1", "#15803d", "#7c3aed", "#dc2626",
+                   "#0e7490"]
 
 
 class StatsView(BaseView):
@@ -51,12 +68,14 @@ class StatsView(BaseView):
         completes = [y for y in rendement.index if int(y) not in partielles]
         if completes:
             moyenne = rendement.loc[completes].mean()
-            texte_moyenne = f"moyenne des années complètes : {int(moyenne)}"
+            texte_moyenne = (f"moyenne des années complètes : "
+                             f"{milliers(int(moyenne))} kWh/kWc/an")
         else:
             texte_moyenne = "aucune année complète pour calculer une moyenne"
 
         self.layout_inner.addWidget(SectionTitle(
-            "Rendement spécifique (kWh / kWc / an)",
+            # Une seule ecriture de l'unite sur la page (01/10/2026).
+            "Rendement spécifique (kWh/kWc/an)",
             f"Référence France : 900 à 1 200 kWh/kWc/an — {texte_moyenne}",
         ))
         cards = []
@@ -64,13 +83,20 @@ class StatsView(BaseView):
             if int(y) in partielles:
                 g = df[df.index.year == int(y)]
                 cards.append(KpiCard(
-                    f"Année {int(y)} — partielle", f"{int(v)}",
+                    f"Année {int(y)} — partielle", milliers(int(v)),
                     f"kWh/kWc — du {g.index.min().strftime('%d/%m')} "
                     f"au {g.index.max().strftime('%d/%m')} — hors moyenne",
                     "neutral"))
             else:
                 cards.append(KpiCard(
-                    f"Année {int(y)}", f"{int(v)}", "kWh/kWc", "primary"))
+                    f"Année {int(y)}", milliers(int(v)), "kWh/kWc/an",
+                    "primary"))
+        # Toutes les tuiles de la meme largeur : les annees partielles, au
+        # sous-titre plus long, prenaient plus de place et attiraient l'oeil
+        # (01/10/2026). Leur sous-titre passe a la ligne.
+        for carte in cards:
+            carte.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+            carte.sub.setWordWrap(True)
         # Jusqu'a six annees par ligne : par quatre, la cinquieme restait
         # seule, etiree sur toute la largeur (audit du 14/09/2026).
         for i in range(0, len(cards), 6):
@@ -104,6 +130,7 @@ class StatsView(BaseView):
         ax.set_xticklabels([f"{y}\n(partielle)" if int(y) in partielles else str(y)
                             for y in yearly.index])
         ax.set_ylabel("kWh")
+        ax.yaxis.set_major_formatter(AXE_MILLIERS)
         # Legende au-dessus du trace : dedans, elle recouvrait le haut des
         # barres de production, les plus hautes.
         # Deux par ligne : en clair, les quatre libelles ne tiennent pas sur
@@ -124,10 +151,20 @@ class StatsView(BaseView):
         df_m["annee"] = df_m.index.year
         pivot = df_m.pivot_table(values="production_kwh", index="mois",
                                   columns="annee", aggfunc="sum")
+        # Un mois incomplet (mise en service, mois en cours) n'est pas trace :
+        # avril 2022, deux jours de releves, tirait la courbe vers zero
+        # (01/10/2026). Un mois compte s'il a un releve chaque jour.
+        jours = df_m.groupby(["annee", "mois"]).size()
+        incomplets = False
+        for (annee, mois), nombre in jours.items():
+            if nombre < pd.Period(year=int(annee), month=int(mois),
+                                  freq="M").days_in_month:
+                pivot.loc[mois, annee] = np.nan
+                incomplets = True
         canvas = MplCanvas(width=5, height=3.2, dpi=100)
         canvas.apply_theme(mpl_style(self.theme))
         ax = canvas.fig.add_subplot(111)
-        palette = ["#f59e0b", "#0ea5e9", "#16a34a", "#7c3aed", "#ef4444", "#06b6d4"]
+        palette = COULEURS_ANNEES
         # La couleur ne porte jamais seule le sens (charte, 30/09/2026) :
         # chaque annee a aussi son trait et sa forme de point.
         traits = ["-", "--", "-.", ":"]
@@ -140,12 +177,23 @@ class StatsView(BaseView):
         # Les mois comme sur les autres pages (« janv. », « sept. »).
         ax.set_xticklabels(["janv.", "févr.", "mars", "avr.", "mai", "juin",
                             "juil.", "août", "sept.", "oct.", "nov.", "déc."],
-                           fontsize=9)
-        ax.set_ylabel("Production (kWh)")
+                           fontsize=8)
+        # « kWh », comme l'axe du graphique voisin ; le titre de la carte dit
+        # deja qu'il s'agit de production.
+        ax.set_ylabel("kWh")
+        ax.yaxis.set_major_formatter(AXE_MILLIERS)
         # Legende au-dessus du trace : en haut a droite, elle recouvrait les
         # points d'aout et de septembre (audit du 14/09/2026).
+        # Trois annees par ligne au plus : cinq sur une seule ne tenaient pas,
+        # la derniere s'affichait « 20. » (01/10/2026).
         ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0),
-                  frameon=False, ncol=min(len(pivot.columns), 6))
+                  frameon=False, ncol=min(len(pivot.columns), 3))
         canvas.fig.tight_layout()
         v.addWidget(canvas)
+        if incomplets:
+            note = QLabel("Les mois incomplets (mise en service, mois en "
+                          "cours) ne sont pas tracés.")
+            note.setObjectName("SectionSub")
+            note.setWordWrap(True)
+            v.addWidget(note)
         return card

@@ -30,7 +30,7 @@ from matplotlib.figure import Figure
 
 # Les unites qu'une mise en capitales ne doit pas toucher : « KWH » ne veut
 # rien dire, le k de kilo s'ecrit en minuscule.
-_UNITES = re.compile(r"(€/kWh|kWh/kWc|kWh|MWh|kWc|Wh|kW)")
+_UNITES = re.compile(r"(€/kWh|kWh/kWc/an|kWh/kWc|kWh|MWh|kWc|Wh|kW)")
 
 
 def capitales(texte: str) -> str:

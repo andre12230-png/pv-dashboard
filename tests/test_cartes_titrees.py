@@ -107,8 +107,14 @@ def _titres_au_dessus(fenetre, vue: str) -> list[str]:
     return [e.text() for e in fenetre.views[vue].findChildren(QLabel, "SectionTitle")]
 
 
+# Le mois d'hier, qui a toujours des releves. Le mois en cours n'en a aucun
+# le 1er : le Tableau de bord s'ouvrait alors sur toute la periode, et le test
+# echouait un jour par mois (vu le 01/10/2026).
+MOIS_D_HIER = f"month-{date.today() - timedelta(days=1):%Y-%m}"
+
+
 @pytest.mark.parametrize("vue, periode, attendus", [
-    ("dashboard", None, ["CIRCULATION DE L'ÉNERGIE",
+    ("dashboard", MOIS_D_HIER, ["CIRCULATION DE L'ÉNERGIE",
                          "REMBOURSEMENT DE L'INSTALLATION",
                          "PRODUCTION JOUR PAR JOUR"]),
     ("categories", f"year-{date.today().year - 1}",
