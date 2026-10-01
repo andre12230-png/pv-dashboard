@@ -1562,6 +1562,43 @@ def test_garder_si_case_vide_ignore_les_blancs():
     assert ecartees == 0
 
 
+def test_index_enedis_remplace_la_conso_de_l_onduleur_et_complete_hc_hp(tmp_path):
+    # Cas d'un utilisateur (01/10/2026) : le dernier jour d'un export d'index
+    # (30/09) n'a ni HC ni HP, faute de l'index du lendemain ; le rapport de
+    # l'onduleur y a mis sa propre consommation reseau. A l'import suivant,
+    # qui porte l'index du 01/10, le releve Enedis doit prendre la place du
+    # chiffre de l'onduleur (le gestionnaire de reseau fait foi) et remplir
+    # HC / HP -- sans toucher a la production ni au 29/09 deja releve.
+    # Meme enchainement que l'ecran de saisie : merge_import colonne par
+    # colonne, sans garder_si_case_vide pour un fichier Enedis.
+    rows = [
+        {"Date": "29/09/2026", "Prod_Jour": "30", "Inj_Jour": "20",
+         "Conso_réseau_Jour": "7,5", "Conso_HC": "4,5", "Conso_HP": "3"},
+        {"Date": "30/09/2026", "Prod_Jour": "8", "Inj_Jour": "2",
+         "Conso_réseau_Jour": "8", "Conso_HC": "", "Conso_HP": ""},
+    ]
+    p = _classeur_index(str(tmp_path / "Export_Index.xlsx"), lignes=[
+        ("29/09/2026", 1000.0, 600.0, 400.0),
+        ("30/09/2026", 1007.5, 603.0, 404.5),
+        ("01/10/2026", 1016.0, 608.0, 408.0),
+    ])
+    for colonne, valeurs in dl.parse_enedis_fichier(p).items():
+        rows, _n, _r, _i = dl.merge_import(rows, colonne, valeurs)
+    par_date = {r["Date"]: r for r in rows}
+
+    trente = par_date["30/09/2026"]
+    assert trente["Conso_réseau_Jour"] == "8,5"   # 8 de l'onduleur remplace
+    assert trente["Conso_HP"] == "5"
+    assert trente["Conso_HC"] == "3,5"
+    assert trente["Prod_Jour"] == "8" and trente["Inj_Jour"] == "2"
+    assert par_date["29/09/2026"] == {
+        "Date": "29/09/2026", "Prod_Jour": "30", "Inj_Jour": "20",
+        "Conso_réseau_Jour": "7,5", "Conso_HC": "4,5", "Conso_HP": "3"}
+    # L'index du 01/10 sert seulement a cloturer le 30/09 : pas de journee
+    # du 01/10 tant que l'index du 02/10 manque.
+    assert "01/10/2026" not in par_date
+
+
 def test_read_raw_meme_resultat_que_la_lecture_ligne_a_ligne(tmp_path):
     # read_releves_raw lisait ligne par ligne (iterrows), la moitie du temps
     # du calcul complet (28/09/2026). La lecture par colonnes doit rendre
