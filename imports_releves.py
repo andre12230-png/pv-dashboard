@@ -430,7 +430,8 @@ def _charger_openpyxl():
 
 
 def _index_d_une_feuille(ws, production: bool = False
-                         ) -> tuple[dict[str, dict[str, str]] | None, str | None]:
+                         ) -> tuple[dict[str, dict[str, str]] | None,
+                                    str | None, str | None]:
     """
     Lit une feuille d'export d'index Enedis.
 
@@ -441,7 +442,8 @@ def _index_d_une_feuille(ws, production: bool = False
     seraient ranges en soutirage.
 
     Retourne ({colonne_cible: {date: kWh}} converti en consommations, premier
-    jour lu), ou (None, None) si cette feuille n'est pas un export d'index.
+    jour lu, dernier jour lu), ou (None, None, None) si cette feuille n'est
+    pas un export d'index.
     """
     total = "Inj_Jour" if production else "Conso_réseau_Jour"
     colonnes: dict[int, str] = {}
@@ -486,14 +488,17 @@ def _index_d_une_feuille(ws, production: bool = False
                 index.setdefault(cible, {})[jour] = valeur
 
     if not colonnes:
-        return None, None
+        return None, None, None
     # Le premier releve du fichier sert de reference : il n'y a rien avant
-    # lui a soustraire, donc il ne produit aucune journee. L'appelant le dit
-    # a l'utilisateur, qui sinon cherche en vain ce jour dans ses releves.
+    # lui a soustraire, donc il ne produit aucune journee. Le dernier ne fait
+    # que cloturer la veille : sa propre journee attend l'index du lendemain.
+    # L'appelant le dit a l'utilisateur, qui sinon cherche en vain ces jours
+    # dans ses releves.
     tous = [j for valeurs in index.values() for j in valeurs]
     premier = min(tous, key=_en_date) if tous else None
+    dernier = max(tous, key=_en_date) if tous else None
     return ({cible: consommation_depuis_index(valeurs)
-             for cible, valeurs in index.items()}, premier)
+             for cible, valeurs in index.items()}, premier, dernier)
 
 
 def parse_enedis_index_xlsx(path: str, notes: list | None = None
@@ -517,9 +522,9 @@ def parse_enedis_index_xlsx(path: str, notes: list | None = None
         # Un producteur a deux feuilles : la consommation (avec le detail
         # HP/HC) et la production, c'est-a-dire l'injection. On prend les
         # deux, chacune dans sa colonne.
-        premiers = []
+        premiers, derniers = [], []
         for nom in wb.sheetnames:
-            trouve, premier = _index_d_une_feuille(
+            trouve, premier, dernier = _index_d_une_feuille(
                 wb[nom], "prod" in nom.lower())
             if trouve is None:
                 continue  # feuille de garde, ou autre chose
@@ -527,6 +532,8 @@ def parse_enedis_index_xlsx(path: str, notes: list | None = None
             resultat.update(trouve)
             if premier:
                 premiers.append(premier)
+            if dernier:
+                derniers.append(dernier)
     finally:
         wb.close()
     if not reconnu:
@@ -538,6 +545,16 @@ def parse_enedis_index_xlsx(path: str, notes: list | None = None
             "premier jour sert de référence, il n'y a rien avant lui à "
             "soustraire. Pour l'obtenir, refaites l'export en partant de la "
             "veille.")
+    if notes is not None and derniers:
+        dernier = max(derniers, key=_en_date)
+        # Un seul releve : premier et dernier ne font qu'un, la remarque
+        # ci-dessus suffit.
+        if not premiers or dernier != min(premiers, key=_en_date):
+            notes.append(
+                f"Le {dernier} n'apparaît pas encore : sa consommation se "
+                "calcule avec le relevé du lendemain, qu'Enedis publie un "
+                "jour plus tard. Il se complétera au prochain import, si "
+                f"l'export part du {dernier} ou d'avant.")
     return resultat
 
 

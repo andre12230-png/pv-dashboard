@@ -646,10 +646,34 @@ def test_index_enedis_previent_pour_le_premier_jour(tmp_path):
     p = _classeur_index(str(tmp_path / "Export_Index.xlsx"))
     notes = []
     dl.parse_enedis_fichier(p, notes=notes)
-    assert len(notes) == 1
-    assert "01/01/2025" in notes[0]
-    assert "référence" in notes[0]
-    assert "veille" in notes[0]
+    premier = [n for n in notes if "01/01/2025" in n]
+    assert len(premier) == 1
+    assert "référence" in premier[0]
+    assert "veille" in premier[0]
+
+
+def test_index_enedis_previent_pour_le_dernier_jour(tmp_path):
+    """Le dernier releve ne fait que cloturer la veille : sa propre journee
+    attend l'index du lendemain. Un utilisateur a cherche le 30/09 dans
+    l'appli alors qu'il figurait dans son fichier (01/10/2026)."""
+    p = _classeur_index(str(tmp_path / "Export_Index.xlsx"))
+    notes = []
+    imports = dl.parse_enedis_fichier(p, notes=notes)
+    assert "03/01/2025" not in imports["Conso_réseau_Jour"]
+    dernier = [n for n in notes if "03/01/2025" in n]
+    assert len(dernier) == 1
+    assert "lendemain" in dernier[0]
+    assert "prochain import" in dernier[0]
+
+
+def test_index_enedis_un_seul_jour_une_seule_remarque(tmp_path):
+    # Un seul releve : il est a la fois le premier et le dernier. La
+    # remarque du premier jour suffit, pas deux phrases sur la meme date.
+    p = _classeur_index(str(tmp_path / "Export_Index.xlsx"),
+                        lignes=[("01/01/2025", 100.0, 60.0, 40.0)])
+    notes = []
+    dl.parse_enedis_fichier(p, notes=notes)
+    assert len([n for n in notes if "01/01/2025" in n]) == 1
 
 
 def test_sans_liste_de_notes_l_import_marche_pareil(tmp_path):
