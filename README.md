@@ -83,8 +83,8 @@ l'application **le cree vide** et s'ouvre dessus. Trois etapes ensuite :
    **Recalages sur mes factures** (ou directement `config-local.yaml`)
    ci-dessous.
 
-Une configuration incomplete n'affiche plus un message de programmeur mais
-la liste, en francais, de ce qu'il reste a renseigner.
+Si la configuration est incomplete, l'application affiche la liste, en
+francais, de ce qu'il reste a renseigner.
 
 ## Lancement
 
@@ -167,9 +167,14 @@ c'est une annee, d'une annee OA quand c'est une annee OA — et se grisent
 quand il n'y a plus rien de ce cote. Le menu des mois ne propose que les
 mois qui portent des releves.
 
+Le bouton **Ce mois-ci** ramene au mois en cours (**Cette annee** sur les
+pages qui ne raisonnent qu'en annees, comme les Statistiques) ; il est grise
+quand on y est deja. Au clavier : **Ctrl+←** et **Ctrl+→** pour la periode
+precedente ou suivante, **Ctrl+Origine** pour revenir au mois en cours.
+
 Le menu des annees porte aussi **Toute la periode** et les **annees OA**
-(du 12 mai au 11 mai, par exemple) ; dans ces deux cas le menu des mois est
-grise, puisque ces periodes-la sont a cheval sur les mois. Les dates exactes
+(du 12 mai au 11 mai, par exemple) ; dans ces deux cas le menu des mois ne
+propose que **Toute l'annee**, puisque ces periodes-la sont a cheval sur les mois. Les dates exactes
 d'une annee OA se lisent en survolant son entree dans le menu.
 
 ## Le menu de gauche
@@ -180,9 +185,11 @@ a jour), dans l'ordre de Pecule — chacune avec un pictogramme, separees par
 un filet. Le menu defile si la fenetre est basse. Trois n'apparaissent
 que si elles vous concernent : **Annees OA** (si vous vendez votre electricite :
 masquee avec `oa.type: aucune`), **TVA autoconsommation** (section `tva_lasm`
-remplie) et la **comparaison avec EDF** (fournisseur autre qu'EDF). Le bandeau reprend celui de Pecule : boutons rectangulaires, un
-emoji devant chaque libelle, titres de section soulignes ; la page
-affichee est le bouton surligne en bleu. En haut du
+remplie) et la **comparaison avec EDF** (fournisseur autre qu'EDF).
+
+Le bandeau reprend celui de Pecule : boutons rectangulaires, un emoji devant
+chaque libelle, titres de section soulignes ; la page affichee est le bouton
+surligne en bleu. En haut du
 menu, la puissance et la date de debut du contrat OA ; en pied, le numero de
 version.
 
@@ -201,10 +208,20 @@ version.
 | Comparer a l'an passe | La periode choisie en haut (mois, annee, annee OA) face a la meme periode un an plus tot (periode en cours : memes dates de N-1) ; bouton « Une journee precise » pour comparer un jour donne |
 | *Fournisseur* ou *reference* | Cout reel du contrat en cours face a la simulation de l'offre de reference, options Base et HP/HC (depuis la bascule). Le libelle porte les noms declares en config : "Mon fournisseur ou EDF" avec le modele livre. **Masque quand le fournisseur declare est EDF** (`nom: "EDF"`) : comparer EDF a EDF n'a pas de sens |
 | Notice | Mode d'emploi et glossaire des termes |
-| Votre avis | Ouvre un court questionnaire en ligne dans le navigateur (probleme, idee), apres avoir copie la version. L'application n'envoie rien elle-meme. Une seule invitation, deux semaines apres le premier lancement |
 | Parametres | Vue lecture seule de la configuration, et la liste des recalages actifs ; bouton « Modifier mes reglages » |
-| 💾 Sauvegarde externe | Copie les donnees sur une cle USB ou un disque choisi, verifiee fichier par fichier. Un rappel s'affiche sur le tableau de bord au-dela de 30 jours sans sauvegarde |
-| 🔄 Mise a jour | Affiche la version installee et ouvre, a la demande, la page de la derniere version dans le navigateur : l'application ne se connecte jamais a Internet, c'est vous qui comparez les numeros |
+
+Trois boutons du menu ouvrent une fenetre plutot qu'une page :
+
+- **💾 Sauvegarde externe** : copie les donnees sur une cle USB ou un disque
+  choisi, verifiee fichier par fichier. Un rappel s'affiche sur le tableau de
+  bord au-dela de 30 jours sans sauvegarde.
+- **🔄 Mise a jour** : affiche la version installee et ouvre, a la demande,
+  la page de la derniere version dans le navigateur. L'application ne se
+  connecte jamais a Internet, c'est vous qui comparez les numeros.
+- **💬 Votre avis** : ouvre un court questionnaire en ligne dans le
+  navigateur (probleme, idee), apres avoir copie la version. L'application
+  n'envoie rien elle-meme. Une seule invitation, deux semaines apres le
+  premier lancement.
 
 ## Donnees
 
@@ -259,13 +276,11 @@ La ligne neuve laissee telle quelle n'est pas enregistree.
 Ce qui est refuse a l'enregistrement, avec un message explicite :
 
 - une **date incomplete** (`2026`, `08/2026`) ou inexistante (`31/02/2026`) :
-  elle etait auparavant comprise comme le 1er janvier et **ecrasait** le
-  releve de ce jour. Format attendu : `JJ/MM/AAAA` ;
+  format attendu : `JJ/MM/AAAA` ;
 - une valeur **negative**, ou `inf` / `nan` (qui contaminaient les totaux) ;
 - une valeur **au-dela du plausible** : 150 kWh pour la consommation,
   et **10 kWh par kWc** pour la production et l'injection (60 kWh sur une
-  installation de 6 kWc, 90 sur 9 kWc). Le plafond etait fige a 60 : une
-  journee d'ete d'une installation plus grande etait refusee a tort.
+  installation de 6 kWc, 90 sur 9 kWc).
 
 Pour **effacer une journee**, videz toutes ses cases et enregistrez :
 l'app demande confirmation, puis retire la ligne du fichier (une ligne
@@ -454,9 +469,7 @@ pour l'activer.
 Pourquoi separer ? Les sections de recalage **reecrivent les releves
 journaliers** pour retomber sur le total d'une facture. Livrees avec le
 programme, elles s'appliquaient aux releves de qui recuperait
-l'application : ses chiffres etaient faux, sans un mot. Un essai a blanc du
-09/09/2026 le montrait -- 5 kWh saisis affiches 7,66, un total de 305 kWh
-reecrit a 467. **Ne recopiez jamais les recalages de quelqu'un d'autre.**
+l'application : ses chiffres etaient faux, sans un mot. **Ne recopiez jamais les recalages de quelqu'un d'autre.**
 
 Ce fichier n'etant plus protege par l'historique du depot, l'application en
 garde une copie quotidienne dans `backups/` (les 30 dernieres).
@@ -751,6 +764,7 @@ pv-dashboard/
 ├── gui_widgets.py        # Widgets reutilisables (cards, KPI, pill...)
 ├── reglages.py           # « Mes reglages » : lire et ecrire config.yaml
 ├── fenetre_reglages.py   #   ... et la fenetre qui les presente
+├── accords.py           # Accorder un mot avec un nombre (« 1 jour », « 2 jours »)
 ├── erreurs.py            # Erreurs techniques dites en francais (commun
 │                         #   aux trois applications de l'auteur)
 ├── sauvegarde_externe.py # Copie verifiee sur cle USB ou disque (commun)
@@ -796,8 +810,6 @@ pv-dashboard/
 ├── LICENSE               # Licence MIT
 ├── docs/                 # Page de presentation (GitHub Pages)
 ├── pv-dashboard.ico      # Icone de l'application
-├── pv-dashboard.log      # Erreurs de demarrage (ecrit par l'app)
-├── pv-dashboard.spec     # Engendre par PyInstaller, non versionne
 └── README.md
 ```
 
