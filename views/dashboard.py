@@ -546,6 +546,9 @@ class DashboardView(BaseView):
                    + pd.Timedelta(days=round(am["roi_an"] * 365.25)))
             detail += (f" Au rythme actuel, remboursement complet vers "
                        f"{fin.year} (voir la Synthèse financière).")
+        elif am["jours_avant_estimation"]:
+            detail += (" La date de remboursement s'estimera après un an de "
+                       "relevés.")
         note = QLabel(detail)
         note.setWordWrap(True)
         note.setStyleSheet(

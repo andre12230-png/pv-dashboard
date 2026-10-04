@@ -437,7 +437,9 @@ mois quelle que soit la consommation. Comptée dans les dépenses réseau.</p>
 <p><b>Amortissement</b> — moment où les gains cumulés égalent le coût de
 l'installation ({invest}).</p>
 <p><b>Temps de retour</b> — durée estimée pour rembourser l'investissement
-initial (on dit aussi « retour sur investissement »).</p>
+initial (on dit aussi « retour sur investissement »). Il ne s'affiche
+qu'après un an de relevés : quelques mois d'été ou d'hiver, prolongés sur une
+année, le fausseraient de plusieurs années.</p>
 """
 
 

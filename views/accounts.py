@@ -135,12 +135,21 @@ class AccountsView(BaseView):
 
         # Le bilan net n'est plus repete ici : il est deja dans la carte
         # « Bilan net global » du haut, meme calcul (relecture du 29/09/2026).
+        gains = "vente + économies" if self.data.vend else "économies"
+        manque = am["jours_avant_estimation"]
+        if manque:
+            # Moins d'un an de releves : rien a extrapoler (voir
+            # amortissement()). On dit quand l'estimation viendra.
+            s = "s" if manque > 1 else ""
+            sous_titre_gains = (f"{gains} : estimés après un an de relevés "
+                                f"(encore {manque} jour{s})")
+        else:
+            sous_titre_gains = (f"{gains}, moyenne sur {_ans(annees)} "
+                                + ("an" if annees < 2 else "ans"))
         self.layout_inner.addLayout(grid_row([
-            KpiCard("Gains récurrents par an", fmt_eur(gains_an),
-                    ("vente + économies" if self.data.vend else "économies")
-                    + f", moyenne sur {_ans(annees)} "
-                    + ("an" if annees < 2 else "ans"),
-                    "credit"),
+            KpiCard("Gains récurrents par an",
+                    fmt_eur(gains_an) if gains_an is not None else "—",
+                    sous_titre_gains, "credit"),
             # « Temps de retour » et non « ROI » (sigle anglais, relecture du
             # 29/09/2026).
             KpiCard("Temps de retour", f"{_ans(roi_an)} ans" if roi_an else "—",

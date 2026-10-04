@@ -208,3 +208,39 @@ def test_graduations_avec_espace_des_milliers(qapp, donnees):
     ax = vue.findChildren(MplCanvas)[0].fig.axes[0]
     # Avec l'unite sur chaque graduation (30/09/2026 : plus de « € » couche).
     assert ax.yaxis.get_major_formatter()(20000, 0) == "20 000 €"
+
+
+# --- Pas d'extrapolation avant un an de relevés (audit du 04/10/2026) -------
+
+def _quelques_jours(donnees, debut: str, fin: str):
+    jours = pd.date_range(debut, fin, freq="D")
+    df = pd.DataFrame({"revenu_vente_eur": 1.0, "economie_eur": 2.0,
+                       "cout_reseau_eur": 5.0}, index=jours)
+    df["annee_oa"] = calc.assign_oa_year(df.index, donnees.start_oa).values
+    donnees.df = df
+    return donnees
+
+
+def test_une_semaine_ne_donne_ni_rythme_ni_temps_de_retour(qapp, donnees):
+    """Une semaine de releves affichait « 632,75 € par an, moyenne sur
+    0,0 an » et « remboursement vers 2039 » ; trois mois commences au
+    printemps raccourcissaient le temps de retour de six ans, en octobre ils
+    l'allongeaient de dix-huit. Avant un an de releves, on n'extrapole pas."""
+    _quelques_jours(donnees, "2024-06-01", "2024-06-07")
+    am = amortissement(donnees)
+    assert am["gains_an"] is None
+    assert am["roi_an"] is None
+    assert am["jours_avant_estimation"] == 365 - 7
+    textes = _textes_de_la_synthese(donnees)
+    assert "0,0 an" not in textes
+    assert "après un an de relevés" in textes
+
+
+def test_un_an_de_releves_suffit_et_chaque_jour_compte(qapp, donnees):
+    """365 jours de releves valent un an : le rythme est la somme des gains,
+    sans le jour oublie de l'ancien calcul (dernier - premier)."""
+    _quelques_jours(donnees, "2024-01-01", "2024-12-30")   # 365 jours
+    am = amortissement(donnees)
+    assert am["jours_avant_estimation"] == 0
+    assert am["gains_an"] == pytest.approx(3.0 * 365 / (365 / 365.25))
+    assert am["roi_an"] is not None

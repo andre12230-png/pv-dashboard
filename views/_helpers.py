@@ -199,6 +199,10 @@ def _orienter_chiffres(ax, textes: list[list], centres: list[float]) -> None:
     ax.margins(y=0.20 if debout else 0.12)
 
 
+# Releves necessaires avant d'estimer un rythme annuel et un temps de retour.
+JOURS_AVANT_ESTIMATION = 365
+
+
 def amortissement(data) -> dict | None:
     """Ou en est le remboursement de l'installation, depuis la mise en service.
 
@@ -212,7 +216,9 @@ def amortissement(data) -> dict | None:
       annees, gonflerait ce rythme et raccourcirait l'amortissement de
       plusieurs annees) ;
     - roi_an : annees necessaires depuis la mise en service, la prime totale
-      (versee ou non) venant en deduction du capital a rembourser.
+      (versee ou non) venant en deduction du capital a rembourser ;
+    - jours_avant_estimation : jours de releves qui manquent encore pour
+      estimer gains_an et roi_an (tous deux None tant qu'il en manque).
     """
     df = data.df
     if df is None or df.empty:
@@ -227,15 +233,26 @@ def amortissement(data) -> dict | None:
     revenu = float(df["revenu_vente_eur"].sum())
     eco = float(df["economie_eur"].sum())
     invest = float(installation["cout_total_eur"])
-    annees = max((df.index.max() - df.index.min()).days / 365.25, 0.01)
-    gains_an = (revenu + eco) / annees
+    # Chaque jour de releve compte : du 1er au 7 juin, c'est 7 jours, pas 6.
+    jours = (df.index.max() - df.index.min()).days + 1
+    annees = jours / 365.25
     prime_versee = prime_an * nb_primes
     prime_totale = prime_an * oa.prime_duree
     reste = invest - prime_totale
-    # Au-dela d'un siecle, une echeance ne veut plus rien dire : c'est le cas
-    # de quelques jours de releves seulement. Elle faisait planter le calcul
-    # de la date de remboursement (au-dela de ce que pandas sait dater).
-    roi_an = reste / gains_an if gains_an > 0 else None
+    # Avant un an de releves, pas de rythme annuel ni de temps de retour :
+    # quelques semaines d'ete ou d'hiver, multipliees jusqu'a faire un an,
+    # donnaient un temps de retour faux de plusieurs annees (audit du
+    # 04/10/2026). Un an entier contient toutes les saisons.
+    jours_avant_estimation = max(JOURS_AVANT_ESTIMATION - jours, 0)
+    if jours_avant_estimation:
+        gains_an = None
+        roi_an = None
+    else:
+        gains_an = (revenu + eco) / annees
+        roi_an = reste / gains_an if gains_an > 0 else None
+    # Au-dela d'un siecle, une echeance ne veut plus rien dire. Elle faisait
+    # planter le calcul de la date de remboursement (au-dela de ce que
+    # pandas sait dater).
     if roi_an is not None and roi_an > 100:
         roi_an = None
     return {
@@ -245,6 +262,7 @@ def amortissement(data) -> dict | None:
         "prime_totale": prime_totale,
         "invest": invest,
         "annees": annees,
+        "jours_avant_estimation": jours_avant_estimation,
         "gains_an": gains_an,
         "reste_a_amortir": reste,
         "roi_an": roi_an,

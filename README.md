@@ -647,7 +647,8 @@ code les fait bouger un jour, le test tombe. Faites de meme avec les votres.
 - **Temps de retour** (ex-« ROI ») = (investissement − prime totale) ÷ gains **recurrents** annuels
   (vente OA + economies). La prime n'etant versee que sur 5 ans, elle est
   deduite du capital a amortir au lieu d'etre comptee comme un revenu qui
-  se repete. Le calcul suppose des gains maintenus au rythme observe
+  se repete. Le calcul suppose des gains maintenus au rythme observe,
+  et n'est fait qu'apres un an de releves (toutes les saisons comprises)
 - **Avant le debut du contrat OA** : pas de vente (contrat pas encore
   actif), meme pour l'injection estimee de cette periode
 - **Jours sans releve d'injection** (avant le contrat, ou panne du Linky
