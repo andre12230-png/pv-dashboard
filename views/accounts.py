@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import pandas as pd
+from matplotlib.dates import DateFormatter, MonthLocator
 from matplotlib.ticker import FuncFormatter
 from PySide6.QtWidgets import QFrame, QLabel
 
@@ -241,7 +242,17 @@ class AccountsView(BaseView):
         x = recupere.index
         ax.fill_between(x, 0, recupere.values, color=CC["autoconso"], alpha=0.18)
         ax.plot(x, recupere.values, color=CC["autoconso"], lw=2.5,
+                marker="o" if len(x) == 1 else None,
                 label=f"Récupéré : {self._recettes()}")
+        if len(x) == 1:
+            # Un seul mois de releves : face a un point seul, matplotlib
+            # etalait l'axe sur quatre ans et la courbe disparaissait. On
+            # resserre l'axe autour de ce mois.
+            ax.set_xlim(x[0] - pd.DateOffset(months=1),
+                        x[0] + pd.DateOffset(months=1))
+            # Un repere par mois, ecrit « 09/2026 » et non « 2026-09-01 ».
+            ax.xaxis.set_major_locator(MonthLocator())
+            ax.xaxis.set_major_formatter(DateFormatter("%m/%Y"))
         # Chaque versement de la prime fait une marche dans la courbe, qui
         # passait pour une anomalie. La marche reste a sa vraie date (avant le
         # versement, l'argent n'etait pas la) mais elle est signalee : un point

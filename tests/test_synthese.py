@@ -244,3 +244,17 @@ def test_un_an_de_releves_suffit_et_chaque_jour_compte(qapp, donnees):
     assert am["jours_avant_estimation"] == 0
     assert am["gains_an"] == pytest.approx(3.0 * 365 / (365 / 365.25))
     assert am["roi_an"] is not None
+
+
+def test_une_semaine_reste_visible_sur_le_graphique(qapp, donnees):
+    """Une semaine = un seul point mensuel : matplotlib etalait l'axe sur
+    quatre ans et la courbe disparaissait (vu le 04/10/2026, une fois la
+    projection retiree avant un an de releves)."""
+    from views.accounts import AccountsView
+    from gui_widgets import MplCanvas
+    _quelques_jours(donnees, "2024-06-01", "2024-06-07")
+    vue = AccountsView(donnees, LIGHT)
+    vue.refresh("all")
+    ax = vue.findChildren(MplCanvas)[0].fig.axes[0]
+    gauche, droite = ax.get_xlim()
+    assert droite - gauche < 100        # en jours
