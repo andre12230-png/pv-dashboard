@@ -250,8 +250,8 @@ def test_une_semaine_reste_visible_sur_le_graphique(qapp, donnees):
     """Une semaine = un seul point mensuel : matplotlib etalait l'axe sur
     quatre ans et la courbe disparaissait (vu le 04/10/2026, une fois la
     projection retiree avant un an de releves)."""
-    from views.accounts import AccountsView
     from gui_widgets import MplCanvas
+    from views.accounts import AccountsView
     _quelques_jours(donnees, "2024-06-01", "2024-06-07")
     vue = AccountsView(donnees, LIGHT)
     vue.refresh("all")
