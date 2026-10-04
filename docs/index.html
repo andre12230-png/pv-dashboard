@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gestion Photovoltaïque — suivi d'une installation solaire en autoconsommation (Windows, gratuit)</title>
-<meta name="description" content="Application gratuite et en français pour suivre une installation photovoltaïque en autoconsommation avec vente du surplus à EDF OA : production, autoconsommation, injection, économies, remboursement de l'installation. Windows 10/11. Données 100 % locales. Open source (MIT).">
+<meta name="description" content="Application gratuite et en français pour suivre une installation photovoltaïque en autoconsommation, avec ou sans vente (surplus ou totale, à EDF OA ou à un autre acheteur) : production, autoconsommation, injection, économies, remboursement de l'installation. Windows 10/11. Données 100 % locales. Open source (MIT).">
 <!-- Aperçu lors du partage (réseaux sociaux, forums, messageries) : une
      couverture 1200x630, le format que ces services attendent. -->
 <meta property="og:type" content="website">
@@ -12,14 +12,14 @@
 <meta property="og:site_name" content="Gestion Photovoltaïque">
 <meta property="og:url" content="https://andre12230-png.github.io/pv-dashboard/">
 <meta property="og:title" content="Gestion Photovoltaïque — suivi d'une installation solaire (Windows, gratuit)">
-<meta property="og:description" content="Suivez votre production solaire, votre autoconsommation et la revente du surplus à EDF OA. Gratuit, en français, données 100 % locales, open source (MIT).">
+<meta property="og:description" content="Suivez votre production solaire, votre autoconsommation et la vente de votre électricité. Gratuit, en français, données 100 % locales, open source (MIT).">
 <meta property="og:image" content="https://andre12230-png.github.io/pv-dashboard/media/partage_1200x630.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Gestion Photovoltaïque — suivez votre production solaire, votre autoconsommation et la revente du surplus à EDF OA.">
+<meta property="og:image:alt" content="Gestion Photovoltaïque — suivez votre production solaire, votre autoconsommation et la vente de votre électricité.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Gestion Photovoltaïque — suivi d'une installation solaire (Windows, gratuit)">
-<meta name="twitter:description" content="Production, autoconsommation, revente EDF OA, remboursement de l'installation. Gratuit, en français, données 100 % locales.">
+<meta name="twitter:description" content="Production, autoconsommation, vente, remboursement de l'installation. Gratuit, en français, données 100 % locales.">
 <meta name="twitter:image" content="https://andre12230-png.github.io/pv-dashboard/media/partage_1200x630.png">
 <link rel="canonical" href="https://andre12230-png.github.io/pv-dashboard/">
 
@@ -32,7 +32,7 @@
   "alternateName": "pv-dashboard",
   "url": "https://andre12230-png.github.io/pv-dashboard/",
   "sameAs": ["https://github.com/andre12230-png/pv-dashboard"],
-  "description": "Application de bureau gratuite et en français pour suivre une installation photovoltaïque en autoconsommation avec vente du surplus à EDF OA : production, autoconsommation, injection, consommation réseau, économies, revenus de l'obligation d'achat, remboursement de l'installation, comparaison avec le Tarif Bleu d'EDF. Données stockées localement, sans compte ni cloud.",
+  "description": "Application de bureau gratuite et en français pour suivre une installation photovoltaïque en autoconsommation, avec ou sans vente (surplus ou totale, à EDF OA ou à un autre acheteur) : production, autoconsommation, injection, consommation réseau, économies, revenus de la vente, remboursement de l'installation, comparaison avec le Tarif Bleu d'EDF. Données stockées localement, sans compte ni cloud.",
   "applicationCategory": "UtilitiesApplication",
   "operatingSystem": "Windows 10, Windows 11",
   "softwareVersion": "1.47.0",
@@ -53,12 +53,12 @@
   "featureList": [
     "Tableau de bord : autoproduction, production, bilan financier",
     "Import des relevés Enedis (index quotidiens avec heures creuses et pleines), du fournisseur et de l'onduleur (toutes marques)",
-    "Revenus de la vente du surplus à EDF OA, année OA par année OA",
+    "Revenus de la vente, à EDF OA ou à un autre acheteur, année de contrat par année de contrat",
     "Économies d'autoconsommation et remboursement de l'installation",
     "Diagramme de circulation de l'énergie",
     "Comparaison avec l'année précédente et avec le Tarif Bleu d'EDF",
     "TVA sur l'autoconsommation pour les producteurs assujettis",
-    "Sauvegardes automatiques",
+    "Sauvegardes automatiques et sauvegarde externe",
     "Données 100 % locales, sans compte ni cloud"
   ]
 }
@@ -117,7 +117,7 @@
   <div class="wrap">
     <h1>☀️ Gestion Photovoltaïque</h1>
     <p class="sub">Suivez votre installation solaire en autoconsommation : ce qu'elle produit,
-    ce que vous consommez, ce que vous vendez à EDF OA, et quand elle sera remboursée.</p>
+    ce que vous consommez, ce que vous vendez, et quand elle sera remboursée.</p>
     <div class="badges">
       <img src="https://badgen.net/github/assets-dl/andre12230-png/pv-dashboard?label=t%C3%A9l%C3%A9chargements&amp;color=green" alt="Téléchargements">
       <img src="https://badgen.net/github/release/andre12230-png/pv-dashboard/stable?label=version&amp;color=blue" alt="Version">
@@ -160,21 +160,21 @@
   <section>
     <h2>À quoi ça sert ?</h2>
     <p>Vous avez des panneaux solaires, vous consommez une partie de ce qu'ils produisent et
-    vendez le reste à EDF OA. Les chiffres sont éparpillés : l'application de l'onduleur,
-    l'espace Enedis, les factures du fournisseur, l'autofacturation annuelle d'EDF OA.
+    vendez peut-être le reste, le plus souvent à EDF OA. Les chiffres sont éparpillés : l'application de l'onduleur,
+    l'espace Enedis, les factures du fournisseur, l'autofacturation annuelle de l'acheteur.
     Gestion Photovoltaïque les rassemble jour par jour et en tire ce que vous voulez vraiment
     savoir — sans abonnement, sans compte en ligne, et sans qu'aucune donnée ne quitte votre
     ordinateur.</p>
     <div class="grid">
       <div class="card"><h3>🏠 Tableau de bord</h3><p>La part de votre consommation qui vient du soleil, la production du mois comparée à l'an passé, et le bilan en euros.</p></div>
       <div class="card"><h3>📥 Imports sans ressaisie</h3><p>Relevés Enedis — y compris l'export d'<b>index quotidiens</b>, qui donne le détail <b>heures creuses / pleines</b> quel que soit votre fournisseur, et l'injection si vous produisez. Suivi de consommation du fournisseur et export de l'onduleur, quelle que soit sa marque — le <b>rapport mensuel</b> de son portail comble même les journées d'avant la mise en service du compteur, que le réseau ne connaît pas. Saisie à la main possible.</p></div>
-      <div class="card"><h3>💶 Vente à EDF OA</h3><p>Les revenus du surplus injecté et la prime à l'autoconsommation, année de contrat par année de contrat.</p></div>
+      <div class="card"><h3>💶 Vente</h3><p>Les revenus de la vente — surplus ou totalité, à EDF OA ou à un autre acheteur — et la prime à l'autoconsommation, année de contrat par année de contrat.</p></div>
       <div class="card"><h3>🐷 Économies</h3><p>Ce que l'électricité autoconsommée vous a évité d'acheter, au prix de votre propre contrat, heures pleines et creuses comprises.</p></div>
       <div class="card"><h3>🏡 Remboursement</h3><p>Ce que l'installation vous a déjà rapporté face à ce qu'elle a coûté, et l'année où elle sera remboursée au rythme actuel.</p></div>
       <div class="card"><h3>🔀 Circulation de l'énergie</h3><p>Un diagramme montre d'où vient et où va chaque kWh : autoconsommé, vendu, acheté au réseau.</p></div>
       <div class="card"><h3>🔁 Comparaisons</h3><p>Une période face à la même un an plus tôt, et votre fournisseur face au Tarif Bleu d'EDF, en option Base et heures creuses.</p></div>
       <div class="card"><h3>🧾 TVA autoconsommation</h3><p>Pour les producteurs assujettis à la TVA : la base de la livraison à soi-même, année par année. Invisible pour les autres.</p></div>
-      <div class="card"><h3>💾 Sauvegardes</h3><p>Chaque enregistrement garde les versions précédentes de vos relevés : une erreur se rattrape.</p></div>
+      <div class="card"><h3>💾 Sauvegardes</h3><p>Chaque enregistrement garde les versions précédentes de vos relevés : une erreur se rattrape. Et une copie vérifiée sur une clé USB ou un autre disque, en un clic, avec un rappel si vous l'oubliez.</p></div>
     </div>
   </section>
 
@@ -211,8 +211,8 @@
   <section>
     <h2>Premiers pas</h2>
     <ol class="steps">
-      <li><b>Décrivez votre installation</b> dans la fenêtre <b>Mes réglages</b>, qui s'ouvre au premier
-      lancement : puissance des panneaux, coût, dates, prix de rachat EDF OA, fournisseur et ses prix.
+      <li><b>Décrivez votre installation</b> dans la fenêtre <b>Mes réglages</b>, proposée au premier
+      lancement : puissance des panneaux, coût, dates, type de vente et prix de rachat, fournisseur et ses prix.
       Tout se lit sur vos factures et votre contrat.</li>
       <li><b>Faites entrer vos relevés</b> : onglet <b>Saisie quotidienne</b>, boutons <b>Importer…</b>.
       L'injection et la consommation se téléchargent dans votre espace Enedis (compteur Linky),

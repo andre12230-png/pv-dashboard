@@ -4,9 +4,9 @@
 [![Licence MIT](https://badgen.net/github/license/andre12230-png/pv-dashboard)](LICENSE)
 
 Application de bureau gratuite (Windows 10/11) pour suivre une installation
-photovoltaique en autoconsommation avec vente du surplus : production,
-autoconsommation, injection, economies, revente EDF OA et remboursement de
-l'installation. Donnees 100 % locales, open source (licence MIT).
+photovoltaique : production, autoconsommation, injection, economies, vente
+(surplus ou totale, a EDF OA ou a un autre acheteur, ou pas de vente du tout)
+et remboursement de l'installation. Donnees 100 % locales, open source (licence MIT).
 
 Page de presentation : **[andre12230-png.github.io/pv-dashboard](https://andre12230-png.github.io/pv-dashboard/)**
 
@@ -42,9 +42,13 @@ modifier le programme.
 
 Ce que l'application suppose de votre installation :
 
-- une installation en **autoconsommation avec vente du surplus** a EDF OA
-  (l'annee OA suit la date de debut de VOTRE contrat) ;
-- un compteur **Linky** (necessaire : c'est lui qui mesure l'injection) ;
+- une installation en **autoconsommation avec vente du surplus**, en
+  **vente totale**, ou **sans vente** ; l'acheteur est EDF OA par defaut, ou
+  celui que vous nommez (l'annee de contrat suit la date de debut de VOTRE
+  contrat) ;
+- un compteur **Linky** : c'est lui qui mesure l'injection (sans releve
+  d'injection, toute la production est comptee comme consommee chez vous,
+  et l'application le signale) ;
 - n'importe quel onduleur et n'importe quel fournisseur : les imports
   acceptent les exports de toutes les marques, voir « Une autre marque
   d'onduleur, un autre fournisseur ».
@@ -145,8 +149,8 @@ raccourcis au menu Demarrer, et se desinstalle par Parametres > Applications.
 
 Une fois installee, l'application range ses donnees **a part**, dans
 `%LOCALAPPDATA%\pv-dashboard` : au premier lancement, elle y copie le
-`config.yaml` modele (et `config-local.exemple.yaml`), dit ou le trouver et
-cree le fichier de releves vide. Le raccourci **Dossier des donnees** du menu
+`config.yaml` modele (et `config-local.exemple.yaml`), cree le fichier de
+releves vide et propose de remplir la fenetre « Mes reglages » (ou plus tard). Le raccourci **Dossier des donnees** du menu
 Demarrer y mene. Une mise a jour ne remplace jamais une configuration deja
 remplie, et une desinstallation laisse ce dossier en place.
 
@@ -167,9 +171,9 @@ c'est une annee, d'une annee OA quand c'est une annee OA — et se grisent
 quand il n'y a plus rien de ce cote. Le menu des mois ne propose que les
 mois qui portent des releves.
 
-Le bouton **Ce mois-ci** ramene au mois en cours (**Cette annee** sur les
-pages qui ne raisonnent qu'en annees, comme les Statistiques) ; il est grise
-quand on y est deja. Au clavier : **Ctrl+←** et **Ctrl+→** pour la periode
+Le bouton **Ce mois-ci** ramene au mois en cours ; il est grise quand on y
+est deja, et sur les pages qui montrent toujours tout l'historique (comme
+les Statistiques), ou le selecteur entier est grise. Au clavier : **Ctrl+←** et **Ctrl+→** pour la periode
 precedente ou suivante, **Ctrl+Origine** pour revenir au mois en cours.
 
 Le menu des annees porte aussi **Toute la periode** et les **annees OA**
@@ -201,7 +205,9 @@ version.
 | Saisie quotidienne | Tableau editable pour ajouter / corriger les releves du jour |
 | Releves journaliers | Journal jour par jour : production, autoconsommee, injectee, achetee au reseau (et part du vehicule), recettes, depenses, bilan du jour ; ligne de totaux de la periode sous le tableau (a part, pour que le tri ne la deplace pas) |
 | Repartition energie | Taux d'autoconsommation, couverture solaire et bilan ; diagramme de flux (Sankey) production/reseau -> injection/consommation ; detail par poste avec prix au kWh ; comparaison avec l'annee precedente |
-| Synthese financiere | 6 postes (Vente OA, Prime, Economies, Facture, Investissement, Bilan global) + graphique « Remboursement de l'installation » (ce qu'elle a rapporte face a son cout, projection au rythme actuel ; chaque versement de la prime, qui fait une marche dans la courbe, est marque d'un point et le dernier porte l'etiquette « Prime autoconso »). Le **bilan global** = ventes + economies + primes versees − cout de l'installation : la facture reseau n'y entre pas (on la paierait sans panneaux ; ce que les panneaux y changent est deja dans les economies). Meme calcul que la carte « Remboursement de l'installation » du tableau de bord (`amortissement()`) |
+| Synthese financiere | Jusqu'a 6 postes selon le contrat (Vente, Prime, Economies, Facture, Investissement, Bilan global) + graphique « Remboursement de l'installation » (ce qu'elle a rapporte face a son cout, projection au rythme actuel ; chaque versement de la prime, qui fait une marche dans la courbe, est marque d'un point et le dernier porte l'etiquette « Prime a l'autoconsommation » et son montant).
+Avant un an de releves, ni rythme annuel ni temps de retour : quelques mois
+d'ete ou d'hiver, prolonges sur un an, les fausseraient de plusieurs annees). Le **bilan global** = ventes + economies + primes versees − cout de l'installation : la facture reseau n'y entre pas (on la paierait sans panneaux ; ce que les panneaux y changent est deja dans les economies). Meme calcul que la carte « Remboursement de l'installation » du tableau de bord (`amortissement()`) |
 | Annees OA | Recap par annee de contrat OA (de sa date de debut a la veille de son anniversaire). **Masquee sans revente** (`oa.type: aucune`) |
 | TVA autoconsommation | Base de la livraison a soi-meme par annee civile (ligne 5A du 3517-S), TVA due, et recoupement des injections relevees avec les factures EDF OA. **N'apparait que si la section `tva_lasm` est remplie** : elle ne concerne que les producteurs assujettis a la TVA |
 | Statistiques | Comparaisons annuelles, rendement kWh/kWc |
@@ -257,7 +263,7 @@ filets** conservent l'etat precedent :
 |---|---|
 | `Releves-pv.csv.bak` | la version juste avant le dernier enregistrement |
 | `backups/Releves-pv_<date>_<heure>.csv` | les **15** dernieres versions |
-| `backups/Releves-pv_jour_<date>.csv` | la premiere de chaque journee, **30** jours |
+| `backups/Releves-pv_jour_<date>.csv` | la premiere de chaque journee, pour les **30** dernieres journees d'utilisation |
 
 Les copies du jour echappent a la rotation des 15 : on peut donc revenir
 plusieurs semaines en arriere, meme apres de nombreux enregistrements.
@@ -332,8 +338,9 @@ sauvegardes decrites plus haut conservent l'etat precedent.
 Deux garde-fous evitent qu'une grandeur atterrisse dans la mauvaise
 colonne :
 
-- le type (injection ou consommation) est lu **dans l'en-tete** du
-  fichier, pas n'importe ou dedans ; si l'en-tete mentionne les deux
+- le type (injection ou consommation) est cherche **d'abord dans
+  l'en-tete** du fichier, puis dans le reste du fichier si l'en-tete n'en dit
+  rien ; s'il mentionne les deux
   (le classeur s'appelle "Consommation-Production"...), l'app **refuse
   de deviner** et le dit ;
 - apres lecture, elle verifie que **l'injection ne depasse pas la
@@ -398,12 +405,14 @@ Les deux lecteurs ne connaissent pas de marque : ils acceptent **tout export
 "date + valeur"**, verifie sur des exports type SolarEdge, Huawei et un
 fournisseur autre qu'Octopus.
 
-- dates **francaises** (`01/08/2026`) ou **ISO** (`2026-08-01`), avec ou sans
-  heure ;
+- dates **francaises** (`01/08/2026`) ou **ISO** (`2026-08-01`) ;
 - valeurs en **Wh** ou en **kWh**, unite lue dans l'en-tete ou devinee ;
 - separateur **`;`**, **`,`** ou **tabulation** ; lignes d'en-tete ignorees ;
-- pas **infrajournalier totalise par jour** (15 minutes chez Enphase), ou
-  releve deja quotidien.
+- **production** : pas infrajournalier (15 minutes chez Enphase, avec
+  l'heure) totalise par jour, ou releve deja quotidien ;
+- **consommation et injection** : **une valeur par jour** (export quotidien
+  d'Enedis ou du fournisseur). Une courbe a l'heure ou a la demi-heure n'est
+  pas additionnee : exportez le releve quotidien.
 
 Seule exigence pour la conso et l'injection : **l'en-tete doit dire de quelle
 grandeur il s'agit** — un mot comme `consommation`, `soutirage`, `injection`
@@ -412,7 +421,8 @@ ranger les valeurs dans la mauvaise colonne.
 
 Ce qui n'a pas d'equivalent ailleurs : le **detail heures creuses / pleines**
 au jour le jour, que tous les fournisseurs ne publient pas. Sans lui,
-l'application estime la repartition a partir du ratio observe et le signale.
+l'application estime la repartition a partir du ratio observe sur les jours
+qui ont ce detail, ou a defaut de la duree des plages d'heures creuses.
 
 En France, l'**injection et la consommation** se recuperent de toute facon
 chez le gestionnaire de reseau (Enedis), commun a tous les fournisseurs, des
@@ -512,7 +522,7 @@ garde une copie quotidienne dans `backups/` (les 30 dernieres).
   (voir « TVA sur l'autoconsommation » plus bas). `taux` = taux de TVA,
   `periodes` = une entree par periode tarifaire avec `prix_ht` (energie +
   acheminement, hors taxes) et `accise`, en €/kWh, releves sur les factures
-  EDF. **Facultative** : sans elle, la vue TVA reste en veille. A completer a
+  EDF. **Facultative** : sans elle, la vue TVA est masquee. A completer a
   chaque evolution tarifaire, en general le 1er fevrier et le 1er aout
 - `sources.releves_csv` : chemin du CSV de releves
 
@@ -548,7 +558,7 @@ injectee pendant ce cycle × tarif OA fixe.
 
 Cette partie ne concerne que les producteurs **assujettis a la TVA**
 (entreprise individuelle, regime reel simplifie). Elle est facultative :
-sans la section `tva_lasm` dans `config.yaml`, la vue reste en veille.
+sans la section `tva_lasm` dans `config.yaml`, la vue est masquee.
 
 ### La regle
 

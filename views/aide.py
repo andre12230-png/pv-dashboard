@@ -292,7 +292,8 @@ combien de journées ont été laissées telles quelles.</p>
 commune à tous les foyers français, quel que soit le fournisseur.<br>
 <b>Heures creuses et heures pleines</b> : l'espace client du <b>fournisseur</b>
 d'électricité. Tous ne publient pas ce détail jour par jour ; sans lui,
-l'application estime la répartition et le dit.{source_vehicule}</p>
+l'application estime la répartition, d'après vos jours qui ont ce détail, ou
+à défaut d'après la durée de vos heures creuses.{source_vehicule}</p>
 
 {rubrique_voiture}<h3 style="color:#1F3A6B">Si vous êtes assujetti à la TVA</h3>
 <p>Cette partie ne concerne que les producteurs qui déclarent la TVA
@@ -346,7 +347,8 @@ de vos relevés, à trois endroits :</p>
 <ul>
 <li><code>Releves-pv.csv.bak</code> — juste avant le dernier enregistrement ;</li>
 <li><code>backups/</code> — les <b>15 dernières versions</b>, horodatées ;</li>
-<li><code>backups/</code> — la première de <b>chaque journée</b>, gardée 30 jours.</li>
+<li><code>backups/</code> — la première de <b>chaque journée</b>, pour les 30
+dernières journées d'utilisation.</li>
 </ul>
 <p>Les copies quotidiennes échappent à la rotation des 15 : vous pouvez donc
 revenir plusieurs semaines en arrière. Pour restaurer, fermez l'application et
