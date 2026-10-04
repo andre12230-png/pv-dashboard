@@ -1313,7 +1313,8 @@ def lasm_par_annee(df_brut: pd.DataFrame, lasm: LasmConfig,
       part_autoconso (0 a 1), base_eur (exacte), base_5a_eur (arrondie :
       c'est elle qui se reporte ligne 5A), prix_moyen_eur_kwh, tva_eur
       (exacte), tva_due_eur (arrondie), jours_sans_injection, jours_releves,
-      estimation (vrai pour l'annee en cours, projetee), controle (la ligne
+      estimation (vrai pour l'annee en cours, pas definitive), projetee
+      (vrai si elle a vraiment ete prolongee au 31/12), controle (la ligne
       de controle EDF qui se cloture dans l'annee, ou None).
 
     L'annee en cours est PROJETEE jusqu'au 31/12 : on regarde quelle part de
@@ -1379,6 +1380,7 @@ def lasm_par_annee(df_brut: pd.DataFrame, lasm: LasmConfig,
         }
 
         estimation = an not in completes
+        projetee = False
         if estimation:
             # Point de depart de la projection : le dernier jour renseigne DE
             # CETTE ANNEE-LA. Sans cette borne, une annee laissee en plan il y
@@ -1387,6 +1389,9 @@ def lasm_par_annee(df_brut: pd.DataFrame, lasm: LasmConfig,
             arret_an = min(arret, tranche.index.max().date())
             kwh, base = _projette_fin_annee(
                 df_brut, lasm, an, arret_an, modeles, kwh, base)
+            # Sans annee modele, rien n'est prolonge : le montant reste le
+            # realise, et la tuile ne doit pas l'appeler « estimé au 31/12 ».
+            projetee = kwh != a_date["autoconsommation_kwh"]
 
         lignes.append({
             "annee": an,
@@ -1406,6 +1411,7 @@ def lasm_par_annee(df_brut: pd.DataFrame, lasm: LasmConfig,
             "jours_sans_injection": sans_inj,
             "jours_releves": int(len(tranche)),
             "estimation": estimation,
+            "projetee": projetee,
             "controle": controles.get(an),
             "a_date": a_date,
         })

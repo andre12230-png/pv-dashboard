@@ -479,3 +479,26 @@ def test_la_part_de_l_annee_estimee_n_est_pas_gonflee_par_la_projection():
     assert en_cours["estimation"] is True
     assert en_cours["part_autoconso"] == pytest.approx(0.5)
     assert en_cours["part_autoconso"] == en_cours["a_date"]["part_autoconso"]
+
+
+def test_sans_projection_la_tuile_ne_parle_pas_d_estimation_au_31_12():
+    """Premiere annee : rien pour extrapoler, le montant « estimé au 31/12 »
+    de la tuile etait simplement le realise (audit du 04/10/2026)."""
+    from views.tva import textes_tuiles
+    df = _releves([("2025-01-15", 60.0, 0.0), ("2025-06-30", 0.0, 0.0)])
+    ligne = calc.lasm_par_annee(df, _lasm_plat(), aujourdhui=date(2025, 6, 30))[0]
+    assert ligne["projetee"] is False
+    sous_titres = " ".join(s for _t, _v, s in textes_tuiles(ligne, True, 0.2))
+    assert "estimée au 31/12" not in sous_titres
+    assert "année entière" in sous_titres
+
+
+def test_une_annee_projetee_le_dit():
+    df = _releves([
+        ("2023-01-15", 100.0, 0.0), ("2023-09-15", 100.0, 0.0),
+        ("2024-01-15", 100.0, 0.0), ("2024-09-15", 100.0, 0.0),
+        ("2025-01-15", 60.0, 0.0), ("2025-06-30", 0.0, 0.0),
+    ])
+    lignes = calc.lasm_par_annee(df, _lasm_plat(), aujourdhui=date(2025, 6, 30))
+    assert lignes[-1]["projetee"] is True
+    assert lignes[0]["projetee"] is False

@@ -63,6 +63,14 @@ def textes_tuiles(ligne: dict, en_cours: bool, taux: float
         ]
     reel = ligne["a_date"]
     jusquau = reel["jusquau"].strftime("%d/%m/%Y")
+    if ligne.get("projetee"):
+        fin_base = f"estimée au 31/12 : {_nombre(ligne['base_5a_eur'], 0)} €"
+        fin_tva = f"estimée au 31/12 : {_nombre(ligne['tva_due_eur'], 0)} €"
+    else:
+        # Aucune annee civile entiere pour modele : on n'invente pas de
+        # montant au 31/12 (audit du 04/10/2026).
+        fin_base = fin_tva = ("estimation au 31/12 après une année entière "
+                              "de relevés")
     return [
         (f"Autoconsommation {ligne['annee']}",
          _nombre(reel["autoconsommation_kwh"], 0) + " kWh",
@@ -72,11 +80,9 @@ def textes_tuiles(ligne: dict, en_cours: bool, taux: float
          _nombre(reel["prix_moyen_eur_kwh"], 4) + " €/kWh",
          "énergie + acheminement HT + accise"),
         ("Base à ce jour",
-         _nombre(reel["base_5a_eur"], 0) + " €",
-         f"estimée au 31/12 : {_nombre(ligne['base_5a_eur'], 0)} €"),
+         _nombre(reel["base_5a_eur"], 0) + " €", fin_base),
         ("TVA à ce jour",
-         _nombre(reel["tva_due_eur"], 0) + " €",
-         f"estimée au 31/12 : {_nombre(ligne['tva_due_eur'], 0)} €"),
+         _nombre(reel["tva_due_eur"], 0) + " €", fin_tva),
     ]
 
 
