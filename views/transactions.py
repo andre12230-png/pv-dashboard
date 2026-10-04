@@ -167,10 +167,18 @@ class TransactionsView(BaseView):
 
         legendes = []
         if "releve_incomplet" in df.columns and (df["releve_incomplet"] > 0).any():
+            # Injection jamais relevee nulle part : rien n'a pu etre estime
+            # (estime_injection_manquante, audit du 04/10/2026).
+            sans_reference = ("injection_sans_reference" in df.columns
+                              and (df["injection_sans_reference"] > 0).any())
             legendes.append(
                 "* sur Injection / Autoconsommation : pas de relevé d'injection "
                 "Enedis ce jour-là "
-                "— injection estimée d'après vos ratios mensuels observés."
+                + ("— aucune injection relevée nulle part : toute la "
+                   "production est comptée comme consommée chez vous, "
+                   "l'autoconsommation affichée est un maximum."
+                   if sans_reference else
+                   "— injection estimée d'après vos ratios mensuels observés.")
             )
         if "conso_absente" in df.columns and (df["conso_absente"] > 0).any():
             legendes.append(

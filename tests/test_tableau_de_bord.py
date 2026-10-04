@@ -481,3 +481,18 @@ def test_chez_edf_oa_les_textes_ne_changent_pas():
     df = _df_notes(injection_recalee=[1.0, 1.0, 0.0])
     resume = [r for t, r, _a in notes_donnees(df) if t == "Vente recalée"][0]
     assert resume == "2 jours ajustés sur vos factures EDF OA"
+
+
+def test_injection_jamais_relevee_n_est_pas_dite_estimee():
+    """Sans aucun jour de reference, la remarque disait « estimées d'après
+    vos ratios mensuels » alors que rien n'avait pu l'etre : les economies
+    comptaient toute la production, environ 2,7 fois trop (audit du
+    04/10/2026). Elle dit maintenant que c'est un maximum."""
+    df = _df_notes(releve_incomplet=[1.0, 1.0, 1.0],
+                   injection_sans_reference=[1.0, 1.0, 1.0],
+                   production_kwh=[5.0, 5.0, 5.0])
+    notes = notes_donnees(df)
+    titre, _resume, aide = notes[0]
+    assert titre == "Injection non relevée"
+    assert "ratios" not in aide
+    assert "maximum" in aide

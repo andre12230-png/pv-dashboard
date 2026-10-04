@@ -122,12 +122,19 @@ def estime_injection_manquante(df_daily: pd.DataFrame) -> pd.DataFrame:
     sur les jours complets de toutes les annees (fallback : ratio global).
     Le CSV n'est pas touche, l'estimation est refaite a chaque chargement ;
     ces jours restent marques releve_incomplet pour etre signales.
+
+    Sans AUCUN jour de reference (injection jamais relevee), il n'y a pas de
+    ratio : la production reste comptee en autoconsommation, et ces jours
+    portent injection_sans_reference = 1 pour que la remarque le dise au lieu
+    de pretendre les avoir estimes (audit du 04/10/2026).
     """
     if df_daily.empty or "releve_incomplet" not in df_daily.columns:
         return df_daily
     out = df_daily.copy()
     manquants = (out["releve_incomplet"] > 0) & (out["production_kwh"] > 0)
     complets = (out["releve_incomplet"] == 0) & (out["production_kwh"] > 0)
+    out["injection_sans_reference"] = (
+        (manquants & ~complets.any()).astype(float))
     if not manquants.any() or not complets.any():
         return out
 
@@ -473,6 +480,11 @@ def applique_vente_totale(df_daily: pd.DataFrame) -> pd.DataFrame:
     out["injection_kwh"] = out["production_kwh"]
     out["autoconsommation_kwh"] = 0.0
     out["consommation_kwh"] = out["soutirage_kwh"]
+    # L'injection est connue par definition : rien n'est estime. Sans cela,
+    # « Injection estimee » s'affichait sur toutes les journees.
+    for colonne in ("releve_incomplet", "injection_sans_reference"):
+        if colonne in out.columns:
+            out[colonne] = 0.0
     return out
 
 

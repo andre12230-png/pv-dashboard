@@ -696,7 +696,24 @@ def notes_donnees(df, jours_en_attente=(), start_oa=None,
         n = int(estimes.sum())
     else:
         estimes, n = None, 0
-    if n:
+    # Injection jamais relevee nulle part : rien n'a pu etre estime, toute la
+    # production compte en autoconsommation (estime_injection_manquante).
+    sans_reference = (n and "injection_sans_reference" in df.columns
+                      and bool((df.loc[estimes, "injection_sans_reference"]
+                                > 0).all()))
+    if sans_reference:
+        notes.append((
+            "Injection non relevée",
+            f"{_pluriel(n, 'jour')} sans relevé d'injection",
+            "Aucune de vos journées n'a de relevé d'injection : l'application "
+            "ne peut pas savoir quelle part de votre production est partie "
+            "au réseau. Elle la compte entière comme consommée chez vous : "
+            "l'autoconsommation et les économies affichées sont donc un "
+            "maximum.\n\n"
+            "Importez l'injection relevée par Enedis pour des chiffres "
+            "justes.",
+        ))
+    elif n:
         # Combien de ces journees precedent le contrat OA : c'est la cause la
         # plus frequente, et la seule qui ne se comblera jamais.
         avant = 0

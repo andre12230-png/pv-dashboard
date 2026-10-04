@@ -1271,3 +1271,32 @@ def test_estimation_une_plage_a_midi_pese_plus_que_le_soir():
 
 def test_estimation_sans_plage():
     assert _estime([]) == 0.0
+
+
+# --- Injection jamais relevee (audit du 04/10/2026) ------------------------
+
+def test_sans_aucun_jour_de_reference_les_jours_sont_marques_non_estimables():
+    """Sans un seul jour d'injection relevee, il n'y a aucun ratio : toute
+    la production reste comptee en autoconsommation. Ces journees le
+    portent, pour que la remarque ne pretende pas l'avoir estimee."""
+    idx = pd.DatetimeIndex(["2022-06-15", "2022-06-16"])
+    df = pd.DataFrame({
+        "production_kwh": [30.0, 0.0], "injection_kwh": [0.0, 0.0],
+        "soutirage_kwh": [0.0, 0.0], "releve_incomplet": [1.0, 1.0],
+        "autoconsommation_kwh": [30.0, 0.0], "consommation_kwh": [30.0, 0.0],
+    }, index=idx)
+    out = calc.estime_injection_manquante(df)
+    assert out["injection_sans_reference"].tolist() == [1.0, 0.0]
+
+
+def test_avec_des_jours_de_reference_rien_n_est_marque_non_estimable():
+    out = calc.estime_injection_manquante(_df_avec_incomplet())
+    assert (out["injection_sans_reference"] == 0).all()
+
+
+def test_en_vente_totale_l_injection_n_est_plus_dite_non_relevee():
+    """En vente totale, l'injection vaut la production par definition : la
+    remarque « Injection estimee » s'affichait a tort sur toutes les
+    journees."""
+    out = calc.applique_vente_totale(_df_avec_incomplet())
+    assert (out["releve_incomplet"] == 0).all()

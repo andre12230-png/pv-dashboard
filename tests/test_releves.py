@@ -62,3 +62,24 @@ def test_les_entetes_sont_en_clair(vue):
                for i in range(principal.columnCount())]
     assert "Production\n(kWh)" in entetes
     assert not any(e.startswith(("Prod\n", "Sout\n")) for e in entetes)
+
+
+def test_la_legende_ne_pretend_pas_estimer_une_injection_jamais_relevee(qapp):
+    """Audit du 04/10/2026 : sans aucun jour de reference, la legende disait
+    « injection estimée d'après vos ratios mensuels »."""
+    from PySide6.QtWidgets import QLabel
+
+    from views.transactions import TransactionsView
+    jours = pd.date_range("2026-09-01", "2026-09-03", freq="D")
+    df = pd.DataFrame({
+        "production_kwh": 10.0, "autoconsommation_kwh": 10.0,
+        "injection_kwh": 0.0, "soutirage_kwh": 8.0,
+        "revenu_vente_eur": 0.0, "economie_eur": 1.5,
+        "cout_reseau_eur": 2.0, "bilan_jour_eur": -0.5,
+        "releve_incomplet": 1.0, "injection_sans_reference": 1.0,
+    }, index=jours)
+    v = TransactionsView(SimpleNamespace(df=df, start_oa=None), LIGHT)
+    v.refresh("all")
+    textes = " ".join(lbl.text() for lbl in v.findChildren(QLabel))
+    assert "ratios mensuels" not in textes
+    assert "maximum" in textes
