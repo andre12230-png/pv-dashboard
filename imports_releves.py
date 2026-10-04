@@ -25,6 +25,8 @@ from accords import accorde, pluriel
 
 _RE_DATE_ISO = re.compile(r"^(\d{4})-(\d{2})-(\d{2})")
 _RE_DATE_FR = re.compile(r"^(\d{1,2})/(\d{1,2})/(\d{4})$")
+# Une heure accolee a la date (« 2026-09-01T00:30 », « ... 00:30:00 »).
+_RE_HEURE = re.compile(r"\d{1,2}:\d{2}")
 _RE_NOMBRE = re.compile(r"^-?\d+(\.\d+)?$")
 
 
@@ -186,6 +188,7 @@ def parse_enedis_csv_texte(texte: str, notes: list | None = None
     unite_kwh = _unite_annoncee(bas)
 
     brutes: list[tuple[str, float]] = []
+    dates_brutes: list[str] = []      # la cellule de date telle quelle
     ecartees: list[str] = []
     for ligne in texte.splitlines():
         # Point-virgule, tabulation ou virgule, comme le promet la Notice.
@@ -207,12 +210,29 @@ def parse_enedis_csv_texte(texte: str, notes: list | None = None
                 ecartees.append(jour)
             continue
         brutes.append((jour, valeur))
+        dates_brutes.append(cellules[0])
 
     if not brutes:
         raise ValueError(
             "Aucune ligne 'date;valeur' reconnue. Attendu : un export "
             "quotidien Enedis (une date et un nombre par ligne, séparés "
             "par des points-virgules, des virgules ou des tabulations)."
+        )
+
+    # Un meme jour sur plusieurs lignes horodatees : c'est une courbe heure
+    # par heure, pas un releve quotidien. La derniere valeur ecrasait les
+    # autres en silence ; les additionner serait faux aussi, une courbe de
+    # charge Enedis donnant souvent une puissance (W) et non une energie.
+    # On refuse en disant quoi exporter (audit du 04/10/2026).
+    horodates = [jour for (jour, _v), ligne_date in zip(brutes, dates_brutes,
+                                                         strict=True)
+                 if _RE_HEURE.search(ligne_date)]
+    if len(horodates) != len(set(horodates)):
+        raise ValueError(
+            "Ce fichier donne plusieurs valeurs par jour (heure par heure ou "
+            "à la demi-heure) : c'est une courbe de charge, pas un relevé "
+            "quotidien. Téléchargez plutôt la consommation (ou l'injection) "
+            "quotidienne, en kWh, une valeur par jour."
         )
 
     if unite_kwh is None:

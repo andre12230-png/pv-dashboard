@@ -196,10 +196,11 @@ L'application les ignore.</li>
 <p><b>Vous n'êtes pas obligé d'être chez les mêmes que l'auteur.</b> Le format
 est reconnu automatiquement, et tout export <b>« date + valeur »</b> passe :
 dates françaises ou internationales, valeurs en Wh ou en kWh, point-virgule,
-virgule ou tabulation. La seule exigence est que l'en-tête dise de quelle
-grandeur il s'agit — un mot comme « consommation », « injection » ou
-« production » — car l'application refuse de deviner dans quelle colonne
-ranger vos chiffres.</p>
+virgule ou tabulation. Deux exigences : <b>une valeur par jour</b> (une
+courbe heure par heure ou à la demi-heure est refusée : téléchargez le relevé
+quotidien), et un en-tête qui dise de quelle grandeur il s'agit — un mot comme
+« consommation », « injection » ou « production » — car l'application refuse
+de deviner dans quelle colonne ranger vos chiffres.</p>
 <p><b>Le détail heures creuses / heures pleines sans passer par votre
 fournisseur.</b> Dans votre espace client <b>Enedis</b>, l'export des
 <b>index quotidiens</b> (un fichier <code>Export_…_Index_….xlsx</code>)

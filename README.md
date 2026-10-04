@@ -411,8 +411,10 @@ fournisseur autre qu'Octopus.
 - **production** : pas infrajournalier (15 minutes chez Enphase, avec
   l'heure) totalise par jour, ou releve deja quotidien ;
 - **consommation et injection** : **une valeur par jour** (export quotidien
-  d'Enedis ou du fournisseur). Une courbe a l'heure ou a la demi-heure n'est
-  pas additionnee : exportez le releve quotidien.
+  d'Enedis ou du fournisseur). Une courbe a l'heure ou a la demi-heure est
+  refusee avec un message (l'additionner serait faux : une courbe de charge
+  donne souvent une puissance, pas une energie) : exportez le releve
+  quotidien.
 
 Seule exigence pour la conso et l'injection : **l'en-tete doit dire de quelle
 grandeur il s'agit** — un mot comme `consommation`, `soutirage`, `injection`
