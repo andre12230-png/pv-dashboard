@@ -1331,6 +1331,13 @@ def lasm_par_annee(df_brut: pd.DataFrame, lasm: LasmConfig,
     # mieux que d'afficher un montant ampute comme s'il etait definitif.
     completes = [an for an in annees
                  if arret >= _bornes_annee(an)[1].date()]
+    # Pour PROLONGER l'annee en cours, il faut en plus des annees ENTIERES :
+    # une annee dont les releves ne commencent qu'en octobre est close au
+    # 31/12, mais dirait que presque rien n'est acquis au 3 octobre, et la
+    # projection sortirait plusieurs fois trop forte. On ne garde comme
+    # modeles que les annees closes dont les releves commencent en janvier.
+    modeles = [an for an in completes
+               if df_brut.index[df_brut.index.year == an].min().month == 1]
 
     lignes = []
     for an in annees:
@@ -1367,7 +1374,7 @@ def lasm_par_annee(df_brut: pd.DataFrame, lasm: LasmConfig,
             # pas du tout.
             arret_an = min(arret, tranche.index.max().date())
             kwh, base = _projette_fin_annee(
-                df_brut, lasm, an, arret_an, completes, kwh, base)
+                df_brut, lasm, an, arret_an, modeles, kwh, base)
 
         lignes.append({
             "annee": an,

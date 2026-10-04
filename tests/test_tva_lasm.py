@@ -294,6 +294,25 @@ def test_premiere_annee_ne_se_projette_pas():
     assert ligne["autoconsommation_kwh"] == pytest.approx(60.0)
 
 
+def test_une_annee_commencee_a_l_automne_ne_sert_pas_de_modele():
+    """Releves depuis le 01/10/2025 : 2025 est close au 31/12, mais elle
+    n'a que son dernier trimestre. Elle disait que presque rien n'est acquis
+    au 3 octobre, et la base de 2026 « estimee au 31/12 » sortait environ
+    quinze fois trop forte (audit du 04/10/2026). Sans annee entiere pour
+    modele, on garde le realise."""
+    df = _releves([
+        ("2025-10-01", 10.0, 0.0), ("2025-12-31", 10.0, 0.0),
+        ("2026-01-15", 100.0, 0.0), ("2026-06-15", 100.0, 0.0),
+        ("2026-10-03", 0.0, 0.0),
+    ])
+
+    lignes = calc.lasm_par_annee(df, _lasm_plat(), aujourdhui=date(2026, 10, 3))
+    par_annee = {ligne["annee"]: ligne for ligne in lignes}
+
+    assert par_annee[2025]["estimation"] is False   # close : elle se declare
+    assert par_annee[2026]["autoconsommation_kwh"] == pytest.approx(200.0)
+
+
 # -----------------------------------------------------------------------------
 # Controle avec les factures EDF OA
 # -----------------------------------------------------------------------------
