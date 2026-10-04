@@ -48,18 +48,45 @@ def fin_de_periode(period: str, start_oa) -> pd.Timestamp:
     return pd.Timestamp(int(period.split("-")[1]), 12, 31)
 
 
+def debut_de_periode(period: str, start_oa) -> pd.Timestamp:
+    """Premier jour d'un mois, d'une annee civile ou d'une annee OA."""
+    if period.startswith("month-"):
+        return pd.Period(period.split("-", 1)[1], freq="M").start_time
+    if period.startswith("oa-"):
+        debut, _ = calc.oa_year_bounds(start_oa, int(period.split("-")[1]))
+        return pd.Timestamp(debut)
+    return pd.Timestamp(int(period.split("-")[1]), 1, 1)
+
+
 def couper_aux_memes_dates(df_n: pd.DataFrame, df_n1: pd.DataFrame,
                           period: str, start_oa
-                          ) -> tuple[pd.DataFrame, pd.Timestamp | None]:
-    """L'an passe, coupe aux memes dates quand la periode N est en cours.
+                          ) -> tuple[pd.DataFrame, pd.DataFrame,
+                                     pd.Timestamp | None,
+                                     pd.Timestamp | None]:
+    """Les deux periodes ramenees aux memes dates.
 
-    Rend (df_n1 coupe, date limite) ; limite None = rien a couper. Une seule
-    regle pour les trois pages qui comparent a l'an passe (tableau de bord,
-    Repartition, Comparaison) : elles la recopiaient."""
+    - Fin : quand la periode N est en cours, l'an passe s'arrete a la meme
+      date (voir date_limite_n1).
+    - Debut : quand l'an passe ne commence qu'en cours de periode (mois ou
+      annee de la mise en service), la periode N part de la meme date. Mai
+      2024 n'avait que 20 jours de releves : face a mai 2025 entier, le
+      badge du tableau de bord affichait « +429 % » (audit du 04/10/2026).
+
+    Rend (df_n coupe, df_n1 coupe, limite, debut) ; limite et debut valent
+    None quand il n'y a rien a couper de ce cote. Une seule regle pour les
+    trois pages qui comparent a l'an passe (tableau de bord, Repartition,
+    Comparaison) : elles la recopiaient."""
     limite = date_limite_n1(df_n, period, start_oa)
     if limite is not None and not df_n1.empty:
         df_n1 = df_n1[df_n1.index.normalize() <= limite]
-    return df_n1, limite
+    debut = None
+    if not df_n1.empty:
+        attendu = debut_de_periode(period, start_oa) - pd.DateOffset(years=1)
+        premier = df_n1.index.min().normalize()
+        if premier > attendu:
+            debut = premier + pd.DateOffset(years=1)
+            df_n = df_n[df_n.index.normalize() >= debut]
+    return df_n, df_n1, limite, debut
 
 
 def date_limite_n1(df_n: pd.DataFrame, period: str, start_oa) -> pd.Timestamp | None:
@@ -227,9 +254,13 @@ class ComparaisonView(BaseView):
 
         # Periode en cours : l'an passe s'arrete a la meme date, et les
         # libelles le disent (« Septembre 2026 (au 09/09) »).
-        df_n1, limite = couper_aux_memes_dates(df_n, df_n1, period,
-                                               self.data.start_oa)
-        if limite is not None:
+        df_n, df_n1, limite, debut = couper_aux_memes_dates(
+            df_n, df_n1, period, self.data.start_oa)
+        if debut is not None:
+            # Meme jour et meme mois des deux cotes, un an d'ecart.
+            label_n += f" (depuis le {debut:%d/%m})"
+            label_n1 += f" (depuis le {debut:%d/%m})"
+        if limite is not None and not df_n.empty:
             label_n += f" (au {df_n.index.max().strftime('%d/%m')})"
             label_n1 += f" (au {limite.strftime('%d/%m')})"
 

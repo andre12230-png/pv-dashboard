@@ -64,7 +64,8 @@ def test_un_mois_est_compare_au_meme_mois_de_l_an_passe(vue):
 
 def test_une_annee_est_comparee_a_la_precedente(vue):
     vue.refresh("year-2025")
-    assert any("Année 2025 face à année 2024" in t for t in textes(vue))
+    assert any("Année 2025" in t and "face à année 2024" in t
+               for t in textes(vue))
 
 
 def test_une_annee_oa_est_comparee_a_la_precedente(vue):
@@ -244,3 +245,45 @@ def test_le_mode_journee_montre_toutes_ses_colonnes(vue):
         assert largeur <= table.viewport().width() + 1, (
             largeur, table.viewport().width())
     vue.hide()
+
+
+# ---------------------------------------------------------------------------
+# L'an passe commence en cours de periode (mise en service) : on compare a
+# partir de la meme date. Mai 2024 n'avait que 20 jours de releves, et le
+# badge du tableau de bord affichait « +429 % » face a mai 2025 entier
+# (audit du 04/10/2026).
+# ---------------------------------------------------------------------------
+
+def test_l_annee_est_comparee_depuis_la_mise_en_service(vue):
+    vue.refresh("year-2025")
+    assert any("Année 2025 (depuis le 12/05) face à année 2024 "
+               "(depuis le 12/05)" in t for t in textes(vue))
+    table = vue.container.findChildren(QTableWidget)[-1]
+    assert table.item(0, 0).text().strip() == "Production"
+    assert table.item(0, 1).text() == table.item(0, 2).text()   # 234 j / 234 j
+
+
+def test_le_mois_de_mise_en_service_est_compare_aux_memes_jours(vue):
+    vue.refresh("month-2025-05")
+    table = vue.container.findChildren(QTableWidget)[-1]
+    assert table.item(0, 1).text() == "20,0 kWh"      # N-1 : 12 au 31/05
+    assert table.item(0, 2).text() == "20,0 kWh"      # N : memes jours
+
+
+def test_une_annee_oa_entiere_n_est_pas_coupee_au_debut(vue):
+    """L'annee OA #1 commence le jour de la mise en service : rien a couper."""
+    vue.refresh("oa-2")
+    assert not any("depuis le" in t for t in textes(vue))
+
+
+def test_le_badge_du_tableau_de_bord_compare_les_memes_jours(qapp, vue):
+    from views.dashboard import DashboardView
+    df = vue.data.df
+    data = SimpleNamespace(df=df, start_oa=DEBUT_OA)
+    tableau = DashboardView.__new__(DashboardView)
+    tableau.data, tableau.theme = data, LIGHT
+    df_n = filter_period(df, "month-2025-05", DEBUT_OA)
+    badge = tableau._badge_n1(df_n, "month-2025-05",
+                              float(df_n["production_kwh"].sum()))
+    assert badge is not None
+    assert badge.text().startswith("+0 %")

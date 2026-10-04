@@ -332,12 +332,14 @@ class CategoriesView(BaseView):
         # Face au mois entier, 13 jours de septembre affichaient « -44,8 % »
         # de production quand le tableau de bord annoncait « +24 % ».
         a_couper = not df_n1.empty
-        df_n1, limite = couper_aux_memes_dates(df_n, df_n1, period,
-                                               self.data.start_oa)
+        df_n, df_n1, limite, debut = couper_aux_memes_dates(
+            df_n, df_n1, period, self.data.start_oa)
         suffixe_n = suffixe_n1 = ""
-        if limite is not None and a_couper:
-            suffixe_n = f" (au {df_n.index.max():%d/%m})"
-            suffixe_n1 = f" (au {limite:%d/%m})"
+        if debut is not None:
+            suffixe_n = suffixe_n1 = f" (depuis le {debut:%d/%m})"
+        if limite is not None and a_couper and not df_n.empty:
+            suffixe_n += f" (au {df_n.index.max():%d/%m})"
+            suffixe_n1 += f" (au {limite:%d/%m})"
         agg_n = agreger(df_n, cles)
         agg_n1 = agreger(df_n1, cles)
 

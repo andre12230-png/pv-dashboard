@@ -281,15 +281,20 @@ class DashboardView(BaseView):
         if precedente is None:
             return None
         df_n1 = filter_period(self.data.df, precedente, self.data.start_oa)
-        df_n1, _limite = couper_aux_memes_dates(df, df_n1, period,
-                                                self.data.start_oa)
+        df_n, df_n1, _limite, debut = couper_aux_memes_dates(
+            df, df_n1, period, self.data.start_oa)
         base = float(df_n1["production_kwh"].sum()) if not df_n1.empty else 0.0
-        if base <= 0:
+        if base <= 0 or df_n.empty:
             return None
+        if debut is not None:
+            # L'an passe commence en cours de periode : la production de N
+            # est recomptee sur les memes jours.
+            prod = float(df_n["production_kwh"].sum())
         ecart = (prod - base) / base * 100
         signe = "+" if ecart >= 0 else "−"
+        depuis = f" (depuis le {debut:%d/%m})" if debut is not None else ""
         badge = QLabel(f"{signe}{abs(ecart):.0f} % par rapport à "
-                       f"{libelle_periode(precedente).lower()}")
+                       f"{libelle_periode(precedente).lower()}{depuis}")
         encre, fond = (("credit", "credit_bg") if ecart >= 0
                        else ("debit", "debit_bg"))
         badge.setStyleSheet(
