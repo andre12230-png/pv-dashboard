@@ -489,11 +489,10 @@ def _index_d_une_feuille(ws, production: bool = False
 
     if not colonnes:
         return None, None, None
-    # Le premier releve du fichier sert de reference : il n'y a rien avant
-    # lui a soustraire, donc il ne produit aucune journee. Le dernier ne fait
-    # que cloturer la veille : sa propre journee attend l'index du lendemain.
-    # L'appelant le dit a l'utilisateur, qui sinon cherche en vain ces jours
-    # dans ses releves.
+    # La consommation du jour J est l'index du lendemain moins celui de J :
+    # le premier jour du fichier a donc sa valeur, mais le dernier attend
+    # l'index du lendemain. L'appelant le dit a l'utilisateur, qui sinon
+    # cherche en vain ce jour dans ses releves.
     tous = [j for valeurs in index.values() for j in valeurs]
     premier = min(tous, key=_en_date) if tous else None
     dernier = max(tous, key=_en_date) if tous else None
@@ -512,7 +511,7 @@ def parse_enedis_index_xlsx(path: str, notes: list | None = None
     alors au lecteur du classeur conso/production habituel.
 
     `notes` : liste que l'appelant fournit s'il veut afficher les remarques
-    de lecture -- ici, le premier jour, qui sert de reference.
+    de lecture -- ici, le dernier jour, qui attend l'index du lendemain.
     """
     openpyxl = _charger_openpyxl()
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
@@ -522,39 +521,29 @@ def parse_enedis_index_xlsx(path: str, notes: list | None = None
         # Un producteur a deux feuilles : la consommation (avec le detail
         # HP/HC) et la production, c'est-a-dire l'injection. On prend les
         # deux, chacune dans sa colonne.
-        premiers, derniers = [], []
+        derniers = []
         for nom in wb.sheetnames:
-            trouve, premier, dernier = _index_d_une_feuille(
+            trouve, _premier, dernier = _index_d_une_feuille(
                 wb[nom], "prod" in nom.lower())
             if trouve is None:
                 continue  # feuille de garde, ou autre chose
             reconnu = True
             resultat.update(trouve)
-            if premier:
-                premiers.append(premier)
             if dernier:
                 derniers.append(dernier)
     finally:
         wb.close()
     if not reconnu:
         return None
-    if notes is not None and premiers:
-        premier = min(premiers, key=_en_date)
-        notes.append(
-            f"Le {premier} n'apparaît pas : dans un relevé d'index, le "
-            "premier jour sert de référence, il n'y a rien avant lui à "
-            "soustraire. Pour l'obtenir, refaites l'export en partant de la "
-            "veille.")
+    # Le premier jour de l'export, lui, a bien sa valeur (index du lendemain
+    # moins le sien) : aucune remarque a faire a son sujet.
     if notes is not None and derniers:
         dernier = max(derniers, key=_en_date)
-        # Un seul releve : premier et dernier ne font qu'un, la remarque
-        # ci-dessus suffit.
-        if not premiers or dernier != min(premiers, key=_en_date):
-            notes.append(
-                f"Le {dernier} n'apparaît pas encore : sa consommation se "
-                "calcule avec le relevé du lendemain, qu'Enedis publie un "
-                "jour plus tard. Il se complétera au prochain import, si "
-                f"l'export part du {dernier} ou d'avant.")
+        notes.append(
+            f"Le {dernier} n'apparaît pas encore : sa consommation se "
+            "calcule avec le relevé du lendemain, qu'Enedis publie un "
+            "jour plus tard. Il se complétera au prochain import, si "
+            f"l'export part du {dernier} ou d'avant.")
     return resultat
 
 

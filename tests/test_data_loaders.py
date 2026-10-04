@@ -638,18 +638,18 @@ def test_index_enedis_xlsx_ignore_le_calendrier_distributeur(tmp_path):
     assert "0" not in imports["Conso_HP"].values()      # 999 - 999 = 0
 
 
-def test_index_enedis_previent_pour_le_premier_jour(tmp_path):
-    """Le premier releve sert de reference : il ne peut produire aucune
-    journee. Un utilisateur l'a decouvert tout seul (18/09/2026) en exportant
-    depuis la date de son installation -- ce jour-la restait vide, sans que
-    rien ne l'explique."""
+def test_index_enedis_le_premier_jour_est_importe_sans_fausse_remarque(
+        tmp_path):
+    """La consommation du jour J est l'index du lendemain moins celui du
+    jour J : le premier jour de l'export a donc bien sa valeur. Une remarque
+    (et la Notice) affirmaient le contraire et faisaient refaire l'export
+    depuis la veille pour rien (audit du 04/10/2026)."""
     p = _classeur_index(str(tmp_path / "Export_Index.xlsx"))
     notes = []
-    dl.parse_enedis_fichier(p, notes=notes)
-    premier = [n for n in notes if "01/01/2025" in n]
-    assert len(premier) == 1
-    assert "référence" in premier[0]
-    assert "veille" in premier[0]
+    imports = dl.parse_enedis_fichier(p, notes=notes)
+    assert "01/01/2025" in imports["Conso_réseau_Jour"]
+    assert not [n for n in notes if "01/01/2025" in n]
+    assert not [n for n in notes if "veille" in n]
 
 
 def test_index_enedis_previent_pour_le_dernier_jour(tmp_path):
@@ -667,8 +667,8 @@ def test_index_enedis_previent_pour_le_dernier_jour(tmp_path):
 
 
 def test_index_enedis_un_seul_jour_une_seule_remarque(tmp_path):
-    # Un seul releve : il est a la fois le premier et le dernier. La
-    # remarque du premier jour suffit, pas deux phrases sur la meme date.
+    # Un seul releve : il ne donne aucune journee. Une seule remarque, celle
+    # du dernier jour, pas deux phrases sur la meme date.
     p = _classeur_index(str(tmp_path / "Export_Index.xlsx"),
                         lignes=[("01/01/2025", 100.0, 60.0, 40.0)])
     notes = []

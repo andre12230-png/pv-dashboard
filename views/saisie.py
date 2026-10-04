@@ -413,8 +413,8 @@ class SaisieView(BaseView):
             return
 
         # Remarques de lecture : le parseur y dépose ce que l'utilisateur
-        # doit savoir du fichier -- le premier jour d'un relevé d'index, par
-        # exemple, qui sert de référence et ne produit aucune journée.
+        # doit savoir du fichier -- le dernier jour d'un relevé d'index, par
+        # exemple, qui attend l'index du lendemain.
         remarques: list[str] = []
         try:
             try:

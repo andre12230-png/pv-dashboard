@@ -218,11 +218,11 @@ creuses, heures pleines et injection. Pour l'obtenir : espace client Enedis,
 <b>Ma consommation ▸ Suivre ma consommation</b>, choisir <b>Mixte</b> dans le
 menu du milieu (sans quoi la production manque) et <b>Index (kWh)</b> dans
 celui de droite, puis <b>Télécharger le .xlsx</b>.</p>
-<p><b>Le premier jour de l'export n'apparaîtra pas</b> dans vos relevés, et
-c'est normal : il sert de référence, il n'y a rien avant lui à soustraire.
-Pour ne pas perdre une journée, <b>partez de la veille</b> — si votre
-installation date du 18 janvier, exportez depuis le 17. L'application vous le
-rappelle après chaque import d'index.</p>
+<p><b>Le dernier jour de l'export n'apparaîtra pas encore</b> dans vos
+relevés, et c'est normal : la consommation d'un jour est l'index du lendemain
+moins celui du jour, et Enedis publie l'index du lendemain un jour plus tard.
+Il se complétera au prochain import, si l'export repart de ce jour-là ou
+d'avant. L'application vous le rappelle après chaque import d'index.</p>
 <p><b>Le détail heures creuses / heures pleines</b> demande deux colonnes
 nommées, l'une pour les heures creuses, l'autre pour les heures pleines.
 Plusieurs libellés sont acceptés : <code>Consommation HC (kWh)</code> et

@@ -51,11 +51,14 @@ def test_la_notice_renvoie_les_recalages_vers_la_fenetre():
     # Le libelle nomme l'acheteur declare (EDF OA par defaut).
     assert "Injection payée par {acheteur}" in NOTICE_HTML
 
-def test_la_notice_previent_pour_le_premier_jour_d_un_index():
-    """Un utilisateur a perdu le jour de sa mise en service sans comprendre
-    pourquoi (18/09/2026). La parade — partir de la veille — doit être écrite."""
-    assert "partez de la veille" in NOTICE_HTML
-    assert "sert de référence" in NOTICE_HTML
+def test_la_notice_previent_pour_le_dernier_jour_d_un_index():
+    """Le dernier jour d'un export d'index attend l'index du lendemain : la
+    Notice doit le dire. Elle annonçait à tort la perte du PREMIER jour, et
+    faisait refaire l'export depuis la veille pour rien (audit du
+    04/10/2026)."""
+    assert "dernier jour de l'export" in NOTICE_HTML
+    assert "partez de la veille" not in NOTICE_HTML
+    assert "sert de référence" not in NOTICE_HTML
     # Et le menu qui manquait à son export.
     assert "Mixte" in NOTICE_HTML
 
