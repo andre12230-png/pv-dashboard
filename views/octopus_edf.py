@@ -17,6 +17,7 @@ from gui_theme import mpl_style
 from gui_widgets import Card, KpiCard, MplCanvas, SectionTitle, grid_row
 from views._base import BaseView
 from views._helpers import (
+    JOURS_AVANT_ESTIMATION,
     chiffres_sur_barres,
     fmt_date_fr,
     fmt_eur,
@@ -24,6 +25,22 @@ from views._helpers import (
     nombre_de_jours,
     poser_texte_court,
 )
+
+
+def texte_par_an(gains: pd.Series) -> str:
+    """Sous-titre « par an » d'un gain journalier (audit du 04/10/2026).
+
+    Le gain de la periode etait multiplie jusqu'a faire un an : quelques mois
+    d'ete ou d'hiver donnaient un chiffre faux. Avant un an de releves, on
+    dit quand il viendra ; ensuite, c'est le gain REEL des 365 derniers
+    jours, sans extrapolation."""
+    manque = JOURS_AVANT_ESTIMATION - len(gains)
+    if manque > 0:
+        s = "s" if manque > 1 else ""
+        return f"sur un an : après un an de relevés (encore {manque} jour{s})"
+    dernier_an = gains.iloc[-JOURS_AVANT_ESTIMATION:].sum()
+    return (f"soit {fmt_eur(dernier_an, signed=True)} sur les "
+            f"{JOURS_AVANT_ESTIMATION} derniers jours")
 
 
 class OctopusEdfView(BaseView):
@@ -53,7 +70,6 @@ class OctopusEdfView(BaseView):
         gain_base = comp["gain_vs_base_eur"].sum()
         gain_hphc = comp["gain_vs_hphc_eur"].sum()
         jours = len(comp)
-        par_an = 365.25 / jours if jours else 0.0
 
         options = {mon_offre: cout_octopus,
                    f"{autre} Base": cout_base,
@@ -90,10 +106,10 @@ class OctopusEdfView(BaseView):
         self.layout_inner.addWidget(SectionTitle(f"Économie (ou surcoût) avec {mien}"))
         self.layout_inner.addLayout(grid_row([
             KpiCard(f"Par rapport à {autre} Base", fmt_eur(gain_base, signed=True),
-                    f"soit environ {fmt_eur(gain_base * par_an, signed=True)} par an",
+                    texte_par_an(comp["gain_vs_base_eur"]),
                     "credit" if gain_base >= 0 else "debit"),
             KpiCard(f"Par rapport à {autre} HP/HC", fmt_eur(gain_hphc, signed=True),
-                    f"soit environ {fmt_eur(gain_hphc * par_an, signed=True)} par an",
+                    texte_par_an(comp["gain_vs_hphc_eur"]),
                     "credit" if gain_hphc >= 0 else "debit"),
             KpiCard("Offre la moins chère", gagnant,
                     "sur la période analysée",
