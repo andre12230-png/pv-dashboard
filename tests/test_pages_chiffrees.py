@@ -144,11 +144,11 @@ def test_plus_de_vs_sur_les_pages_chiffrees(win):
 
 def test_l_estimation_annuelle_se_lit_en_toutes_lettres(win):
     """29/09/2026 : « ~-19,88 €/an » (tilde colle au signe, barre oblique)
-    devient « soit environ -19,88 € par an »."""
+    devient une phrase. Depuis le 04/10/2026, plus d'extrapolation : avant
+    un an de releves (ici 3 jours), la carte dit quand le chiffre viendra."""
     textes = _textes(win, "octopus_edf")
     assert "~" not in textes and "€/an" not in textes
-    assert textes.count("soit environ ") == 2
-    assert " € par an" in textes
+    assert textes.count("après un an de relevés") == 2
 
 
 def test_la_repartition_ecrit_lisiblement(win):
