@@ -101,7 +101,9 @@ class CategoriesView(BaseView):
             track_color=self.theme["border"], variant="solaire"))
 
         h.addWidget(KpiTile(
-            "Couverture solaire", fmt_pct(couverture),
+            # Le meme nom qu'au tableau de bord pour la meme mesure (journal
+            # du 01/10/2026).
+            "Autoproduction", fmt_pct(couverture),
             self._paire_kwh(auto, conso, "consommés"),
             ratio=couverture / 100, bar_color=CC["autoconso"],
             track_color=self.theme["border"], variant="prod"))

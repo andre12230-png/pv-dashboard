@@ -78,7 +78,7 @@ class SettingsView(BaseView):
             if oa.type == "surplus":
                 contrat += [
                     ("Prime par kWc", fmt_eur(oa.prime_par_kwc) + "/kWc"),
-                    ("Durée prime", _duree_ans(oa.prime_duree)),
+                    ("Durée de la prime", _duree_ans(oa.prime_duree)),
                 ]
             contrat.append(("Durée contrat", _duree_ans(oa.duree_contrat)))
         cards = [
@@ -89,24 +89,25 @@ class SettingsView(BaseView):
         ]
         self.layout_inner.addLayout(grid_row(cards))
 
-        bleu_abo_rows = [(f"Abonn. {du_au(t['debut'], t['fin'])}",
+        # Libelles entiers, sans « Abonn. » ni « HC » (journal du 01/10/2026).
+        bleu_abo_rows = [(f"Abonnement {du_au(t['debut'], t['fin'])}",
                           f"{fmt_eur(t['montant'])} / mois")
                          for t in (bleu.get("abonnement_par_periode") or [])]
-        bleu_rows = [(f"kWh {du_au(t['debut'], t['fin'])}",
+        bleu_rows = [(f"Prix du kWh {du_au(t['debut'], t['fin'])}",
                       fmt_prix_kwh(t["prix"]))
                      for t in (bleu.get("prix_kwh_par_periode") or [])]
         # Une ligne par periode de prix Octopus : les tarifs changent en cours
         # de contrat (revalorisation du 01/08/2026), l'ecran les montre tous.
         octopus_rows = []
         for p in calc.periodes_octopus(octopus):
-            libelle = (du_au(p["debut"], p["fin"]) if p.get("fin")
+            libelle = (du_au(p["debut"], p["fin"]).capitalize() if p.get("fin")
                        else f"Depuis le {fmt_date_fr(p['debut'])}, en cours")
             octopus_rows.append((libelle, (
                 f"abonnement {fmt_eur(p['abonnement'])}/mois · "
                 f"HP {fmt_prix_kwh(p['prix_hp'])} · "
                 f"HC {fmt_prix_kwh(p['prix_hc'])}")))
         octopus_rows += [
-            ("Plages HC", " / ".join(octopus["plages_hc"])),
+            ("Plages d'heures creuses", " / ".join(octopus["plages_hc"])),
             ("Part de l'autoconsommation en heures creuses",
              fmt_pct(self.data.octopus.part_hc_autoconso * 100)
              + ("" if octopus.get("part_hc_autoconso") is not None

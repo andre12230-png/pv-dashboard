@@ -165,3 +165,16 @@ def test_edf_oa_garde_ses_annees_oa(fenetre):
     from views._helpers import libelle_periode
     fenetre(lambda cfg: None)
     assert libelle_periode("oa-2") == "Année OA #2"
+
+
+def test_des_libelles_entiers_et_un_seul_nom_par_mesure(fenetre):
+    """Journal du 01/10/2026 : « Abonn. » dix fois, « Plages HC », « Durée
+    prime » dans Parametres ; « Couverture solaire » en Repartition pour la
+    meme mesure que l'« Autoproduction » du tableau de bord."""
+    win = fenetre(lambda cfg: None)
+    parametres = _textes(win, "settings", "all")
+    for abrege in ("ABONN.", "PLAGES HC", "DURÉE PRIME"):
+        assert abrege not in parametres.upper(), abrege
+    repartition = _textes(win, "categories", "year-2024").upper()
+    assert "COUVERTURE SOLAIRE" not in repartition
+    assert "AUTOPRODUCTION" in repartition

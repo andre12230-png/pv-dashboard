@@ -809,7 +809,7 @@ def notes_donnees(df, jours_en_attente=(), start_oa=None,
     n = _compte("conso_recalee")
     if n:
         notes.append((
-            "Consommation arrondie",
+            "Achat au réseau arrondi",
             f"{_pluriel(n, 'jour')} saisis au kWh entier",
             "Ces journées ont été saisies sans décimales. Elles sont recalées "
             "sur le total de vos factures, qui est exact.\n\n"
@@ -821,7 +821,7 @@ def notes_donnees(df, jours_en_attente=(), start_oa=None,
     if n:
         kwh = df.loc[df["conso_absente"] > 0, "soutirage_kwh"].sum()
         notes.append((
-            "Consommation manquante",
+            "Achat au réseau manquant",
             f"{_pluriel(n, 'jour')} sans relevé exploitable ({fmt_kwh(kwh)})",
             "Données absentes chez Enedis, qui ne conserve que 36 mois "
             "glissants, ou valeurs interpolées pendant une panne du "

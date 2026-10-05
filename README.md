@@ -659,7 +659,8 @@ code les fait bouger un jour, le test tombe. Faites de meme avec les votres.
   apres coup). L'annee en cours est affichee « a venir » dans les Annees OA
   sans entrer dans son bilan
 - **Temps de retour** (ex-« ROI ») = (investissement − prime totale) ÷ gains **recurrents** annuels
-  (vente OA + economies). La prime n'etant versee que sur 5 ans, elle est
+  (vente OA + economies). La prime n'etant versee qu'un temps (en une fois
+  pour les contrats recents, sur 5 ans pour les plus anciens), elle est
   deduite du capital a amortir au lieu d'etre comptee comme un revenu qui
   se repete. Le calcul suppose des gains maintenus au rythme observe,
   et n'est fait qu'apres un an de releves (toutes les saisons comprises)
@@ -707,8 +708,9 @@ code les fait bouger un jour, le test tombe. Faites de meme avec les votres.
 - **Apres la bascule** : heures pleines / creuses. Si les colonnes
   Conso_HC et Conso_HP sont renseignees pour un jour, le cout est calcule
   exactement ; sinon il est estime au prix moyen correspondant au **ratio
-  HC reellement observe** sur les jours detailles, et non a la duree des
-  plages sur 24 h qui supposerait une consommation uniforme jour et nuit
+  HC reellement observe** sur les jours detailles ; la duree des plages
+  sur 24 h (consommation supposee uniforme jour et nuit) ne sert qu'en
+  repli, quand aucun jour n'a ce detail
 - **Changement de grille du fournisseur** : chaque periode de prix est
   gardee dans `config.yaml`, et chaque journee est facturee au prix de
   **sa** periode. Un nouveau tarif ne s'applique donc pas retroactivement
@@ -802,8 +804,8 @@ pv-dashboard/
 │   ├── aide.py           #   Notice (mode d'emploi et glossaire)
 │   └── settings.py       #   Parametres
 │
-│   -- les donnees (aucune n'est versionnee) --
-├── config.yaml           # Parametres editables (versionne)
+│   -- les donnees (aucune n'est versionnee, sauf le modele) --
+├── config.yaml           # Parametres editables (le modele est versionne)
 ├── config-local.exemple.yaml  # Modele du fichier personnel
 │                         #   (config-local.yaml, jamais versionne)
 ├── Releves-pv.csv        # Donnees, une ligne par jour

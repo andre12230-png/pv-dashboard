@@ -3,4 +3,4 @@ matplotlib>=3.7
 pandas>=2.0
 numpy>=1.24
 PyYAML>=6.0
-openpyxl>=3.1     # lecture du classeur Excel Enedis (bouton Importer Enedis)
+openpyxl>=3.1     # lecture des classeurs Excel d'Enedis (export d'index, conso / production)

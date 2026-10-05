@@ -321,7 +321,8 @@ def test_chaque_remarque_dit_de_quelle_grandeur_elle_parle():
     df = _df_notes(releve_incomplet=[1.0, 1.0, 0.0],
                    conso_absente=[0.0, 0.0, 1.0])
     titres = [titre for titre, _resume, _aide in notes_donnees(df)]
-    assert titres == ["Injection estimée", "Consommation manquante"]
+    # « Achat au réseau » : le nom de ce flux partout ailleurs (05/10/2026).
+    assert titres == ["Injection estimée", "Achat au réseau manquant"]
 
 
 def test_les_deux_remarques_qui_ont_ete_confondues_ne_se_ressemblent_plus():
@@ -333,9 +334,9 @@ def test_les_deux_remarques_qui_ont_ete_confondues_ne_se_ressemblent_plus():
     injection = notes[0][0] + " " + notes[0][1]
     conso = notes[1][0] + " " + notes[1][1]
     assert "Injection" in injection and "2 jours" in injection
-    assert "Consommation" in conso and "1 jour" in conso
+    assert "Achat au réseau" in conso and "1 jour" in conso
     # Aucune des deux ne peut etre prise pour l'autre.
-    assert "Consommation" not in injection
+    assert "Achat au réseau" not in injection
     assert "Injection" not in conso
 
 
