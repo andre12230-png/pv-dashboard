@@ -120,7 +120,7 @@ def test_l_ecart_avec_les_factures_se_lit_pareil_dans_les_deux_tableaux(vue):
     entetes = [annees.horizontalHeaderItem(j).text()
                for j in range(annees.columnCount())]
     assert "Contrôle EDF" not in entetes
-    assert entetes[-1] == "Écart avec les factures"
+    assert " ".join(entetes[-1].split()) == "Écart avec les factures"
     # 2024 : 50 kWh releves pour 50 factures, ecart nul, donc vert.
     ligne_2024 = _premiere_colonne(annees).index("2024")
     ecart = annees.item(ligne_2024, annees.columnCount() - 1)

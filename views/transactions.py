@@ -4,7 +4,6 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
-    QHeaderView,
     QLabel,
     QTableWidget,
     QTableWidgetItem,
@@ -12,7 +11,7 @@ from PySide6.QtWidgets import (
 )
 
 from accords import pluriel
-from gui_widgets import Card
+from gui_widgets import Card, repartir_colonnes
 from views._base import BaseView
 from views._helpers import filter_period
 
@@ -90,9 +89,6 @@ class TransactionsView(BaseView):
         table.setSelectionBehavior(QTableWidget.SelectRows)
         table.setSortingEnabled(False)
         table.setShowGrid(False)
-        header = table.horizontalHeader()
-        for i in range(len(colonnes)):
-            header.setSectionResizeMode(i, QHeaderView.Stretch)
 
         # Nombres a droite, comme dans la Saisie et la charte (ils etaient
         # centres, 30/09/2026) ; la date a gauche. Les en-tetes suivent.
@@ -162,8 +158,13 @@ class TransactionsView(BaseView):
                 table.setItem(row, col, item)
 
         table.setSortingEnabled(True)
+        # Largeurs reparties sans couper un en-tete : a parts egales, avec la
+        # colonne du vehicule, « Autoconsommation » perdait sa premiere
+        # lettre (audit du 04/10/2026). La ligne de totaux suit.
+        totaux = self._ligne_totaux(df, colonnes, avec_ve)
+        repartir_colonnes(table, suiveuses=[totaux])
         v.addWidget(table)
-        v.addWidget(self._ligne_totaux(df, colonnes, avec_ve))
+        v.addWidget(totaux)
         self.layout_inner.addWidget(card)
 
         legendes = []
@@ -232,8 +233,6 @@ class TransactionsView(BaseView):
         ligne.setShowGrid(False)
         ligne.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         ligne.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        for i in range(len(colonnes)):
-            ligne.horizontalHeader().setSectionResizeMode(i, QHeaderView.Stretch)
         gras = QFont()
         gras.setBold(True)
         for c, texte in enumerate(valeurs):

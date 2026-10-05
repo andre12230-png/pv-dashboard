@@ -17,7 +17,6 @@ import numpy as np
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
-    QHeaderView,
     QLabel,
     QTableWidget,
     QTableWidgetItem,
@@ -26,7 +25,7 @@ from PySide6.QtWidgets import (
 import calculations as calc
 from accords import accorde, pluriel
 from gui_theme import mpl_style
-from gui_widgets import Card, KpiCard, MplCanvas, grid_row
+from gui_widgets import Card, KpiCard, MplCanvas, grid_row, repartir_colonnes
 from views._base import BaseView
 from views._helpers import chiffres_sur_barres, du_au, fmt_date_fr, fmt_pct, poser_texte_court
 
@@ -35,6 +34,14 @@ def _nombre(x: float, decimales: int = 1) -> str:
     """Un nombre a la francaise, virgule decimale ; jamais « -0,0 »."""
     x = 0.0 if round(float(x), decimales) == 0 else float(x)
     return f"{x:,.{decimales}f}".replace(",", " ").replace(".", ",")
+
+
+def _signe(x: float, decimales: int) -> str:
+    """Un ecart signe a la francaise (« +1,5 », « -0,25 ») ; « 0,0 » sans
+    signe quand il s'arrondit a zero, jamais « -0,0 » (audit du 04/10/2026)."""
+    if round(float(x), decimales) == 0:
+        return _nombre(0.0, decimales)
+    return f"{x:+.{decimales}f}".replace(".", ",")
 
 
 def textes_tuiles(ligne: dict, en_cours: bool, taux: float
@@ -198,9 +205,11 @@ class TvaView(BaseView):
         v.setContentsMargins(0, 8 if estimation else 0, 0, 0)
         if estimation:
             v.itemAt(0).widget().setContentsMargins(12, 0, 12, 6)
-        cols = ["Année", "Autoconsommation (kWh)", "Part d'autoconsommation",
-                "Prix moyen (€/kWh)", "Base ligne 5A (€)", "TVA due (€)",
-                "Écart avec les factures"]
+        # Sur deux lignes, comme les autres tableaux : sur une seule, les
+        # en-tetes etaient coupes a 1280 px (« utoconsommation »).
+        cols = ["Année", "Autoconsommation\n(kWh)", "Part\nd'autoconsommation",
+                "Prix moyen\n(€/kWh)", "Base ligne 5A\n(€)", "TVA due\n(€)",
+                "Écart avec\nles factures"]
         table = QTableWidget(len(lignes), len(cols))
         table.setHorizontalHeaderLabels(cols)
         table.setAlternatingRowColors(True)
@@ -262,11 +271,9 @@ class TvaView(BaseView):
             for j, item in enumerate(items):
                 table.setItem(i, j, item)
 
-        # Colonnes reparties sur toute la largeur : avec la derniere seule
-        # etiree, un grand vide la separait des autres (audit du 14/09/2026).
-        header = table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.Stretch)
-        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        # Colonnes reparties sur toute la largeur (audit du 14/09/2026),
+        # sans jamais couper un en-tete (04/10/2026).
+        repartir_colonnes(table)
         self._hauteur_exacte(table)
         v.addWidget(table)
         self.layout_inner.addWidget(card)
@@ -329,9 +336,9 @@ class TvaView(BaseView):
                 QTableWidgetItem(du_au(ligne["debut"], ligne["fin"])),
                 QTableWidgetItem(_nombre(ligne["releve_kwh"])),
                 QTableWidgetItem(_nombre(ligne["facture_kwh"], 0)),
-                QTableWidgetItem(f"{ligne['ecart_kwh']:+.1f}".replace(".", ",")),
+                QTableWidgetItem(_signe(ligne["ecart_kwh"], 1)),
                 QTableWidgetItem("—" if pct is None
-                                 else f"{pct:+.2f} %".replace(".", ",")),
+                                 else _signe(pct, 2) + " %"),
                 QTableWidgetItem(str(ligne["jours_estimes"] or "—")),
             ]
             # Vert sous le seuil, rouge au-dela (voir SEUIL_ECART_PCT).
@@ -345,11 +352,9 @@ class TvaView(BaseView):
             for j, item in enumerate(items):
                 table.setItem(i, j, item)
 
-        # Colonnes reparties sur toute la largeur : avec la derniere seule
-        # etiree, un grand vide la separait des autres (audit du 14/09/2026).
-        header = table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.Stretch)
-        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        # Colonnes reparties sur toute la largeur (audit du 14/09/2026),
+        # sans jamais couper un en-tete (04/10/2026).
+        repartir_colonnes(table)
         self._hauteur_exacte(table)
         v.addWidget(table)
         self.layout_inner.addWidget(card)

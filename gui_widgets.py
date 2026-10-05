@@ -8,14 +8,16 @@ import re
 from typing import Iterable
 
 import matplotlib
-from PySide6.QtCore import QRectF, Qt
+from PySide6.QtCore import QEvent, QObject, QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
     QMessageBox,
     QSizePolicy,
+    QTableWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -589,3 +591,76 @@ def grid_row(widgets: Iterable[QWidget], spacing: int = 14) -> QHBoxLayout:
     for w in widgets:
         h.addWidget(w, stretch=1)
     return h
+
+
+# -----------------------------------------------------------------------------
+# Colonnes de tableau : jamais un en-tete coupe (audit du 04/10/2026)
+# -----------------------------------------------------------------------------
+
+# Marge autour du texte d'un en-tete : le retrait de 10 px de chaque cote
+# (feuille de style), plus la place de la fleche de tri.
+MARGE_ENTETE = 28
+
+
+def largeurs_colonnes(besoins: list[int], disponible: int) -> list[int]:
+    """Chaque colonne recoit sa largeur minimale, puis le reste de la place
+    a parts egales. Sans place en trop, chacune garde son minimum (le
+    tableau defile alors en largeur plutot que de couper un en-tete)."""
+    reste = disponible - sum(besoins)
+    if reste <= 0 or not besoins:
+        return list(besoins)
+    part, surplus = divmod(reste, len(besoins))
+    return [b + part + (1 if i < surplus else 0)
+            for i, b in enumerate(besoins)]
+
+
+class _RepartiteurColonnes(QObject):
+    """Recalcule les largeurs a chaque changement de taille du tableau."""
+
+    def __init__(self, table: QTableWidget, suiveuses: list[QTableWidget]):
+        super().__init__(table)
+        self.table = table
+        self.suiveuses = list(suiveuses)
+        table.viewport().installEventFilter(self)
+
+    def besoins(self) -> list[int]:
+        h = self.table.horizontalHeader()
+        fm = QFontMetrics(h.font())
+        resultat = []
+        for c in range(self.table.columnCount()):
+            item = self.table.horizontalHeaderItem(c)
+            texte = item.text() if item is not None else ""
+            entete = max((fm.horizontalAdvance(ligne)
+                          for ligne in texte.splitlines()), default=0)
+            resultat.append(max(entete + MARGE_ENTETE,
+                                self.table.sizeHintForColumn(c)))
+        return resultat
+
+    def appliquer(self) -> None:
+        largeurs = largeurs_colonnes(self.besoins(),
+                                     self.table.viewport().width())
+        for tableau in [self.table, *self.suiveuses]:
+            h = tableau.horizontalHeader()
+            for c, largeur in enumerate(largeurs):
+                if c < tableau.columnCount():
+                    h.resizeSection(c, largeur)
+
+    def eventFilter(self, objet, evenement) -> bool:
+        if evenement.type() == QEvent.Resize:
+            self.appliquer()
+        return False
+
+
+def repartir_colonnes(table: QTableWidget,
+                      suiveuses: Iterable[QTableWidget] = ()) -> None:
+    """Repartit la largeur d'un tableau sans couper aucun en-tete.
+
+    A parts egales (mode Stretch), une colonne a l'en-tete long devenait
+    plus etroite que lui et Qt en coupait le debut (« utoconsommation »).
+    `suiveuses` : tableaux qui prennent les memes largeurs (la ligne de
+    totaux sous les Releves). A appeler une fois le tableau rempli."""
+    suiveuses = list(suiveuses)
+    for tableau in [table, *suiveuses]:
+        tableau.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
+        tableau.horizontalHeader().setStretchLastSection(False)
+    _RepartiteurColonnes(table, suiveuses).appliquer()
