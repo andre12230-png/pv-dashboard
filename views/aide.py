@@ -49,12 +49,14 @@ sens :</p>
 surplus, toute votre production, ou rien), dates de votre contrat, prix
 de rachat, fournisseur et prix de votre électricité, et la part de votre
 autoconsommation qui tomberait en heures creuses (0 % si elles sont toutes la
-nuit). L'application se
+nuit ; la fenêtre en propose une estimation d'après vos plages d'heures
+creuses, que le bouton <b>Reprendre</b> met dans la case). L'application se
 recharge seule à l'enregistrement. L'onglet <b>Paramètres</b> montre ensuite
 à tout moment ce qui est pris en compte : c'est là qu'on vérifie qu'on ne
 s'est pas trompé.<br>
 Les réglages plus rares (TVA, grille EDF de comparaison, prix d'un ancien
-contrat à prix unique) se font dans le fichier <code>config.yaml</code>,
+contrat à prix unique, durée du contrat de vente — 20 ans par défaut ;
+au-delà, la vente compte pour 0 €) se font dans le fichier <code>config.yaml</code>,
 avec le Bloc-notes, dans le dossier de vos données : <code>{dossier}</code>
 (menu Démarrer, raccourci « Dossier des données », si l'application a été
 installée). Relancez alors l'application pour appliquer.</p>
@@ -79,7 +81,7 @@ ordinateur : ce sont vos factures. <b>N'y recopiez jamais celles de quelqu'un
 d'autre</b>, vos relevés seraient réécrits pour retomber sur des totaux qui ne
 sont pas les vôtres.</p>
 
-<h3 style="color:#1F3A6B">Les vues (menu de gauche)</h3>
+<h3 style="color:#1F3A6B">Les onglets (menu de gauche)</h3>
 <p><b>Tableau de bord</b> — vue d'ensemble de la période choisie : la part de
 soleil dans votre consommation (jauge), la production comparée à l'an passé,
 où va votre soleil et d'où vient votre électricité, le bilan financier, où
@@ -106,14 +108,16 @@ vous le paieriez même sans panneaux.</p>
 déclarer sur l'électricité autoconsommée, année civile par année civile. Sans
 intérêt pour les autres : cet onglet n'apparaît dans le menu que si la
 section <code>tva_lasm</code> de <code>config.yaml</code> est remplie.</p>
-<p><b>Statistiques</b> — comparaison des années civiles et rendement.</p>
+<p><b>Statistiques</b> — comparaison des années civiles et rendement. Les
+mois incomplets (mise en service, mois en cours) ne sont pas tracés, et les
+années partielles restent hors de la moyenne.</p>
 <p><b>Comparer à l'an passé</b> — compare la période choisie en haut à droite
 à la même période un an plus tôt : un mois au même mois de l'année d'avant,
 une année à la précédente, une {annee_oa} à l'{annee_oa} précédente. Sur « Toute la
 période », rien à comparer : l'onglet invite à choisir un mois ou une année.
 Une période <b>en cours</b> est comparée aux <b>mêmes dates</b> de l'an passé :
-septembre relevé jusqu'au 9 face au 1<sup>er</sup>–9 septembre de l'année
-d'avant, et non au mois entier — les libellés l'indiquent, « (au 09/09) ».
+septembre relevé jusqu'au 9 face à la période du 1<sup>er</sup> au 9 septembre de
+l'année d'avant, et non au mois entier — les libellés l'indiquent, « (au 09/09) ».
 Le bouton <b>Une journée précise</b> ouvre un calendrier pour comparer un jour
 donné au même jour de l'an passé ; changer de période en haut le referme.</p>
 <p><b>{comparaison}</b> — ce que votre contrat vous fait gagner (ou
@@ -139,7 +143,7 @@ date du dernier relevé quel que soit l'onglet affiché.</p>
 
 <h3 style="color:#1F3A6B">Choisir une période</h3>
 <p>La barre en haut à droite porte <b>‹ année mois ›</b> et filtre toutes les
-vues. Les deux flèches reculent ou avancent d'un cran : d'un mois quand un
+onglets. Les deux flèches reculent ou avancent d'un cran : d'un mois quand un
 mois est affiché, d'une année quand c'est une année, d'une {annee_oa} quand
 c'est une {annee_oa}. Elles se grisent quand il n'y a plus rien de ce côté.</p>
 <p>Le menu des mois ne propose que les mois qui portent des relevés. Il se
@@ -151,18 +155,24 @@ dernier mois relevé, tant que le mois en cours n'a rien) ; il est grisé quand
 vous y êtes déjà. Au clavier : <b>Ctrl+←</b> période précédente,
 <b>Ctrl+→</b> période suivante, <b>Ctrl+Origine</b> mois en cours.</p>
 <p>Sur <b>Statistiques</b>, le menu des mois disparaît et le bouton devient
-<b>Cette année</b> : la page compare toujours toutes les années, un mois n'y a
+<b>Cette année</b> : l'onglet compare toujours toutes les années, un mois n'y a
 pas de sens. Le sélecteur y reste grisé, comme sur les autres onglets qui ne
 dépendent pas de la période.</p>
-<p>L'application s'ouvre <b>toujours sur le mois en cours</b> : la période
-n'est pas mémorisée d'une fois sur l'autre, pour ne pas retrouver au
-lancement suivant les chiffres d'un mois passé consulté la veille.</p>
+<p>L'application s'ouvre <b>toujours sur le mois en cours</b> (ou sur toute
+la période tant que ce mois n'a aucun relevé) : la période n'est pas
+mémorisée d'une fois sur l'autre, pour ne pas retrouver au lancement suivant
+les chiffres d'un mois passé consulté la veille.</p>
 
 <h3 style="color:#1F3A6B">Saisir les relevés du jour</h3>
 <p>1. Ouvrez <b>Saisie quotidienne</b>.<br>
 2. La première ligne, surlignée, est prête avec la date attendue.<br>
 3. Saisissez les valeurs (touche Tab pour changer de case).<br>
-4. Cliquez sur <b>Enregistrer</b> : les autres vues se mettent à jour.</p>
+4. Cliquez sur <b>Enregistrer</b> : les autres onglets se mettent à jour.</p>
+<p>Une journée qui n'a encore que sa production (Enedis publie l'achat au
+réseau et l'injection un jour plus tard), comme la journée en cours, est
+<b>mise en attente</b> : elle n'entre dans aucun calcul tant que ses relevés
+réseau ne sont pas arrivés, et le tableau de bord le signale. Elle revient
+d'elle-même au prochain import.</p>
 <p>Des valeurs tapées et <b>pas encore enregistrées</b> restent dans le tableau
 si vous allez voir un autre onglet. Avant de fermer l'application, d'ouvrir
 « Mes réglages » ou d'importer un fichier, elle vous demande quoi en faire.</p>
@@ -319,7 +329,7 @@ l'autoconsommation se concentre sur l'été. Ces tarifs se relèvent sur vos
 factures et se déclarent dans <code>config.yaml</code>, section
 <code>tva_lasm</code> : <b>à compléter à chaque révision</b>, en général le
 1<sup>er</sup> février et le 1<sup>er</sup> août.</p>
-<p><b>Les quatre chiffres du haut de la page.</b> De janvier à fin mai, ils
+<p><b>Les quatre chiffres du haut de l'onglet.</b> De janvier à fin mai, ils
 donnent l'année terminée, celle qui se déclare : ce sont les montants à
 recopier sur le 3517-S. À partir de juin, la déclaration est faite : ils
 passent à l'année en cours, <b>réalisée à ce jour</b> (jusqu'au dernier relevé
@@ -368,8 +378,9 @@ externe, le tableau de bord vous le rappelle.</p>
 <p>Toutes les données restent sur votre ordinateur. Après chaque enregistrement, les
 calculs et graphiques sont recalculés automatiquement.</p>
 <p>L'application ne se connecte jamais à Internet. Pour savoir si une version
-plus récente existe, cliquez sur <b>🔄 Mise à jour</b> : la page de la dernière
-version s'ouvre dans votre navigateur.</p>
+plus récente existe, cliquez sur <b>🔄 Mise à jour</b> : une fenêtre propose
+de <b>voir les nouveautés</b> ou de <b>télécharger l'installeur</b>, dans votre
+navigateur.</p>
 """
 
 GLOSSAIRE_HTML = """

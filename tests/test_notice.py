@@ -69,3 +69,23 @@ def test_la_notice_nomme_le_vrai_fichier_de_releves():
     s'appelle « Releves-pv.csv ». Restaurer d'après la notice echouait."""
     assert "Relevés-pv.csv" not in NOTICE_HTML
     assert "<code>Releves-pv.csv</code>" in NOTICE_HTML
+
+
+def test_la_notice_decrit_ce_que_l_audit_a_trouve_absent():
+    """Audit du 04/10/2026 : fonctions non decrites, « 1er–9 », et trois
+    mots pour la meme chose (onglet, vue, page)."""
+    for attendu in ("Reprendre", "durée du contrat de vente",
+                    "mois incomplets", "mise en attente",
+                    "télécharger l'installeur", "Les onglets (menu de gauche)",
+                    "du 1<sup>er</sup> au 9 septembre"):
+        assert attendu in NOTICE_HTML, attendu
+    assert "Les vues (menu" not in NOTICE_HTML
+
+
+def test_une_date_de_bascule_illisible_est_dite_en_francais():
+    import pytest
+
+    import calculations as calc
+    with pytest.raises(RuntimeError, match="Écrivez-la sous la forme"):
+        calc.definir_bascule_hphc("pas une date")
+    calc.definir_bascule_hphc(None)

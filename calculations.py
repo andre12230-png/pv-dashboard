@@ -736,9 +736,10 @@ def definir_bascule_hphc(valeur) -> None:
         CUTOFF_OCTOPUS = pd.Timestamp(valeur)
     except (ValueError, TypeError) as exc:
         raise RuntimeError(
-            f"config.yaml : tarifs_reseau.bascule_hphc ne ressemble pas a "
-            f"une date ('{valeur}'). Attendu : AAAA-MM-JJ, "
-            "par exemple 2026-01-01."
+            f"La date de passage aux heures pleines / creuses ({valeur}) "
+            "n'est pas une date valide. Écrivez-la sous la forme AAAA-MM-JJ, "
+            "par exemple 2026-01-01 (fichier config.yaml, ligne "
+            "« bascule_hphc »)."
         ) from exc
 
 # Periode tarifaire encore en cours (Octopus ou grille EDF de reference) :
