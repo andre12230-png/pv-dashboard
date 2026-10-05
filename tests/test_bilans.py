@@ -122,3 +122,33 @@ def test_le_bilan_du_tableau_de_bord_suit_son_signe(win):
     negatif = win.data.df["bilan_jour_eur"].sum() < 0
     attendu = LIGHT["debit" if negatif else "credit"].lower()
     assert attendu in valeur.styleSheet().lower()
+
+
+def test_l_annee_oa_en_cours_est_signalee(win):
+    """Audit du 04/10/2026 : l'annee OA en cours (ici 10 jours) avait
+    l'allure d'une mauvaise annee. Son nom le dit, ses barres sont
+    hachurees."""
+    from gui_widgets import MplCanvas
+    win._switch_view("oa")
+    vue = win.views["oa"]
+    ax = vue.findChildren(MplCanvas)[0].fig.axes[0]
+    noms = [t.get_text() for t in ax.get_xticklabels()]
+    assert noms[-1].startswith("OA #2") and "en cours" in noms[-1]
+    assert "en cours" not in noms[0]
+    hachures = [bool(p.get_hatch()) for p in ax.patches]
+    assert hachures[:2] == [False, True]          # production #1, #2
+    table = vue.findChildren(QTableWidget)[-1]
+    assert "en cours" in table.item(0, 1).text()  # #2, la plus recente en haut
+
+
+def test_une_annee_oa_commencee_en_route_est_partielle(win):
+    """Releves commences apres le debut du contrat : l'annee #1 est
+    partielle, et le dit."""
+    from gui_widgets import MplCanvas
+    df = win.data.df
+    win.data.df = df[df.index >= "2024-04-26"]
+    win._switch_view("oa")
+    win.views["oa"].refresh("all")
+    ax = win.views["oa"].findChildren(MplCanvas)[-1].fig.axes[0]
+    noms = [t.get_text() for t in ax.get_xticklabels()]
+    assert noms[0] == "OA #1 (partielle)"

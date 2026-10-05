@@ -132,6 +132,13 @@ class OctopusEdfView(BaseView):
         v.setContentsMargins(16, 10, 16, 14)
         m = comp[["cout_octopus_eur", "cout_edf_hphc_eur",
                   "cout_edf_base_eur"]].resample("MS").sum()
+        # Mois incomplets (debut des releves, mois en cours) : hachures, et
+        # la carte le dit (audit du 04/10/2026). Les trois couts portent sur
+        # les memes jours : la comparaison reste juste, seule la hauteur
+        # trompe.
+        jours = comp["cout_octopus_eur"].resample("MS").count()
+        m["incomplet"] = [int(n) < d.days_in_month
+                          for d, n in zip(jours.index, jours.values, strict=True)]
         # Un graphique par annee civile, la plus recente en haut, comme les
         # tableaux de la page TVA (29/09/2026). Sur 33 mois dans un seul
         # graphique, les trois montants de chaque mois se chevauchaient et
@@ -143,6 +150,12 @@ class OctopusEdfView(BaseView):
             v.addWidget(self._graphique_annee(
                 m[m.index.year == annee], annee, mien, autre, plafond,
                 avec_legende=(rang == 0)))
+        if m["incomplet"].any():
+            note = QLabel("Hachurés : mois incomplets (début des relevés, "
+                          "mois en cours).")
+            note.setObjectName("SectionSub")
+            note.setWordWrap(True)
+            v.addWidget(note)
         return card
 
     MOIS_COURTS = ("janv.", "févr.", "mars", "avr.", "mai", "juin",
@@ -179,6 +192,11 @@ class OctopusEdfView(BaseView):
         # Les montants : a plat s'ils tiennent a l'ecran, debout sinon (regle
         # commune). Hauteur fixe, commune a toutes les annees, avec de quoi
         # loger les chiffres des plus hautes barres.
+        for serie in (b1, b2, b3):
+            for barre, incomplet in zip(serie, mois["incomplet"], strict=True):
+                if incomplet:
+                    barre.set_hatch("///")
+                    barre.set_alpha(0.55)
         chiffres_sur_barres(ax, [b1, b2, b3])
         ax.set_ylim(0, plafond * 1.25 if plafond > 0 else 1)
         canvas.fig.tight_layout()

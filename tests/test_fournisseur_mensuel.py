@@ -68,3 +68,18 @@ def test_meme_echelle_et_une_seule_legende(qapp):
     assert len({ax.get_ylim() for ax in axes}) == 1
     assert axes[0].get_legend() is not None
     assert all(ax.get_legend() is None for ax in axes[1:])
+
+
+def test_les_mois_incomplets_sont_hachures(qapp):
+    """Audit du 04/10/2026 : le premier et le dernier mois, incomplets,
+    passaient pour des mois entiers. Ils restent la, hachures, et la carte
+    le dit."""
+    from PySide6.QtWidgets import QLabel
+    carte = _carte("2025-03-20", "2025-06-10")
+    ax = carte.findChildren(MplCanvas)[0].fig.axes[0]
+    # Les barres arrivent par serie (mon offre, puis les deux autres), chacune
+    # dans l'ordre des mois : mars, avril, mai, juin.
+    hachures = [bool(p.get_hatch()) for p in ax.patches][:4]
+    assert hachures == [True, False, False, True]
+    textes = " ".join(lbl.text() for lbl in carte.findChildren(QLabel))
+    assert "incomplets" in textes

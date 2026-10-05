@@ -620,7 +620,13 @@ class DashboardView(BaseView):
         tete = QHBoxLayout()
         tete.addStretch(1)
         valeurs = serie.values
-        meilleur = int(valeurs.argmax()) if len(valeurs) and valeurs.max() > 0 else None
+        # Semaines et mois incomplets (debut des releves, periode en cours) :
+        # traces hachures, et jamais « meilleur » (audit du 04/10/2026).
+        incomplets = self._pas_incomplets(df, serie, freq)
+        candidats = [i for i in range(len(valeurs))
+                     if not incomplets[i] and valeurs[i] > 0]
+        meilleur = (max(candidats, key=lambda i: valeurs[i])
+                    if candidats else None)
         if meilleur is not None:
             record = QLabel(
                 f"🏆 {nom_record} {serie.index[meilleur].strftime(fmt_date)} : "
@@ -640,6 +646,11 @@ class DashboardView(BaseView):
         couleurs = [CC["production"] if i == meilleur else adoucie
                     for i in range(len(x))]
         barres = ax.bar(x, valeurs, 0.7, color=couleurs)
+        for i, barre in enumerate(barres):
+            if incomplets[i]:
+                barre.set_facecolor(mcolors.to_rgba(CC["production"], 0.18))
+                barre.set_hatch("///")
+                barre.set_edgecolor(CC["production"])
         # Chaque barre porte son chiffre (demande du 15/09/2026) ; celui du
         # meilleur jour reste mis en valeur, en gras.
         textes = chiffres_sur_barres(ax, [barres],
@@ -653,7 +664,29 @@ class DashboardView(BaseView):
         ax.set_ylabel("kWh")
         canvas.fig.tight_layout()
         v.addWidget(canvas)
+        if any(incomplets):
+            unite = "mois" if freq == "MS" else "semaines"
+            note = QLabel(f"Hachurés : {unite} incomplets (début des "
+                          "relevés, période en cours).")
+            note.setObjectName("SectionSub")
+            note.setWordWrap(True)
+            v.addWidget(note)
         return card
+
+    @staticmethod
+    def _pas_incomplets(df: pd.DataFrame, serie: pd.Series,
+                        freq: str) -> list[bool]:
+        """Pour chaque barre, vrai si sa semaine ou son mois n'a pas un
+        releve chaque jour. Le jour par jour n'a rien d'incomplet."""
+        if freq == "D":
+            return [False] * len(serie)
+        jours = df["production_kwh"].resample(freq).count()
+        resultat = []
+        for debut, nombre in zip(serie.index, jours.values, strict=True):
+            attendu = (pd.Period(debut, freq="M").days_in_month
+                       if freq == "MS" else 7)
+            resultat.append(int(nombre) < attendu)
+        return resultat
 
     @staticmethod
     def _jours_du_mois(ax, index) -> None:

@@ -3,6 +3,7 @@ date de debut du contrat OA)."""
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
@@ -60,9 +61,19 @@ class OAView(BaseView):
             versee = calc.prime_est_versee(self.data.start_oa, int(n_oa), oa)
             eligible = 1 <= n_oa <= oa.prime_duree
             prime = prime_an if versee else 0.0
+            # Annee pas encore finie au dernier releve : dite « en cours »,
+            # sinon ses petites barres passaient pour une mauvaise annee
+            # (audit du 04/10/2026).
+            en_cours = g.index.max().date() < pd.Timestamp(f).date()
+            # Releves commences apres le debut de l'annee : partielle aussi.
+            partielle = g.index.min().date() > pd.Timestamp(d).date()
+            mention = (" (en cours)" if en_cours
+                       else " (partielle)" if partielle else "")
             rows.append({
                 "n": int(n_oa),
-                "periode": du_au(d, f),
+                "en_cours": en_cours or partielle,
+                "mention": mention,
+                "periode": du_au(d, f) + mention,
                 "prod": g["production_kwh"].sum(),
                 "auto": g["autoconsommation_kwh"].sum(),
                 "inj":  g["injection_kwh"].sum(),
@@ -103,7 +114,12 @@ class OAView(BaseView):
         b3 = ax.bar(xs + w, [r["inj"] for r in rows], w,
                     label="Injection", color=CC["injection"])
         ax.set_xticks(xs)
-        ax.set_xticklabels([f"OA #{r['n']}" for r in rows])
+        ax.set_xticklabels([f"OA #{r['n']}{r['mention']}" for r in rows])
+        for serie in (b1, b2, b3):
+            for barre, r in zip(serie, rows, strict=True):
+                if r["en_cours"]:
+                    barre.set_hatch("///")
+                    barre.set_alpha(0.55)
         ax.set_ylabel("kWh")
         # Le chiffre de chaque barre (demande du 15/09/2026).
         chiffres_sur_barres(ax, [b1, b2, b3])

@@ -496,3 +496,32 @@ def test_injection_jamais_relevee_n_est_pas_dite_estimee():
     assert titre == "Injection non relevée"
     assert "ratios" not in aide
     assert "maximum" in aide
+
+
+def test_les_mois_incomplets_sont_hachures_et_jamais_records():
+    """Audit du 04/10/2026 : sur toute la periode, le mois de mise en
+    service (5 jours) et le mois en cours etaient traces comme des mois
+    entiers. Ils restent la, hachures, et la note le dit."""
+    from types import SimpleNamespace
+
+    from PySide6.QtWidgets import QApplication, QLabel
+
+    from gui_theme import LIGHT
+    from gui_widgets import MplCanvas
+    from views.dashboard import DashboardView
+    QApplication.instance() or QApplication([])
+    jours = pd.date_range("2024-04-26", "2025-10-10", freq="D")
+    prod = [10.0] * len(jours)
+    prod[0] = 400.0            # un jour enorme dans le mois incomplet d'avril
+    df = pd.DataFrame({"production_kwh": prod}, index=jours)
+    tableau = DashboardView.__new__(DashboardView)
+    tableau.data = SimpleNamespace(df=df)
+    tableau.theme = LIGHT
+    carte = tableau._carte_production_jours(df)
+    textes = " ".join(lbl.text() for lbl in carte.findChildren(QLabel))
+    assert "04/2024" not in textes.split("Meilleur mois")[-1][:12]
+    assert "incomplets" in textes
+    ax = carte.findChildren(MplCanvas)[0].fig.axes[0]
+    hachures = [p.get_hatch() for p in ax.patches]
+    assert hachures[0] and hachures[-1]          # avril 2024, octobre 2025
+    assert not hachures[1]
