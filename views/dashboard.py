@@ -28,6 +28,7 @@ from views._helpers import (
     amortissement,
     chiffres_sur_barres,
     filter_period,
+    fin_du_contrat,
     fmt_eur,
     fmt_kwh,
     fmt_pct,
@@ -37,6 +38,7 @@ from views._helpers import (
     libelle_periode,
     notes_donnees,
     periode_precedente,
+    phrase_apres_contrat,
 )
 from views.comparaison import couper_aux_memes_dates
 
@@ -121,9 +123,16 @@ class DashboardView(BaseView):
         if data.vend:
             quoi = ("le surplus injecté" if data.oa.type == "surplus"
                     else "votre production")
+            # Toute la periode apres la fin du contrat : plus de prix a
+            # citer, la vente vaut 0 (audit du 04/10/2026).
+            fin = fin_du_contrat(data)
+            sous_titre = (f"contrat terminé le {fin:%d/%m/%Y}"
+                          if fin is not None and not df.empty
+                          and df.index.min() >= fin
+                          else f"à {fmt_prix_kwh(data.oa.prix_kwh)}")
             carte_vente = KpiCard(
                 f"💶 Vente à {data.acheteur}", fmt_eur(revenu, signed=True),
-                f"à {fmt_prix_kwh(data.oa.prix_kwh)}", "credit",
+                sous_titre, "credit",
                 aide=f"Ce que {data.acheteur} vous verse pour {quoi} sur "
                      "la période.\n\nLe prix du kWh se règle dans "
                      "« Mes réglages » : tout le bilan en dépend.")
@@ -567,7 +576,8 @@ class DashboardView(BaseView):
             fin = (pd.Timestamp(self.data.df.index.min())
                    + pd.Timedelta(days=round(am["roi_an"] * 365.25)))
             detail += (f" Au rythme actuel, remboursement complet vers "
-                       f"{fin.year} (voir la Synthèse financière).")
+                       f"{fin.year} (voir la Synthèse financière)."
+                       + phrase_apres_contrat(self.data, fin))
         elif am["jours_avant_estimation"]:
             detail += (" La date de remboursement s'estimera après un an de "
                        "relevés.")

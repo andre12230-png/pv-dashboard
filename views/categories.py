@@ -161,8 +161,11 @@ class CategoriesView(BaseView):
         # noeud d'arrivee mais le chemin entre les deux. Les couleurs sont
         # celles du tableau "Detail par poste" juste en dessous.
         flux = [
+            # Sans contrat de vente, l'injection n'est pas payee : ne pas
+            # parler de vente (audit du 04/10/2026).
             Flux("production", "injection", inj,
-                 "Vendu au réseau", CC["injection"]),
+                 "Vendu au réseau" if self.data.vend else "Injecté, non payé",
+                 CC["injection"]),
             Flux("production", "consommation", auto,
                  "Autoconsommation", CC["autoconso"]),
             Flux("soutirage", "consommation", sout,
@@ -236,7 +239,10 @@ class CategoriesView(BaseView):
         # Bloc production : ce que les panneaux fabriquent, et ou ca va.
         poste("Production solaire", CC["production"], prod)
         poste("Autoconsommation", CC["autoconso"], auto, eco)
-        poste("Injection", CC["injection"], inj, revenu)
+        # Sans vente, l'injection ne rapporte rien : « — » plutot que
+        # « +0,00 € » et « 0,000 €/kWh ».
+        poste("Injection" if self.data.vend else "Injecté, non payé",
+              CC["injection"], inj, revenu if self.data.vend else None)
 
         # Filet de separation : sans lui, on additionne machinalement les six
         # lignes et on croit a une consommation de 1 262 kWh.

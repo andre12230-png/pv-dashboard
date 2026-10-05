@@ -360,6 +360,10 @@ class TvaView(BaseView):
         """A qui l'electricite est vendue (« EDF OA » si rien n'est dit)."""
         return getattr(self.data, "acheteur", None) or "EDF OA"
 
+    def _vend(self) -> bool:
+        """Faux sans contrat de vente : ni ventes ni autofacturations."""
+        return getattr(self.data, "vend", True)
+
     def _d_acheteur(self) -> str:
         """« d'EDF OA », « de Solaire Coop »."""
         return getattr(self.data, "d_acheteur", None) or "d'EDF OA"
@@ -369,9 +373,10 @@ class TvaView(BaseView):
             "Ce qui est taxable : seule l'électricité à la fois produite et "
             "consommée "
             "sur place l'est, au titre de la livraison à soi-même "
-            f"(art. 257-II-1-1° du CGI). Les ventes à {self._acheteur()} "
-            "sont autoliquidées — l'acheteur déclare leur TVA — et la prime à "
-            "l'autoconsommation est hors champ.",
+            "(art. 257-II-1-1° du CGI)."
+            + (f" Les ventes à {self._acheteur()} sont autoliquidées — "
+               "l'acheteur déclare leur TVA — et la prime à "
+               "l'autoconsommation est hors champ." if self._vend() else ""),
             "Comment la base est calculée : chaque kWh autoconsommé est "
             "valorisé au tarif d'achat en vigueur le jour même — part "
             "fourniture et acheminement HT, plus l'accise, hors TVA et hors "
@@ -379,9 +384,10 @@ class TvaView(BaseView):
             "tarif : c'est la moyenne qui ressort de ce calcul jour par jour.",
             "D'où viennent les chiffres : des relevés quotidiens du fichier "
             "Releves-pv.csv, pris tels quels, sans le recalage sur factures "
-            "appliqué dans les autres onglets. Le contrôle ci-dessus les "
-            "recoupe avec les autofacturations annuelles "
-            f"{self._d_acheteur()}.",
+            "appliqué dans les autres onglets."
+            + (" Le contrôle ci-dessus les recoupe avec les "
+               f"autofacturations annuelles {self._d_acheteur()}."
+               if self._vend() else ""),
         ]
         incompletes = [ligne for ligne in lignes
                        if ligne["jours_sans_injection"]]

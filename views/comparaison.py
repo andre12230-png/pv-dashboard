@@ -298,7 +298,11 @@ class ComparaisonView(BaseView):
         v = card.corps
         v.setContentsMargins(16, 10, 16, 14)
 
-        table = QTableWidget(len(METRIQUES), 4)
+        # Sans contrat de vente, pas de ligne « Vente » a 0,00 € « stable ».
+        metriques = [m for m in METRIQUES
+                     if getattr(self.data, "vend", True)
+                     or m[0] != "revenu_vente_eur"]
+        table = QTableWidget(len(metriques), 4)
         table.setHorizontalHeaderLabels(
             ["Indicateur", entete_n1, entete_n, "Variation"])
         table.verticalHeader().setVisible(False)
@@ -313,7 +317,7 @@ class ComparaisonView(BaseView):
         for i in range(1, 4):
             hh.setSectionResizeMode(i, QHeaderView.ResizeToContents)
 
-        for r, (cle, label, unite, sens) in enumerate(METRIQUES):
+        for r, (cle, label, unite, sens) in enumerate(metriques):
             fmt = fmt_kwh_seul if unite == "kwh" else fmt_eur
             val_n = agg_n[cle] if agg_n else None
             val_n1 = agg_n1[cle] if agg_n1 else None

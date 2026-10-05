@@ -83,7 +83,8 @@ class SettingsView(BaseView):
             contrat.append(("Durée contrat", _duree_ans(oa.duree_contrat)))
         cards = [
             self._kv_card("Installation", installation),
-            self._kv_card("Contrat OA" if self.data.acheteur == "EDF OA"
+            self._kv_card("Vente" if oa.type == "aucune"
+                          else "Contrat OA" if self.data.acheteur == "EDF OA"
                           else "Contrat de vente", contrat),
         ]
         self.layout_inner.addLayout(grid_row(cards))

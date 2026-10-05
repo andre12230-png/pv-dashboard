@@ -199,6 +199,28 @@ def _orienter_chiffres(ax, textes: list[list], centres: list[float]) -> None:
     ax.margins(y=0.20 if debout else 0.12)
 
 
+def fin_du_contrat(data) -> pd.Timestamp | None:
+    """Premier jour apres le contrat de vente (debut + duree), ou None."""
+    start = getattr(data, "start_oa", None)
+    duree = getattr(getattr(data, "oa", None), "duree_contrat", 0)
+    if start is None or not duree or not getattr(data, "vend", True):
+        return None
+    return pd.Timestamp(start) + pd.DateOffset(years=int(duree))
+
+
+def phrase_apres_contrat(data, fin_projetee: pd.Timestamp) -> str:
+    """Ce que suppose une date de remboursement posterieure au contrat.
+
+    La projection prolonge le rythme des gains, vente comprise : au-dela de
+    la fin du contrat, elle suppose que la vente continue au meme prix
+    (audit du 04/10/2026). Rend "" quand la date tombe avant."""
+    fin = fin_du_contrat(data)
+    if fin is None or fin_projetee <= fin:
+        return ""
+    return (" Cette date suppose que la vente continue au même prix après la "
+            f"fin du contrat, le {fin:%d/%m/%Y}.")
+
+
 # Releves necessaires avant d'estimer un rythme annuel et un temps de retour.
 JOURS_AVANT_ESTIMATION = 365
 

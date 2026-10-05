@@ -19,6 +19,7 @@ from views._helpers import (
     fmt_date_fr,
     fmt_eur,
     libelle_periode,
+    phrase_apres_contrat,
     poser_texte_court,
 )
 
@@ -170,6 +171,10 @@ class AccountsView(BaseView):
                "seulement, est déduite du capital à amortir "
                "au lieu d'être comptée comme un revenu perpétuel."
                if oa.prime_duree else "")
+            + (phrase_apres_contrat(
+                self.data, pd.Timestamp(df_total.index.min())
+                + pd.Timedelta(days=round(roi_an * 365.25)))
+               if roi_an else "")
         )
         note.setStyleSheet(
             f"color: {self.theme['text_muted']}; font-size: 11px; padding-top: 4px;")
