@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from matplotlib.patches import Patch
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
@@ -132,7 +133,13 @@ class OAView(BaseView):
         # Le chiffre de chaque barre (demande du 15/09/2026).
         chiffres_sur_barres(ax, [b1, b2, b3])
         # Legende au-dessus du trace : dedans, elle recouvrait les chiffres.
-        ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0),
+        # Ses carres sont pleins : pris sur les premieres barres, ils etaient
+        # hachures quand la premiere annee est partielle (05/10/2026).
+        ax.legend(handles=[Patch(color=CC[cle], label=nom) for cle, nom in (
+                      ("production", "Production"),
+                      ("autoconso", "Autoconsommation"),
+                      ("injection", "Injection"))],
+                  loc="lower center", bbox_to_anchor=(0.5, 1.0),
                   frameon=False, ncol=3)
         canvas.fig.tight_layout()
         cv.addWidget(canvas)
@@ -164,7 +171,7 @@ class OAView(BaseView):
             if r.get("prime_a_venir"):
                 prime_txt = f"({prime_an:.2f} à venir)".replace(".", ",")
             items = [
-                QTableWidgetItem("avant OA" if r["n"] == 0 else f"#{r['n']}"),
+                QTableWidgetItem("avant OA" if r["n"] == 0 else mot_annee("numero", r["n"])),
                 QTableWidgetItem(r["periode"]),
                 QTableWidgetItem(nombre_fr(r["prod"])),
                 QTableWidgetItem(nombre_fr(r["auto"])),

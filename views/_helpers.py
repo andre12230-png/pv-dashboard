@@ -445,10 +445,11 @@ MOIS_TOUS = "*"       # entree « Toute l'annee » du menu des mois
 # date de bascule HP/HC de calculations.
 _MOTS_EDF_OA = {"pluriel": "Années OA", "singulier": "Année OA",
                 "minuscule": "année OA", "colonne": "Année OA",
-                "long": "Année OA #{n}", "court": "OA #{n}"}
+                "long": "Année OA #{n}", "court": "OA #{n}", "numero": "#{n}"}
 _MOTS_AUTRE = {"pluriel": "Années de contrat", "singulier": "Année de contrat",
                "minuscule": "année de contrat", "colonne": "Année",
-               "long": "Année de contrat n° {n}", "court": "Année n° {n}"}
+               "long": "Année de contrat n° {n}", "court": "Année n° {n}",
+               "numero": "n° {n}"}
 _mots_annee = dict(_MOTS_EDF_OA)
 
 
@@ -462,7 +463,7 @@ def definir_acheteur(acheteur: str | None) -> None:
 def mot_annee(forme: str, n: int | None = None) -> str:
     """« Années OA », « année OA », « OA #3 »… ou leur equivalent chez un
     autre acheteur. `forme` : pluriel, singulier, minuscule, colonne, long,
-    court (ces deux-la avec le numero n)."""
+    court, numero (ces trois-la avec le numero n)."""
     return _mots_annee[forme].format(n=n)
 
 
@@ -604,7 +605,8 @@ METRIQUES = [
     ("soutirage_kwh",        "Achat au réseau",     "kwh", -1),
     ("revenu_vente_eur",     "Vente",               "eur", +1),
     ("economie_eur",         "Économies",           "eur", +1),
-    ("cout_reseau_eur",      "Achat au réseau",     "eur", -1),
+    # « (€) » : la ligne des kWh porte le meme nom (relecture du 05/10/2026).
+    ("cout_reseau_eur",      "Achat au réseau (€)", "eur", -1),
     ("bilan_jour_eur",       "Bilan électricité",   "eur", +1),
 ]
 METRIQUES_ENERGIE = {"production_kwh", "autoconsommation_kwh",

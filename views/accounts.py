@@ -199,7 +199,8 @@ class AccountsView(BaseView):
 
     def _recettes(self) -> str:
         """« ventes + économies + primes », selon ce que le contrat prévoit."""
-        parts = (["ventes"] if self.data.vend else []) + ["économies"]
+        # « vente », le nom de la carte (relecture du 05/10/2026).
+        parts = (["vente"] if self.data.vend else []) + ["économies"]
         if self.data.oa.prime_duree:
             parts.append("primes")
         return " + ".join(parts)

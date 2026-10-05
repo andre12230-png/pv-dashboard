@@ -80,7 +80,7 @@ class SettingsView(BaseView):
                     ("Prime par kWc", fmt_eur(oa.prime_par_kwc) + "/kWc"),
                     ("Durée de la prime", _duree_ans(oa.prime_duree)),
                 ]
-            contrat.append(("Durée contrat", _duree_ans(oa.duree_contrat)))
+            contrat.append(("Durée du contrat", _duree_ans(oa.duree_contrat)))
         cards = [
             self._kv_card("Installation", installation),
             self._kv_card("Vente" if oa.type == "aucune"

@@ -133,6 +133,9 @@ class DashboardView(BaseView):
             carte_vente = KpiCard(
                 f"💶 Vente à {data.acheteur}", fmt_eur(revenu, signed=True),
                 sous_titre, "credit",
+                # Les quatre montants suivent leur signe, comme dans la
+                # Synthese (relecture du 05/10/2026).
+                value_color=self._couleur_montant(revenu),
                 aide=f"Ce que {data.acheteur} vous verse pour {quoi} sur "
                      "la période.\n\nLe prix du kWh se règle dans "
                      "« Mes réglages » : tout le bilan en dépend.")
@@ -148,12 +151,14 @@ class DashboardView(BaseView):
             carte_vente,
             KpiCard("🐷 Économies", fmt_eur(eco, signed=True),
                     "kWh du soleil, non achetés", "credit",
+                    value_color=self._couleur_montant(eco),
                     aide="Ce que vous n'avez PAS payé, en consommant votre "
                          "propre production au lieu de l'acheter.\n\n"
                          "Attention : ce n'est pas de l'argent reçu, mais une "
                          "dépense évitée."),
             KpiCard("🔌 Achat au réseau", fmt_eur(-cout, signed=True),
                     "électricité + abonnement", "debit",
+                    value_color=self._couleur_montant(-cout),
                     aide="Ce que votre fournisseur vous facture sur la "
                          "période : l'électricité soutirée et la part fixe de "
                          "l'abonnement.\n\nC'est le montant à comparer à vos "
@@ -165,8 +170,7 @@ class DashboardView(BaseView):
                     "credit" if bilan >= 0 else "debit",
                     # Vert ou rouge selon le signe, comme les autres bilans
                     # (choix de l'auteur, 05/10/2026).
-                    value_color=(self.theme["credit"] if bilan >= 0
-                                 else self.theme["debit"]),
+                    value_color=self._couleur_montant(bilan),
                     aide=(
                         f"{fmt_eur(revenu)} de vente + {fmt_eur(eco)} "
                         f"d'économies − {fmt_eur(cout)} d'achat au réseau "
@@ -304,7 +308,8 @@ class DashboardView(BaseView):
             # est recomptee sur les memes jours.
             prod = float(df_n["production_kwh"].sum())
         ecart = (prod - base) / base * 100
-        signe = "+" if ecart >= 0 else "−"
+        # « - », le signe de tous les montants de l'appli (05/10/2026).
+        signe = "+" if ecart >= 0 else "-"
         depuis = f" (depuis le {debut:%d/%m})" if debut is not None else ""
         if round(ecart) == 0:
             # « −0 % » n'a pas de sens (audit du 04/10/2026).
@@ -544,6 +549,8 @@ class DashboardView(BaseView):
         # longtemps apres la mise en service, ce qui a ete recupere avant
         # n'est pas compte, et on le dit (audit du 04/10/2026).
         premier = pd.Timestamp(self.data.df.index.min())
+        # Sous-titre court (charte : ~110 signes) ; la mise en service va
+        # dans la ligne de detail, qui passe a la ligne (05/10/2026).
         sous_titre = (f"Depuis le premier relevé, le {premier:%d/%m/%Y}, "
                       "quelle que soit la période choisie.")
         try:
@@ -551,9 +558,10 @@ class DashboardView(BaseView):
                 self.data.cfg["installation"]["date_mise_en_service"])
         except (KeyError, TypeError, ValueError):
             mes = None
+        avant = ""
         if mes is not None and premier - mes > pd.Timedelta(days=31):
-            sous_titre += (f" Mise en service le {mes:%d/%m/%Y} : ce que "
-                           "l'installation a rapporté avant n'est pas compté.")
+            avant = (f" Mise en service le {mes:%d/%m/%Y} : ce que "
+                     "l'installation a rapporté avant n'est pas compté.")
         card = Card(titre="Remboursement de l'installation",
                     sous_titre=sous_titre)
         v = card.corps
@@ -568,7 +576,7 @@ class DashboardView(BaseView):
             "font-weight: 700; background: transparent;")
         ligne.addWidget(pourcentage)
         v.addLayout(ligne)
-        sources = ([f"ventes à {self.data.acheteur}"] if self.data.vend else [])
+        sources = ([f"vente à {self.data.acheteur}"] if self.data.vend else [])
         sources.append("économies")
         if self.data.oa.prime_duree:
             sources.append("primes déjà perçues")
@@ -587,6 +595,7 @@ class DashboardView(BaseView):
         elif am["jours_avant_estimation"]:
             detail += (" La date de remboursement s'estimera après un an de "
                        "relevés.")
+        detail += avant
         note = QLabel(detail)
         note.setWordWrap(True)
         note.setStyleSheet(
@@ -672,6 +681,13 @@ class DashboardView(BaseView):
             note.setWordWrap(True)
             v.addWidget(note)
         return card
+
+    def _couleur_montant(self, montant: float) -> str | None:
+        """Vert positif, rouge negatif, encre pour zero : « 0,00 » ne prend
+        ni signe ni couleur (charte)."""
+        if round(montant, 2) == 0:
+            return None
+        return self.theme["credit"] if montant > 0 else self.theme["debit"]
 
     @staticmethod
     def _pas_incomplets(df: pd.DataFrame, serie: pd.Series,

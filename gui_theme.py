@@ -622,13 +622,14 @@ def encre(couleur: str, seuil: float = 4.8) -> str:
     return "#000000"
 
 
-# Encre des variations ecrites (colonne « Variation » : + favorable /
-# - defavorable). Les teintes du vert et de l'orange des graphiques plutot
-# que le couple vert/rouge, pour que les daltoniens les distinguent ; mais
-# assombries pour ECRIRE (30/09/2026) : les couleurs vives #199e70 et
-# #d95926 ne faisaient que 3,1 a 3,9 pour 1 sur les lignes du tableau.
-COULEUR_FAVORABLE = encre(CHART_COLORS["autoconso"])     # #137b57
-COULEUR_DEFAVORABLE = encre(CHART_COLORS["soutirage"])   # #b44a20
+# Encre des variations et des montants ecrits (+ favorable / - defavorable) :
+# le vert et le rouge des montants de la charte, les memes que les bilans.
+# Un vert et un orange a part (#137b57, #b44a20, choisis le 30/09/2026 pour
+# les daltoniens) faisaient deux verts et deux rouges sur la meme page
+# (relecture du 05/10/2026). Les daltoniens n'y perdent rien : chaque
+# variation porte aussi son signe, la couleur n'est jamais seule.
+COULEUR_FAVORABLE = LIGHT["credit"]       # #18733A, 5,6 pour 1 sur l'ivoire
+COULEUR_DEFAVORABLE = LIGHT["debit"]      # #C0392B, 5,1 pour 1
 
 
 def palette_claire() -> QPalette:

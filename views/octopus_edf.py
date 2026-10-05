@@ -19,6 +19,7 @@ from views._base import BaseView
 from views._helpers import (
     JOURS_AVANT_ESTIMATION,
     chiffres_sur_barres,
+    du_au,
     fmt_date_fr,
     fmt_eur,
     fmt_prix_kwh,
@@ -79,20 +80,13 @@ class OctopusEdfView(BaseView):
                    f"{autre} HP/HC": cout_hphc}
         gagnant = min(options, key=options.get)
 
-        # Qui a toujours ete en heures creuses n'a « change » de rien : sa
-        # periode commence a la mise en service.
-        try:
-            mise_en_service = pd.Timestamp(self.data.date_mise_en_service)
-        except (TypeError, ValueError):
-            mise_en_service = None
-        if mise_en_service is not None and bascule <= mise_en_service:
-            depuis = f"Depuis la mise en service du {mise_en_service:%d/%m/%Y}"
-        else:
-            depuis = (f"Depuis le passage en heures pleines / creuses du "
-                      f"{bascule:%d/%m/%Y}")
+        # La periode reellement comparee, du premier au dernier releve : la
+        # page disait « Depuis la mise en service du … » pour des releves
+        # commences bien plus tard (relecture du 05/10/2026).
+        periode = du_au(comp.index.min(), comp.index.max())
         # Sans titre : il redisait celui de la page (30/09/2026).
         self.layout_inner.addWidget(SectionTitle(
-            "", f"{depuis} — {nombre_de_jours(jours)}",
+            "", f"{periode[:1].upper()}{periode[1:]} — {nombre_de_jours(jours)}",
         ))
 
         self.layout_inner.addWidget(SectionTitle("Coût sur la période"))

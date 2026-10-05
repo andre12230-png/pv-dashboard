@@ -110,8 +110,10 @@ class CategoriesView(BaseView):
 
         h.addWidget(KpiTile(
             self._titre_bilan(period), fmt_eur(bilan, signed=True),
-            f"{fmt_eur(credits, signed=True)} de vente et d'économies "
-            f"− {fmt_eur(cout)} d'achat au réseau",
+            # Sans vente, pas de « vente » dans la phrase (05/10/2026).
+            f"{fmt_eur(credits, signed=True)} "
+            + ("de vente et d'économies" if self.data.vend else "d'économies")
+            + f" − {fmt_eur(cout)} d'achat au réseau",
             # Vert ou rouge selon le signe, les memes encres que les autres
             # bilans de l'appli (choix de l'auteur, 05/10/2026).
             value_color=(self.theme["credit"] if bilan >= 0
@@ -372,9 +374,14 @@ class CategoriesView(BaseView):
             val_n1 = agg_n1.get(cle, 0.0)
             txt, couleur = variation(val_n - val_n1, val_n1, fmt, sens,
                                      self.theme)
+            # Un bilan suit son signe, ici aussi (relecture du 05/10/2026).
+            est_bilan = cle == "bilan_jour_eur" and round(val_n, 2) != 0
             carte = KpiCard(label, fmt(val_n),
                             f"{txt}\nL'an passé : {fmt(val_n1)}",
-                            variant=self._variant(cle, val_n))
+                            variant=self._variant(cle, val_n),
+                            value_color=(self.theme["credit" if val_n > 0
+                                                    else "debit"]
+                                         if est_bilan else None))
             carte.sub.setStyleSheet(
                 f"color: {couleur}; font-size: 11px; font-weight: 600; "
                 f"background: transparent;")
@@ -386,7 +393,8 @@ class CategoriesView(BaseView):
     def _variant(self, cle: str, valeur: float) -> str:
         """Couleur du liseré gauche : la meme que dans le diagramme de flux."""
         if cle == "bilan_jour_eur":
-            return "solaire" if valeur >= 0 else "reseau"
+            # Le trait d'un bilan, vert ou rouge comme ailleurs (05/10/2026).
+            return "credit" if valeur >= 0 else "debit"
         return {"production_kwh": "prod",
                 "consommation_kwh": "total",
                 "autoconsommation_kwh": "solaire"}.get(cle, "neutral")
