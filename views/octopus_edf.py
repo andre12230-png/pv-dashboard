@@ -121,7 +121,7 @@ class OctopusEdfView(BaseView):
 
         self.layout_inner.addWidget(self._chart_mensuel(comp, mien, autre))
         self.layout_inner.addWidget(
-            self._carte_hypotheses(ref, mon_offre, autre_offre))
+            self._carte_hypotheses(ref, mon_offre, autre_offre, comp))
         self.layout_inner.addStretch(1)
 
     def _chart_mensuel(self, comp: pd.DataFrame, mien: str,
@@ -202,8 +202,29 @@ class OctopusEdfView(BaseView):
         canvas.fig.tight_layout()
         return canvas
 
+    @staticmethod
+    def _phrase_detail(comp: pd.DataFrame, mon_offre: str) -> str:
+        """Sur quoi repose le cout du contrat : le detail HC / HP releve, ou
+        une repartition estimee. La page disait « relevés HP/HC réels » meme
+        sans aucun detail (audit du 04/10/2026)."""
+        sout = comp["soutirage_kwh"].fillna(0.0)
+        hc = comp.get("soutirage_hc_kwh", sout * 0).fillna(0.0)
+        hp = comp.get("soutirage_hp_kwh", sout * 0).fillna(0.0)
+        utiles = sout > 0
+        part = (float(((hc + hp) >= 0.9 * sout)[utiles].mean())
+                if utiles.any() else 1.0)
+        if part >= 0.99:
+            return f"Le coût {mon_offre} est calculé sur vos relevés HP/HC réels."
+        if part == 0:
+            return (f"Le coût {mon_offre} est calculé avec une répartition "
+                    "heures creuses / pleines estimée : vos relevés n'ont "
+                    "pas ce détail.")
+        return (f"Le coût {mon_offre} est calculé sur vos relevés HP/HC réels "
+                f"quand ils existent ({part * 100:.0f} % des jours), sinon "
+                "avec une répartition estimée.")
+
     def _carte_hypotheses(self, ref: list[dict], mon_offre: str,
-                          autre_offre: str) -> QFrame:
+                          autre_offre: str, comp: pd.DataFrame) -> QFrame:
         # Titre dans le bandeau de la carte, comme les autres (29/09/2026 ;
         # c'etait un texte gras dans le corps).
         card = Card(titre="Hypothèses du calcul")
@@ -218,10 +239,20 @@ class OctopusEdfView(BaseView):
             f"HP {fmt_prix_kwh(p['prix_hp'])} et HC {fmt_prix_kwh(p['prix_hc'])}."
             for p in ref
         )
+        # Des releves anterieurs a la premiere grille declaree recoivent
+        # cette premiere grille : le dire, plutot que « en vigueur à chaque
+        # date » (audit du 04/10/2026).
+        avant = ""
+        if ref and not comp.empty:
+            premiere = pd.Timestamp(ref[0]["debut"])
+            if comp.index.min() < premiere:
+                avant = (f" Avant le {fmt_date_fr(ref[0]['debut'])}, date de "
+                         "la première grille déclarée, c'est cette première "
+                         "grille qui est appliquée.")
         txt = QLabel(
-            f"Le coût {mon_offre} est calculé sur vos relevés HP/HC réels. Les "
+            f"{self._phrase_detail(comp, mon_offre)} Les "
             f"coûts de comparaison sont estimés à partir de la grille "
-            f"{autre_offre} en vigueur à chaque date. {grilles} "
+            f"{autre_offre} en vigueur à chaque date. {grilles}{avant} "
             "Attention : le scénario heures pleines / creuses reprend votre "
             "répartition HC/HP actuelle, or les plages d'heures creuses de "
             f"{autre_offre} diffèrent de celles de {mon_offre} : ce scénario "

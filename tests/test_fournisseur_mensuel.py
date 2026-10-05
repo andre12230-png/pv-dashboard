@@ -83,3 +83,32 @@ def test_les_mois_incomplets_sont_hachures(qapp):
     assert hachures == [True, False, False, True]
     textes = " ".join(lbl.text() for lbl in carte.findChildren(QLabel))
     assert "incomplets" in textes
+
+
+def _hypotheses(comp, debut_grille="2026-01-01"):
+    from PySide6.QtWidgets import QLabel
+
+    from views.octopus_edf import OctopusEdfView
+    vue = OctopusEdfView.__new__(OctopusEdfView)
+    vue.theme = LIGHT
+    ref = [{"debut": debut_grille, "fin": None, "abonnement": 20.0,
+            "prix_base": 0.2, "prix_hp": 0.22, "prix_hc": 0.16}]
+    carte = vue._carte_hypotheses(ref, "Mon offre", "EDF Tarif Bleu", comp)
+    return " ".join(lbl.text() for lbl in carte.findChildren(QLabel))
+
+
+def test_les_hypotheses_ne_disent_reels_que_s_ils_le_sont(qapp):
+    """Audit du 04/10/2026 : « calculé sur vos relevés HP/HC réels » meme
+    sans aucun detail HC / HP, et « grille en vigueur à chaque date » pour
+    des releves anterieurs a la seule grille du modele."""
+    jours = pd.date_range("2025-06-01", "2026-03-31", freq="D")
+    sans_detail = pd.DataFrame({"soutirage_kwh": 10.0, "soutirage_hc_kwh": 0.0,
+                                "soutirage_hp_kwh": 0.0}, index=jours)
+    texte = _hypotheses(sans_detail)
+    assert "relevés HP/HC réels" not in texte
+    assert "estimée" in texte
+    assert "Avant le 01/01/2026" in texte
+    avec = sans_detail.assign(soutirage_hc_kwh=4.0, soutirage_hp_kwh=6.0)
+    texte = _hypotheses(avec, debut_grille="2025-01-01")
+    assert "relevés HP/HC réels" in texte
+    assert "Avant le" not in texte
