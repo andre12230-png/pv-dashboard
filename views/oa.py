@@ -69,7 +69,10 @@ class OAView(BaseView):
                 "prime": prime,
                 "prime_a_venir": eligible and not versee,
                 "eco": g["economie_eur"].sum(),
-                "bilan": g["bilan_jour_eur"].sum() + prime,
+                # Sans la prime, qui a sa colonne : le meme « Bilan
+                # électricité » que le Tableau de bord sur la meme annee
+                # (choix de l'auteur, 05/10/2026).
+                "bilan": g["bilan_jour_eur"].sum(),
             })
 
         # Sans titre : il redisait celui de la page (30/09/2026).
@@ -116,8 +119,8 @@ class OAView(BaseView):
         tv = table_card.corps
         tv.setContentsMargins(0, 0, 0, 0)
         cols = ["Année OA", "Période", "Production\n(kWh)",
-                "Autoconsommation\n(kWh)", "Injection\n(kWh)", "Revenu\n(€)",
-                "Prime\n(€)", "Économies\n(€)", "Bilan\n(€)"]
+                "Autoconsommation\n(kWh)", "Injection\n(kWh)", "Vente\n(€)",
+                "Prime\n(€)", "Économies\n(€)", "Bilan\nélectricité (€)"]
         # L'annee la plus recente en haut, comme la page TVA (27/09/2026) :
         # c'est elle qu'on vient voir. La periode d'avant-contrat, la plus
         # ancienne, ferme donc le tableau (elle reste hors du graphique, qui
@@ -199,8 +202,7 @@ class OAView(BaseView):
             legendes.append(
                 "Une prime « à venir » n'est pas encore encaissée : "
                 f"{self.data.acheteur} la facture après la fin de l'année OA "
-                "concernée. Elle n'entre "
-                "donc pas dans le bilan de la ligne."
+                "concernée."
             )
         if legendes:
             note = QLabel("\n".join(legendes))

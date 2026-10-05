@@ -45,7 +45,7 @@ METRIQUES_COMPARAISON = [
     ("production_kwh",       "Production",       "kwh", +1),
     ("consommation_kwh",     "Consommation",     "kwh", -1),
     ("autoconsommation_kwh", "Autoconsommation", "kwh", +1),
-    ("bilan_jour_eur",       "Bilan",            "eur", +1),
+    ("bilan_jour_eur",       "Bilan électricité", "eur", +1),
 ]
 
 
@@ -108,21 +108,24 @@ class CategoriesView(BaseView):
 
         h.addWidget(KpiTile(
             self._titre_bilan(period), fmt_eur(bilan, signed=True),
-            f"{fmt_eur(credits, signed=True)} de crédits "
-            f"− {fmt_eur(cout)} d'achat",
-            # Encre, pas couleur vive : c'est du texte (30/09/2026).
-            value_color=COULEUR_FAVORABLE if bilan >= 0 else COULEUR_DEFAVORABLE,
+            f"{fmt_eur(credits, signed=True)} de vente et d'économies "
+            f"− {fmt_eur(cout)} d'achat au réseau",
+            # Vert ou rouge selon le signe, les memes encres que les autres
+            # bilans de l'appli (choix de l'auteur, 05/10/2026).
+            value_color=(self.theme["credit"] if bilan >= 0
+                         else self.theme["debit"]),
             track_color=self.theme["border"],
             variant="credit" if bilan >= 0 else "debit"))
         return h
 
     def _titre_bilan(self, period: str) -> str:
-        """'Bilan du mois' n'a de sens que sur un mois ; on adapte."""
+        """« Bilan électricité », avec sa periode : le meme nom que sur les
+        autres pages (choix de l'auteur, 05/10/2026)."""
         if period and period.startswith("month-"):
-            return "Bilan du mois"
+            return "Bilan électricité du mois"
         if period and (period.startswith("year-") or period.startswith("oa-")):
-            return "Bilan de l'année"
-        return "Bilan total"
+            return "Bilan électricité de l'année"
+        return "Bilan électricité, toute la période"
 
     def _paire_kwh(self, part: float, total: float, suffixe: str) -> str:
         """'126,7 des 241,1 kWh produits' — meme unite pour les deux nombres.

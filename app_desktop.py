@@ -1100,7 +1100,8 @@ class MainWindow(QMainWindow):
             "transactions": ("Relevés journaliers",
                              "Production, injection et achat au réseau, jour par jour"),
             "categories":   ("Répartition énergie", "D'où vient et où va chaque kWh"),
-            "accounts":     ("Synthèse financière", "Revenus, économies et dépenses électricité"),
+            "accounts":     ("Synthèse financière",
+                             "Vente, économies, achat au réseau et remboursement"),
             "oa":           ("Années OA",
                              "Suivi du contrat EDF Obligation d'Achat"
                              if self.data.acheteur == "EDF OA"

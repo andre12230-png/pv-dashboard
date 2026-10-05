@@ -91,16 +91,16 @@ les totaux de la période en bas du tableau.</p>
 <p><b>Répartition énergie</b> — diagramme de flux montrant d'où vient et où va
 chaque kWh, avec le détail poste par poste et la comparaison avec l'an
 dernier.</p>
-<p><b>Synthèse financière</b> — ventes, primes, économies et facture réseau
+<p><b>Synthèse financière</b> — vente, primes, économies et achat au réseau
 depuis le début, et le graphique du remboursement de l'installation : ce
 qu'elle vous a rapporté face à ce qu'elle a coûté, avec l'année où elle sera
 remboursée au rythme actuel. La courbe fait une marche, marquée d'un point,
 à chaque versement de la prime à l'autoconsommation : {acheteur} la paie d'un
 coup, à la date anniversaire du contrat. L'année du remboursement n'en dépend
 pas, la prime étant déduite une fois pour toutes du coût à rembourser. Le
-bilan net compte les ventes, les économies et les primes, moins le coût de
-l'installation ; la facture d'électricité n'y entre pas, puisque vous la
-paieriez même sans panneaux.</p>
+<b>bilan de l'installation</b> compte la vente, les économies et les primes,
+moins le coût de l'installation ; l'achat au réseau n'y entre pas, puisque
+vous le paieriez même sans panneaux.</p>
 <p><b>Années OA</b> — récapitulatif par cycle de contrat {cycle_notice}.</p>
 <p><b>TVA autoconsommation</b> — pour qui est assujetti à la TVA : la base à
 déclarer sur l'électricité autoconsommée, année civile par année civile. Sans
@@ -427,16 +427,20 @@ et soutirée.</p>
 installée (kWh/kWc/an). Référence en France : 900 à 1200.</p>
 <p><b>Économie d'autoconsommation</b> — argent économisé en consommant sa
 propre production au lieu de l'acheter au réseau.</p>
-<p><b>Bilan net</b> — recettes + économies − dépenses réseau (électricité
-consommée + abonnement). Autrement dit : <b>ce que l'électricité vous coûte
-encore</b>, une fois compté tout ce que le solaire vous rapporte ou vous
-évite. Il passe au vert le jour où elle ne vous coûte plus rien.<br>
+<p><b>Bilan électricité</b> — vente + économies − achat au réseau (électricité
+consommée + abonnement). C'est le même partout : tableau de bord, Répartition,
+Comparer, Relevés et Années OA (la prime y garde sa colonne). Autrement
+dit : <b>ce que l'électricité vous coûte encore</b>, une fois compté tout
+ce que le solaire vous rapporte ou vous évite. Il passe au vert le jour où
+elle ne vous coûte plus rien.<br>
 Attention à ne pas le confondre avec ce qui sort réellement de votre poche :
 les économies ne sont pas encaissées. L'argent déboursé sur la période, c'est
 l'achat au réseau moins la vente à {acheteur}. Les infobulles des quatre cartes du
 tableau de bord donnent le détail, vos chiffres à l'appui.</p>
 <p><b>Abonnement</b> — part fixe de la facture d'électricité, payée chaque
-mois quelle que soit la consommation. Comptée dans les dépenses réseau.</p>
+mois quelle que soit la consommation. Comptée dans l'achat au réseau.</p>
+<p><b>Bilan de l'installation</b> — vente + économies + primes − coût de
+l'installation (Synthèse financière) : où en est le remboursement.</p>
 <p><b>Amortissement</b> — moment où les gains cumulés égalent le coût de
 l'installation ({invest}).</p>
 <p><b>Temps de retour</b> — durée estimée pour rembourser l'investissement

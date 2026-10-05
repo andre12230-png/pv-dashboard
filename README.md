@@ -203,11 +203,11 @@ version.
 |---|---|
 | Tableau de bord | Fraicheur des donnees ; tuiles « Autoproduction » (jauge) et « Production » (periode avec badge d'evolution sur l'an passe (memes dates) et mini-courbe) ; carte « Circulation de l'energie » : barres « ou va votre soleil » / « d'ou vient votre electricite » (part du vehicule en legende) ; bilan financier avec icones ; carte « Remboursement de l'installation » (meme calcul que la Synthese) ; production jour par jour (semaine par semaine sur un an, mois par mois au-dela) avec le meilleur jour en valeur |
 | Saisie quotidienne | Tableau editable pour ajouter / corriger les releves du jour |
-| Releves journaliers | Journal jour par jour : production, autoconsommee, injectee, achetee au reseau (et part du vehicule), recettes, depenses, bilan du jour ; ligne de totaux de la periode sous le tableau (a part, pour que le tri ne la deplace pas) |
+| Releves journaliers | Journal jour par jour : production, autoconsommee, injectee, achetee au reseau (et part du vehicule), vente + economies, achat au reseau, bilan electricite ; ligne de totaux de la periode sous le tableau (a part, pour que le tri ne la deplace pas) |
 | Repartition energie | Taux d'autoconsommation, couverture solaire et bilan ; diagramme de flux (Sankey) production/reseau -> injection/consommation ; detail par poste avec prix au kWh ; comparaison avec l'annee precedente |
-| Synthese financiere | Jusqu'a 6 postes selon le contrat (Vente, Prime, Economies, Facture, Investissement, Bilan global) + graphique « Remboursement de l'installation » (ce qu'elle a rapporte face a son cout, projection au rythme actuel ; chaque versement de la prime, qui fait une marche dans la courbe, est marque d'un point et le dernier porte l'etiquette « Prime a l'autoconsommation » et son montant).
+| Synthese financiere | Jusqu'a 6 postes selon le contrat (Vente, Prime, Economies, Achat au reseau, Investissement, Bilan de l'installation) + graphique « Remboursement de l'installation » (ce qu'elle a rapporte face a son cout, projection au rythme actuel ; chaque versement de la prime, qui fait une marche dans la courbe, est marque d'un point et le dernier porte l'etiquette « Prime a l'autoconsommation » et son montant).
 Avant un an de releves, ni rythme annuel ni temps de retour : quelques mois
-d'ete ou d'hiver, prolonges sur un an, les fausseraient de plusieurs annees). Le **bilan global** = ventes + economies + primes versees − cout de l'installation : la facture reseau n'y entre pas (on la paierait sans panneaux ; ce que les panneaux y changent est deja dans les economies). Meme calcul que la carte « Remboursement de l'installation » du tableau de bord (`amortissement()`) |
+d'ete ou d'hiver, prolonges sur un an, les fausseraient de plusieurs annees). Le **bilan de l'installation** = vente + economies + primes versees − cout de l'installation : l'achat au reseau n'y entre pas (on la paierait sans panneaux ; ce que les panneaux y changent est deja dans les economies). Meme calcul que la carte « Remboursement de l'installation » du tableau de bord (`amortissement()`) |
 | Annees OA | Recap par annee de contrat OA (de sa date de debut a la veille de son anniversaire). **Masquee sans revente** (`oa.type: aucune`) |
 | TVA autoconsommation | Base de la livraison a soi-meme par annee civile (ligne 5A du 3517-S), TVA due, et recoupement des injections relevees avec les factures EDF OA. **N'apparait que si la section `tva_lasm` est remplie** : elle ne concerne que les producteurs assujettis a la TVA |
 | Statistiques | Comparaisons annuelles, rendement kWh/kWc |
@@ -649,9 +649,11 @@ code les fait bouger un jour, le test tombe. Faites de meme avec les votres.
   fichier, elle est **estimee d'apres les plages HC** : la part d'une journee
   de soleil type qui tombe dedans (0 si elles sont toutes la nuit) ; « Mes
   reglages » montre l'estimation a cote de la case
-- **Bilan net** (tableau de bord, pastille) = Vente OA + Economies − Facture
-  reseau. La prime, versee une fois par an a l'anniversaire OA, est comptee
-  a part dans la Synthese financiere et les Annees OA
+- **Bilan electricite** (tableau de bord, Repartition, Comparer, Releves,
+  Annees OA) = Vente + Economies − Achat au reseau, le meme partout. La
+  prime est comptee a part : sa colonne dans les Annees OA, et le **bilan de
+  l'installation** de la Synthese financiere. Un bilan s'ecrit en vert s'il
+  est positif, en rouge s'il est negatif
 - **Prime a l'autoconsommation** : comptee seulement quand l'annee OA
   concernee est **terminee** (EDF OA facture a la date anniversaire, donc
   apres coup). L'annee en cours est affichee « a venir » dans les Annees OA

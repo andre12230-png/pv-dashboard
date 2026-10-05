@@ -81,11 +81,12 @@ class AccountsView(BaseView):
 
         # Vente et prime n'apparaissent que si le contrat les prevoit.
         vente = [AccountCard(
-            f"Vente {self.data.acheteur}",
-            "Recettes — " + ("surplus injecté" if oa.type == "surplus"
-                             else "production vendue"),
+            "Vente",
+            f"À {self.data.acheteur} — " + ("surplus injecté"
+                                            if oa.type == "surplus"
+                                            else "production vendue"),
             fmt_eur(revenu_cum, signed=True),
-            part(revenu_p, "Aucune recette"),
+            part(revenu_p, "Aucune vente"),
             self.theme["credit"], "💶", "credit")] if self.data.vend else []
         prime = [AccountCard("Prime à l'autoconsommation",
                         f"Versée sur {oa.prime_duree} "
@@ -101,15 +102,15 @@ class AccountsView(BaseView):
                         fmt_eur(eco_cum, signed=True),
                         part(eco_p, "Aucune économie"),
                         self.theme["credit"], "🐷", "credit"),
-            AccountCard("Facture réseau", "Dépenses — électricité + abonnement",
+            AccountCard("Achat au réseau", "Électricité + abonnement",
                         fmt_eur(-cout_cum, signed=True),
-                        part(-cout_p, "Aucune dépense"),
+                        part(-cout_p, "Aucun achat"),
                         self.theme["debit"], "🔌", "debit"),
             AccountCard("Investissement", f"Achat de l'installation — {date_mes}",
                         fmt_eur(-invest, signed=True),
                         "Amorti progressivement",
                         self.theme["debit"], "🏡", "debit"),
-            AccountCard("Bilan net global",
+            AccountCard("Bilan de l'installation",
                         self._recettes().capitalize() + " − installation",
                         fmt_eur(bilan_global, signed=True),
                         "Amortissement atteint" if bilan_global >= 0 else "Amortissement en cours",

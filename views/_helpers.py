@@ -545,10 +545,10 @@ METRIQUES = [
     # Libelles en clair (30/09/2026 : « Soutirage réseau », « Économies
     # autoconso ») ; « Consommation du réseau » comme la ligne de fraicheur.
     ("soutirage_kwh",        "Achat au réseau",     "kwh", -1),
-    ("revenu_vente_eur",     "Revenus vente OA",    "eur", +1),
+    ("revenu_vente_eur",     "Vente",               "eur", +1),
     ("economie_eur",         "Économies",           "eur", +1),
-    ("cout_reseau_eur",      "Dépenses réseau",     "eur", -1),
-    ("bilan_jour_eur",       "Bilan net",           "eur", +1),
+    ("cout_reseau_eur",      "Achat au réseau",     "eur", -1),
+    ("bilan_jour_eur",       "Bilan électricité",   "eur", +1),
 ]
 METRIQUES_ENERGIE = {"production_kwh", "autoconsommation_kwh",
                      "injection_kwh", "soutirage_kwh"}

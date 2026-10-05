@@ -85,7 +85,7 @@ def test_annees_oa_revenu_egal_injection_fois_prix(win):
                for j in range(table.columnCount())]
     ligne = 0                                      # une seule annee OA
     inj = table.item(ligne, entetes.index("Injection\n(kWh)")).text()
-    revenu = table.item(ligne, entetes.index("Revenu\n(€)")).text()
+    revenu = table.item(ligne, entetes.index("Vente\n(€)")).text()
     assert inj == "33,0"
     assert revenu == f"{INJECTION * 0.10:.2f}".replace(".", ",")    # 3,30
 

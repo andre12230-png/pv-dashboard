@@ -79,7 +79,8 @@ class TransactionsView(BaseView):
         ]
         if avec_ve:
             colonnes.append("dont véhicule\n(kWh)")
-        colonnes += ["Recettes\n(€)", "Dépenses\n(€)", "Bilan du jour\n(€)"]
+        colonnes += ["Vente +\néconomies (€)", "Achat au\nréseau (€)",
+                     "Bilan\nélectricité (€)"]
 
         table = QTableWidget(len(df), len(colonnes))
         table.setHorizontalHeaderLabels(colonnes)

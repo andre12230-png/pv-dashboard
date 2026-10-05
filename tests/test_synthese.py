@@ -61,9 +61,9 @@ def test_le_bilan_ne_soustrait_plus_la_facture_reseau(qapp, donnees):
     assert fmt_eur(ancien, signed=True) not in textes
 
 
-def test_la_facture_reseau_reste_affichee(qapp, donnees):
+def test_l_achat_au_reseau_reste_affiche(qapp, donnees):
     textes = _textes_de_la_synthese(donnees)
-    assert "FACTURE RÉSEAU" in textes   # titre en petites capitales
+    assert "ACHAT AU RÉSEAU" in textes   # titre en petites capitales
     assert fmt_eur(-donnees.df["cout_reseau_eur"].sum(), signed=True) in textes
 
 
@@ -127,7 +127,7 @@ def test_le_bilan_net_ne_s_affiche_qu_une_fois(qapp, donnees):
     vue.refresh("all")
     textes = [lbl.text() for lbl in vue.findChildren(QLabel)]
     assert textes.count(montant) == 1
-    assert any("BILAN NET GLOBAL" in t for t in textes)
+    assert any("BILAN DE L'INSTALLATION" in t for t in textes)
     assert not any("BILAN NET ACTUEL" in t.upper() for t in textes)
 
 

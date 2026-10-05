@@ -116,10 +116,14 @@ class KpiCard(QFrame):
 
     `aide` : texte d'infobulle, pour ce qu'un sous-titre de trois mots ne peut
     pas dire. Une carte sans infobulle se comporte comme avant.
+
+    `value_color` : couleur du chiffre (un bilan vert ou rouge selon son
+    signe) ; sans elle, le chiffre reste a l'encre.
     """
 
     def __init__(self, label: str, value: str, sub: str = "", variant: str = "neutral",
-                 parent: QWidget | None = None, aide: str = ""):
+                 parent: QWidget | None = None, aide: str = "",
+                 value_color: str | None = None):
         super().__init__(parent)
         self.setObjectName("KpiCard")
         if aide:
@@ -136,6 +140,8 @@ class KpiCard(QFrame):
         self.label.setObjectName("KpiLabel")
         self.value = QLabel(value)
         self.value.setObjectName("KpiValue")
+        if value_color:
+            self.value.setStyleSheet(f"color: {value_color};")
         self.sub = QLabel(sub)
         self.sub.setObjectName("KpiSub")
         self.sub.setVisible(bool(sub))

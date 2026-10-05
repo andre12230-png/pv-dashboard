@@ -150,10 +150,14 @@ class DashboardView(BaseView):
                          "l'abonnement.\n\nC'est le montant à comparer à vos "
                          "factures, à condition qu'elles couvrent la même "
                          "période que celle affichée en haut."),
-            KpiCard("⚖️ Bilan net", fmt_eur(bilan, signed=True),
+            KpiCard("⚖️ Bilan électricité", fmt_eur(bilan, signed=True),
                     ("ce que l'électricité vous coûte encore" if bilan < 0
                      else "ce que le solaire vous rapporte, net"),
                     "credit" if bilan >= 0 else "debit",
+                    # Vert ou rouge selon le signe, comme les autres bilans
+                    # (choix de l'auteur, 05/10/2026).
+                    value_color=(self.theme["credit"] if bilan >= 0
+                                 else self.theme["debit"]),
                     aide=(
                         f"{fmt_eur(revenu)} de vente + {fmt_eur(eco)} "
                         f"d'économies − {fmt_eur(cout)} d'achat au réseau "
