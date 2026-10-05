@@ -439,6 +439,33 @@ def period_options(df: pd.DataFrame, start_oa) -> list[tuple[str, str]]:
 MOIS_TOUS = "*"       # entree « Toute l'annee » du menu des mois
 
 
+# Le nom de l'annee de contrat. « Année OA » chez EDF OA ; « Année de
+# contrat » chez un autre acheteur, a qui « OA » ne dit rien (audit du
+# 04/10/2026). Reglage du module, pose une fois par MainWindow, comme la
+# date de bascule HP/HC de calculations.
+_MOTS_EDF_OA = {"pluriel": "Années OA", "singulier": "Année OA",
+                "minuscule": "année OA", "colonne": "Année OA",
+                "long": "Année OA #{n}", "court": "OA #{n}"}
+_MOTS_AUTRE = {"pluriel": "Années de contrat", "singulier": "Année de contrat",
+               "minuscule": "année de contrat", "colonne": "Année",
+               "long": "Année de contrat n° {n}", "court": "Année n° {n}"}
+_mots_annee = dict(_MOTS_EDF_OA)
+
+
+def definir_acheteur(acheteur: str | None) -> None:
+    """Pose le vocabulaire de l'annee de contrat selon l'acheteur."""
+    _mots_annee.clear()
+    _mots_annee.update(_MOTS_EDF_OA if not acheteur or acheteur == "EDF OA"
+                       else _MOTS_AUTRE)
+
+
+def mot_annee(forme: str, n: int | None = None) -> str:
+    """« Années OA », « année OA », « OA #3 »… ou leur equivalent chez un
+    autre acheteur. `forme` : pluriel, singulier, minuscule, colonne, long,
+    court (ces deux-la avec le numero n)."""
+    return _mots_annee[forme].format(n=n)
+
+
 def label_annee_oa(start_oa, n: int) -> str:
     """Ex: 'Année OA #3'.
 
@@ -446,7 +473,7 @@ def label_annee_oa(start_oa, n: int) -> str:
     a rester deux fois plus large pour un libelle qu'on lit rarement. Elles
     sont dans l'infobulle (voir bornes_annee_oa) et dans l'onglet OA.
     """
-    return f"Année OA #{n}"
+    return mot_annee("long", n)
 
 
 def bornes_annee_oa(start_oa, n: int) -> str:
@@ -649,7 +676,7 @@ def libelle_periode(period: str) -> str:
     if period.startswith("month-"):
         return label_mois_fr(pd.Period(period.split("-", 1)[1], freq="M"))
     if period.startswith("oa-"):
-        return f"Année OA #{period.split('-')[1]}"
+        return mot_annee("long", int(period.split("-")[1]))
     return period
 
 def _pluriel(n: int, mot: str) -> str:

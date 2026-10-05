@@ -33,6 +33,7 @@ from views._helpers import (
     fmt_eur,
     fmt_kwh_seul,
     libelle_periode,
+    mot_annee,
     periode_precedente,
     variation,
 )
@@ -279,7 +280,8 @@ class ComparaisonView(BaseView):
         if period.startswith("month-"):
             titre, titre_chart = "Mois", "Énergie du mois"
         elif period.startswith("oa-"):
-            titre, titre_chart = "Année OA", "Énergie de l'année OA"
+            titre = mot_annee("singulier")
+            titre_chart = f"Énergie de l'{mot_annee('minuscule')}"
         else:
             titre, titre_chart = "Année civile", "Énergie de l'année"
 

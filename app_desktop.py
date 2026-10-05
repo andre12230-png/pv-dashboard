@@ -77,6 +77,7 @@ from views import (
     period_options,
     periode_voisine,
 )
+from views._helpers import definir_acheteur, mot_annee
 
 # ----------------------------------------------------------------------
 # Resolution des chemins
@@ -630,6 +631,9 @@ NAV_ITEMS = [
 
 class MainWindow(QMainWindow):
     def __init__(self, data: AppData, settings: QSettings | None = None):
+        # « Années OA » ou « Années de contrat », selon l'acheteur : a poser
+        # avant de construire le menu et les pages.
+        definir_acheteur(data.acheteur)
         super().__init__()
         self.data = data
         # Preferences persistantes (registre Windows). Injectable pour que
@@ -832,6 +836,8 @@ class MainWindow(QMainWindow):
                 continue
             if key == "octopus_edf":
                 label = self.data.libelle_comparaison
+            if key == "oa":
+                label = mot_annee("pluriel")
             if section_courante != section_affichee:
                 # Comme dans Pecule, « MES DONNÉES » precede « RÉGLAGES ».
                 if section_courante == "RÉGLAGES":
@@ -1102,7 +1108,7 @@ class MainWindow(QMainWindow):
             "categories":   ("Répartition énergie", "D'où vient et où va chaque kWh"),
             "accounts":     ("Synthèse financière",
                              "Vente, économies, achat au réseau et remboursement"),
-            "oa":           ("Années OA",
+            "oa":           (mot_annee("pluriel"),
                              "Suivi du contrat EDF Obligation d'Achat"
                              if self.data.acheteur == "EDF OA"
                              else f"Suivi de votre contrat avec "
@@ -1112,7 +1118,7 @@ class MainWindow(QMainWindow):
                              "déclaration CA12 / 3517-S"),
             "stats":        ("Statistiques", "Comparaisons annuelles et rendement"),
             "comparaison":  ("Comparer à l'an passé",
-                             "Le mois, l'année ou l'année OA choisis en haut, "
+                             f"Le mois, l'année ou l'{mot_annee('minuscule')} choisis en haut, "
                              "face à la même période un an plus tôt"),
             # Le nom du menu, pour arriver la ou l'on a clique ; les noms
             # complets des deux offres en sous-titre (30/09/2026).

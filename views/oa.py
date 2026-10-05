@@ -18,7 +18,13 @@ from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
 from gui_widgets import Card, MplCanvas, SectionTitle
 from views._base import BaseView
-from views._helpers import chiffres_sur_barres, du_au, hauteur_exacte, poser_texte_court
+from views._helpers import (
+    chiffres_sur_barres,
+    du_au,
+    hauteur_exacte,
+    mot_annee,
+    poser_texte_court,
+)
 from views.transactions import texte_bilan
 
 
@@ -99,7 +105,8 @@ class OAView(BaseView):
 
         # Bar chart
         # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
-        chart_card = Card(titre="Production, autoconsommation et injection par année OA")
+        chart_card = Card(titre="Production, autoconsommation et injection "
+                                f"par {mot_annee('minuscule')}")
         cv = chart_card.corps
         cv.setContentsMargins(16, 10, 16, 14)
         canvas = MplCanvas(width=8, height=3.2, dpi=100)
@@ -114,7 +121,8 @@ class OAView(BaseView):
         b3 = ax.bar(xs + w, [r["inj"] for r in rows], w,
                     label="Injection", color=CC["injection"])
         ax.set_xticks(xs)
-        ax.set_xticklabels([f"OA #{r['n']}{r['mention']}" for r in rows])
+        ax.set_xticklabels([mot_annee("court", r["n"]) + r["mention"]
+                            for r in rows])
         for serie in (b1, b2, b3):
             for barre, r in zip(serie, rows, strict=True):
                 if r["en_cours"]:
@@ -132,10 +140,10 @@ class OAView(BaseView):
 
         # Tableau
         # Titre dans le bandeau, comme les autres cartes (30/09/2026).
-        table_card = Card(titre="Détail par année OA")
+        table_card = Card(titre=f"Détail par {mot_annee('minuscule')}")
         tv = table_card.corps
         tv.setContentsMargins(0, 0, 0, 0)
-        cols = ["Année OA", "Période", "Production\n(kWh)",
+        cols = [mot_annee("colonne"), "Période", "Production\n(kWh)",
                 "Autoconsommation\n(kWh)", "Injection\n(kWh)", "Vente\n(€)",
                 "Prime\n(€)", "Économies\n(€)", "Bilan\nélectricité (€)"]
         # L'annee la plus recente en haut, comme la page TVA (27/09/2026) :
@@ -217,7 +225,7 @@ class OAView(BaseView):
         if any(r.get("prime_a_venir") for r in rows):
             legendes.append(
                 "Une prime « à venir » n'est pas encore encaissée : "
-                f"{self.data.acheteur} la facture après la fin de l'année OA "
+                f"{self.data.acheteur} la facture après la fin de l'{mot_annee('minuscule')} "
                 "concernée."
             )
         if legendes:

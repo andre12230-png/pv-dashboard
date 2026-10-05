@@ -19,6 +19,7 @@ from views._helpers import (
     fmt_date_fr,
     fmt_eur,
     libelle_periode,
+    mot_annee,
     phrase_apres_contrat,
     poser_texte_court,
 )
@@ -193,7 +194,7 @@ class AccountsView(BaseView):
         if period.startswith("year-"):
             return "en " + period.split("-")[1]
         if period.startswith("oa-"):
-            return "sur l'année OA #" + period.split("-")[1]
+            return "sur l'" + mot_annee("long", int(period.split("-")[1])).lower()
         return ""
 
     def _recettes(self) -> str:

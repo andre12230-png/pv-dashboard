@@ -18,7 +18,7 @@ from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout
 import calculations as calc
 from gui_widgets import Card
 from views._base import BaseView
-from views._helpers import fmt_date_fr, fmt_kwc, poser_texte_court
+from views._helpers import fmt_date_fr, fmt_kwc, mot_annee, poser_texte_court
 
 # Rubrique affichee seulement si un fichier de recharges du vehicule
 # est lu : les autres utilisateurs n'ont rien a en faire.
@@ -101,7 +101,7 @@ pas, la prime étant déduite une fois pour toutes du coût à rembourser. Le
 <b>bilan de l'installation</b> compte la vente, les économies et les primes,
 moins le coût de l'installation ; l'achat au réseau n'y entre pas, puisque
 vous le paieriez même sans panneaux.</p>
-<p><b>Années OA</b> — récapitulatif par cycle de contrat {cycle_notice}.</p>
+<p><b>{annees_oa}</b> — récapitulatif par cycle de contrat {cycle_notice}.</p>
 <p><b>TVA autoconsommation</b> — pour qui est assujetti à la TVA : la base à
 déclarer sur l'électricité autoconsommée, année civile par année civile. Sans
 intérêt pour les autres : cet onglet n'apparaît dans le menu que si la
@@ -109,7 +109,7 @@ section <code>tva_lasm</code> de <code>config.yaml</code> est remplie.</p>
 <p><b>Statistiques</b> — comparaison des années civiles et rendement.</p>
 <p><b>Comparer à l'an passé</b> — compare la période choisie en haut à droite
 à la même période un an plus tôt : un mois au même mois de l'année d'avant,
-une année à la précédente, une année OA à l'année OA précédente. Sur « Toute la
+une année à la précédente, une {annee_oa} à l'{annee_oa} précédente. Sur « Toute la
 période », rien à comparer : l'onglet invite à choisir un mois ou une année.
 Une période <b>en cours</b> est comparée aux <b>mêmes dates</b> de l'an passé :
 septembre relevé jusqu'au 9 face au 1<sup>er</sup>–9 septembre de l'année
@@ -140,11 +140,11 @@ date du dernier relevé quel que soit l'onglet affiché.</p>
 <h3 style="color:#1F3A6B">Choisir une période</h3>
 <p>La barre en haut à droite porte <b>‹ année mois ›</b> et filtre toutes les
 vues. Les deux flèches reculent ou avancent d'un cran : d'un mois quand un
-mois est affiché, d'une année quand c'est une année, d'une année OA quand
-c'est une année OA. Elles se grisent quand il n'y a plus rien de ce côté.</p>
+mois est affiché, d'une année quand c'est une année, d'une {annee_oa} quand
+c'est une {annee_oa}. Elles se grisent quand il n'y a plus rien de ce côté.</p>
 <p>Le menu des mois ne propose que les mois qui portent des relevés. Il se
-grise sur <b>Toute la période</b> et sur une <b>année OA</b>, qui sont à
-cheval sur les mois ; les dates exactes d'une année OA se lisent en survolant
+grise sur <b>Toute la période</b> et sur une <b>{annee_oa}</b>, qui sont à
+cheval sur les mois ; les dates exactes d'une {annee_oa} se lisent en survolant
 son entrée dans le menu des années.</p>
 <p>Le bouton <b>Ce mois-ci</b> ramène au mois en cours en un clic (ou au
 dernier mois relevé, tant que le mois en cours n'a rien) ; il est grisé quand
@@ -429,7 +429,7 @@ installée (kWh/kWc/an). Référence en France : 900 à 1200.</p>
 propre production au lieu de l'acheter au réseau.</p>
 <p><b>Bilan électricité</b> — vente + économies − achat au réseau (électricité
 consommée + abonnement). C'est le même partout : tableau de bord, Répartition,
-Comparer, Relevés et Années OA (la prime y garde sa colonne). Autrement
+Comparer, Relevés et {annees_oa} (la prime y garde sa colonne). Autrement
 dit : <b>ce que l'électricité vous coûte encore</b>, une fois compté tout
 ce que le solaire vous rapporte ou vous évite. Il passe au vert le jour où
 elle ne vous coûte plus rien.<br>
@@ -574,6 +574,9 @@ class AideView(BaseView):
             "puissance": fmt_kwc(self.data.puissance_kwc) or "puissance inconnue",
             "mise_en_service": fmt_date_fr(self.data.date_mise_en_service),
             "cycle_notice": cycle_notice,
+            # « Années OA » ou « Années de contrat » selon l'acheteur.
+            "annees_oa": mot_annee("pluriel"),
+            "annee_oa": mot_annee("minuscule"),
             # A qui l'electricite est vendue : la notice disait « EDF OA » a
             # tous, meme a qui vend a un autre acheteur (28/09/2026).
             "acheteur": getattr(self.data, "acheteur", None) or "EDF OA",

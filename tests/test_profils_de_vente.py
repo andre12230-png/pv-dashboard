@@ -132,3 +132,36 @@ def test_une_projection_au_dela_du_contrat_le_dit(fenetre):
     for cle in ("dashboard", "accounts"):
         textes = _textes(win, cle, "all")
         assert "après la fin du contrat, le 01/01/2025" in textes, cle
+
+
+@pytest.fixture
+def remet_le_nom_d_annee():
+    """Le nom de l'annee de contrat est un reglage du module : on le remet
+    a « OA » apres le test, pour ne pas deteindre sur les suivants."""
+    yield
+    from views._helpers import definir_acheteur
+    definir_acheteur("EDF OA")
+
+
+def test_un_autre_acheteur_n_a_plus_d_annees_oa(fenetre, remet_le_nom_d_annee):
+    """Audit du 04/10/2026 : avec un autre acheteur, le menu, les titres,
+    les barres et le selecteur gardaient « Années OA », « OA #1 »."""
+    from views._helpers import libelle_periode
+
+    def autre(cfg):
+        cfg["oa"]["acheteur"] = "Solaire Coop"
+    win = fenetre(autre)
+    boutons = " ".join(b.text() for b in win.nav_buttons.values())
+    assert "Années de contrat" in boutons and "Années OA" not in boutons
+    textes = _textes(win, "oa", "all")
+    assert "OA #" not in textes and "année OA" not in textes.lower()
+    assert libelle_periode("oa-2") == "Année de contrat n° 2"
+    entetes = [win.views["oa"].findChildren(QTableWidget)[-1]
+               .horizontalHeaderItem(0).text()]
+    assert entetes == ["Année"]
+
+
+def test_edf_oa_garde_ses_annees_oa(fenetre):
+    from views._helpers import libelle_periode
+    fenetre(lambda cfg: None)
+    assert libelle_periode("oa-2") == "Année OA #2"
