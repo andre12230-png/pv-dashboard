@@ -258,3 +258,28 @@ def test_une_semaine_reste_visible_sur_le_graphique(qapp, donnees):
     ax = vue.findChildren(MplCanvas)[0].fig.axes[0]
     gauche, droite = ax.get_xlim()
     assert droite - gauche < 100        # en jours
+
+
+# --- La vraie date de depart des cumuls (audit du 04/10/2026) -------------
+
+def test_le_cumul_part_du_premier_releve(qapp, donnees):
+    """La Synthese disait « Cumul depuis <debut du contrat> » alors que ses
+    sommes partent du premier releve (economies d'avant-contrat comprises,
+    et rien d'avant les releves pour un contrat ancien)."""
+    _quelques_jours(donnees, "2024-03-10", "2025-06-30")
+    textes = _textes_de_la_synthese(donnees)
+    assert "Cumul depuis le premier relevé, le 10/03/2024" in textes
+    assert "Cumul depuis 28/06/2022" not in textes
+
+
+def test_le_tableau_de_bord_dit_d_ou_part_le_remboursement(qapp, donnees):
+    """Releves commences longtemps apres la mise en service : la carte
+    disait « Depuis la mise en service » et comptait « 13 % remboursé »."""
+    from views.dashboard import DashboardView
+    _quelques_jours(donnees, "2024-03-10", "2025-06-30")
+    tableau = DashboardView.__new__(DashboardView)
+    tableau.data, tableau.theme = donnees, LIGHT
+    carte = tableau._carte_remboursement()
+    textes = " ".join(lbl.text() for lbl in carte.findChildren(QLabel))
+    assert "Depuis le premier relevé, le 10/03/2024" in textes
+    assert "avant n'est pas compté" in textes

@@ -525,9 +525,22 @@ class DashboardView(BaseView):
         # Titre dans le bandeau bleute, du meme nom que la carte de la
         # Synthese financiere (29/09/2026) ; le pourcentage a droite de la
         # jauge.
+        # La vraie date de depart : le premier releve. Quand il arrive
+        # longtemps apres la mise en service, ce qui a ete recupere avant
+        # n'est pas compte, et on le dit (audit du 04/10/2026).
+        premier = pd.Timestamp(self.data.df.index.min())
+        sous_titre = (f"Depuis le premier relevé, le {premier:%d/%m/%Y}, "
+                      "quelle que soit la période choisie.")
+        try:
+            mes = pd.Timestamp(
+                self.data.cfg["installation"]["date_mise_en_service"])
+        except (KeyError, TypeError, ValueError):
+            mes = None
+        if mes is not None and premier - mes > pd.Timedelta(days=31):
+            sous_titre += (f" Mise en service le {mes:%d/%m/%Y} : ce que "
+                           "l'installation a rapporté avant n'est pas compté.")
         card = Card(titre="Remboursement de l'installation",
-                    sous_titre="Depuis la mise en service, quelle que soit la "
-                               "période choisie.")
+                    sous_titre=sous_titre)
         v = card.corps
         v.setSpacing(8)
         ligne = QHBoxLayout()

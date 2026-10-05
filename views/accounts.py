@@ -57,12 +57,14 @@ class AccountsView(BaseView):
         # annoncait l'installation remboursee a 25 %.
         bilan_global = am["recupere"] - invest
 
+        # La vraie date de depart des sommes : le premier releve. Le titre
+        # disait la date du contrat, alors que les economies d'avant-contrat
+        # y sont, et que rien d'avant les releves n'y est (audit du
+        # 04/10/2026).
         self.layout_inner.addWidget(SectionTitle(
             "Postes financiers",
-            # Sans contrat de vente, le cumul part de la mise en service.
-            f"Cumul depuis {self.data.start_oa.strftime('%d/%m/%Y')}"
-            if self.data.start_oa else
-            f"Cumul depuis le {fmt_date_fr(cfg['installation']['date_mise_en_service'])}",
+            f"Cumul depuis le premier relevé, le "
+            f"{df_total.index.min():%d/%m/%Y}",
         ))
 
         date_mes = fmt_date_fr(cfg["installation"]["date_mise_en_service"])
