@@ -306,10 +306,16 @@ class DashboardView(BaseView):
         ecart = (prod - base) / base * 100
         signe = "+" if ecart >= 0 else "−"
         depuis = f" (depuis le {debut:%d/%m})" if debut is not None else ""
-        badge = QLabel(f"{signe}{abs(ecart):.0f} % par rapport à "
+        if round(ecart) == 0:
+            # « −0 % » n'a pas de sens (audit du 04/10/2026).
+            texte = "stable"
+            encre, fond = "text_muted", "primary_bg"
+        else:
+            texte = f"{signe}{abs(ecart):.0f} %"
+            encre, fond = (("credit", "credit_bg") if ecart >= 0
+                           else ("debit", "debit_bg"))
+        badge = QLabel(f"{texte} par rapport à "
                        f"{libelle_periode(precedente).lower()}{depuis}")
-        encre, fond = (("credit", "credit_bg") if ecart >= 0
-                       else ("debit", "debit_bg"))
         badge.setStyleSheet(
             f"color: {self.theme[encre]}; background: {self.theme[fond]}; "
             "font-size: 11px; font-weight: 600; padding: 3px 8px; "

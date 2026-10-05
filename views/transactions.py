@@ -218,8 +218,10 @@ class TransactionsView(BaseView):
                    nombre(df["soutirage_kwh"].sum(), 1)]
         if avec_ve:
             valeurs.append(nombre(df["recharge_ve_kwh"].sum(), 1))
-        valeurs += [nombre(credit, 2), nombre(debit, 2),
-                    f"{'+' if bilan >= 0 else '-'}{nombre(abs(bilan), 2)}"]
+        # Meme ecriture que le bilan d'une journee : « 0,00 » sans signe ni
+        # couleur a l'equilibre, jamais « -0,00 » (audit du 04/10/2026).
+        texte_total, couleur_total = texte_bilan(bilan)
+        valeurs += [nombre(credit, 2), nombre(debit, 2), texte_total]
 
         ligne = QTableWidget(1, len(colonnes))
         ligne.horizontalHeader().setVisible(False)
@@ -241,8 +243,7 @@ class TransactionsView(BaseView):
             it.setFont(gras)
             ligne.setItem(0, c, it)
         dernier = ligne.item(0, len(valeurs) - 1)
-        dernier.setForeground(QColor(
-            self.theme["credit"] if bilan >= 0 else self.theme["debit"]))
+        dernier.setForeground(QColor(self.theme[couleur_total]))
         ligne.setFixedHeight(36)
         ligne.setStyleSheet(
             f"QTableWidget {{ border: none; border-top: 1px solid "

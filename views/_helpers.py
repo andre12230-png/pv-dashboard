@@ -24,6 +24,12 @@ MOIS_FR = [
 # Formatage
 # -----------------------------------------------------------------------------
 
+def sans_zero_negatif(x: float, decimales: int) -> float:
+    """0 pour un nombre qui s'affichera zero : « -0,00 € » ou « -0,0 kWh »
+    n'ont pas de sens a l'ecran (audit du 04/10/2026)."""
+    return 0.0 if round(float(x), decimales) == 0 else float(x)
+
+
 def fmt_kwh_seul(x: float) -> str:
     """Toujours en kWh, milliers separes : « 3 650,0 kWh ». Pour un tableau
     ou des valeurs et leurs ecarts se lisent cote a cote : fmt_kwh passe en
@@ -31,6 +37,7 @@ def fmt_kwh_seul(x: float) -> str:
     meme ligne (30/09/2026)."""
     if x is None or pd.isna(x):
         return "—"
+    x = sans_zero_negatif(x, 1)
     return f"{x:,.1f}".replace(",", " ").replace(".", ",") + " kWh"
 
 
@@ -39,7 +46,7 @@ def fmt_kwh(x: float) -> str:
         return "—"
     if abs(x) >= 1000:
         return f"{x/1000:.2f} MWh".replace(".", ",")
-    return f"{x:.1f} kWh".replace(".", ",")
+    return f"{sans_zero_negatif(x, 1):.1f} kWh".replace(".", ",")
 
 
 def fmt_kwc(x: float) -> str:
@@ -57,6 +64,7 @@ def fmt_kwc(x: float) -> str:
 def fmt_eur(x: float, signed: bool = False) -> str:
     if x is None or pd.isna(x):
         return "—"
+    x = sans_zero_negatif(x, 2)
     s = f"{abs(x):,.2f}".replace(",", " ").replace(".", ",")
     if signed and x > 0:
         return f"+{s} €"
@@ -68,7 +76,7 @@ def fmt_eur(x: float, signed: bool = False) -> str:
 def fmt_pct(x: float) -> str:
     if x is None or pd.isna(x):
         return "—"
-    return f"{x:.1f} %".replace(".", ",")
+    return f"{sans_zero_negatif(x, 1):.1f} %".replace(".", ",")
 
 
 def fmt_prix_kwh(x) -> str:
@@ -594,7 +602,8 @@ def variation(delta: float, base: float | None, fmt, sens: int,
     l'autre trompe : "+50 %" sur une base minuscule n'est rien, "+40 kWh" sans
     reference ne dit pas si c'est beaucoup.
     """
-    if abs(delta) < 1e-9:
+    # Un ecart qui s'ecrirait « -0,00 € » ou « -0,0 kWh » est un ecart nul.
+    if abs(delta) < 1e-9 or fmt(abs(delta)) == fmt(0.0):
         return "stable", theme["text_muted"]
     favorable = (delta > 0) == (sens > 0)
     couleur = COULEUR_FAVORABLE if favorable else COULEUR_DEFAVORABLE

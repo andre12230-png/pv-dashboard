@@ -18,6 +18,7 @@ from gui_theme import mpl_style
 from gui_widgets import Card, MplCanvas, SectionTitle
 from views._base import BaseView
 from views._helpers import chiffres_sur_barres, du_au, hauteur_exacte, poser_texte_court
+from views.transactions import texte_bilan
 
 
 def nombre_fr(valeur: float) -> str:
@@ -147,9 +148,8 @@ class OAView(BaseView):
                 QTableWidgetItem(f"{r['revenu']:.2f}".replace(".", ",")),
                 QTableWidgetItem(prime_txt),
                 QTableWidgetItem(f"{r['eco']:.2f}".replace(".", ",")),
-                QTableWidgetItem(
-                    f"{'+' if r['bilan'] >= 0 else '-'}{abs(r['bilan']):.2f}"
-                    .replace(".", ",")),
+                # Meme ecriture que les Releves : jamais « -0,00 ».
+                QTableWidgetItem(texte_bilan(r["bilan"])[0]),
             ]
             # En noir : en bleu gras, le numero passait pour un lien
             # cliquable (30/09/2026).
@@ -163,8 +163,8 @@ class OAView(BaseView):
                 items[1].setToolTip(
                     "Du raccordement au début du contrat de vente : "
                     "l'injection de cette période n'était pas rémunérée.")
-            bilan_color = self.theme["credit"] if r["bilan"] >= 0 else self.theme["debit"]
-            items[-1].setForeground(QColor(bilan_color))
+            items[-1].setForeground(
+                QColor(self.theme[texte_bilan(r["bilan"])[1]]))
             items[-1].setFont(f)
             for j in range(2, len(cols)):
                 items[j].setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)

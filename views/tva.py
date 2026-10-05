@@ -32,7 +32,8 @@ from views._helpers import chiffres_sur_barres, du_au, fmt_date_fr, fmt_pct, pos
 
 
 def _nombre(x: float, decimales: int = 1) -> str:
-    """Un nombre a la francaise, virgule decimale."""
+    """Un nombre a la francaise, virgule decimale ; jamais « -0,0 »."""
+    x = 0.0 if round(float(x), decimales) == 0 else float(x)
     return f"{x:,.{decimales}f}".replace(",", " ").replace(".", ",")
 
 

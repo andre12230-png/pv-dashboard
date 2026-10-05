@@ -286,4 +286,4 @@ def test_le_badge_du_tableau_de_bord_compare_les_memes_jours(qapp, vue):
     badge = tableau._badge_n1(df_n, "month-2025-05",
                               float(df_n["production_kwh"].sum()))
     assert badge is not None
-    assert badge.text().startswith("+0 %")
+    assert badge.text().startswith("stable")     # memes jours, meme production
