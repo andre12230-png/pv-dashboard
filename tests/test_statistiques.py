@@ -124,3 +124,18 @@ def test_les_tuiles_de_rendement_ont_la_meme_largeur(vue, qapp):
 def test_les_deux_axes_disent_kwh(vue):
     barres, courbes = _axes(vue)
     assert barres.get_ylabel() == courbes.get_ylabel() == "kWh"
+
+
+def test_sans_mois_complet_la_carte_le_dit(qapp):
+    """Audit du 04/10/2026 : une semaine de releves donnait un graphique
+    vide, legende « 2026 » et axe « 0, 0, 0, −0 »."""
+    jours = pd.date_range("2026-09-15", "2026-09-21", freq="D")
+    df = pd.DataFrame({"production_kwh": 18.0, "autoconsommation_kwh": 7.0,
+                       "injection_kwh": 11.0, "soutirage_kwh": 9.0}, index=jours)
+    v = StatsView(SimpleNamespace(df=df, cfg={"installation": {"puissance_kwc": 6.0}}),
+                  LIGHT)
+    v.populate("all")
+    textes = " ".join(lbl.text() for lbl in v.findChildren(QLabel))
+    assert "premier mois complet" in textes
+    assert len(v.findChildren(MplCanvas)) == 1     # plus de graphique vide
+    detruire(v)

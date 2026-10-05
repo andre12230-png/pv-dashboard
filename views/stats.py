@@ -161,6 +161,15 @@ class StatsView(BaseView):
                                   freq="M").days_in_month:
                 pivot.loc[mois, annee] = np.nan
                 incomplets = True
+        if pivot.isna().all().all():
+            # Aucun mois complet : un graphique vide, sa legende et un axe
+            # « 0, 0, −0 » n'apprenaient rien (audit du 04/10/2026).
+            note = QLabel("La production mensuelle s'affichera ici dès votre "
+                          "premier mois complet de relevés.")
+            note.setObjectName("SectionSub")
+            note.setWordWrap(True)
+            v.addWidget(note)
+            return card
         canvas = MplCanvas(width=5, height=3.2, dpi=100)
         canvas.apply_theme(mpl_style(self.theme))
         ax = canvas.fig.add_subplot(111)
