@@ -142,7 +142,7 @@ APP_NAME = "Gestion Photovoltaique"
 # APP_NAME garde sa forme d'origine : c'est le nom de l'application pour Qt,
 # qu'il vaut mieux ne pas changer d'une version a l'autre (29/09/2026).
 NOM_AFFICHE = "Gestion Photovoltaïque"
-APP_VERSION = "1.52.15"
+APP_VERSION = "1.52.16"
 
 
 TAILLE_MAX_LOG = 1_000_000  # 1 Mo
