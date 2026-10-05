@@ -58,9 +58,12 @@ class OctopusEdfView(BaseView):
         bascule = calc.CUTOFF_OCTOPUS
 
         if comp.empty:
+            # En clair, sans « passage en heures pleines / creuses » (audit
+            # du 04/10/2026) ; sans aucun releve, la carte renvoie a la
+            # Saisie (BaseView._empty_card).
             self.layout_inner.addWidget(self._empty_card(
-                f"Aucune donnée depuis le passage en heures pleines / creuses "
-                f"({bascule:%d/%m/%Y})."))
+                f"Aucun relevé depuis le {bascule:%d/%m/%Y} : c'est à partir "
+                f"de cette date que votre contrat est comparé à {autre}."))
             self.layout_inner.addStretch(1)
             return
 

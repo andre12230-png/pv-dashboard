@@ -267,6 +267,15 @@ class ComparaisonView(BaseView):
         agg_n = agreger(df_n)
         agg_n1 = agreger(df_n1)
 
+        if agg_n1 is None:
+            # Rien l'an passe : une carte qui le dit, comme la Repartition,
+            # plutot qu'un tableau de « — » et un graphique sans barres
+            # (audit du 04/10/2026).
+            self.layout_inner.addWidget(self._empty_card(
+                f"Aucun relevé sur {label_n1[:1].lower() + label_n1[1:]} : "
+                "la comparaison n'est pas possible."))
+            return
+
         if period.startswith("month-"):
             titre, titre_chart = "Mois", "Énergie du mois"
         elif period.startswith("oa-"):

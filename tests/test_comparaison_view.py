@@ -287,3 +287,14 @@ def test_le_badge_du_tableau_de_bord_compare_les_memes_jours(qapp, vue):
                               float(df_n["production_kwh"].sum()))
     assert badge is not None
     assert badge.text().startswith("stable")     # memes jours, meme production
+
+
+def test_sans_releve_l_an_passe_une_carte_le_dit(vue):
+    """Audit du 04/10/2026 : un tableau de « — » (« pas de donnée l'an
+    passé » huit fois) et un graphique sans barres, la ou la Repartition
+    dit clairement que la comparaison n'est pas possible. Le fichier
+    commence le 12/05/2024 : mai 2024 n'a pas d'an passe."""
+    vue.refresh("month-2024-05")
+    tout = " ".join(textes(vue))
+    assert "la comparaison n'est pas possible" in tout
+    assert not vue.container.findChildren(QTableWidget)

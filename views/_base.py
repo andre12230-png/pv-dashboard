@@ -7,6 +7,13 @@ from PySide6.QtWidgets import QFrame, QLabel, QScrollArea, QVBoxLayout, QWidget
 from app_data import AppData
 from gui_widgets import Card
 
+# Ce que voit une page tant qu'aucun releve n'est entre.
+MESSAGE_SANS_RELEVE = (
+    "Aucun relevé pour l'instant.\n\n"
+    "Commencez par la page « Saisie quotidienne » : ses boutons "
+    "« Importer… » chargent vos fichiers (Enedis, votre onduleur, votre "
+    "fournisseur), ou saisissez une journée à la main.")
+
 
 class BaseView(QWidget):
     """Classe de base : chaque vue implemente `populate(period)`."""
@@ -54,7 +61,14 @@ class BaseView(QWidget):
                 self._clear_layout(item.layout())
 
     def _empty_card(self, message: str = "Aucune donnée sur cette période.") -> QFrame:
-        """Carte 'rien a afficher', commune a toutes les vues."""
+        """Carte 'rien a afficher', commune a toutes les vues.
+
+        Sans aucun releve (premier lancement), elle dit quoi faire plutot que
+        « Aucune donnée. » : seul le tableau de bord guidait le nouvel
+        utilisateur (audit du 04/10/2026)."""
+        df = getattr(getattr(self, "data", None), "df", None)
+        if df is not None and df.empty:
+            message = MESSAGE_SANS_RELEVE
         card = Card()
         v = QVBoxLayout(card)
         v.setContentsMargins(20, 30, 20, 30)
