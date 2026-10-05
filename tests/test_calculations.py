@@ -1300,3 +1300,21 @@ def test_en_vente_totale_l_injection_n_est_plus_dite_non_relevee():
     journees."""
     out = calc.applique_vente_totale(_df_avec_incomplet())
     assert (out["releve_incomplet"] == 0).all()
+
+
+def test_le_recalage_sur_facture_suit_dans_les_heures_creuses_et_pleines():
+    """Audit du 04/10/2026 : l'achat au reseau etait recale sur la facture,
+    mais pas son detail HC / HP, que le cout utilise des qu'il couvre 90 %
+    du jour. Facture 5 % au-dessus : +150 kWh, mais seulement +5,58 EUR au
+    lieu d'environ +28. HC + HP suivent desormais, a proportion gardee."""
+    idx = pd.date_range("2026-01-01", "2026-01-10", freq="D")
+    df = pd.DataFrame({"soutirage_kwh": 10.0, "soutirage_hc_kwh": 4.0,
+                       "soutirage_hp_kwh": 6.0, "autoconsommation_kwh": 2.0},
+                      index=idx)
+    out = calc.recale_sur_facture(df, [{"debut": "2026-01-01",
+                                        "fin": "2026-01-10",
+                                        "total_kwh": 105.0}])
+    total = out["soutirage_hc_kwh"] + out["soutirage_hp_kwh"]
+    assert total.sum() == pytest.approx(105.0)
+    assert (total - out["soutirage_kwh"]).abs().max() == pytest.approx(0.0)
+    assert (out["soutirage_hc_kwh"] / total).iloc[0] == pytest.approx(0.4)

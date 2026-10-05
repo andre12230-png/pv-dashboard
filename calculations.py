@@ -403,6 +403,18 @@ def recale_sur_facture(df_daily: pd.DataFrame,
         out.loc[dans, "soutirage_kwh"] = valeurs
         out.loc[dans, "conso_recalee"] = 1.0
 
+    # Le detail HC / HP suit le recalage, a proportion gardee : le cout s'en
+    # sert des qu'il couvre 90 % du jour, et ne bougeait presque pas quand
+    # le total etait recale (audit du 04/10/2026).
+    if {"soutirage_hc_kwh", "soutirage_hp_kwh"} <= set(out.columns):
+        hc = out["soutirage_hc_kwh"].fillna(0.0)
+        hp = out["soutirage_hp_kwh"].fillna(0.0)
+        detail = hc + hp
+        a_suivre = (out["conso_recalee"] > 0) & (detail > 0)
+        facteur = out.loc[a_suivre, "soutirage_kwh"] / detail[a_suivre]
+        out.loc[a_suivre, "soutirage_hc_kwh"] = hc[a_suivre] * facteur
+        out.loc[a_suivre, "soutirage_hp_kwh"] = hp[a_suivre] * facteur
+
     out["consommation_kwh"] = out["autoconsommation_kwh"] + out["soutirage_kwh"]
     return out
 
