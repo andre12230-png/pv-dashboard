@@ -488,7 +488,7 @@ class DashboardView(BaseView):
         fond = self.theme["warm_bg"] if en_retard else "transparent"
         lbl.setStyleSheet(
             f"color: {couleur}; background: {fond}; font-size: 11px; "
-            f"padding: 6px 10px; border-radius: 6px;")
+            f"padding: 6px 10px; border-radius: 4px;")  # 4 px : un bandeau (charte)
         return lbl
 
     def _bandeau_sauvegarde(self) -> QLabel | None:
@@ -503,7 +503,7 @@ class DashboardView(BaseView):
         lbl.setStyleSheet(
             f"color: {self.theme['warm_ink']}; "
             f"background: {self.theme['warm_bg']}; font-size: 11px; "
-            f"padding: 6px 10px; border-radius: 6px;")
+            f"padding: 6px 10px; border-radius: 4px;")  # 4 px : un bandeau (charte)
         return lbl
 
     def _carte_remarques(self, notes) -> QFrame:

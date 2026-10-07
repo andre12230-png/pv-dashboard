@@ -74,3 +74,17 @@ def test_le_bandeau_du_tableau_de_bord():
         SimpleNamespace(theme=LIGHT, rappel_sauvegarde=lambda: None)) is None
     assert DashboardView._bandeau_sauvegarde(
         SimpleNamespace(theme=LIGHT, rappel_sauvegarde=None)) is None
+
+
+def test_les_bandeaux_du_tableau_de_bord_ont_des_coins_de_4_px():
+    """Charte (07/10/2026) : un bandeau a des coins de 4 px, comme dans
+    Pecule et Recharges VE ; ces deux-la etaient a 6 px."""
+    import re
+    QApplication.instance() or QApplication([])
+    sauvegarde = DashboardView._bandeau_sauvegarde(
+        SimpleNamespace(theme=LIGHT, rappel_sauvegarde=lambda: "À refaire."))
+    fraicheur = DashboardView._bandeau_fraicheur(
+        SimpleNamespace(theme=LIGHT, data=SimpleNamespace(dernieres_saisies={})))
+    for bandeau in (sauvegarde, fraicheur):
+        assert re.findall(r"border-radius:\s*(\d+)px",
+                          bandeau.styleSheet()) == ["4"]
