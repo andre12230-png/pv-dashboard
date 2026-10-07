@@ -357,19 +357,25 @@ def test_texte_des_barres_de_repartition_lisible(fond):
         f"texte {encre} sur {fond} : {rapport:.2f} pour 1, moins que 4,5")
 
 
-def test_cartes_a_coins_presque_droits_et_trait_en_haut_comme_pecule():
-    """29/09/2026 : cartes, tuiles et tableaux avaient des coins tres
-    arrondis (12 et 8 px) et les tuiles un trait de couleur a GAUCHE.
-    Pecule et Recharges VE : coins de 4 px, trait de 3 px en HAUT."""
+def test_cartes_arrondies_a_12_px_et_trait_en_haut_comme_pecule():
+    """29/09/2026 : tout etait passe a 4 px et le trait des tuiles en HAUT.
+    07/10/2026, choix de l'auteur pour les trois applis : cartes et tuiles
+    a 12 px ; les tableaux gardent 4 px ; l'en-tete bleute d'une carte
+    arrondit ses coins du haut a 11 px pour ne pas depasser."""
     import re as _re
     qss = qss_for(LIGHT)
-    for selecteur in ('QFrame#Card, QFrame.Card', 'QFrame[role="kpi"]',
-                      'QFrame[role="tile"]', 'QFrame[role="account"]',
-                      'QTableWidget, QTableView'):
+    for selecteur, attendu in (('QFrame#Card, QFrame.Card', "12"),
+                               ('QFrame[role="kpi"]', "12"),
+                               ('QFrame[role="tile"]', "12"),
+                               ('QFrame[role="account"]', "12"),
+                               ('QTableWidget, QTableView', "4")):
         bloc = _bloc(qss, selecteur)
         assert bloc, selecteur
         rayon = _re.search(r"border-radius:\s*(\d+)px", bloc)
-        assert rayon and rayon.group(1) == "4", selecteur
+        assert rayon and rayon.group(1) == attendu, selecteur
+    entete = _bloc(qss, 'QFrame#Card QLabel#CardHeader')
+    assert _re.search(r"border-top-left-radius:\s*11px", entete)
+    assert _re.search(r"border-top-right-radius:\s*11px", entete)
     kpi = _bloc(qss, 'QFrame[role="kpi"]')
     assert "border-top-width: 3px" in kpi and "border-left-width" not in kpi
     assert 'border-left-color' not in qss

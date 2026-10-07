@@ -303,11 +303,11 @@ QScrollArea > QWidget > QWidget {{
     background: {t["bg_app"]};
 }}
 
-/* Cards : coins de 4 px, comme Pecule et Recharges VE (29/09/2026 ;
-   c'etait 12 px). */
+/* Cards : coins de 12 px dans les trois applis (choix de l'auteur du
+   07/10/2026 ; 4 px du 29/09 au 07/10). Les tableaux gardent 4 px. */
 QFrame#Card, QFrame.Card {{
     background: {t["bg_carte"]};
-    border-radius: 4px;
+    border-radius: 12px;
     border: 1px solid {t["cadre"]};
 }}
 /* En-tete d'une carte titree (Card(titre=...)) : le bandeau degrade des
@@ -323,8 +323,10 @@ QFrame#Card QLabel#CardHeader {{
     padding: 4px 10px;
     border: none;
     border-bottom: 1px solid {t["entete_filet"]};
-    border-top-left-radius: 3px;
-    border-top-right-radius: 3px;
+    /* 11 px : le rayon de la carte moins son liseré, sinon le bandeau
+       depasse dans les deux coins du haut. */
+    border-top-left-radius: 11px;
+    border-top-right-radius: 11px;
 }}
 QLabel#SectionTitle {{
     color: {t["text_secondary"]};
@@ -339,13 +341,13 @@ QLabel#SectionSub {{
     background: transparent;
 }}
 
-/* KPI cards : trait de couleur de 3 px en HAUT, coins de 4 px, comme les
-   tuiles de Pecule et de Recharges VE (29/09/2026 ; c'etait un trait de
-   4 px a gauche et des coins de 12 px). */
+/* KPI cards : trait de couleur de 3 px en HAUT, comme les tuiles de Pecule
+   et de Recharges VE (29/09/2026 ; c'etait un trait de 4 px a gauche).
+   Coins de 12 px, comme les cartes (07/10/2026). */
 QFrame[role="kpi"] {{
     background: {t["bg_carte"]};
     border: 1px solid {t["cadre"]};
-    border-radius: 4px;
+    border-radius: 12px;
     border-top-width: 3px;
 }}
 QFrame[role="kpi"][variant="credit"]   {{ border-top-color: {t["credit"]}; }}
@@ -386,7 +388,7 @@ QLabel#KpiSub {{
 QFrame[role="tile"] {{
     background: {t["bg_carte"]};
     border: 1px solid {t["cadre"]};
-    border-radius: 4px;
+    border-radius: 12px;
     border-top-width: 3px;
 }}
 QFrame[role="tile"][variant="solaire"] {{ border-top-color: {CHART_COLORS["autoconso"]}; }}
@@ -433,7 +435,7 @@ QWidget#PosteCell {{
 QFrame[role="account"] {{
     background: {t["bg_carte"]};
     border: 1px solid {t["cadre"]};
-    border-radius: 4px;
+    border-radius: 12px;
     border-top-width: 3px;
 }}
 QFrame[role="account"][variant="credit"]  {{ border-top-color: {t["credit"]}; }}
