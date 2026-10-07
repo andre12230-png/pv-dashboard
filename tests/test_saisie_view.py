@@ -481,7 +481,7 @@ def test_rien_ne_change_se_dit_en_toutes_lettres():
 def test_des_valeurs_corrigees_sans_jour_nouveau():
     # Le cas d'un utilisateur : rien de nouveau, mais 1062 valeurs remplacees.
     assert phrase_import(nouveaux=0, remplaces=1062, jours=591) == (
-        "1 062 valeurs vont être corrigées. Aucune journée nouvelle : "
+        "1\xa0062 valeurs vont être corrigées. Aucune journée nouvelle : "
         "ces dates sont déjà dans vos relevés."
     )
 

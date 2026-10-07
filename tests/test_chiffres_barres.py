@@ -17,7 +17,7 @@ from views._helpers import chiffres_sur_barres, nombre_barre  # noqa: E402
 
 
 def test_nombre_a_la_francaise():
-    assert nombre_barre(7812.4) == "7 812"
+    assert nombre_barre(7812.4) == "7\xa0812"
     assert nombre_barre(25.14, 1) == "25,1"
     assert nombre_barre(0) == ""
     assert nombre_barre(0.04, 1) == ""
@@ -124,7 +124,7 @@ def test_statistiques_annuelles_chiffrees(qapp):
     vue = StatsView.__new__(StatsView)
     vue.theme = LIGHT
     ax = _axes(vue._yearly_bars(annees, set()))[0]
-    assert "7 812" in _textes(ax) and "5 300" in _textes(ax)
+    assert "7\xa0812" in _textes(ax) and "5\xa0300" in _textes(ax)
     assert len(ax.texts) == 8
 
 

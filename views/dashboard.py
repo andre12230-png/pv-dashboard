@@ -25,6 +25,7 @@ from gui_widgets import (
 )
 from views._base import BaseView
 from views._helpers import (
+    ESPACE,
     amortissement,
     chiffres_sur_barres,
     filter_period,
@@ -388,7 +389,7 @@ class DashboardView(BaseView):
                   "🏠"], maison, CC["soutirage"]),
                 ([f"🚗 Réseau, véhicule {fmt_kwh(ve)}",
                   f"🚗 Véhicule {fmt_kwh(ve)}", f"🚗 {fmt_kwh(ve)}",
-                  f"🚗 {fmt_kwh(ve).removesuffix(' kWh')}", "🚗"],
+                  f"🚗 {fmt_kwh(ve).removesuffix(ESPACE + 'kWh')}", "🚗"],
                  ve, self.theme["info"]),
             ]
         else:

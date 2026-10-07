@@ -120,7 +120,7 @@ def test_le_meilleur_jour_est_signale(qapp):
     carte = _vue(df)._carte_production_jours(df)
     textes = " ".join(lbl.text() for lbl in carte.findChildren(QLabel))
     assert "Meilleur jour 03/09" in textes
-    assert "25,8 kWh" in textes
+    assert "25,8\xa0kWh" in textes
 
 
 def test_une_annee_se_lit_semaine_par_semaine(qapp):
@@ -175,8 +175,8 @@ def test_la_part_du_vehicule_se_voit(qapp):
         ["☀️", "🏠", "🚗"]
     assert barre_origine.segments[1][1] == pytest.approx(186.7 - 67.8)
     textes = " ".join(lbl.text() for lbl in carte.findChildren(QLabel))
-    assert "🚗 Recharge du véhicule : 67,8 kWh" in textes
-    assert "8,75 €" in textes
+    assert "🚗 Recharge du véhicule : 67,8\xa0kWh" in textes
+    assert "8,75\xa0€" in textes
 
 
 # 985 px : la barre d'une fenetre de 1280 px (moitie de l'ecran de l'auteur)
@@ -214,10 +214,10 @@ def test_chaque_pourcentage_dit_de_quoi_il_est_la_part(qapp):
     carte = vue._carte_repartition(121.3, 178.7, 186.7, 308.0, 40.4, 59.6,
                                    39.4, 0.0)
     textes = [lbl.text() for lbl in carte.findChildren(QLabel)]
-    assert ("Sur 300,0 kWh produits : 40,4 % consommés sur place, "
-            "59,6 % vendus") in textes
-    assert ("Sur 308,0 kWh consommés : 39,4 % de soleil, "
-            "60,6 % du réseau") in textes
+    assert ("Sur 300,0\xa0kWh produits : 40,4\xa0% consommés sur place, "
+            "59,6\xa0% vendus") in textes
+    assert ("Sur 308,0\xa0kWh consommés : 39,4\xa0% de soleil, "
+            "60,6\xa0% du réseau") in textes
 
 
 def test_la_jauge_ne_repete_pas_son_chiffre(qapp):

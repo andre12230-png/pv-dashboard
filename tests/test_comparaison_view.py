@@ -101,8 +101,8 @@ def test_le_mois_en_cours_est_compare_aux_memes_jours(vue):
                for t in textes(vue))
     table = vue.container.findChildren(QTableWidget)[-1]
     assert table.item(0, 0).text().strip() == "Production"
-    assert table.item(0, 1).text() == "10,0 kWh"      # N-1
-    assert table.item(0, 2).text() == "10,0 kWh"      # N
+    assert table.item(0, 1).text() == "10,0\xa0kWh"      # N-1
+    assert table.item(0, 2).text() == "10,0\xa0kWh"      # N
 
 
 def test_l_annee_en_cours_est_coupee_aussi(vue):
@@ -179,7 +179,7 @@ def test_une_seule_unite_dans_le_tableau(vue_annuelle):
     lignes = _cellules(vue_annuelle)
     assert not any("MWh" in t for ligne in lignes for t in ligne)
     production = next(ligne for ligne in lignes if ligne[0] == "Production")
-    assert production[1:3] == ["3 660,0 kWh", "3 650,0 kWh"]
+    assert production[1:3] == ["3\xa0660,0\xa0kWh", "3\xa0650,0\xa0kWh"]
 
 
 def test_libelles_sans_jargon(vue_annuelle):
@@ -194,14 +194,14 @@ def test_graphique_sans_n_moins_1_et_chiffres_francais(vue_annuelle):
     ax = vue_annuelle.container.findChildren(MplCanvas)[0].fig.axes[0]
     legende = [t.get_text() for t in ax.get_legend().get_texts()]
     assert legende == ["Année 2024", "Année 2025"]
-    assert "3 650" in [t.get_text() for t in ax.texts]
+    assert "3\xa0650" in [t.get_text() for t in ax.texts]
 
 
 def test_pas_de_pourcentage_nul():
     """« +0,18 € (+0,0 %) » : un pourcentage arrondi a zero n'apprend rien."""
     from views._helpers import fmt_eur, variation
     texte, _ = variation(0.18, -419.95, fmt_eur, +1, LIGHT)
-    assert texte == "+0,18 €"
+    assert texte == "+0,18\xa0€"
     texte, _ = variation(-55.0, 2765.0, str, +1, LIGHT)
     assert "%" in texte                      # -2,0 % : garde son pourcentage
 
@@ -266,8 +266,8 @@ def test_l_annee_est_comparee_depuis_la_mise_en_service(vue):
 def test_le_mois_de_mise_en_service_est_compare_aux_memes_jours(vue):
     vue.refresh("month-2025-05")
     table = vue.container.findChildren(QTableWidget)[-1]
-    assert table.item(0, 1).text() == "20,0 kWh"      # N-1 : 12 au 31/05
-    assert table.item(0, 2).text() == "20,0 kWh"      # N : memes jours
+    assert table.item(0, 1).text() == "20,0\xa0kWh"      # N-1 : 12 au 31/05
+    assert table.item(0, 2).text() == "20,0\xa0kWh"      # N : memes jours
 
 
 def test_une_annee_oa_entiere_n_est_pas_coupee_au_debut(vue):

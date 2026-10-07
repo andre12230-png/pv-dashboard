@@ -560,7 +560,7 @@ def test_nombre_de_jours_en_toutes_lettres():
     assert nombre_de_jours(0) == "0 jour"
     assert nombre_de_jours(28) == "28 jours"
     # Meme separateur de milliers que les montants (fmt_eur) : une espace.
-    assert nombre_de_jours(1614) == "1 614 jours"
+    assert nombre_de_jours(1614) == "1\xa0614 jours"
 
 
 def test_fraicheur_du_jour_meme():

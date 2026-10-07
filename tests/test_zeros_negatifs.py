@@ -19,15 +19,15 @@ def qapp_module():
 
 
 def test_les_montants_minuscules_s_ecrivent_zero():
-    assert fmt_eur(-0.004) == "0,00 €"
-    assert fmt_eur(-0.004, signed=True) == "0,00 €"
-    assert fmt_eur(-0.006) == "-0,01 €"          # un vrai centime reste
+    assert fmt_eur(-0.004) == "0,00\xa0€"
+    assert fmt_eur(-0.004, signed=True) == "0,00\xa0€"
+    assert fmt_eur(-0.006) == "-0,01\xa0€"          # un vrai centime reste
 
 
 def test_les_kwh_et_pourcentages_minuscules_s_ecrivent_zero():
-    assert fmt_kwh(-0.03) == "0,0 kWh"
-    assert fmt_kwh_seul(-0.03) == "0,0 kWh"
-    assert fmt_pct(-0.04) == "0,0 %"
+    assert fmt_kwh(-0.03) == "0,0\xa0kWh"
+    assert fmt_kwh_seul(-0.03) == "0,0\xa0kWh"
+    assert fmt_pct(-0.04) == "0,0\xa0%"
 
 
 def test_un_ecart_invisible_est_stable():

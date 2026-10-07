@@ -168,9 +168,9 @@ def test_la_part_de_la_periode_dit_laquelle(qapp, donnees):
     quelle periode, et sur « toute la periode » la ligne repetait le montant
     juste au-dessus."""
     mois = _labels(donnees, "month-2024-01")
-    assert "dont +31,00 € en janvier 2024" in mois          # 1 €/jour
-    assert "dont +62,00 € en janvier 2024" in mois          # 2 €/jour
-    assert "dont -155,00 € en janvier 2024" in mois         # 5 €/jour
+    assert "dont +31,00\xa0€ en janvier 2024" in mois          # 1 €/jour
+    assert "dont +62,00\xa0€ en janvier 2024" in mois          # 2 €/jour
+    assert "dont -155,00\xa0€ en janvier 2024" in mois         # 5 €/jour
     tout = _labels(donnees, "all")
     assert not any("sur période" in t or t.startswith("dont ") for t in tout)
 

@@ -100,7 +100,7 @@ def test_fournisseur_vs_edf_ecarts_coherents(win):
         cartes.setdefault(lbl.parent(), []).append(lbl.text())
     valeurs = {}
     for textes in cartes.values():
-        euros = [t for t in textes if re.fullmatch(r"[+\-−]?[\d  ]+,\d\d €", t)]
+        euros = [t for t in textes if re.fullmatch(r"[+\-−]?[\d  ]+,\d\d\xa0€", t)]
         if euros:
             valeurs[textes[0]] = _euros(euros[0])
     actuel = next(v for k, v in valeurs.items() if "votre contrat" in k.lower())
@@ -121,10 +121,10 @@ def test_fournisseur_vs_edf_ecarts_coherents(win):
 
 def test_parametres_reprennent_la_configuration(win):
     textes = _textes(win, "settings")
-    assert "3 kWc" in textes
-    assert "9 000,00 €" in textes
+    assert "3\xa0kWc" in textes
+    assert "9\xa0000,00\xa0€" in textes
     assert "EDF OA" in textes
-    assert "0,1000 €/kWh" in textes
+    assert "0,1000\xa0€/kWh" in textes
     assert "en cours" in textes                      # periode de prix ouverte
 
 

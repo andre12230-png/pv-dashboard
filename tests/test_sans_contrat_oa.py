@@ -249,8 +249,8 @@ def test_sans_part_hc_declaree_les_parametres_affichent_zero(
     win = _fenetre(qapp, tmp_path, monkeypatch, _sans_part_hc)
     try:
         textes = _textes(win, "settings")
-        assert "0,0 %" in textes
-        assert "20,0 %" not in textes
+        assert "0,0\xa0%" in textes
+        assert "20,0\xa0%" not in textes
     finally:
         detruire(win)
 
@@ -271,6 +271,6 @@ def test_parametres_disent_que_la_part_est_estimee(qapp, tmp_path, monkeypatch):
     win = _fenetre(qapp, tmp_path, monkeypatch, _apres_midi_sans_part)
     try:
         textes = _textes(win, "settings")
-        assert "24,0 %" in textes and "ESTIM" in textes
+        assert "24,0\xa0%" in textes and "ESTIM" in textes
     finally:
         detruire(win)

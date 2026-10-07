@@ -9,6 +9,7 @@ import os
 
 from PySide6.QtCore import QLibraryInfo, QTranslator
 from PySide6.QtGui import QColor, QPalette
+from PySide6.QtWidgets import QToolTip
 
 
 def installer_traduction_qt(app) -> bool:
@@ -666,3 +667,6 @@ def appliquer_style(app) -> None:
     eux-memes, sans consulter la palette."""
     app.setStyle("Fusion")
     app.setPalette(palette_claire())
+    # Les infobulles ont leur palette a elles, prise au systeme (fond
+    # #3C3C3C sur un Windows sombre) : setPalette() ne la touche pas.
+    QToolTip.setPalette(palette_claire())

@@ -30,6 +30,11 @@ def sans_zero_negatif(x: float, decimales: int) -> float:
     return 0.0 if round(float(x), decimales) == 0 else float(x)
 
 
+# Espace insecable, entre les milliers et devant l'unite : un montant ne se
+# coupe jamais en fin de ligne (charte des trois applis, 07/10/2026).
+ESPACE = " "
+
+
 def fmt_kwh_seul(x: float) -> str:
     """Toujours en kWh, milliers separes : « 3 650,0 kWh ». Pour un tableau
     ou des valeurs et leurs ecarts se lisent cote a cote : fmt_kwh passe en
@@ -38,15 +43,15 @@ def fmt_kwh_seul(x: float) -> str:
     if x is None or pd.isna(x):
         return "—"
     x = sans_zero_negatif(x, 1)
-    return f"{x:,.1f}".replace(",", " ").replace(".", ",") + " kWh"
+    return f"{x:,.1f}".replace(",", ESPACE).replace(".", ",") + ESPACE + "kWh"
 
 
 def fmt_kwh(x: float) -> str:
     if x is None or pd.isna(x):
         return "—"
     if abs(x) >= 1000:
-        return f"{x/1000:.2f} MWh".replace(".", ",")
-    return f"{sans_zero_negatif(x, 1):.1f} kWh".replace(".", ",")
+        return f"{x/1000:.2f}{ESPACE}MWh".replace(".", ",")
+    return f"{sans_zero_negatif(x, 1):.1f}{ESPACE}kWh".replace(".", ",")
 
 
 def fmt_kwc(x: float) -> str:
@@ -58,25 +63,25 @@ def fmt_kwc(x: float) -> str:
     if not x:
         return ""
     texte = f"{float(x):.1f}".rstrip("0").rstrip(".")
-    return f"{texte.replace('.', ',')} kWc"
+    return f"{texte.replace('.', ',')}{ESPACE}kWc"
 
 
 def fmt_eur(x: float, signed: bool = False) -> str:
     if x is None or pd.isna(x):
         return "—"
     x = sans_zero_negatif(x, 2)
-    s = f"{abs(x):,.2f}".replace(",", " ").replace(".", ",")
+    s = f"{abs(x):,.2f}".replace(",", ESPACE).replace(".", ",")
     if signed and x > 0:
-        return f"+{s} €"
+        return f"+{s}{ESPACE}€"
     if x < 0:
-        return f"-{s} €"
-    return f"{s} €"
+        return f"-{s}{ESPACE}€"
+    return f"{s}{ESPACE}€"
 
 
 def fmt_pct(x: float) -> str:
     if x is None or pd.isna(x):
         return "—"
-    return f"{sans_zero_negatif(x, 1):.1f} %".replace(".", ",")
+    return f"{sans_zero_negatif(x, 1):.1f}{ESPACE}%".replace(".", ",")
 
 
 def fmt_prix_kwh(x) -> str:
@@ -85,7 +90,7 @@ def fmt_prix_kwh(x) -> str:
     Plusieurs ecrans l'ecrivaient a l'anglaise (0.1985) : Parametres, tableau
     de bord, hypotheses de la comparaison avec EDF (audit du 14/09/2026).
     """
-    return f"{float(x):.4f} €/kWh".replace(".", ",")
+    return f"{float(x):.4f}{ESPACE}€/kWh".replace(".", ",")
 
 
 def nombre_barre(x, decimales: int = 0) -> str:
@@ -93,7 +98,7 @@ def nombre_barre(x, decimales: int = 0) -> str:
     Vide pour zero ou une valeur absente : rien a lire sur une barre nulle."""
     if x is None or pd.isna(x) or round(float(x), decimales) == 0:
         return ""
-    return f"{float(x):,.{decimales}f}".replace(",", " ").replace(".", ",")
+    return f"{float(x):,.{decimales}f}".replace(",", ESPACE).replace(".", ",")
 
 
 def poser_texte_court(colonne, texte, largeur: int = 780) -> None:

@@ -90,7 +90,7 @@ def test_mes_reglages_de_bout_en_bout(fenetre_neuve, tmp_path):
     # Le libelle suit l'emoji du bouton, comme dans Pecule.
     # « ou » et non « vs » (anglicisme, relecture du 29/09/2026)
     assert suivante.nav_buttons["octopus_edf"].text().endswith("Engie ou EDF")
-    assert "4,5 kWc" in suivante.findChild(QLabel, "BrandSub").text()
+    assert "4,5\xa0kWc" in suivante.findChild(QLabel, "BrandSub").text()
     detruire(suivante)
 
 

@@ -8,8 +8,9 @@ from __future__ import annotations
 
 
 def nombre(n: int) -> str:
-    """« 1 614 » : milliers separes par une espace, comme les montants."""
-    return f"{n:,}".replace(",", " ")
+    """« 1 614 » : milliers separes par une espace insecable, comme les
+    montants : le nombre ne se coupe pas en fin de ligne."""
+    return f"{n:,}".replace(",", " ")
 
 
 def accorde(n: int, singulier: str, forme_plurielle: str | None = None) -> str:

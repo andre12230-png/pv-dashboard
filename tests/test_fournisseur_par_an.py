@@ -25,4 +25,4 @@ def test_moins_d_un_an_rien_n_est_extrapole():
 def test_au_dela_d_un_an_le_gain_des_365_derniers_jours():
     gains = pd.concat([_gains("2024-01-01", 400, 1.0),
                        _gains("2025-02-04", 365, 0.1)])
-    assert texte_par_an(gains) == "soit +36,50 € sur les 365 derniers jours"
+    assert texte_par_an(gains) == "soit +36,50\xa0€ sur les 365 derniers jours"
