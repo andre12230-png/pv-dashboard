@@ -51,6 +51,12 @@ def charger_recharges_ve(path: str) -> pd.DataFrame:
         return vide
 
     recharges = contenu.get("recharges", []) if isinstance(contenu, dict) else contenu
+    # Une forme inattendue (« recharges » vide, un texte, une liste melee)
+    # faisait planter le demarrage (audit du 08/10/2026) : ce qu'on ne
+    # comprend pas est ignore, comme une ligne incomplete.
+    if not isinstance(recharges, list):
+        recharges = []
+    recharges = [r for r in recharges if isinstance(r, dict)]
     kwh_jour: dict[_date, float] = {}
     eur_jour: dict[_date, float] = {}
 

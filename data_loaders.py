@@ -133,6 +133,16 @@ def _read_releves_csv(path: str) -> pd.DataFrame:
         raise ValueError(f"Encodage non reconnu pour {path}")
 
     df.columns = [c.strip() for c in df.columns]
+    # Une seule colonne dont le nom contient des virgules : le fichier est
+    # separe par des virgules (Excel en anglais). Il etait annonce « non
+    # reconnu » sans dire pourquoi (audit du 08/10/2026).
+    if len(df.columns) == 1 and "," in df.columns[0]:
+        raise ValueError(
+            f"{os.path.basename(path)} est séparé par des virgules ; "
+            "l'application attend un point-virgule (;) entre les colonnes, "
+            "comme Excel en français. Réenregistrez-le au format « CSV "
+            "(séparateur : point-virgule) », ou remplacez les virgules qui "
+            "séparent les colonnes par des points-virgules.")
     return df
 
 
@@ -305,7 +315,10 @@ def read_releves_raw(path: str) -> list[dict[str, str]]:
             "car une colonne lue vide serait effacée au premier "
             "enregistrement.\n"
             "Cause la plus fréquente : le fichier a été ouvert puis "
-            "réenregistré par Excel, qui a abîmé les accents de l'en-tête."
+            "réenregistré par Excel, qui a abîmé les accents de l'en-tête. "
+            "Si votre fichier n'a jamais eu ces colonnes, ajoutez-les, vides, "
+            "à la fin de la première ligne (par exemple « ;Conso_HC;Conso_HP ») "
+            "avec le Bloc-notes, puis relancez l'application."
         )
 
     # Colonne par colonne, et non ligne par ligne : iterrows fabriquait un

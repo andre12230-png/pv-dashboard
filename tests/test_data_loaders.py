@@ -1663,3 +1663,16 @@ def test_les_messages_de_saisie_gardent_leurs_accents():
     refus = dl.ReductionRefusee("2 lignes")
     assert str(refus).startswith("Enregistrement refusé : 2 lignes.")
     assert "il doit être confirmé." in str(refus)
+
+
+def test_recharges_ve_fichier_de_forme_inattendue(tmp_path):
+    """Audit du 08/10/2026 : « recharges » vide (null), ou une liste qui
+    contient autre chose que des recharges, faisait planter le demarrage
+    (AttributeError / TypeError). Le fichier appartient a l'autre
+    application : on ignore ce qu'on ne comprend pas."""
+    import json
+    chemin = tmp_path / "recharges.json"
+    for contenu in ({"recharges": None}, {"recharges": ["texte", 3, None]},
+                    "texte", 12):
+        chemin.write_text(json.dumps(contenu), encoding="utf-8")
+        assert dl.charger_recharges_ve(str(chemin)).empty
