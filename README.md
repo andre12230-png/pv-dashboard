@@ -359,8 +359,8 @@ colonne ou avec la mauvaise unite :
   defaut devient « Annuler » ;
 - les **valeurs invraisemblables** (au-dela des plafonds de la saisie a la
   main : 10 kWh par kWc, 150 kWh de consommation), signe typique de Wh lus
-  comme des kWh, sont signalees en tete du recapitulatif, avec « Non » par
-  defaut. L'import reste possible si les valeurs sont justes.
+  comme des kWh, sont signalees en tete du recapitulatif, avec « Annuler »
+  par defaut. L'import reste possible si les valeurs sont justes.
 
 ### Importer la production
 
