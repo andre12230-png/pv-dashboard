@@ -159,3 +159,28 @@ def test_les_tuiles_de_la_repartition_ont_leur_trait(qapp):
     assert "border-top-width: 3px" in bloc
     for variante in ("solaire", "prod", "credit", "debit"):
         assert f'QFrame[role="tile"][variant="{variante}"]' in qss
+
+
+def test_statistiques_l_annee_partielle_est_hachuree(qapp):
+    """Charte : une periode incomplete reste tracee mais hachuree, et la
+    legende garde des carres pleins (audit du 08/10/2026 : seule la mention
+    « (partielle) » le disait)."""
+    from matplotlib.patches import Patch
+
+    from gui_theme import LIGHT
+    from views.stats import StatsView
+
+    annees = pd.DataFrame({
+        "production_kwh": [7812.0, 4000.0],
+        "autoconsommation_kwh": [3100.0, 1500.0],
+        "injection_kwh": [4712.0, 2500.0],
+        "soutirage_kwh": [5200.0, 2600.0],
+    }, index=[2025, 2026])
+    vue = StatsView.__new__(StatsView)
+    vue.theme = LIGHT
+    ax = _axes(vue._yearly_bars(annees, {2026}))[0]
+    barres = ax.patches
+    hachurees = [b for b in barres if b.get_hatch()]
+    assert len(hachurees) == 4                   # les quatre de 2026
+    poignees = ax.get_legend().legend_handles
+    assert all(isinstance(p, Patch) and not p.get_hatch() for p in poignees)

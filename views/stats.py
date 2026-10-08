@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from matplotlib.patches import Patch
 from matplotlib.ticker import FuncFormatter
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QSizePolicy
 
@@ -124,6 +125,13 @@ class StatsView(BaseView):
                     label="Injection", color=CC["injection"])
         b4 = ax.bar(xs + 1.5*w, yearly["soutirage_kwh"], w,
                     label="Achat au réseau", color=CC["soutirage"])
+        # Annee partielle : tracee mais hachuree, comme dans les Annees OA
+        # (charte, audit du 08/10/2026 : seule sa mention le disait).
+        for serie in (b1, b2, b3, b4):
+            for barre, annee in zip(serie, yearly.index, strict=True):
+                if int(annee) in partielles:
+                    barre.set_hatch("///")
+                    barre.set_alpha(0.55)
         # Le chiffre de chaque barre (demande du 15/09/2026).
         chiffres_sur_barres(ax, [b1, b2, b3, b4])
         ax.set_xticks(xs)
@@ -135,7 +143,14 @@ class StatsView(BaseView):
         # barres de production, les plus hautes.
         # Deux par ligne : en clair, les quatre libelles ne tiennent pas sur
         # une seule (« Achetee » sortait coupe).
-        ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0),
+        # Carres pleins : pris sur les barres, ils seraient hachures quand la
+        # premiere annee est partielle.
+        ax.legend(handles=[Patch(color=CC[cle], label=nom) for cle, nom in (
+                      ("production", "Production"),
+                      ("autoconso", "Autoconsommation"),
+                      ("injection", "Injection"),
+                      ("soutirage", "Achat au réseau"))],
+                  loc="lower center", bbox_to_anchor=(0.5, 1.0),
                   frameon=False, ncol=2)
         canvas.fig.tight_layout()
         v.addWidget(canvas)
