@@ -42,6 +42,7 @@ PAIRES = [
     ("text_secondary", "bg_panel"),
     ("text_muted", "bg_panel"),
     ("text_muted", "bg_app"),        # sous-titres des pages, sur le fond creme
+    ("debit", "bg_app"),             # rouge sur le creme (4,46 avant le 08/10/2026)
     ("credit", "bg_panel"),          # montants positifs dans les tableaux
     ("debit", "bg_panel"),           # montants negatifs
     ("credit", "credit_bg"),         # pastille "+16 % vs ..."
@@ -288,7 +289,8 @@ def test_un_bouton_desactive_s_ecrit_en_gris():
     """29/09/2026 : « Ce mois-ci » et la fleche › etaient bien desactives sur
     le mois en cours, mais restaient dessines en noir : la regle universelle
     `QWidget { color: … }` ecrasait le gris de la palette. Un bouton
-    desactive doit s'ecrire dans le gris de la charte, #6B6B6B."""
+    desactive doit s'ecrire dans le gris de la charte, #666666 (#6B6B6B avant
+    le 08/10/2026 : 4,37 sur le creme)."""
     import os
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     from PySide6.QtWidgets import QApplication, QPushButton
@@ -302,7 +304,7 @@ def test_un_bouton_desactive_s_ecrit_en_gris():
     assert _encre_la_plus_foncee(bouton) == "#000000"
     # Desactive : plus de noir, le gris des elements desactives.
     bouton.setEnabled(False)
-    assert _encre_la_plus_foncee(bouton) == "#6b6b6b"
+    assert _encre_la_plus_foncee(bouton) == "#666666"
 
 
 def test_les_cases_de_saisie_sont_blanches():

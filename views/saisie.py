@@ -559,7 +559,7 @@ class SaisieView(BaseView):
     def _set_status(self, msg: str, ok: bool = True) -> None:
         if self.status_label is None:
             return
-        couleur = "#18733A" if ok else "#C0392B"
+        couleur = "#18733A" if ok else "#BC3729"
         self.status_label.setStyleSheet(
             f"color: {couleur}; font-size: 12px; font-weight: 600;"
         )

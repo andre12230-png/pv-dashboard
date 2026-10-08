@@ -79,7 +79,7 @@ LIGHT = {
     # le #229954 de Pecule ne fait que 3,5 pour 1 sur blanc.
     "credit":         "#18733A",
     "credit_bg":      "#E6F4EA",
-    "debit":          "#C0392B",
+    "debit":          "#BC3729",
     "debit_bg":       "#FDEDEB",
     # Accent : le bleu de selection de Pecule.
     "primary":        "#316AC5",
@@ -145,7 +145,7 @@ QWidget {{
    noir « Ce mois-ci » et les fleches grisees : on les croyait cliquables
    (29/09/2026). */
 QWidget:disabled {{
-    color: #6B6B6B;
+    color: #666666;
 }}
 /* Les cases de saisie sont blanches : on voit ou taper (charte). Sans cette
    regle, la regle universelle QWidget leur donnait le fond beige de la page
@@ -632,7 +632,7 @@ def encre(couleur: str, seuil: float = 4.8) -> str:
 # (relecture du 05/10/2026). Les daltoniens n'y perdent rien : chaque
 # variation porte aussi son signe, la couleur n'est jamais seule.
 COULEUR_FAVORABLE = LIGHT["credit"]       # #18733A, 5,6 pour 1 sur l'ivoire
-COULEUR_DEFAVORABLE = LIGHT["debit"]      # #C0392B, 5,1 pour 1
+COULEUR_DEFAVORABLE = LIGHT["debit"]      # #BC3729 : 5,3 pour 1 sur l'ivoire, 4,6 sur le creme
 
 
 def palette_claire() -> QPalette:
@@ -652,12 +652,12 @@ def palette_claire() -> QPalette:
             (QPalette.Button, "#ECE9D8"), (QPalette.ButtonText, "#000000"),
             (QPalette.ToolTipBase, "#FFFFDC"), (QPalette.ToolTipText, "#000000"),
             (QPalette.Highlight, "#316AC5"), (QPalette.HighlightedText, "#FFFFFF"),
-            (QPalette.PlaceholderText, "#6B6B6B"), (QPalette.BrightText, "#FFFFFF"),
+            (QPalette.PlaceholderText, "#666666"), (QPalette.BrightText, "#FFFFFF"),
             (QPalette.Link, "#0B5AA8"), (QPalette.LinkVisited, "#6A3FA0")):
         pal.setColor(role, QColor(couleur))
     # Ce qui est desactive s'efface, sans disparaitre pour autant.
     for role in (QPalette.WindowText, QPalette.Text, QPalette.ButtonText):
-        pal.setColor(QPalette.Disabled, role, QColor("#6B6B6B"))
+        pal.setColor(QPalette.Disabled, role, QColor("#666666"))
     return pal
 
 
