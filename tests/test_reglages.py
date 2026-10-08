@@ -460,8 +460,8 @@ VALEURS_FENETRE = {
     "date_mise_en_service": date(2022, 5, 2),
     "date_debut_contrat_oa": date(2022, 7, 1),
     "prix_oa": 0.1003, "prime_par_kwc": 380.0, "prime_duree": 5,
-    "nom": "Octopus", "offre": "Octopus Go", "abonnement": 20.16,
-    "prix_hp": 0.2213, "prix_hc": 0.129, "prix_depuis": date(2026, 8, 1),
+    "nom": "Octopus", "offre": "Octopus Go", "abonnement": 19.00,
+    "prix_hp": 0.2100, "prix_hc": 0.16, "prix_depuis": date(2026, 8, 1),
     "plages_hc": ["22:00-06:00"], "part_hc_autoconso": 0.20,
 }
 
@@ -873,7 +873,7 @@ def test_les_copies_avant_reglages_ne_s_accumulent_pas(tmp_path):
 # Part HC estimee d'apres les plages quand le fichier n'en ecrit pas (28/09)
 # -----------------------------------------------------------------------------
 
-APRES_MIDI = ["23:56-05:26", "14:26-16:56"]
+APRES_MIDI = ["23:30-05:00", "14:30-17:00"]
 
 
 def _avec_plages(texte: str, plages: list[str]) -> str:
@@ -909,7 +909,7 @@ def test_part_non_touchee_et_non_ecrite_rien_n_est_ajoute():
     texte = _avec_plages(_sans_part_hc(ANCIEN), APRES_MIDI)
     cfg = yaml.safe_load(texte)
     v = {**rg.lire_reglages(cfg), "part_hc_autoconso": None,
-         "plages_hc": ["23:56-05:26", "12:00-14:00"]}
+         "plages_hc": ["23:30-05:00", "12:00-14:00"]}
     rg.controler(v)
     nouveau = rg.appliquer_reglages(texte, cfg, v)
     assert "part_hc_autoconso" not in nouveau

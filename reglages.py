@@ -530,8 +530,8 @@ def _reecrire_periodes(lignes: list[str], chemin_contrat: list[str],
             raise ReglagesRefuses("Période de prix mal fermée dans config.yaml.")
     ind = _indent(lignes[s])
     derniere, modifiees = anciennes[-1], nouvelles[len(anciennes) - 1:]
-    # La periode qu'on ferme garde son ecriture d'origine (0.1290 reste
-    # 0.1290) : seule sa date de fin change. On ne la reecrit entierement que
+    # La periode qu'on ferme garde son ecriture d'origine (0.1600 reste
+    # 0.1600) : seule sa date de fin change. On ne la reecrit entierement que
     # si ce remplacement n'est pas possible.
     if len(modifiees) == 2 and all(
             modifiees[0].get(c) == derniere.get(c)

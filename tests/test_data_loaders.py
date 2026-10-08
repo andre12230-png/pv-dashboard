@@ -408,10 +408,10 @@ SUIVI_CONSO_OCTOPUS = (
     "Nature de la donnée (Réelle/estimée);Option tarifaire;"
     "Consommation HP (kWh);Consommation HC (kWh);"
     "Consommation HP (euros);Consommation HC (euros)\n"
-    "01/07/2026;4,749;0,62;-;Heures pleines / heures creuses;"
-    "1,005;3,744;0,22;0,4\n"
-    "02/07/2026;2,459;0,35;-;Heures pleines / heures creuses;"
-    "0,747;1,712;0,16;0,19\n"
+    "01/07/2026;5,200;0,60;-;Heures pleines / heures creuses;"
+    "1,200;4,000;0,20;0,40\n"
+    "02/07/2026;3,500;0,40;-;Heures pleines / heures creuses;"
+    "1,000;2,500;0,15;0,25\n"
 )
 
 
@@ -419,9 +419,10 @@ def test_parse_octopus_suivi_conso_detail_hphc(tmp_path):
     p = tmp_path / "suivi_conso.csv"
     p.write_text(SUIVI_CONSO_OCTOPUS, encoding="utf-8")
     assert dl.parse_enedis_fichier(str(p)) == {
-        "Conso_réseau_Jour": {"01/07/2026": "4,749", "02/07/2026": "2,459"},
-        "Conso_HP": {"01/07/2026": "1,005", "02/07/2026": "0,747"},
-        "Conso_HC": {"01/07/2026": "3,744", "02/07/2026": "1,712"},
+        # Les zeros inutiles du fichier tombent a la lecture : 5,200 -> 5,2.
+        "Conso_réseau_Jour": {"01/07/2026": "5,2", "02/07/2026": "3,5"},
+        "Conso_HP": {"01/07/2026": "1,2", "02/07/2026": "1"},
+        "Conso_HC": {"01/07/2026": "4", "02/07/2026": "2,5"},
     }
 
 
@@ -430,7 +431,7 @@ def test_parse_octopus_suivi_conso_ignore_les_euros(tmp_path):
     p = tmp_path / "suivi_conso.csv"
     p.write_text(SUIVI_CONSO_OCTOPUS, encoding="utf-8")
     imports = dl.parse_enedis_fichier(str(p))
-    assert imports["Conso_réseau_Jour"]["01/07/2026"] != "0,62"
+    assert imports["Conso_réseau_Jour"]["01/07/2026"] != "0,60"
 
 
 # Avis recu le 18/09/2026 : "ca me met tout dans Conso Reseau mais rien dans

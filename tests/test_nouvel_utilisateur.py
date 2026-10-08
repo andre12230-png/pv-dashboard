@@ -110,8 +110,8 @@ def _config_minimale() -> dict:
                "duree_contrat_annees": 20},
         "tarifs_reseau": {"contrat_hphc": {
             "periodes": [{"debut": "2026-01-01", "fin": None,
-                          "abonnement": 20.16, "prix_hp": 0.2213,
-                          "prix_hc": 0.1290}],
+                          "abonnement": 19.00, "prix_hp": 0.2100,
+                          "prix_hc": 0.1600}],
             "plages_hc": ["22:00-06:00"]}},
         "sources": {"releves_csv": "Releves-pv.csv"},
     }
@@ -138,14 +138,14 @@ def test_tarif_a_prix_unique_facultatif():
     """Section bleu_base absente : plus de KeyError, un prix nul."""
     vide = calc.BleuBaseConfig(abonnement_tranches=[], tranches=[])
     octopus = calc.OctopusConfig(
-        periodes=[{"debut": "2026-01-01", "fin": None, "abonnement": 20.16,
-                   "prix_hp": 0.2213, "prix_hc": 0.1290}],
+        periodes=[{"debut": "2026-01-01", "fin": None, "abonnement": 19.00,
+                   "prix_hp": 0.2100, "prix_hc": 0.1600}],
         plages_hc=calc.parse_plages_hc(["22:00-06:00"]))
     idx = pd.DatetimeIndex(["2025-06-01", "2026-06-01"])
     assert list(calc._prix_bleu_series(idx, vide.tranches)) == [0.0, 0.0]
     # Apres bascule, l'abonnement reste celui du fournisseur en cours.
     assert calc.abonnement_mensuel_eur(
-        pd.Timestamp("2026-06-01"), vide, octopus) == 20.16
+        pd.Timestamp("2026-06-01"), vide, octopus) == 19.00
     assert calc.abonnement_mensuel_eur(
         pd.Timestamp("2025-06-01"), vide, octopus) == 0.0
 

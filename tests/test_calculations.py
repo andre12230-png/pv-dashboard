@@ -286,28 +286,28 @@ def octopus_deux_periodes() -> calc.OctopusConfig:
     return calc.OctopusConfig(
         periodes=[
             {"debut": "2026-01-01", "fin": "2026-07-31",
-             "abonnement": 19.83, "prix_hp": 0.2132, "prix_hc": 0.1251},
+             "abonnement": 18.00, "prix_hp": 0.2000, "prix_hc": 0.1500},
             {"debut": "2026-08-01", "fin": None,
-             "abonnement": 20.16, "prix_hp": 0.2213, "prix_hc": 0.1290},
+             "abonnement": 19.00, "prix_hp": 0.2100, "prix_hc": 0.1600},
         ],
-        plages_hc=calc.parse_plages_hc(["23:56-05:26", "14:26-16:56"]),
+        plages_hc=calc.parse_plages_hc(["23:30-05:00", "14:30-17:00"]),
     )
 
 
 def test_octopus_prix_de_chaque_periode(octopus_deux_periodes):
     o = octopus_deux_periodes
     # Dernier jour de l'ancienne grille, puis premier jour de la nouvelle.
-    assert o.prix_hc(pd.Timestamp("2026-07-31")) == 0.1251
-    assert o.prix_hp(pd.Timestamp("2026-07-31")) == 0.2132
-    assert o.abonnement(pd.Timestamp("2026-07-31")) == 19.83
-    assert o.prix_hc(pd.Timestamp("2026-08-01")) == 0.1290
-    assert o.prix_hp(pd.Timestamp("2026-08-01")) == 0.2213
-    assert o.abonnement(pd.Timestamp("2026-08-01")) == 20.16
+    assert o.prix_hc(pd.Timestamp("2026-07-31")) == 0.1500
+    assert o.prix_hp(pd.Timestamp("2026-07-31")) == 0.2000
+    assert o.abonnement(pd.Timestamp("2026-07-31")) == 18.00
+    assert o.prix_hc(pd.Timestamp("2026-08-01")) == 0.1600
+    assert o.prix_hp(pd.Timestamp("2026-08-01")) == 0.2100
+    assert o.abonnement(pd.Timestamp("2026-08-01")) == 19.00
     # La periode en cours ("fin" vide) continue de s'appliquer plus tard.
-    assert o.prix_hc(pd.Timestamp("2027-03-15")) == 0.1290
-    # Une charge de nuit reste dans SA journee : 23h56 le 31/07 est encore
+    assert o.prix_hc(pd.Timestamp("2027-03-15")) == 0.1600
+    # Une charge de nuit reste dans SA journee : 23h30 le 31/07 est encore
     # a l'ancien prix, meme si elle finit le 1er aout.
-    assert o.prix_hc(pd.Timestamp("2026-07-31 23:56")) == 0.1251
+    assert o.prix_hc(pd.Timestamp("2026-07-31 23:30")) == 0.1500
 
 
 def test_cout_reseau_change_de_prix_au_01_08_2026(bleu, octopus_deux_periodes):
@@ -320,11 +320,11 @@ def test_cout_reseau_change_de_prix_au_01_08_2026(bleu, octopus_deux_periodes):
     }, index=idx)
     out = calc.cout_reseau_journalier(df, None, bleu, octopus_deux_periodes)
     energie = out["cout_reseau_eur"] - out["abonnement_eur"]
-    assert energie.iloc[0] == pytest.approx(10.0 * 0.1251)
-    assert energie.iloc[1] == pytest.approx(10.0 * 0.1290)
+    assert energie.iloc[0] == pytest.approx(10.0 * 0.1500)
+    assert energie.iloc[1] == pytest.approx(10.0 * 0.1600)
     # L'abonnement journalier suit aussi la periode (juillet 31 j, aout 31 j).
-    assert out["abonnement_eur"].iloc[0] == pytest.approx(19.83 / 31)
-    assert out["abonnement_eur"].iloc[1] == pytest.approx(20.16 / 31)
+    assert out["abonnement_eur"].iloc[0] == pytest.approx(18.00 / 31)
+    assert out["abonnement_eur"].iloc[1] == pytest.approx(19.00 / 31)
 
 
 def test_economies_autoconso_change_de_prix_au_01_08_2026(bleu,
@@ -333,28 +333,28 @@ def test_economies_autoconso_change_de_prix_au_01_08_2026(bleu,
     df = pd.DataFrame({"autoconsommation_kwh": [10.0, 10.0]}, index=idx)
     out = calc.economies_autoconsommation(df, bleu, octopus_deux_periodes)
     part_hc = octopus_deux_periodes.part_hc_autoconso  # 0 % par defaut
-    avant = 0.1251 * part_hc + 0.2132 * (1 - part_hc)
-    apres = 0.1290 * part_hc + 0.2213 * (1 - part_hc)
+    avant = 0.1500 * part_hc + 0.2000 * (1 - part_hc)
+    apres = 0.1600 * part_hc + 0.2100 * (1 - part_hc)
     assert out["economie_eur"].iloc[0] == pytest.approx(10.0 * avant)
     assert out["economie_eur"].iloc[1] == pytest.approx(10.0 * apres)
 
 
 def test_periodes_octopus_accepte_ancien_config():
     """Un config.yaml d'avant le decoupage en periodes reste utilisable."""
-    ancien = {"abonnement_mensuel_eur": 19.83,
-              "prix_hp_eur_kwh": 0.2132, "prix_hc_eur_kwh": 0.1251}
+    ancien = {"abonnement_mensuel_eur": 18.00,
+              "prix_hp_eur_kwh": 0.2000, "prix_hc_eur_kwh": 0.1500}
     periodes = calc.periodes_octopus(ancien)
     assert len(periodes) == 1
-    assert periodes[0]["prix_hc"] == 0.1251
+    assert periodes[0]["prix_hc"] == 0.1500
     assert periodes[0]["fin"] is None
 
 
 def test_periodes_octopus_triees_par_date():
     cfg = {"periodes": [
         {"debut": "2026-08-01", "fin": None,
-         "abonnement": 20.16, "prix_hp": 0.2213, "prix_hc": 0.1290},
+         "abonnement": 19.00, "prix_hp": 0.2100, "prix_hc": 0.1600},
         {"debut": "2026-01-01", "fin": "2026-07-31",
-         "abonnement": 19.83, "prix_hp": 0.2132, "prix_hc": 0.1251},
+         "abonnement": 18.00, "prix_hp": 0.2000, "prix_hc": 0.1500},
     ]}
     assert [p["debut"] for p in calc.periodes_octopus(cfg)] == [
         "2026-01-01", "2026-08-01"]
@@ -1252,12 +1252,12 @@ def _estime(plages):
 def test_estimation_heures_creuses_la_nuit_seulement():
     # Les panneaux ne produisent rien la nuit : aucune autoconsommation en HC.
     assert _estime(["22:00-06:00"]) == 0.0
-    assert _estime(["23:56-05:26"]) == 0.0
+    assert _estime(["23:30-05:00"]) == 0.0
 
 
 def test_estimation_avec_une_plage_l_apres_midi():
     # Deux heures et demie l'apres-midi : environ un quart de la production.
-    part = _estime(["23:56-05:26", "14:26-16:56"])
+    part = _estime(["23:30-05:00", "14:30-17:00"])
     assert 0.20 <= part <= 0.28
 
 

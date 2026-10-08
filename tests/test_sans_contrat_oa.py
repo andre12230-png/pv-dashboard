@@ -258,7 +258,7 @@ def test_sans_part_hc_declaree_les_parametres_affichent_zero(
 def _apres_midi_sans_part(cfg):
     contrat = cfg["tarifs_reseau"]["contrat_hphc"]
     contrat.pop("part_hc_autoconso", None)
-    contrat["plages_hc"] = ["23:56-05:26", "14:26-16:56"]
+    contrat["plages_hc"] = ["23:30-05:00", "14:30-17:00"]
 
 
 def test_sans_part_declaree_les_calculs_prennent_l_estimation(

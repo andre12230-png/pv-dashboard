@@ -736,7 +736,7 @@ vehicule » / « dont reste du foyer » dans Repartition energie.
 
 - Seules les recharges **a la maison** comptent : les recharges
   exterieures ne passent pas par votre compteur.
-- Une charge de nuit (23:56 → 05:26) est **repartie entre les deux
+- Une charge de nuit (23:30 → 05:00) est **repartie entre les deux
   journees** au prorata du temps, pour rester comparable aux releves
   quotidiens Enedis.
 - Le **cout** est celui calcule par recharges-ve (vraies plages horaires),

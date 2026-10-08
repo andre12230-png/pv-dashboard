@@ -26,7 +26,7 @@ def charger_recharges_ve(path: str) -> pd.DataFrame:
     par le compteur de la maison. Les recharges exterieures sont payees
     ailleurs et n'ont rien a voir avec le releve Enedis.
 
-    Une charge de nuit va typiquement de 23:56 a 05:26 : elle est donc
+    Une charge de nuit va typiquement de 23:30 a 05:00 : elle est donc
     **repartie entre les deux journees** au prorata du temps passe dans
     chacune, pour rester comparable aux releves quotidiens.
 

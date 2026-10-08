@@ -759,7 +759,7 @@ def _valeur_periode(jour: pd.Timestamp, periodes: list[dict], cle: str) -> float
     """Valeur d'une grille tarifaire (abonnement, prix_hp...) a une date donnee.
 
     Les bornes "debut" et "fin" designent des journees entieres : on compare
-    donc a la date, pas a l'heure (une charge de 23h56 reste dans sa journee).
+    donc a la date, pas a l'heure (une charge de 23h30 reste dans sa journee).
     """
     d = pd.Timestamp(jour).normalize()
     for p in periodes:
