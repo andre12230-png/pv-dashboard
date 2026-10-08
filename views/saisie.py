@@ -99,7 +99,7 @@ class SaisieView(BaseView):
         # Sans titre : il redisait celui de la page (30/09/2026).
         self.layout_inner.addWidget(SectionTitle(
             "",
-            "La première ligne, sur fond orangé, attend les relevés du "
+            "La première ligne, sur fond jaune pâle, attend les relevés du "
             "jour. Modifiez les valeurs puis cliquez sur Enregistrer. "
             "Décimales avec virgule ; une case peut rester vide.",
         ))
@@ -288,8 +288,10 @@ class SaisieView(BaseView):
         return item
 
     def _couleur_nouvelle_ligne(self):
-        # Jaune solaire tres pale, contraste OK clair et sombre
-        return QColor(245, 158, 11, 38)
+        # Le jaune d'information de la charte, celui des remarques sans
+        # urgence (choix de l'auteur du 08/10/2026 ; c'etait un ambre hors
+        # palette). La phrase d'en-tete dit ce qu'est cette ligne.
+        return QColor("#FFFBE6")
 
     def _ajouter_ligne_vide(self) -> None:
         assert self.table is not None

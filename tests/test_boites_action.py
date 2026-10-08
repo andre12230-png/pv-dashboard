@@ -101,3 +101,19 @@ def test_mes_reglages_range_ses_cases_dans_des_cartes(qapp):
                             "RECALAGES SUR MES FACTURES"]
     finally:
         detruire(fenetre)
+
+
+def test_mes_reglages_enregistrer_a_l_allure_de_la_saisie(qapp):
+    """Choix de l'auteur du 08/10/2026 : « Enregistrer » est bleu partout,
+    comme dans la Saisie (il etait gris dans Mes réglages)."""
+    from test_reglages import VALEURS_FENETRE
+
+    import reglages as rg
+    from fenetre_reglages import FenetreReglages
+    fenetre = FenetreReglages(dict(VALEURS_FENETRE), lambda v: None, None,
+                              recalages=rg.recalages_vides(),
+                              enregistrer_recalages=lambda r: None)
+    try:
+        assert fenetre.btn_enregistrer.objectName() == "SaveBtn"
+    finally:
+        fenetre.deleteLater()

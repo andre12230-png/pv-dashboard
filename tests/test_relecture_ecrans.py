@@ -76,12 +76,20 @@ def test_saisie_le_bouton_d_import_dit_achat_au_reseau(win):
     assert not [b for b in boutons if "conso" in b.lower()]
 
 
-def test_saisie_la_ligne_orangee_est_expliquee(win):
+def test_saisie_la_ligne_du_jour_est_expliquee(win):
     """La couleur ne porte jamais seule le sens : la phrase d'en-tete dit ce
-    qu'est la ligne sur fond orange. Et « Modifiez », pas « Éditez »."""
+    qu'est la ligne sur fond jaune pale. Et « Modifiez », pas « Éditez »."""
     textes = _textes(win, "saisie")
-    assert "fond orangé" in textes
+    assert "fond jaune pâle" in textes
     assert "Éditez" not in textes and "Modifiez" in textes
+
+
+def test_saisie_la_ligne_du_jour_est_au_jaune_de_la_charte(win):
+    """Choix de l'auteur du 08/10/2026 : le jaune d'information de la charte
+    (#FFFBE6), et non un ambre hors palette."""
+    win._switch_view("saisie")
+    vue = win.views["saisie"]
+    assert vue._couleur_nouvelle_ligne().name().upper() == "#FFFBE6"
 
 
 # --- Releves journaliers ------------------------------------------------------

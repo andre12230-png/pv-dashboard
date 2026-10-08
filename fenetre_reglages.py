@@ -335,6 +335,9 @@ class FenetreReglages(QDialog):
         annuler = QPushButton("Annuler")
         annuler.clicked.connect(self.reject)
         self.btn_enregistrer = QPushButton("Enregistrer")
+        # Bleu, comme « Enregistrer » dans la Saisie : un seul aspect pour un
+        # meme mot (choix de l'auteur du 08/10/2026 ; il etait gris ici).
+        self.btn_enregistrer.setObjectName("SaveBtn")
         self.btn_enregistrer.setDefault(True)
         self.btn_enregistrer.clicked.connect(self._on_enregistrer)
         boutons.addWidget(annuler)
