@@ -166,7 +166,9 @@ class FenetreReglages(QDialog):
             "Décrivez votre installation et vos contrats. Ces valeurs se "
             "lisent sur la facture de l'installateur, votre contrat de vente "
             "(EDF OA, le plus souvent) et la fiche tarifaire de votre "
-            "fournisseur. Tout se change plus tard, ici même.")
+            "fournisseur. Tout cela se change plus tard, ici même ; les réglages "
+            "plus rares (grille de comparaison, TVA) sont décrits dans la "
+            "Notice.")
         intro.setWordWrap(True)
         v.addWidget(intro)
 
