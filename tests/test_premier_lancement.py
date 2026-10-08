@@ -54,7 +54,7 @@ def test_le_tableau_de_bord_dit_quoi_faire(fenetre_neuve):
     fenetre_neuve._switch_view("dashboard")
     textes = " ".join(lbl.text() for lbl in
                       fenetre_neuve.views["dashboard"].findChildren(QLabel))
-    assert "Pour commencer" in textes
+    assert "POUR COMMENCER" in textes
     assert "Importer" in textes
 
 
@@ -215,3 +215,12 @@ def test_plus_de_vs_dans_l_appli(fenetre_neuve):
                     for lbl in fenetre_neuve.findChildren(QLabel)
                     if vs.search(lbl.text())]
     assert not trouves, trouves
+
+
+def test_pour_commencer_a_son_titre_dans_le_bandeau(fenetre_neuve):
+    """Charte : le titre d'une carte est dans son bandeau bleute (audit du
+    08/10/2026 : « Pour commencer » etait un QLabel en ligne, hors bandeau)."""
+    win = fenetre_neuve
+    win._switch_view("dashboard")
+    cartes = win.views["dashboard"].findChildren(QLabel, "CardHeader")
+    assert any(c.text() == "POUR COMMENCER" for c in cartes)

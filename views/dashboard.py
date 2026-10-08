@@ -446,15 +446,12 @@ class DashboardView(BaseView):
 
     def _carte_premiers_pas(self) -> QFrame:
         """Ce qu'un nouvel utilisateur doit faire, dans l'ordre."""
-        card = Card()
-        v = QVBoxLayout(card)
-        v.setContentsMargins(28, 22, 28, 24)
+        # Titre dans le bandeau bleute de la carte, comme les autres (charte ;
+        # audit du 08/10/2026 : c'etait un QLabel en ligne, hors bandeau).
+        card = Card(titre="Pour commencer")
+        v = card.corps
+        v.setContentsMargins(28, 14, 28, 24)
         v.setSpacing(10)
-        titre = QLabel("Pour commencer")
-        titre.setStyleSheet(
-            f"color: {self.theme['text_primary']}; font-size: 18px; "
-            "font-weight: 700;")
-        v.addWidget(titre)
         texte = QLabel(
             "<p><b>1. Décrivez votre installation</b> avec le bouton "
             "<b>Remplir mes réglages</b> ci-dessous : puissance, coût, dates "
