@@ -142,3 +142,22 @@ def test_le_bandeau_defile_sur_un_petit_ecran(fenetre):
              if z.widget() is bandeau]
     assert len(zones) == 1
     assert fenetre.minimumSizeHint().height() < 690
+
+
+# ---------- le selecteur de periode (08/10/2026) ----------
+
+def test_le_selecteur_porte_le_libelle_periode(fenetre):
+    """« Période : » devant le selecteur, comme Pecule et Recharges VE
+    (choix de l'auteur du 08/10/2026). Grise avec le selecteur, comme dans
+    Pecule, sur un onglet ou la periode n'a pas de sens."""
+    from PySide6.QtWidgets import QLabel
+    libelle = fenetre.findChild(QLabel, "LibellePeriode")
+    assert libelle is not None and libelle.text() == "Période :"
+    rangee = fenetre.prev_btn.parentWidget().layout()
+    assert rangee.indexOf(libelle) == rangee.indexOf(fenetre.prev_btn) - 1
+    fenetre._selecteur_actif = False
+    fenetre._maj_etat_selecteur()
+    assert not libelle.isEnabled()
+    fenetre._selecteur_actif = True
+    fenetre._maj_etat_selecteur()
+    assert libelle.isEnabled()

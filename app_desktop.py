@@ -1020,6 +1020,11 @@ class MainWindow(QMainWindow):
         # Selecteur de periode : « precedent », annee, mois, « suivant ».
         # Les deux fleches font le geste le plus frequent (le mois d'avant)
         # en un clic, sans ouvrir de liste.
+        # « Période : » devant, comme Pecule et Recharges VE (choix de
+        # l'auteur du 08/10/2026) ; grise avec le selecteur.
+        self.lbl_periode = QLabel("Période :")
+        self.lbl_periode.setObjectName("LibellePeriode")
+        h.addWidget(self.lbl_periode)
         self.prev_btn = QPushButton("‹")
         self.prev_btn.setObjectName("PeriodArrow")
         self.prev_btn.setCursor(Qt.PointingHandCursor)
@@ -1215,6 +1220,7 @@ class MainWindow(QMainWindow):
         """
         actif = getattr(self, "_selecteur_actif", True)
         annee = annee_de_periode(self.current_period)
+        self.lbl_periode.setEnabled(actif)
         self.year_combo.setEnabled(actif)
         self.month_combo.setEnabled(actif and annee is not None)
         for bouton, sens in ((self.prev_btn, -1), (self.next_btn, +1)):
