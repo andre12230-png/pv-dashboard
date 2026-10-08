@@ -353,6 +353,7 @@ def _age_en_clair(jours: int) -> str:
 
 def fraicheur_donnees(dernieres: dict, aujourdhui=None,
                       illisibles: list[str] | None = None,
+                      valeurs_illisibles: list[str] | None = None,
                       ) -> tuple[str, bool]:
     """
     Resume l'age des donnees, grandeur par grandeur.
@@ -369,7 +370,8 @@ def fraicheur_donnees(dernieres: dict, aujourdhui=None,
     Retourne (texte a afficher, en_retard) ; en_retard vaut True des qu'une
     grandeur depasse 3 jours — au-dela, c'est qu'un import a ete oublie.
     """
-    alerte = _alerte_dates_illisibles(illisibles)
+    alerte = (_alerte_dates_illisibles(illisibles)
+              + _alerte_valeurs_illisibles(valeurs_illisibles))
 
     if not dernieres:
         return ("Aucun relevé dans le fichier." + alerte), True
@@ -411,6 +413,20 @@ def _alerte_dates_illisibles(illisibles: list[str] | None) -> str:
         ("nt" if len(illisibles) > 1 else "") +
         " visible" + accord + " dans Saisie quotidienne."
     )
+
+
+def _alerte_valeurs_illisibles(valeurs: list[str] | None) -> str:
+    """Phrase a accoler au bandeau quand des cases de chiffres sont lues
+    comme 0 kWh (audit du 08/10/2026 : elles l'etaient sans un mot)."""
+    if not valeurs:
+        return ""
+    n = len(valeurs)
+    apercu = ", ".join(valeurs[:3]) + (" ..." if n > 3 else "")
+    if n == 1:
+        return (f" ⚠ 1 valeur illisible dans le fichier ({apercu}) : elle "
+                "compte pour 0 kWh. Corrigez-la dans Saisie quotidienne.")
+    return (f" ⚠ {n} valeurs illisibles dans le fichier ({apercu}) : elles "
+            "comptent pour 0 kWh. Corrigez-les dans Saisie quotidienne.")
 
 
 def period_options(df: pd.DataFrame, start_oa) -> list[tuple[str, str]]:

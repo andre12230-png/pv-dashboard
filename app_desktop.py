@@ -613,6 +613,7 @@ def build_dataset(cfg: dict) -> AppData:
                    edf_ref=edf_ref, df_brut=df_brut, lasm=lasm,
                    dernieres_saisies=dl.dernieres_saisies(str(releves_path)),
                    dates_illisibles=dl.dates_illisibles(str(releves_path)),
+                   valeurs_illisibles=dl.valeurs_illisibles(str(releves_path)),
                    jours_en_attente=[d.date() for d in attente],
                    dossier_donnees=str(BASE_DIR))
 

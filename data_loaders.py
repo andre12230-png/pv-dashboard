@@ -355,6 +355,42 @@ def dates_illisibles(path: str) -> list[str]:
     ]
 
 
+def valeurs_illisibles(path: str) -> list[str]:
+    """
+    Cases de chiffres non vides que load_releves_pv ne sait pas lire, dans
+    l'ordre du fichier : « 03/06/2026 (Inj_Jour : « 1O ») ».
+
+    Elles comptaient pour 0 kWh dans tous les calculs, sans un mot (audit du
+    08/10/2026). Comme pour dates_illisibles, c'est un constat : le CSV n'est
+    pas modifie, la correction se fait dans la vue Saisie.
+    """
+    if not os.path.exists(path):
+        return []
+    df = _read_releves_csv(path)
+    date_col = _first_matching(df.columns, _RELEVES_DATE_CANDIDATES)
+    if date_col is None:
+        return []
+    colonnes = [c for c in (
+        _first_matching(df.columns, cands) for cands in (
+            _RELEVES_PROD_CANDIDATES, _RELEVES_INJ_CANDIDATES,
+            _RELEVES_SOUT_CANDIDATES, _RELEVES_HC_CANDIDATES,
+            _RELEVES_HP_CANDIDATES)) if c is not None]
+    dates = df[date_col].astype(str).str.strip()
+    fautes: dict[int, list[str]] = {}
+    for col in colonnes:
+        brutes = df[col].astype(str).str.strip()
+        # Meme lecture que load_releves_pv (_to_num), colonne entiere d'un
+        # coup : case par case, cela coutait un tiers de seconde a chaque
+        # demarrage sur trois ans de releves.
+        lues = pd.to_numeric(brutes.str.replace(",", ".", regex=False),
+                             errors="coerce")
+        remplies = brutes.ne("") & brutes.str.lower().ne("nan")
+        for rang in brutes.index[remplies & lues.isna()]:
+            fautes.setdefault(rang, []).append(
+                f"{dates[rang]} ({col} : « {brutes[rang]} »)")
+    return [faute for rang in sorted(fautes) for faute in fautes[rang]]
+
+
 def dernieres_saisies(path: str) -> dict[str, _date]:
     """
     Pour chaque colonne du CSV, la date du dernier jour reellement renseigne.
