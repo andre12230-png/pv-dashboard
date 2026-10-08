@@ -72,7 +72,7 @@ def test_saisie_le_bouton_d_import_dit_achat_au_reseau(win):
     pour ce flux est « Achat au réseau »."""
     win._switch_view("saisie")
     boutons = [b.text() for b in win.views["saisie"].findChildren(QPushButton)]
-    assert "Importer achat au réseau / injection..." in boutons
+    assert "Importer achat au réseau / injection…" in boutons
     assert not [b for b in boutons if "conso" in b.lower()]
 
 

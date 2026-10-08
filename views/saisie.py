@@ -123,7 +123,7 @@ class SaisieView(BaseView):
         # deux lecteurs acceptent tout export « date + valeur ». Ils
         # disent maintenant CE QU'ILS IMPORTENT, les marques restant en
         # exemple dans l'infobulle.
-        btn_importer = QPushButton("Importer achat au réseau / injection...")
+        btn_importer = QPushButton("Importer achat au réseau / injection…")
         btn_importer.setObjectName("ActionBtn")
         btn_importer.setCursor(Qt.PointingHandCursor)
         btn_importer.setToolTip(
@@ -135,7 +135,7 @@ class SaisieView(BaseView):
             "CSV « date + valeur » d'une seule grandeur.")
         btn_importer.clicked.connect(self._importer_enedis)
 
-        btn_enphase = QPushButton("Importer la production...")
+        btn_enphase = QPushButton("Importer la production…")
         btn_enphase.setObjectName("ActionBtn")
         btn_enphase.setCursor(Qt.PointingHandCursor)
         btn_enphase.setToolTip(
