@@ -1676,3 +1676,14 @@ def test_recharges_ve_fichier_de_forme_inattendue(tmp_path):
                     "texte", 12):
         chemin.write_text(json.dumps(contenu), encoding="utf-8")
         assert dl.charger_recharges_ve(str(chemin)).empty
+
+
+def test_recharges_ve_lieu_en_majuscule(tmp_path):
+    """Audit du 08/10/2026 : « Maison » (majuscule, ou espace en trop) etait
+    ignore sans un mot, la comparaison etait exacte."""
+    chemin = _ecrire_recharges(tmp_path, [
+        {"lieu": "Maison ", "kwh": 10.0,
+         "date": "2026-05-01T10:00", "fin": "2026-05-01T12:00"},
+    ])
+    assert dl.charger_recharges_ve(chemin)["recharge_ve_kwh"].sum() == \
+        pytest.approx(10.0)

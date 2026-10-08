@@ -65,7 +65,8 @@ def charger_recharges_ve(path: str) -> pd.DataFrame:
         eur_jour[jour] = eur_jour.get(jour, 0.0) + eur
 
     for r in recharges:
-        if r.get("lieu") != "maison":
+        # « Maison » ou « maison  » comptent aussi (audit du 08/10/2026).
+        if str(r.get("lieu", "")).strip().lower() != "maison":
             continue
         try:
             kwh = float(r["kwh"])
