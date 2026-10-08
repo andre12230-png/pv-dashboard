@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import date as _date
 
 import pandas as pd
+from matplotlib.ticker import FuncFormatter
 
 import calculations as calc
 from accords import pluriel
@@ -427,6 +428,17 @@ def _alerte_valeurs_illisibles(valeurs: list[str] | None) -> str:
                 "compte pour 0 kWh. Corrigez-la dans Saisie quotidienne.")
     return (f" ⚠ {n} valeurs illisibles dans le fichier ({apercu}) : elles "
             "comptent pour 0 kWh. Corrigez-les dans Saisie quotidienne.")
+
+
+def milliers(valeur: float) -> str:
+    """« 1 181 » et non « 1181 » : les milliers separes, comme partout
+    ailleurs (relecture du 01/10/2026 ; deplace ici le 08/10/2026 pour
+    servir aussi la page Annees OA)."""
+    return f"{valeur:,.0f}".replace(",", " ")
+
+
+# Graduations des axes en kWh : « 8 000 » et non « 8000 ».
+AXE_MILLIERS = FuncFormatter(lambda valeur, _pos: milliers(valeur))
 
 
 def period_options(df: pd.DataFrame, start_oa) -> list[tuple[str, str]]:

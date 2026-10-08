@@ -152,3 +152,16 @@ def test_une_annee_oa_commencee_en_route_est_partielle(win):
     ax = win.views["oa"].findChildren(MplCanvas)[-1].fig.axes[0]
     noms = [t.get_text() for t in ax.get_xticklabels()]
     assert noms[0] == "OA #1 (partielle)"
+
+
+def test_annees_oa_milliers_separes(win):
+    """Charte : graduations avec milliers separes (audit du 08/10/2026,
+    l'axe ecrivait « 3000 »)."""
+    from gui_widgets import MplCanvas
+
+    win._switch_view("oa")
+    ax = win.views["oa"].findChildren(MplCanvas)[-1].fig.axes[0]
+    ax.figure.canvas.draw()
+    textes = [t.get_text() for t in ax.get_yticklabels() if t.get_text().strip()]
+    assert textes
+    assert not any(t.isdigit() and len(t) >= 4 for t in textes)

@@ -20,6 +20,7 @@ from gui_theme import mpl_style
 from gui_widgets import Card, MplCanvas, SectionTitle
 from views._base import BaseView
 from views._helpers import (
+    AXE_MILLIERS,
     chiffres_sur_barres,
     du_au,
     hauteur_exacte,
@@ -130,6 +131,9 @@ class OAView(BaseView):
                     barre.set_hatch("///")
                     barre.set_alpha(0.55)
         ax.set_ylabel("kWh")
+        # Milliers separes sur l'axe (charte ; audit du 08/10/2026, il
+        # ecrivait « 3000 »).
+        ax.yaxis.set_major_formatter(AXE_MILLIERS)
         # Le chiffre de chaque barre (demande du 15/09/2026).
         chiffres_sur_barres(ax, [b1, b2, b3])
         # Legende au-dessus du trace : dedans, elle recouvrait les chiffres.
