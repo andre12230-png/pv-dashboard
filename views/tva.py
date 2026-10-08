@@ -57,16 +57,16 @@ def textes_tuiles(ligne: dict, en_cours: bool, taux: float
     if not en_cours:
         return [
             (f"Autoconsommation {ligne['annee']}",
-             _nombre(ligne["autoconsommation_kwh"], 0) + " kWh",
+             _nombre(ligne["autoconsommation_kwh"], 0) + " kWh",
              f"{fmt_pct(ligne['part_autoconso'] * 100)} de la production"),
             ("Prix moyen pondéré",
-             _nombre(ligne["prix_moyen_eur_kwh"], 4) + " €/kWh",
+             _nombre(ligne["prix_moyen_eur_kwh"], 4) + " €/kWh",
              "énergie + acheminement HT + accise"),
             ("Base ligne 5A",
-             _nombre(ligne["base_5a_eur"], 0) + " €",
+             _nombre(ligne["base_5a_eur"], 0) + " €",
              "montant à porter sur le 3517-S"),
             ("TVA à déclarer",
-             _nombre(ligne["tva_due_eur"], 0) + " €",
+             _nombre(ligne["tva_due_eur"], 0) + " €",
              f"soit {_nombre(taux * 100, 0)}\xa0% de la base"),
         ]
     reel = ligne["a_date"]
@@ -81,16 +81,16 @@ def textes_tuiles(ligne: dict, en_cours: bool, taux: float
                               "de relevés")
     return [
         (f"Autoconsommation {ligne['annee']}",
-         _nombre(reel["autoconsommation_kwh"], 0) + " kWh",
+         _nombre(reel["autoconsommation_kwh"], 0) + " kWh",
          f"au {jusquau} : {fmt_pct(reel['part_autoconso'] * 100)} "
          "de la production"),
         ("Prix moyen pondéré",
-         _nombre(reel["prix_moyen_eur_kwh"], 4) + " €/kWh",
+         _nombre(reel["prix_moyen_eur_kwh"], 4) + " €/kWh",
          "énergie + acheminement HT + accise"),
         ("Base à ce jour",
-         _nombre(reel["base_5a_eur"], 0) + " €", fin_base),
+         _nombre(reel["base_5a_eur"], 0) + " €", fin_base),
         ("TVA à ce jour",
-         _nombre(reel["tva_due_eur"], 0) + " €", fin_tva),
+         _nombre(reel["tva_due_eur"], 0) + " €", fin_tva),
     ]
 
 
