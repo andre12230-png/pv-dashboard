@@ -157,7 +157,7 @@ def test_vraisemblance_consommation_mille_fois_trop_grande():
         {"01/09/2026": "5500", "02/09/2026": "12", "03/09/2026": "6100"},
         "Consommation réseau")
     assert "2 valeurs de Consommation réseau dépassent" in alerte
-    assert "01/09/2026" in alerte and "150 kWh" in alerte
+    assert "01/09/2026" in alerte and "150\xa0kWh" in alerte
     assert "Consommation réseau" in alerte
 
 

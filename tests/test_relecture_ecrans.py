@@ -152,7 +152,7 @@ def test_synthese_l_axe_du_remboursement_est_en_euros(win):
     canvas.draw()
     ax = canvas.fig.axes[0]
     graduations = [t.get_text() for t in ax.get_yticklabels() if t.get_text()]
-    assert graduations and all(g.endswith(" €") for g in graduations)
+    assert graduations and all(g.endswith("\xa0€") for g in graduations)
 
 
 # --- Textes longs ----------------------------------------------------------------

@@ -207,7 +207,7 @@ def test_graduations_avec_espace_des_milliers(qapp, donnees):
     vue.refresh("all")
     ax = vue.findChildren(MplCanvas)[0].fig.axes[0]
     # Avec l'unite sur chaque graduation (30/09/2026 : plus de « € » couche).
-    assert ax.yaxis.get_major_formatter()(20000, 0) == "20 000 €"
+    assert ax.yaxis.get_major_formatter()(20000, 0) == "20\xa0000\xa0€"
 
 
 # --- Pas d'extrapolation avant un an de relevés (audit du 04/10/2026) -------

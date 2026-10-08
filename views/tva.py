@@ -33,7 +33,7 @@ from views._helpers import chiffres_sur_barres, du_au, fmt_date_fr, fmt_pct, pos
 def _nombre(x: float, decimales: int = 1) -> str:
     """Un nombre a la francaise, virgule decimale ; jamais « -0,0 »."""
     x = 0.0 if round(float(x), decimales) == 0 else float(x)
-    return f"{x:,.{decimales}f}".replace(",", " ").replace(".", ",")
+    return f"{x:,.{decimales}f}".replace(",", "\xa0").replace(".", ",")
 
 
 def _signe(x: float, decimales: int) -> str:
@@ -67,13 +67,13 @@ def textes_tuiles(ligne: dict, en_cours: bool, taux: float
              "montant à porter sur le 3517-S"),
             ("TVA à déclarer",
              _nombre(ligne["tva_due_eur"], 0) + " €",
-             f"soit {_nombre(taux * 100, 0)} % de la base"),
+             f"soit {_nombre(taux * 100, 0)}\xa0% de la base"),
         ]
     reel = ligne["a_date"]
     jusquau = reel["jusquau"].strftime("%d/%m/%Y")
     if ligne.get("projetee"):
-        fin_base = f"estimée au 31/12 : {_nombre(ligne['base_5a_eur'], 0)} €"
-        fin_tva = f"estimée au 31/12 : {_nombre(ligne['tva_due_eur'], 0)} €"
+        fin_base = f"estimée au 31/12 : {_nombre(ligne['base_5a_eur'], 0)}\xa0€"
+        fin_tva = f"estimée au 31/12 : {_nombre(ligne['tva_due_eur'], 0)}\xa0€"
     else:
         # Aucune annee civile entiere pour modele : on n'invente pas de
         # montant au 31/12 (audit du 04/10/2026).
@@ -226,7 +226,7 @@ class TvaView(BaseView):
             if controle is None or controle["ecart_pct"] is None:
                 ecart_txt = "—"
             else:
-                ecart_txt = f"{controle['ecart_pct']:+.2f} %".replace(".", ",")
+                ecart_txt = f"{controle['ecart_pct']:+.2f}\xa0%".replace(".", ",")
             items = [
                 QTableWidgetItem(f"{ligne['annee']} (estimé)"
                                  if ligne["estimation"] else str(ligne["annee"])),
@@ -264,8 +264,8 @@ class TvaView(BaseView):
                 items[6].setToolTip(
                     f"Année de contrat du {fmt_date_fr(controle['debut'])} au "
                     f"{fmt_date_fr(controle['fin'])} : "
-                    f"{_nombre(controle['releve_kwh'])} kWh relevés contre "
-                    f"{_nombre(controle['facture_kwh'], 0)} kWh facturés.")
+                    f"{_nombre(controle['releve_kwh'])}\xa0kWh relevés contre "
+                    f"{_nombre(controle['facture_kwh'], 0)}\xa0kWh facturés.")
             for j in range(1, len(cols)):
                 items[j].setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
             for j, item in enumerate(items):
@@ -311,7 +311,7 @@ class TvaView(BaseView):
             titre=f"Contrôle avec les factures {self._d_acheteur()}",
             sous_titre="Injection relevée face aux kWh réellement facturés, "
                        "année de contrat par année de contrat "
-                       f"({self.data.cycle_oa}). Un écart de moins de 1 % "
+                       f"({self.data.cycle_oa}). Un écart de moins de 1\xa0% "
                        "est normal (en vert) ; au-delà (en rouge), il reste "
                        "à comprendre avant de s'appuyer sur ces chiffres.")
         v = card.corps

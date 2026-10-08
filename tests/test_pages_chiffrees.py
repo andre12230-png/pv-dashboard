@@ -216,7 +216,7 @@ def test_annees_oa_pas_de_bande_vide_sous_le_tableau(win):
 def test_milliers_separes_dans_les_annees_oa():
     """« 2354,4 » : les milliers se separent, comme partout ailleurs."""
     from views.oa import nombre_fr
-    assert nombre_fr(2354.4) == "2 354,4"
+    assert nombre_fr(2354.4) == "2\xa0354,4"
     assert nombre_fr(856.25) == "856,2" or nombre_fr(856.25) == "856,3"
 
 

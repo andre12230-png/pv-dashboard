@@ -82,12 +82,12 @@ def test_les_milliers_sont_separes(vue):
     meme ligne et partout ailleurs."""
     barres, courbes = _axes(vue)
     for ax in (barres, courbes):
-        assert ax.yaxis.get_major_formatter()(8000, 0) == "8 000"
+        assert ax.yaxis.get_major_formatter()(8000, 0) == "8\xa0000"
     valeurs = [c.value.text() for c in vue.findChildren(KpiCard)]
-    assert "1 095" in valeurs                       # 365 x 18 / 6
+    assert "1\xa0095" in valeurs                       # 365 x 18 / 6
     textes = " ".join(lbl.text() for lbl in vue.findChildren(QLabel))
     # 2023, 2024 (bissextile : 1 098) et 2025 : moyenne 1 096.
-    assert "moyenne des années complètes : 1 096 kWh/kWc/an" in textes
+    assert "moyenne des années complètes : 1\xa0096\xa0kWh/kWc/an" in textes
 
 
 def test_les_courbes_se_detachent_du_fond(vue):

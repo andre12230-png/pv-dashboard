@@ -578,7 +578,7 @@ def _euros(x: float) -> str:
     """1440 -> « 1 440 », 456.5 -> « 456,50 » (milliers comme fmt_eur)."""
     entier = abs(x - round(x)) < 0.005
     texte = f"{x:,.0f}" if entier else f"{x:,.2f}"
-    return texte.replace(",", " ").replace(".", ",")
+    return texte.replace(",", "\xa0").replace(".", ",")
 
 
 def _kwc(x: float) -> str:
@@ -609,18 +609,18 @@ def phrase_prime(par_kwc: float, kwc: float, duree: int,
         return "Pas de prime."
 
     if saisie == "total":
-        debut = (f"{_euros(total)} € au total pour {_kwc(kwc)} kWc, "
-                 f"soit {_euros(par_kwc)} €/kWc")
+        debut = (f"{_euros(total)}\xa0€ au total pour {_kwc(kwc)}\xa0kWc, "
+                 f"soit {_euros(par_kwc)}\xa0€/kWc")
         if duree <= 1:
             return debut + ", versés en une seule fois."
         return (f"{debut}, étalés sur {duree} ans "
-                f"({_euros(total / duree)} € par an).")
+                f"({_euros(total / duree)}\xa0€ par an).")
 
-    debut = (f"{_euros(par_kwc)} €/kWc × {_kwc(kwc)} kWc = "
-             f"{_euros(total)} € au total")
+    debut = (f"{_euros(par_kwc)}\xa0€/kWc × {_kwc(kwc)}\xa0kWc = "
+             f"{_euros(total)}\xa0€ au total")
     if duree <= 1:
         return debut + ", versés en une seule fois."
-    return (f"{debut}, soit {_euros(total / duree)} € par an pendant "
+    return (f"{debut}, soit {_euros(total / duree)}\xa0€ par an pendant "
             f"{duree} ans.")
 
 
@@ -648,7 +648,7 @@ def controler(v: dict) -> None:
             and not 0 <= float(v["part_hc_autoconso"]) <= 1):
         raise ReglagesRefuses(
             "La part de votre autoconsommation en heures creuses doit être "
-            "comprise entre 0 et 100 %.")
+            "comprise entre 0 et 100\xa0%.")
 
 
 # ----------------------------------------------------------------------

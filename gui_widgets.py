@@ -378,7 +378,7 @@ class Jauge(QWidget):
         f.setPixelSize(26)
         p.setFont(f)
         haut = QRectF(0, self.height() / 2 - 22, self.width(), 30)
-        p.drawText(haut, Qt.AlignCenter, f"{round(self.ratio * 100)} %")
+        p.drawText(haut, Qt.AlignCenter, f"{round(self.ratio * 100)}\xa0%")
         if self.legende:
             f = QFont()
             f.setPixelSize(11)

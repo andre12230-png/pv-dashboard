@@ -651,7 +651,7 @@ def variation(delta: float, base: float | None, fmt, sens: int,
         # (30/09/2026).
         if round(pct, 1) > 0:
             pct_str = f"{pct:.1f}".replace(".", ",")
-            return f"{signe}{abs_str}  ({signe}{pct_str} %)", couleur
+            return f"{signe}{abs_str}  ({signe}{pct_str}\xa0%)", couleur
     return f"{signe}{abs_str}", couleur
 
 
@@ -821,7 +821,7 @@ def notes_donnees(df, jours_en_attente=(), start_oa=None,
             "Ces journées ont été saisies sans décimales. Elles sont recalées "
             "sur le total de vos factures, qui est exact.\n\n"
             "Le total de la période est donc juste, le détail quotidien "
-            "approché à environ 1 kWh près.",
+            "approché à environ 1\xa0kWh près.",
         ))
 
     n = _compte("conso_absente")
@@ -836,7 +836,7 @@ def notes_donnees(df, jours_en_attente=(), start_oa=None,
             "Si vous avez déclaré le total de la facture correspondante "
             "(Mes réglages, « Recalages sur mes factures »), il est réparti "
             "sur ces jours : le total de la période est juste, pas le détail "
-            "quotidien. Sinon, ces jours comptent 0 kWh acheté.",
+            "quotidien. Sinon, ces jours comptent 0\xa0kWh acheté.",
         ))
 
     return notes

@@ -303,7 +303,7 @@ class AccountsView(BaseView):
         # (relecture du 29/09/2026), et l'unite sur chaque graduation plutot
         # qu'un « € » couche le long de l'axe (30/09/2026).
         ax.yaxis.set_major_formatter(FuncFormatter(
-            lambda valeur, _pos: f"{valeur:,.0f} €".replace(",", " ")))
+            lambda valeur, _pos: f"{valeur:,.0f}\xa0€".replace(",", "\xa0")))
         # Au milieu a gauche, la zone vide du graphique : en haut, la legende
         # chevauchait la ligne du cout de l'installation.
         ax.legend(loc="center left", frameon=False, fontsize=9)

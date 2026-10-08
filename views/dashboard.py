@@ -317,7 +317,7 @@ class DashboardView(BaseView):
             texte = "stable"
             encre, fond = "text_muted", "primary_bg"
         else:
-            texte = f"{signe}{abs(ecart):.0f} %"
+            texte = f"{signe}{abs(ecart):.0f}\xa0%"
             encre, fond = (("credit", "credit_bg") if ecart >= 0
                            else ("debit", "debit_bg"))
         badge = QLabel(f"{texte} par rapport à "
@@ -571,7 +571,7 @@ class DashboardView(BaseView):
         ligne.setSpacing(12)
         ligne.addWidget(BarMeter(min(ratio, 1.0), CC["autoconso"],
                                  self.theme["border"], hauteur=12), stretch=1)
-        pourcentage = QLabel(f"{min(ratio, 1.0) * 100:.0f} %")
+        pourcentage = QLabel(f"{min(ratio, 1.0) * 100:.0f}\xa0%")
         pourcentage.setStyleSheet(
             f"color: {self.theme['text_primary']}; font-size: 18px; "
             "font-weight: 700; background: transparent;")

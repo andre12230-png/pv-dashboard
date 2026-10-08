@@ -502,8 +502,8 @@ def normalise_nombre_saisie(texte: str, colonne: str = "",
             f"valeur '{texte}'{ou} : un relevé en kWh ne peut pas être négatif")
     if nombre > plafond:
         raise ValueError(
-            f"valeur '{texte}'{ou} : {_fmt_kwh_fr(nombre)} kWh dépasse le "
-            f"maximum plausible de {_fmt_kwh_fr(plafond)} kWh pour une "
+            f"valeur '{texte}'{ou} : {_fmt_kwh_fr(nombre)}\xa0kWh dépasse le "
+            f"maximum plausible de {_fmt_kwh_fr(plafond)}\xa0kWh pour une "
             "journée (virgule oubliée ?)")
     # On rend la valeur NORMALISEE, pas le texte tape. Avant, '22, 1' etait
     # accepte puis ecrit tel quel dans le CSV : a la relecture, plus rien ne
@@ -648,11 +648,11 @@ def controle_vraisemblance(colonne: str, valeurs: dict[str, str],
             trop.append((jour, val))
     if not trop:
         return None
-    exemples = "\n".join(f"  - {jour} : {val} kWh" for jour, val in trop[:3])
+    exemples = "\n".join(f"  - {jour} : {val}\xa0kWh" for jour, val in trop[:3])
     return (
         f"Attention : {pluriel(len(trop), 'valeur')} de {libelle} "
         f"{accorde(len(trop), 'dépasse', 'dépassent')} le maximum "
-        f"vraisemblable ({plafond:g} kWh par jour).\n\n{exemples}\n\n"
+        f"vraisemblable ({plafond:g}\xa0kWh par jour).\n\n{exemples}\n\n"
         "Une unité mal lue (des Wh pris pour des kWh) ou une colonne qui "
         "n'est pas la bonne donne ce genre de chiffres. Vérifiez le fichier "
         "avant d'appliquer."

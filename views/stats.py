@@ -16,7 +16,7 @@ from views._helpers import chiffres_sur_barres
 def milliers(valeur: float) -> str:
     """« 1 181 » et non « 1181 » : les milliers separes, comme partout
     ailleurs (relecture du 01/10/2026)."""
-    return f"{valeur:,.0f}".replace(",", " ")
+    return f"{valeur:,.0f}".replace(",", "\xa0")
 
 
 # Graduations des axes en kWh : « 8 000 » et non « 8000 ».
@@ -69,14 +69,14 @@ class StatsView(BaseView):
         if completes:
             moyenne = rendement.loc[completes].mean()
             texte_moyenne = (f"moyenne des années complètes : "
-                             f"{milliers(int(moyenne))} kWh/kWc/an")
+                             f"{milliers(int(moyenne))}\xa0kWh/kWc/an")
         else:
             texte_moyenne = "aucune année complète pour calculer une moyenne"
 
         self.layout_inner.addWidget(SectionTitle(
             # Une seule ecriture de l'unite sur la page (01/10/2026).
             "Rendement spécifique (kWh/kWc/an)",
-            f"Référence France : 900 à 1 200 kWh/kWc/an — {texte_moyenne}",
+            f"Référence France : 900 à 1\xa0200\xa0kWh/kWc/an — {texte_moyenne}",
         ))
         cards = []
         for y, v in rendement.items():

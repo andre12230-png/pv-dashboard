@@ -214,7 +214,7 @@ class OctopusEdfView(BaseView):
                     "heures creuses / pleines estimée : vos relevés n'ont "
                     "pas ce détail.")
         return (f"Le coût {mon_offre} est calculé sur vos relevés HP/HC réels "
-                f"quand ils existent ({part * 100:.0f} % des jours), sinon "
+                f"quand ils existent ({part * 100:.0f}\xa0% des jours), sinon "
                 "avec une répartition estimée.")
 
     def _carte_hypotheses(self, ref: list[dict], mon_offre: str,

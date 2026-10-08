@@ -48,7 +48,7 @@ sens :</p>
 <b>Modifier mes réglages</b> : puissance, coût, ce que vous vendez (votre
 surplus, toute votre production, ou rien), dates de votre contrat, prix
 de rachat, fournisseur et prix de votre électricité, et la part de votre
-autoconsommation qui tomberait en heures creuses (0 % si elles sont toutes la
+autoconsommation qui tomberait en heures creuses (0\xa0% si elles sont toutes la
 nuit ; la fenêtre en propose une estimation d'après vos plages d'heures
 creuses, que le bouton <b>Reprendre</b> met dans la case). L'application se
 recharge seule à l'enregistrement. L'onglet <b>Paramètres</b> montre ensuite
@@ -56,7 +56,7 @@ recharge seule à l'enregistrement. L'onglet <b>Paramètres</b> montre ensuite
 s'est pas trompé.<br>
 Les réglages plus rares (TVA, grille EDF de comparaison, prix d'un ancien
 contrat à prix unique, durée du contrat de vente — 20 ans par défaut ;
-au-delà, la vente compte pour 0 €) se font dans le fichier <code>config.yaml</code>,
+au-delà, la vente compte pour 0\xa0€) se font dans le fichier <code>config.yaml</code>,
 avec le Bloc-notes, dans le dossier de vos données : <code>{dossier}</code>
 (menu Démarrer, raccourci « Dossier des données », si l'application a été
 installée). Relancez alors l'application pour appliquer.</p>
@@ -339,7 +339,7 @@ pas à déclarer ; ils se figent une fois l'année terminée.</p>
 compare la somme de vos injections relevées aux kWh réellement facturés par
 {acheteur}, année de contrat par année de contrat. C'est lui qui rend vos chiffres
 défendables : ils se retrouvent sur un document que vous n'écrivez pas
-vous-même. Un écart de moins de 1 % est normal (en vert) ; au-delà (en rouge),
+vous-même. Un écart de moins de 1\xa0% est normal (en vert) ; au-delà (en rouge),
 il reste à comprendre. Il suppose que les totaux de vos autofacturations soient déclarés
 dans <code>config-local.yaml</code>.</p>
 <p><b>Deux réserves, affichées en clair.</b> Les journées <b>sans relevé
@@ -384,9 +384,9 @@ navigateur.</p>
 """
 
 GLOSSAIRE_HTML = """
-<p><b>kWh (kilowattheure)</b> — unité d'énergie. 1 kWh correspond à 1000 watts
+<p><b>kWh (kilowattheure)</b> — unité d'énergie. 1\xa0kWh correspond à 1000 watts
 utilisés pendant une heure.</p>
-<p><b>MWh (mégawattheure)</b> — 1000 kWh.</p>
+<p><b>MWh (mégawattheure)</b> — 1000\xa0kWh.</p>
 <p><b>kWc (kilowatt-crête)</b> — puissance maximale des panneaux dans des
 conditions idéales. Votre installation fait {puissance}.</p>
 <p><b>Production</b> — énergie produite par les panneaux solaires.</p>
@@ -581,7 +581,7 @@ class AideView(BaseView):
             # Echappe : un « & » dans un nom de dossier casserait le HTML.
             "dossier": html.escape(self.data.dossier_donnees
                                    or "le dossier de l'application"),
-            "invest": f"{cout:,.0f} €".replace(",", " "),
+            "invest": f"{cout:,.0f}\xa0€".replace(",", "\xa0"),
             "puissance": fmt_kwc(self.data.puissance_kwc) or "puissance inconnue",
             "mise_en_service": fmt_date_fr(self.data.date_mise_en_service),
             "cycle_notice": cycle_notice,

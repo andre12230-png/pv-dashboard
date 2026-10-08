@@ -83,7 +83,7 @@ def test_un_mois_en_cours_est_compare_aux_memes_dates(qapp):
     badge = vue._badge_n1(mois, "month-2026-09", mois["production_kwh"].sum())
     assert isinstance(badge, QLabel)
     # « par rapport à » et non « vs » (anglicisme, relecture du 29/09/2026)
-    assert badge.text() == "+20 % par rapport à septembre 2025"
+    assert badge.text() == "+20\xa0% par rapport à septembre 2025"
 
 
 def _axe_des_jours(carte):

@@ -32,7 +32,7 @@ from views.transactions import texte_bilan
 def nombre_fr(valeur: float) -> str:
     """« 2 354,4 » : une decimale, milliers separes par une espace, comme
     partout ailleurs (c'etait « 2354,4 », 30/09/2026)."""
-    return f"{valeur:,.1f}".replace(",", " ").replace(".", ",")
+    return f"{valeur:,.1f}".replace(",", "\xa0").replace(".", ",")
 
 
 class OAView(BaseView):

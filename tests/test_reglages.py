@@ -532,13 +532,13 @@ def test_une_ligne_retiree_disparait_des_recalages(fenetre):
 
 def test_la_prime_dit_son_total():
     assert rg.phrase_prime(par_kwc=120, kwc=12, duree=1) == (
-        "120 €/kWc × 12 kWc = 1 440 € au total, versés en une seule fois."
+        "120\xa0€/kWc × 12\xa0kWc = 1\xa0440\xa0€ au total, versés en une seule fois."
     )
 
 
 def test_la_prime_etalee_dit_le_versement_annuel():
     assert rg.phrase_prime(par_kwc=380, kwc=6, duree=5) == (
-        "380 €/kWc × 6 kWc = 2 280 € au total, soit 456 € par an pendant 5 ans."
+        "380\xa0€/kWc × 6\xa0kWc = 2\xa0280\xa0€ au total, soit 456\xa0€ par an pendant 5 ans."
     )
 
 
@@ -548,7 +548,7 @@ def test_une_prime_nulle_se_tait():
 
 def test_les_decimales_de_puissance_sont_gardees():
     assert rg.phrase_prime(par_kwc=100, kwc=3.5, duree=1) == (
-        "100 €/kWc × 3,5 kWc = 350 € au total, versés en une seule fois."
+        "100\xa0€/kWc × 3,5\xa0kWc = 350\xa0€ au total, versés en une seule fois."
     )
 
 # ======================================================================
@@ -584,22 +584,22 @@ def test_les_deux_conversions_se_repondent():
 def test_la_phrase_en_mode_total_donne_le_montant_par_kwc():
     """En saisie « en tout », c'est l'autre valeur qui manque a l'utilisateur."""
     assert rg.phrase_prime(par_kwc=160, kwc=9, duree=1, saisie="total") == (
-        "1 440 € au total pour 9 kWc, soit 160 €/kWc, "
+        "1\xa0440\xa0€ au total pour 9\xa0kWc, soit 160\xa0€/kWc, "
         "versés en une seule fois."
     )
 
 
 def test_la_phrase_en_mode_total_avec_etalement():
     assert rg.phrase_prime(par_kwc=380, kwc=6, duree=5, saisie="total") == (
-        "2 280 € au total pour 6 kWc, soit 380 €/kWc, "
-        "étalés sur 5 ans (456 € par an)."
+        "2\xa0280\xa0€ au total pour 6\xa0kWc, soit 380\xa0€/kWc, "
+        "étalés sur 5 ans (456\xa0€ par an)."
     )
 
 
 def test_le_mode_par_kwc_reste_la_phrase_d_origine():
     """Le defaut ne change pas : les appels existants gardent leur phrase."""
     assert rg.phrase_prime(par_kwc=120, kwc=12, duree=1) == (
-        "120 €/kWc × 12 kWc = 1 440 € au total, versés en une seule fois."
+        "120\xa0€/kWc × 12\xa0kWc = 1\xa0440\xa0€ au total, versés en une seule fois."
     )
 
 
@@ -633,15 +633,15 @@ def test_le_total_saisi_ne_se_multiplie_plus_par_la_puissance(qapp):
     f = FenetreReglages(dict(VALEURS_FENETRE), lambda _v: None)
     f.prime.setValue(1440)
     assert f.valeurs()["prime_par_kwc"] == 240.0
-    assert "1 440 € au total" in f.total_prime.text()
+    assert "1\xa0440\xa0€ au total" in f.total_prime.text()
 
 
 def test_la_phrase_suit_le_mode_de_saisie(qapp):
     from fenetre_reglages import FenetreReglages
     f = FenetreReglages(dict(VALEURS_FENETRE), lambda _v: None)
-    assert f.total_prime.text().startswith("2 280 € au total")
+    assert f.total_prime.text().startswith("2\xa0280\xa0€ au total")
     f.mode_prime.setCurrentIndex(1)
-    assert f.total_prime.text().startswith("380 €/kWc")
+    assert f.total_prime.text().startswith("380\xa0€/kWc")
 
 
 
@@ -930,10 +930,10 @@ def test_la_fenetre_montre_l_estimation_et_la_reprend():
                          "part_hc_autoconso": 0.20,
                          "part_hc_estimee": 0.24, "part_hc_declaree": True},
                         lambda _v: None)
-    assert "24 %" in f.estimation_hc.text()
+    assert "24\xa0%" in f.estimation_hc.text()
     # Elle suit les plages tapees.
     f.plages.setText("22:00-06:00")
-    assert "0 %" in f.estimation_hc.text()
+    assert "0\xa0%" in f.estimation_hc.text()
     f.plages.setText(" ; ".join(APRES_MIDI))
     f.bouton_estimation.click()
     assert f.valeurs()["part_hc_autoconso"] == 0.24

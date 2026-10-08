@@ -368,7 +368,7 @@ class SankeyWidget(QWidget):
                    Qt.AlignHCenter | Qt.AlignVCenter, txt_val)
 
     def _valeur_txt(self, valeur: float) -> str:
-        return f"{valeur:,.1f} kWh".replace(",", " ").replace(".", ",")
+        return f"{valeur:,.1f}\xa0kWh".replace(",", "\xa0").replace(".", ",")
 
     def _etiquette(self, p: QPainter, n: Noeud, zone: QRectF, alignement,
                    police_nom, police_val, fm_nom) -> None:

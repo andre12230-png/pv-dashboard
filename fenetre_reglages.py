@@ -311,7 +311,7 @@ class FenetreReglages(QDialog):
            "<b>Autoconsommation en heures creuses</b> : la part du courant "
            "de vos panneaux que vous auriez payée au prix des heures creuses, "
            "s'il avait fallu l'acheter. Vos panneaux produisent le jour : si "
-           "toutes vos heures creuses sont la nuit, c'est 0 %. Avec une plage "
+           "toutes vos heures creuses sont la nuit, c'est 0\xa0%. Avec une plage "
            "l'après-midi, une partie de votre production tombe dedans. "
            "L'estimation à côté part de vos plages et d'une journée de soleil "
            "type ; « Reprendre » la met dans la case. Sans valeur de votre "
@@ -530,7 +530,7 @@ class FenetreReglages(QDialog):
             return
         self.estimation_hc.setText(
             "Estimation d'après vos heures creuses : "
-            f"{round(self._estimation * 100)} %")
+            f"{round(self._estimation * 100)}\xa0%")
         self.bouton_estimation.setEnabled(True)
 
     def _reprendre_estimation(self) -> None:

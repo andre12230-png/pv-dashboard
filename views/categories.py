@@ -138,9 +138,9 @@ class CategoriesView(BaseView):
         nombres separement, la phrase pourrait melanger les unites.
         """
         if total >= 1000:
-            return (f"{part/1000:.2f} des {total/1000:.2f} MWh {suffixe}"
+            return (f"{part/1000:.2f} des {total/1000:.2f}\xa0MWh {suffixe}"
                     .replace(".", ","))
-        return f"{part:.1f} des {total:.1f} kWh {suffixe}".replace(".", ",")
+        return f"{part:.1f} des {total:.1f}\xa0kWh {suffixe}".replace(".", ",")
 
     # ------------------------------------------------------------------
     # 2) Diagramme de flux

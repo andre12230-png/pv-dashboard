@@ -1013,7 +1013,7 @@ def _lire_archive(path: str, notes: list | None) -> dict[str, str]:
                 raise ValueError(
                     f"Les fichiers « {origine[jour]} » et « {nom} » de "
                     f"l'archive donnent deux productions différentes pour "
-                    f"le {jour} ({valeurs[jour]} et {v} kWh). Importez-les "
+                    f"le {jour} ({valeurs[jour]} et {v}\xa0kWh). Importez-les "
                     "un par un, en commençant par celui qui fait foi.")
             valeurs[jour] = v
             origine.setdefault(jour, nom)

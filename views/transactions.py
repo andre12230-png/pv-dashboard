@@ -24,7 +24,7 @@ def texte_bilan(bilan: float) -> tuple[str, str]:
     if round(bilan, 2) == 0:
         return "0,00", "text_primary"
     texte = (f"{'+' if bilan > 0 else '-'}{abs(bilan):,.2f}"
-             .replace(",", " ").replace(".", ","))
+             .replace(",", "\xa0").replace(".", ","))
     return texte, "credit" if bilan > 0 else "debit"
 
 
@@ -129,13 +129,13 @@ class TransactionsView(BaseView):
             sout_item = _num_item(r["soutirage_kwh"], estime=sout_estime)
 
             credit_item = _ItemTriable(
-                f"{credit:,.2f}".replace(",", " ").replace(".", ","), float(credit))
+                f"{credit:,.2f}".replace(",", "\xa0").replace(".", ","), float(credit))
             credit_item.setTextAlignment(ALIGN_DROITE)
             if credit > 0:
                 credit_item.setForeground(QColor(self.theme["credit"]))
 
             debit_item = _ItemTriable(
-                f"{debit:,.2f}".replace(",", " ").replace(".", ","), float(debit))
+                f"{debit:,.2f}".replace(",", "\xa0").replace(".", ","), float(debit))
             debit_item.setTextAlignment(ALIGN_DROITE)
             if debit > 0:
                 debit_item.setForeground(QColor(self.theme["debit"]))
@@ -188,7 +188,7 @@ class TransactionsView(BaseView):
                 "jour-là (données hors des 36 mois conservés par Enedis, ou "
                 "panne du compteur) — si vous avez déclaré le total de la "
                 "facture de la période (Mes réglages), il est réparti sur ses "
-                "jours ; sinon, ces jours comptent 0 kWh acheté."
+                "jours ; sinon, ces jours comptent 0\xa0kWh acheté."
             )
         if legendes:
             note = QLabel("\n".join(legendes))
@@ -206,7 +206,7 @@ class TransactionsView(BaseView):
         melee aux jours (audit du 14/09/2026).
         """
         def nombre(x: float, decimales: int) -> str:
-            return (f"{x:,.{decimales}f}".replace(",", " ")
+            return (f"{x:,.{decimales}f}".replace(",", "\xa0")
                     .replace(".", ","))
 
         credit = float(df["revenu_vente_eur"].sum() + df["economie_eur"].sum())

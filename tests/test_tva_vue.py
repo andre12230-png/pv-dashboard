@@ -110,7 +110,7 @@ def test_les_tableaux_n_ont_pas_de_bande_vide(vue):
 def test_le_seuil_du_controle_est_ecrit(vue):
     """Vert sous 1 %, rouge au-dela : la couleur portait seule le verdict."""
     assert [lbl for lbl in _labels(vue)
-            if lbl.objectName() == "SectionSub" and "1 %" in lbl.text()]
+            if lbl.objectName() == "SectionSub" and "1\xa0%" in lbl.text()]
 
 
 def test_l_ecart_avec_les_factures_se_lit_pareil_dans_les_deux_tableaux(vue):
