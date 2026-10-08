@@ -240,3 +240,19 @@ def test_parametres_le_bouton_a_l_allure_des_autres(win):
     bouton = next(b for b in win.views["settings"].findChildren(QPushButton)
                   if b.text() == "Modifier mes réglages")
     assert bouton.objectName() == "ActionBtn"
+
+
+def test_releves_les_euros_portent_leur_signe(win):
+    """Charte : la couleur ne porte jamais seule le sens. « Vente +
+    économies » s'ecrivait 0,95 en vert, « Achat au réseau » 2,40 en rouge,
+    sans signe (audit du 08/10/2026)."""
+    win._switch_view("transactions")
+    tableau, totaux = win.views["transactions"].findChildren(QTableWidget)[:2]
+    n = tableau.columnCount()
+    credit, debit = n - 3, n - 2
+    for r in range(tableau.rowCount()):
+        texte_c = tableau.item(r, credit).text()
+        texte_d = tableau.item(r, debit).text()
+        assert texte_c == "0,00" or texte_c.startswith("+"), texte_c
+        assert texte_d == "0,00" or texte_d.startswith("-"), texte_d
+    assert totaux.item(0, debit).text().startswith("-")

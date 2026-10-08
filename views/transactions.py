@@ -128,17 +128,17 @@ class TransactionsView(BaseView):
             inj_item  = _num_item(r["injection_kwh"], estime=inj_estimee)
             sout_item = _num_item(r["soutirage_kwh"], estime=sout_estime)
 
-            credit_item = _ItemTriable(
-                f"{credit:,.2f}".replace(",", "\xa0").replace(".", ","), float(credit))
+            # Chaque montant porte son signe, comme le bilan : la couleur seule
+            # ne doit pas dire le sens (charte, audit du 08/10/2026).
+            texte_c, couleur_c = texte_bilan(credit)
+            credit_item = _ItemTriable(texte_c, float(credit))
             credit_item.setTextAlignment(ALIGN_DROITE)
-            if credit > 0:
-                credit_item.setForeground(QColor(self.theme["credit"]))
+            credit_item.setForeground(QColor(self.theme[couleur_c]))
 
-            debit_item = _ItemTriable(
-                f"{debit:,.2f}".replace(",", "\xa0").replace(".", ","), float(debit))
+            texte_d, couleur_d = texte_bilan(-debit)
+            debit_item = _ItemTriable(texte_d, float(debit))
             debit_item.setTextAlignment(ALIGN_DROITE)
-            if debit > 0:
-                debit_item.setForeground(QColor(self.theme["debit"]))
+            debit_item.setForeground(QColor(self.theme[couleur_d]))
 
             texte, couleur = texte_bilan(bilan)
             bilan_item = _ItemTriable(texte, float(bilan))
@@ -222,7 +222,7 @@ class TransactionsView(BaseView):
         # Meme ecriture que le bilan d'une journee : « 0,00 » sans signe ni
         # couleur a l'equilibre, jamais « -0,00 » (audit du 04/10/2026).
         texte_total, couleur_total = texte_bilan(bilan)
-        valeurs += [nombre(credit, 2), nombre(debit, 2), texte_total]
+        valeurs += [texte_bilan(credit)[0], texte_bilan(-debit)[0], texte_total]
 
         ligne = QTableWidget(1, len(colonnes))
         ligne.horizontalHeader().setVisible(False)
