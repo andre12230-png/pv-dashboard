@@ -195,7 +195,9 @@ def parse_enedis_csv_texte(texte: str, notes: list | None = None
         cellules, virgule = _decoupe_ligne(ligne)
         if len(cellules) < 2:
             continue
-        jour = _parse_date_any(cellules[0])
+        # Date seule, ou suivie d'une heure (« 01/06/2026 00:00 » : refuse
+        # avant l'audit du 08/10/2026, alors que l'ISO avec heure passait).
+        jour = _parse_jour_any(cellules[0])
         if jour is None:
             continue  # ligne de metadonnees / entete
         valeur = next(
@@ -849,11 +851,15 @@ def parse_enedis_fichier(path: str, notes: list | None = None
 
 # Date suivie eventuellement d'une heure : "2026-07-14 06:15:00 +0200",
 # "14/07/2026 06:15". On ne garde que le jour, les valeurs sont totalisees.
-_RE_DATE_HEURE_FR = re.compile(r"^(\d{1,2})/(\d{1,2})/(\d{4})")
+# Annee sur quatre ou deux chiffres dans un fichier importe (« 01/06/26 » :
+# 2026 ; audit du 08/10/2026, la ligne etait ignoree sans un mot). La saisie
+# a la main, elle, reste stricte (data_loaders.normalise_date_saisie).
+_RE_DATE_HEURE_FR = re.compile(r"^(\d{1,2})/(\d{1,2})/(\d{4}|\d{2})(?!\d)")
 
 
 def _parse_jour_any(s: str) -> str | None:
-    """Comme _parse_date_any mais accepte une heure derriere la date."""
+    """Comme _parse_date_any mais accepte une heure derriere la date, et une
+    annee sur deux chiffres (fichiers importes seulement)."""
     jour = _parse_date_any(s)
     if jour is not None:
         return jour
@@ -861,6 +867,8 @@ def _parse_jour_any(s: str) -> str | None:
     if not m:
         return None
     d, mo, y = (int(x) for x in m.groups())
+    if y < 100:
+        y += 2000
     try:
         _date(y, mo, d)
     except ValueError:
@@ -1024,7 +1032,17 @@ def _lire_archive(path: str, notes: list | None) -> dict[str, str]:
 
 
 def _decode_texte(brut: bytes) -> str:
-    """Decode un contenu texte en essayant les encodages usuels."""
+    """Decode un contenu texte en essayant les encodages usuels.
+
+    Le « Texte Unicode » de Windows (UTF-16) se reconnait a sa marque de
+    tete, ou, sans elle, aux octets nuls entre les lettres : decode en
+    UTF-8, il passait sans erreur mais illisible (« type de données
+    introuvable », audit du 08/10/2026)."""
+    if brut.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return brut.decode("utf-16")
+    debut = brut[:200]
+    if debut and debut.count(b"\x00") > len(debut) // 4:
+        return brut.decode("utf-16-be" if debut[0] == 0 else "utf-16-le")
     for encoding in ("utf-8-sig", "utf-8", "cp1252", "latin-1"):
         try:
             return brut.decode(encoding)
