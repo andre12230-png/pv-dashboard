@@ -317,6 +317,20 @@ class SaisieView(BaseView):
         return pd.Timestamp.today().strftime("%d/%m/%Y")
 
     def _recharger(self) -> None:
+        # Relire le fichier efface ce qui est tape et pas encore enregistre :
+        # on le demande d'abord, comme pour un import (audit du 08/10/2026 ;
+        # avant, seule la barre d'etat le disait apres coup).
+        if self._saisies_non_enregistrees():
+            if not confirmer(
+                    self, "Recharger le fichier",
+                    "Des valeurs tapées dans le tableau ne sont pas encore "
+                    "enregistrées. Recharger le fichier va les effacer.\n\n"
+                    "Pour les garder, cliquez sur Annuler, puis sur "
+                    "Enregistrer.",
+                    "Recharger sans enregistrer", avertissement=True):
+                self._set_status("Rechargement annulé : vos saisies sont "
+                                 "toujours là.", ok=True)
+                return
         self._cache_mtime = None  # force la relecture disque dans populate
         self.refresh(self.data.current_period)
         self._set_status("Données rechargees depuis le disque.", ok=True)

@@ -229,3 +229,35 @@ def test_l_alerte_dit_ne_pas_enregistrer(qapp, monkeypatch):
     assert "Ne pas enregistrer" in vu["boutons"]
     assert not any("tenir compte" in b for b in vu["boutons"])
     assert vu["defaut_est_annuler"]      # « Annuler » une fois traduit
+
+
+# --- Le bouton « Recharger » (audit du 08/10/2026) ---------------------------
+# Il relisait le fichier sans demander : ce qui etait tape disparaissait, et
+# seule la barre d'etat le disait apres coup.
+
+def test_recharger_avec_saisie_demande_et_annuler_garde(win, monkeypatch):
+    import views.saisie as module_saisie
+    questions = []
+    monkeypatch.setattr(module_saisie, "confirmer",
+                        lambda *a, **k: questions.append(a[2]) or False)
+    _taper(win, "77,7")
+    win.views["saisie"]._recharger()
+    assert len(questions) == 1
+    assert _case(win) == "77,7"
+
+
+def test_recharger_avec_saisie_et_accord_relit_le_fichier(win, monkeypatch):
+    import views.saisie as module_saisie
+    monkeypatch.setattr(module_saisie, "confirmer", lambda *a, **k: True)
+    _taper(win, "77,7")
+    win.views["saisie"]._recharger()
+    assert _case(win) != "77,7"
+
+
+def test_recharger_sans_saisie_ne_demande_rien(win, monkeypatch):
+    import views.saisie as module_saisie
+    questions = []
+    monkeypatch.setattr(module_saisie, "confirmer",
+                        lambda *a, **k: questions.append(a) or False)
+    win.views["saisie"]._recharger()
+    assert questions == []
