@@ -76,7 +76,8 @@ l'application **le cree vide** et s'ouvre dessus. Trois etapes ensuite :
    **Parametres**. L'application se recharge seule a l'enregistrement.
    La fenetre ne remplace dans `config.yaml` que les valeurs changees, a
    leur place : les commentaires restent, une copie datee part dans
-   `backups\` (`config_avant-reglages_...`), et rien n'est ecrit si le
+   `backups\` (`config_avant-reglages_...`, les 30 plus recentes sont
+   gardees), et rien n'est ecrit si le
    fichier relu ne donne pas exactement ce qui etait voulu. Changer de prix
    ajoute une periode (l'ancienne est fermee la veille) au lieu d'ecraser
    l'historique. Le reste (TVA, grille EDF, prix unique d'avant) se regle
@@ -171,15 +172,20 @@ c'est une annee, d'une annee OA quand c'est une annee OA — et se grisent
 quand il n'y a plus rien de ce cote. Le menu des mois ne propose que les
 mois qui portent des releves.
 
-Le bouton **Ce mois-ci** ramene au mois en cours ; il est grise quand on y
-est deja, et sur les pages qui montrent toujours tout l'historique (comme
-les Statistiques), ou le selecteur entier est grise. Au clavier : **Ctrl+←** et **Ctrl+→** pour la periode
-precedente ou suivante, **Ctrl+Origine** pour revenir au mois en cours.
+Le bouton **Ce mois-ci** ramene au mois en cours (ou au dernier mois
+releve, tant que le mois en cours n'a rien) ; il est grise quand on y est
+deja. Au clavier : **Ctrl+←** et **Ctrl+→** pour la periode precedente ou
+suivante, **Ctrl+Origine** pour revenir au mois en cours. Sur les pages qui
+ne dependent pas de la periode, le selecteur entier est grise. Sur les
+**Statistiques**, qui comparent toujours toutes les annees, le menu des
+mois disparait et le bouton devient **Cette annee**.
 
 Le menu des annees porte aussi **Toute la periode** et les **annees OA**
 (du 12 mai au 11 mai, par exemple) ; dans ces deux cas le menu des mois ne
 propose que **Toute l'annee**, puisque ces periodes-la sont a cheval sur les mois. Les dates exactes
-d'une annee OA se lisent en survolant son entree dans le menu.
+d'une annee OA se lisent en survolant son entree dans le menu. Avec un
+autre acheteur qu'EDF OA (`oa.acheteur`), l'application parle partout
+d'**annees de contrat** (« Annee de contrat n° 3 ») au lieu d'annees OA.
 
 ## Le menu de gauche
 
@@ -187,32 +193,35 @@ Les pages sont rangees en six sections — Principal, Contrats, Analyse,
 Mes donnees (sauvegarde externe), Reglages, Aide (notice, votre avis, mise
 a jour), dans l'ordre de Pecule — chacune avec un pictogramme, separees par
 un filet. Le menu defile si la fenetre est basse. Trois n'apparaissent
-que si elles vous concernent : **Annees OA** (si vous vendez votre electricite :
-masquee avec `oa.type: aucune`), **TVA autoconsommation** (section `tva_lasm`
+que si elles vous concernent : **Annees OA** (si vous vendez votre electricite
+et que la date de debut du contrat est renseignee : masquee avec
+`oa.type: aucune` ; « Annees de contrat » avec un autre acheteur qu'EDF OA),
+**TVA autoconsommation** (section `tva_lasm`
 remplie) et la **comparaison avec EDF** (fournisseur autre qu'EDF).
 
 Le bandeau reprend celui de Pecule : boutons rectangulaires, un emoji devant
 chaque libelle, titres de section soulignes ; la page affichee est le bouton
 surligne en bleu. En haut du
-menu, la puissance et la date de debut du contrat OA ; en pied, le numero de
+menu, la puissance et la date de debut du contrat (« OA depuis... », ou
+« Vente depuis... » avec un autre acheteur) ; en pied, le numero de
 version.
 
 ## Vues disponibles
 
 | Section | Contenu |
 |---|---|
-| Tableau de bord | Fraicheur des donnees ; tuiles « Autoproduction » (jauge) et « Production » (periode avec badge d'evolution sur l'an passe (memes dates) et mini-courbe) ; carte « Circulation de l'energie » : barres « ou va votre soleil » / « d'ou vient votre electricite » (part du vehicule en legende) ; bilan financier avec icones ; carte « Remboursement de l'installation » (meme calcul que la Synthese) ; production jour par jour (semaine par semaine sur un an, mois par mois au-dela) avec le meilleur jour en valeur |
-| Saisie quotidienne | Tableau editable pour ajouter / corriger les releves du jour |
+| Tableau de bord | Fraicheur des donnees ; tuiles « Autoproduction » (jauge) et « Production » (periode avec badge d'evolution sur l'an passe (memes dates) et mini-courbe) ; carte « Circulation de l'energie » : barres « ou va votre soleil » / « d'ou vient votre electricite » (part du vehicule en legende) ; bilan financier avec icones ; carte « Remboursement de l'installation » (meme calcul que la Synthese) ; production jour par jour (semaine par semaine sur un an, mois par mois au-dela) avec le meilleur jour en valeur ; le mois de mise en service et la periode en cours, incomplets, sont **hachures** et ne comptent jamais comme meilleur mois |
+| Saisie quotidienne | Tableau editable pour ajouter / corriger les releves du jour. Ce qui est tape et pas encore enregistre survit a un changement d'onglet ; avant de fermer l'application, d'ouvrir « Mes reglages » ou d'importer un fichier, une question evite de le perdre sans un mot |
 | Releves journaliers | Journal jour par jour : production, autoconsommee, injectee, achetee au reseau (et part du vehicule), vente + economies, achat au reseau, bilan electricite ; ligne de totaux de la periode sous le tableau (a part, pour que le tri ne la deplace pas) |
 | Repartition energie | Taux d'autoconsommation, couverture solaire et bilan ; diagramme de flux (Sankey) production/reseau -> injection/consommation ; detail par poste avec prix au kWh ; comparaison avec l'annee precedente |
-| Synthese financiere | Jusqu'a 6 postes selon le contrat (Vente, Prime, Economies, Achat au reseau, Investissement, Bilan de l'installation) + graphique « Remboursement de l'installation » (ce qu'elle a rapporte face a son cout, projection au rythme actuel ; chaque versement de la prime, qui fait une marche dans la courbe, est marque d'un point et le dernier porte l'etiquette « Prime a l'autoconsommation » et son montant).
+| Synthese financiere | Jusqu'a 6 postes selon le contrat (Vente, Prime, Economies, Achat au reseau, Investissement, Bilan de l'installation) + graphique « Remboursement de l'installation » (ce qu'elle a rapporte face a son cout, projection au rythme actuel ; chaque versement de la prime, qui fait une marche dans la courbe, est marque d'un point et le dernier porte l'etiquette « Prime a l'autoconsommation » avec son montant, ou « N versements de X € » s'il y en a eu plusieurs).
 Avant un an de releves, ni rythme annuel ni temps de retour : quelques mois
 d'ete ou d'hiver, prolonges sur un an, les fausseraient de plusieurs annees). Le **bilan de l'installation** = vente + economies + primes versees − cout de l'installation : l'achat au reseau n'y entre pas (on la paierait sans panneaux ; ce que les panneaux y changent est deja dans les economies). Meme calcul que la carte « Remboursement de l'installation » du tableau de bord (`amortissement()`) |
-| Annees OA | Recap par annee de contrat OA (de sa date de debut a la veille de son anniversaire). **Masquee sans revente** (`oa.type: aucune`) |
+| Annees OA | Recap par annee de contrat OA (de sa date de debut a la veille de son anniversaire). L'annee en cours et la premiere si elle est incomplete sont nommees « (en cours) » et « (partielle) », leurs barres hachurees. Devient **Annees de contrat** avec un autre acheteur qu'EDF OA. **Masquee sans revente** (`oa.type: aucune`) |
 | TVA autoconsommation | Base de la livraison a soi-meme par annee civile (ligne 5A du 3517-S), TVA due, et recoupement des injections relevees avec les factures EDF OA. **N'apparait que si la section `tva_lasm` est remplie** : elle ne concerne que les producteurs assujettis a la TVA |
 | Statistiques | Comparaisons annuelles, rendement kWh/kWc |
 | Comparer a l'an passe | La periode choisie en haut (mois, annee, annee OA) face a la meme periode un an plus tot (periode en cours : memes dates de N-1) ; bouton « Une journee precise » pour comparer un jour donne |
-| *Fournisseur* ou *reference* | Cout reel du contrat en cours face a la simulation de l'offre de reference, options Base et HP/HC (depuis la bascule). Le libelle porte les noms declares en config : "Mon fournisseur ou EDF" avec le modele livre. **Masque quand le fournisseur declare est EDF** (`nom: "EDF"`) : comparer EDF a EDF n'a pas de sens |
+| *Fournisseur* ou *reference* | Cout reel du contrat en cours face a la simulation de l'offre de reference, options Base et HP/HC (depuis la bascule) ; mois incomplets hachures. Le libelle porte les noms declares en config : "Mon fournisseur ou EDF" avec le modele livre. **Masque quand le fournisseur declare est EDF** (`nom: "EDF"`) : comparer EDF a EDF n'a pas de sens |
 | Notice | Mode d'emploi et glossaire des termes |
 | Parametres | Vue lecture seule de la configuration, et la liste des recalages actifs ; bouton « Modifier mes reglages » |
 
@@ -335,8 +344,8 @@ importee change — la production saisie a la main n'est jamais
 touchee). Un recapitulatif est affiche avant d'appliquer, et les
 sauvegardes decrites plus haut conservent l'etat precedent.
 
-Deux garde-fous evitent qu'une grandeur atterrisse dans la mauvaise
-colonne :
+Trois garde-fous evitent qu'une grandeur atterrisse dans la mauvaise
+colonne ou avec la mauvaise unite :
 
 - le type (injection ou consommation) est cherche **d'abord dans
   l'en-tete** du fichier, puis dans le reste du fichier si l'en-tete n'en dit
@@ -347,7 +356,11 @@ colonne :
   production** du meme jour — c'est physiquement impossible, on
   n'injecte que le surplus. Au-dela de 10 % de jours douteux, un
   avertissement s'affiche avant le recapitulatif et le bouton par
-  defaut devient « Annuler ».
+  defaut devient « Annuler » ;
+- les **valeurs invraisemblables** (au-dela des plafonds de la saisie a la
+  main : 10 kWh par kWc, 150 kWh de consommation), signe typique de Wh lus
+  comme des kWh, sont signalees en tete du recapitulatif, avec « Non » par
+  defaut. L'import reste possible si les valeurs sont justes.
 
 ### Importer la production
 
@@ -493,7 +506,9 @@ garde une copie quotidienne dans `backups/` (les 30 dernieres).
   60 kWh sur 6 kWc, 90 sur 9 kWc)
 - `oa` : type de vente (`surplus`, `totale` ou `aucune`), acheteur
   (facultatif, `EDF OA` par defaut), prix de rachat (€/kWh), prime autoconso
-  (€/kWc, duree — vente du surplus seulement)
+  (€/kWc, duree — vente du surplus seulement), duree du contrat
+  (`duree_contrat_annees`, 20 ans pour l'OA : apres, plus aucune vente
+  n'est comptee ; 0 = pas de fin connue)
 - `tarifs_reseau.bascule_hphc` : date du passage du prix unique aux heures
   pleines / creuses (chez l'auteur, un changement de fournisseur). Qui a
   toujours ete en heures creuses met sa date de mise en service ; qui est
@@ -554,7 +569,12 @@ Par exemple, pour un contrat qui debute le 1er juillet 2024 :
 - etc.
 
 EDF OA verse une fois par an la somme correspondant a la production
-injectee pendant ce cycle × tarif OA fixe.
+injectee pendant ce cycle × tarif OA fixe. Le contrat dure
+`oa.duree_contrat_annees` (20 ans pour l'OA) : passe cette date, plus
+aucune vente n'est comptee.
+
+Avec un autre acheteur qu'EDF OA, le meme decoupage s'appelle **annee de
+contrat** dans toute l'application.
 
 ## TVA sur l'autoconsommation
 
@@ -666,6 +686,8 @@ code les fait bouger un jour, le test tombe. Faites de meme avec les votres.
   et n'est fait qu'apres un an de releves (toutes les saisons comprises)
 - **Avant le debut du contrat OA** : pas de vente (contrat pas encore
   actif), meme pour l'injection estimee de cette periode
+- **Apres la fin du contrat** (debut + `duree_contrat_annees`) : plus de
+  vente non plus ; l'injection reste comptee en kWh
 - **Jours sans releve d'injection** (avant le contrat, ou panne du Linky
   dont les donnees ne sont plus disponibles chez Enedis) : injection
   estimee via le ratio injection/production du meme mois observe sur les
