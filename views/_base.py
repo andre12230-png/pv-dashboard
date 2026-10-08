@@ -8,6 +8,15 @@ from app_data import AppData
 from gui_widgets import Card
 
 # Ce que voit une page tant qu'aucun releve n'est entre.
+# Des releves existent, mais pas sur la periode choisie : on dit quoi faire
+# (charte : un etat vide dit pourquoi ET comment continuer ; audit du
+# 08/10/2026, ces pages disaient « Aucune donnée. »).
+CONSEIL_PERIODE = ("Choisissez une autre période avec les flèches ‹ › en "
+                   "haut, ou « Toute la période ».")
+MESSAGES_PERIODE_VIDE = {
+    "Aucune donnée.", "Aucune donnée disponible.",
+    "Aucune donnée sur cette période.", "Aucun relevé sur cette période."}
+
 MESSAGE_SANS_RELEVE = (
     "Aucun relevé pour l'instant.\n\n"
     "Commencez par la page « Saisie quotidienne » : ses boutons "
@@ -69,6 +78,11 @@ class BaseView(QWidget):
         df = getattr(getattr(self, "data", None), "df", None)
         if df is not None and df.empty:
             message = MESSAGE_SANS_RELEVE
+        elif (message in MESSAGES_PERIODE_VIDE
+              and getattr(self, "utilise_periode", True)):
+            # Pas sur une page qui ignore la periode (Annees OA,
+            # Statistiques) : l'en changer n'y changerait rien.
+            message = "Aucun relevé sur cette période.\n\n" + CONSEIL_PERIODE
         card = Card()
         v = QVBoxLayout(card)
         v.setContentsMargins(20, 30, 20, 30)

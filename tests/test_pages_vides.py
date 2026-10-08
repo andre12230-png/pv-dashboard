@@ -61,3 +61,55 @@ def test_le_message_ne_s_affiche_qu_une_fois(win, cle):
     QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
     textes = [lbl.text() for lbl in win.views[cle].findChildren(QLabel)]
     assert sum("Aucun relevé pour l'instant" in t for t in textes) <= 1
+
+
+# --- Periode vide, alors que des releves existent (audit du 08/10/2026) -----
+# « Aucune donnée. » ne disait ni pourquoi ni quoi faire.
+
+@pytest.mark.parametrize("message", [
+    "Aucune donnée.", "Aucune donnée disponible.",
+    "Aucune donnée sur cette période.", "Aucun relevé sur cette période."])
+def test_periode_vide_dit_de_changer_de_periode(qapp, message):
+    import pandas as pd
+
+    from gui_theme import LIGHT
+    from views._base import CONSEIL_PERIODE, BaseView
+
+    vue = BaseView.__new__(BaseView)
+    vue.theme = LIGHT
+    vue.data = type("D", (), {"df": pd.DataFrame(
+        {"production_kwh": [1.0]}, index=[pd.Timestamp("2025-06-01")])})()
+    carte = vue._empty_card(message)
+    texte = " ".join(e.text() for e in carte.findChildren(QLabel))
+    assert texte.startswith("Aucun relevé sur cette période.")
+    assert CONSEIL_PERIODE in texte and "Toute la période" in texte
+
+
+def test_un_message_precis_reste_tel_quel(qapp):
+    import pandas as pd
+
+    from gui_theme import LIGHT
+    from views._base import BaseView
+
+    vue = BaseView.__new__(BaseView)
+    vue.theme = LIGHT
+    vue.data = type("D", (), {"df": pd.DataFrame(
+        {"production_kwh": [1.0]}, index=[pd.Timestamp("2025-06-01")])})()
+    carte = vue._empty_card("Aucune grille de TVA déclarée.")
+    texte = " ".join(e.text() for e in carte.findChildren(QLabel))
+    assert texte == "Aucune grille de TVA déclarée."
+
+
+def test_pas_de_conseil_de_periode_sur_une_page_qui_l_ignore(qapp):
+    import pandas as pd
+
+    from gui_theme import LIGHT
+    from views.oa import OAView
+
+    vue = OAView.__new__(OAView)
+    vue.theme = LIGHT
+    vue.data = type("D", (), {"df": pd.DataFrame(
+        {"production_kwh": [1.0]}, index=[pd.Timestamp("2025-06-01")])})()
+    carte = vue._empty_card("Aucune donnée.")
+    texte = " ".join(e.text() for e in carte.findChildren(QLabel))
+    assert "flèches" not in texte
