@@ -256,3 +256,15 @@ def test_releves_les_euros_portent_leur_signe(win):
         assert texte_c == "0,00" or texte_c.startswith("+"), texte_c
         assert texte_d == "0,00" or texte_d.startswith("-"), texte_d
     assert totaux.item(0, debit).text().startswith("-")
+
+
+def test_boutons_action_et_enregistrer_a_4px(qapp):
+    """Charte : boutons a 4 px, comme tableaux, bandeaux et menus (audit du
+    08/10/2026 ; ActionBtn et SaveBtn etaient a 8 px)."""
+    import re
+
+    from gui_theme import LIGHT, qss_for
+    qss = qss_for(LIGHT)
+    for nom in ("ActionBtn", "SaveBtn"):
+        bloc = re.search(rf"QPushButton#{nom} \{{([^}}]*)\}}", qss).group(1)
+        assert "border-radius: 4px" in bloc, nom

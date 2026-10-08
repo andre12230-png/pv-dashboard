@@ -247,7 +247,7 @@ QLabel#ViewSub {{
 QPushButton#ActionBtn {{
     background: {t["bg_panel_alt"]};
     border: 1px solid {t["cadre_controle"]};
-    border-radius: 8px;
+    border-radius: 4px;
     padding: 8px 14px;
     color: {t["text_primary"]};
     font-weight: 600;
@@ -259,7 +259,7 @@ QPushButton#ActionBtn:hover {{
 QPushButton#SaveBtn {{
     background: {t["primary"]};
     border: 1px solid {t["primary"]};
-    border-radius: 8px;
+    border-radius: 4px;
     padding: 8px 18px;
     color: white;
     font-weight: 700;
