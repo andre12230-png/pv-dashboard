@@ -225,7 +225,24 @@ def _lire_yaml(chemin: Path) -> dict:
             f"{chemin} ne contient pas une configuration valide "
             "(il devrait commencer par des sections comme 'installation:')."
         )
-    return contenu
+    try:
+        return _dates_en_iso(contenu)
+    except ValueError as exc:
+        raise RuntimeError(f"{chemin} : {erreur_en_clair(exc)}") from exc
+
+
+def _dates_en_iso(valeur):
+    """Recopie la configuration en reecrivant chaque date JJ/MM/AAAA au
+    format AAAA-MM-JJ, le seul que le reste du programme comprend sans
+    ambiguite (audit du 08/10/2026 : « 01/06/2024 » etait lu le 6 janvier).
+    Fait ici, a la lecture, une fois pour toutes les dates du fichier."""
+    if isinstance(valeur, dict):
+        return {cle: _dates_en_iso(v) for cle, v in valeur.items()}
+    if isinstance(valeur, list):
+        return [_dates_en_iso(v) for v in valeur]
+    if isinstance(valeur, str):
+        return reglages.date_francaise_en_iso(valeur) or valeur
+    return valeur
 
 
 def _fusionne(base: dict, ajout: dict) -> dict:

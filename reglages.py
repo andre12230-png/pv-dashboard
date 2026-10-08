@@ -49,13 +49,37 @@ class ReglagesRefuses(RuntimeError):
 # Lecture : les valeurs a proposer dans la fenetre
 # ----------------------------------------------------------------------
 
+# Une date ecrite a la francaise : 01/06/2024, 1.6.2024 ou 01-06-2024.
+_DATE_FRANCAISE = re.compile(r"^\s*(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})\s*$")
+
+
+def date_francaise_en_iso(texte: str) -> str | None:
+    """« 01/06/2024 » -> « 2024-06-01 » (le 1er juin, jour d'abord).
+
+    None si le texte n'a pas cette forme (une date ISO, un nom...). Une date
+    impossible (31/02/2024) leve ValueError en francais. Avant (audit du
+    08/10/2026), pandas lisait « 01/06/2024 » au format americain : le 6
+    janvier, sans un mot."""
+    m = _DATE_FRANCAISE.match(str(texte))
+    if not m:
+        return None
+    jour, mois, annee = (int(x) for x in m.groups())
+    try:
+        return date(annee, mois, jour).isoformat()
+    except ValueError:
+        raise ValueError(
+            f"date impossible : « {str(texte).strip()} ». Écrivez-la "
+            "JJ/MM/AAAA (01/06/2024) ou AAAA-MM-JJ (2024-06-01).") from None
+
+
 def _date(valeur) -> date:
-    """Une date de config.yaml ('2025-04-15' ou date YAML) en objet date."""
+    """Une date de config.yaml ('2025-04-15', '15/04/2025' ou date YAML) en
+    objet date."""
     if isinstance(valeur, datetime):
         return valeur.date()
     if isinstance(valeur, date):
         return valeur
-    return date.fromisoformat(str(valeur))
+    return date.fromisoformat(date_francaise_en_iso(valeur) or str(valeur))
 
 
 def _section_contrat(cfg: dict) -> str | None:

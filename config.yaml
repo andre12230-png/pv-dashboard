@@ -7,6 +7,9 @@
 #
 # Les totaux de vos factures et les chemins propres a votre machine vont,
 # eux, dans config-local.yaml (voir config-local.exemple.yaml).
+#
+# Les dates s'ecrivent "2024-06-01" ou "01/06/2024" (jour, mois, annee) :
+# les deux designent le 1er juin 2024.
 # =====================================================================
 installation:
   puissance_kwc: 3.0                   # puissance crete des panneaux
