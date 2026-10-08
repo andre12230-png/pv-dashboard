@@ -216,7 +216,7 @@ class SaisieView(BaseView):
                 apercu += " ..."
             n = len(self._dates_illisibles)
             texte_info += (
-                f"\n⚠  {pluriel(n, 'date')} {accorde(n, 'illisible')} : "
+                f"\n⚠ {pluriel(n, 'date')} {accorde(n, 'illisible')} : "
                 f"{apercu}. "
                 + ("Cette journée n'entre dans AUCUN calcul tant que sa date"
                    if n == 1 else
