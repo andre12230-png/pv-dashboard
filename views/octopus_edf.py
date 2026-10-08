@@ -44,6 +44,15 @@ def texte_par_an(gains: pd.Series) -> str:
             f"{JOURS_AVANT_ESTIMATION} derniers jours")
 
 
+def message_sans_grille(autre: str) -> str:
+    """La page, quand aucune grille de reference n'est declaree (audit du
+    08/10/2026 : des prix ecrits dans le code prenaient le relais)."""
+    return (f"Aucune grille de prix {autre} n'est déclarée pour la "
+            "comparaison. Renseignez la section « comparaison_edf » de "
+            "config.yaml (abonnement et prix du kWh, sur le site du "
+            "fournisseur), puis relancez l'application.")
+
+
 class OctopusEdfView(BaseView):
     """Compare le cout reel du contrat en cours a une offre de reference."""
 
@@ -58,6 +67,11 @@ class OctopusEdfView(BaseView):
         autre, autre_offre = self.data.fournisseur_reference
         bascule = calc.CUTOFF_OCTOPUS
 
+        if not ref:
+            self.layout_inner.addWidget(self._empty_card(
+                message_sans_grille(autre)))
+            self.layout_inner.addStretch(1)
+            return
         if comp.empty:
             # En clair, sans « passage en heures pleines / creuses » (audit
             # du 04/10/2026) ; sans aucun releve, la carte renvoie a la

@@ -800,16 +800,23 @@ def periodes_edf(cfg_comparaison: dict) -> list[dict]:
 
     Accepte aussi l'ancienne forme (un seul jeu de valeurs dans
     abonnement_mensuel_eur / prix_kwh_eur / prix_hp_eur_kwh / prix_hc_eur_kwh).
+    Sans grille declaree, une liste vide : la vue le dit. Avant (audit du
+    08/10/2026), des prix EDF de 2026 ecrits ici prenaient le relais en
+    silence, et vieillissaient sans prevenir.
     """
     periodes = cfg_comparaison.get("periodes")
     if not periodes:
+        cles = ("abonnement_mensuel_eur", "prix_kwh_eur", "prix_hp_eur_kwh",
+                "prix_hc_eur_kwh")
+        if not all(cfg_comparaison.get(c) is not None for c in cles):
+            return []
         return [{
             "debut": CUTOFF_OCTOPUS.date().isoformat(),
             "fin": None,
-            "abonnement": float(cfg_comparaison.get("abonnement_mensuel_eur", 19.56)),
-            "prix_base": float(cfg_comparaison.get("prix_kwh_eur", 0.1927)),
-            "prix_hp": float(cfg_comparaison.get("prix_hp_eur_kwh", 0.2065)),
-            "prix_hc": float(cfg_comparaison.get("prix_hc_eur_kwh", 0.1579)),
+            "abonnement": float(cfg_comparaison["abonnement_mensuel_eur"]),
+            "prix_base": float(cfg_comparaison["prix_kwh_eur"]),
+            "prix_hp": float(cfg_comparaison["prix_hp_eur_kwh"]),
+            "prix_hc": float(cfg_comparaison["prix_hc_eur_kwh"]),
         }]
     return sorted(periodes, key=lambda p: str(p["debut"]))
 
@@ -1054,7 +1061,9 @@ def comparaison_octopus_edf(df_daily: pd.DataFrame,
     # Fichier de releves encore vide (premier lancement) : l'index n'est pas
     # un index de dates, et le comparer a une date levait une erreur qui
     # empechait la vue de s'afficher.
-    if df_daily.empty:
+    # Sans grille de reference (section comparaison_edf absente), rien a
+    # comparer : la vue le dit.
+    if df_daily.empty or not edf_ref:
         return pd.DataFrame(columns=cols)
     out = df_daily[df_daily.index >= CUTOFF_OCTOPUS].copy()
     if out.empty:
