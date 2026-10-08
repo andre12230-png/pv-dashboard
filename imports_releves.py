@@ -955,7 +955,7 @@ def parse_enphase_texte(texte: str, notes: list | None = None
         raise ValueError(
             "Aucune ligne 'date;valeur' reconnue. Attendu : la production "
             "journalière de votre onduleur -- par exemple le rapport "
-            "Enphase 'Energie mensuelle' (Enlighten > Menu > Systeme > "
+            "Enphase 'Énergie mensuelle' (Enlighten > Menu > Système > "
             "Rapports), ou le rapport d'onduleur au format Excel."
         )
 

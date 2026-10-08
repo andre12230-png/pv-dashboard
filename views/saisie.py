@@ -629,8 +629,8 @@ class SaisieView(BaseView):
         else:
             message += (
                 "Or aucune journée n'a été vidée dans le tableau. Le fichier "
-                "a donc probablement été lu incompletement (synchronisation "
-                "interrompue, fichier verrouille) : enregistrer maintenant "
+                "a donc probablement été lu incomplètement (synchronisation "
+                "interrompue, fichier verrouillé) : enregistrer maintenant "
                 "effacerait pour de bon ce qui n'a pas été lu.\n\n"
                 "Dans le doute, cliquez sur Annuler, puis sur Recharger.\n\n")
         message += "L'ancienne version restera dans le .bak."
@@ -648,10 +648,10 @@ class SaisieView(BaseView):
 
         if self._fichier_modifie_depuis_la_lecture():
             QMessageBox.warning(
-                self, "Le fichier a change",
+                self, "Le fichier a changé",
                 "Le fichier de relevés a été modifié sur le disque depuis "
                 "que cette vue l'a lu (Excel ? une synchronisation ?).\n\n"
-                "Enregistrer maintenant ecraserait cette modification sans "
+                "Enregistrer maintenant écraserait cette modification sans "
                 "la voir.\n\n"
                 "Cliquez sur Recharger pour repartir de la version du "
                 "disque. Notez d'abord vos saisies en cours : le rechargement "

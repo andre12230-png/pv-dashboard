@@ -154,13 +154,13 @@ def main() -> int:
 
     splash = _make_splash()
     splash.show()
-    _message(splash, app, "Chargement des bibliotheques...")
+    _message(splash, app, "Chargement des bibliothèques…")
 
     # Imports lourds (pandas, matplotlib, vues) APRES l'affichage du splash.
     try:
         import app_desktop
         app_desktop.configure_application(app)
-        _message(splash, app, "Preparation des donnees...")
+        _message(splash, app, "Préparation des données…")
         win = app_desktop.create_window()
     except Exception as exc:  # frontiere applicative : tout doit etre signale
         _log_traceback()
