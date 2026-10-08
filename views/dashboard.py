@@ -484,13 +484,18 @@ class DashboardView(BaseView):
             self.data.dernieres_saisies,
             illisibles=getattr(self.data, "dates_illisibles", None),
             valeurs_illisibles=getattr(self.data, "valeurs_illisibles", None))
-        lbl = QLabel(("⚠  " if en_retard else "✓  ") + texte)
+        lbl = QLabel(("⚠ " if en_retard else "✓ ") + texte)
         lbl.setWordWrap(True)
         couleur = self.theme["warm_ink"] if en_retard else self.theme["text_muted"]
         fond = self.theme["warm_bg"] if en_retard else "transparent"
+        # Bandeau d'alerte : avec son cadre orange (charte, audit du
+        # 08/10/2026) ; sans alerte, une simple ligne discrete.
+        cadre = (f"1px solid {self.theme['warm']}" if en_retard
+                 else "1px solid transparent")
         lbl.setStyleSheet(
-            f"color: {couleur}; background: {fond}; font-size: 11px; "
-            f"padding: 6px 10px; border-radius: 4px;")  # 4 px : un bandeau (charte)
+            f"color: {couleur}; background: {fond}; border: {cadre}; "
+            "font-size: 11px; padding: 6px 10px; "
+            "border-radius: 4px;")  # 4 px : un bandeau (charte)
         return lbl
 
     def _bandeau_sauvegarde(self) -> QLabel | None:
@@ -500,11 +505,12 @@ class DashboardView(BaseView):
             self.rappel_sauvegarde) else None
         if not texte:
             return None
-        lbl = QLabel("💾  " + texte)
+        lbl = QLabel("💾 " + texte)
         lbl.setWordWrap(True)
         lbl.setStyleSheet(
             f"color: {self.theme['warm_ink']}; "
-            f"background: {self.theme['warm_bg']}; font-size: 11px; "
+            f"background: {self.theme['warm_bg']}; "
+            f"border: 1px solid {self.theme['warm']}; font-size: 11px; "
             f"padding: 6px 10px; border-radius: 4px;")  # 4 px : un bandeau (charte)
         return lbl
 

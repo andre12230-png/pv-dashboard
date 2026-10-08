@@ -113,3 +113,22 @@ def test_pas_de_conseil_de_periode_sur_une_page_qui_l_ignore(qapp):
     carte = vue._empty_card("Aucune donnée.")
     texte = " ".join(e.text() for e in carte.findChildren(QLabel))
     assert "flèches" not in texte
+
+
+def test_bandeaux_d_alerte_ont_leur_cadre_orange(qapp):
+    """Charte : bandeau d'alerte = fond #FEF5E7, cadre #E67E22, texte
+    #7E5109. Le cadre manquait (audit du 08/10/2026)."""
+    from datetime import date
+
+    from gui_theme import LIGHT
+    from views.dashboard import DashboardView
+
+    vue = DashboardView.__new__(DashboardView)
+    vue.theme = LIGHT
+    vue.rappel_sauvegarde = lambda: "Aucune sauvegarde externe."
+    bandeau = vue._bandeau_sauvegarde()
+    assert "#E67E22" in bandeau.styleSheet().upper()
+    assert bandeau.text().startswith("💾 Aucune")        # une seule espace
+    vue.data = type("D", (), {"dernieres_saisies": {"Prod_Jour": date(2020, 1, 1)},
+                              "dates_illisibles": [], "valeurs_illisibles": []})()
+    assert "#E67E22" in vue._bandeau_fraicheur().styleSheet().upper()
