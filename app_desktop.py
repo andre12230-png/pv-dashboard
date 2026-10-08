@@ -8,6 +8,7 @@ l'ecran d'attente puis ouvre cette fenetre.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import sys
 from datetime import date
@@ -226,21 +227,31 @@ def _lire_yaml(chemin: Path) -> dict:
             "(il devrait commencer par des sections comme 'installation:')."
         )
     try:
-        return _dates_en_iso(contenu)
+        return _valeurs_a_la_francaise(contenu)
     except ValueError as exc:
         raise RuntimeError(f"{chemin} : {erreur_en_clair(exc)}") from exc
 
 
-def _dates_en_iso(valeur):
-    """Recopie la configuration en reecrivant chaque date JJ/MM/AAAA au
-    format AAAA-MM-JJ, le seul que le reste du programme comprend sans
-    ambiguite (audit du 08/10/2026 : « 01/06/2024 » etait lu le 6 janvier).
-    Fait ici, a la lecture, une fois pour toutes les dates du fichier."""
+# Un nombre ecrit a la francaise, seul dans sa case : « 0,22 », « -1,5 ».
+_NOMBRE_A_VIRGULE = re.compile(r"^\s*-?\d+,\d+\s*$")
+
+
+def _valeurs_a_la_francaise(valeur):
+    """Recopie la configuration en lisant ce qu'un Francais tape a la main
+    (audit du 08/10/2026) :
+    - une date JJ/MM/AAAA devient AAAA-MM-JJ, le seul format que le reste du
+      programme comprend sans ambiguite (« 01/06/2024 » etait lu le 6
+      janvier) ;
+    - un nombre a virgule (« 0,22 ») devient un nombre (il donnait
+      « could not convert string to float », en anglais).
+    Fait ici, a la lecture, une fois pour tout le fichier."""
     if isinstance(valeur, dict):
-        return {cle: _dates_en_iso(v) for cle, v in valeur.items()}
+        return {cle: _valeurs_a_la_francaise(v) for cle, v in valeur.items()}
     if isinstance(valeur, list):
-        return [_dates_en_iso(v) for v in valeur]
+        return [_valeurs_a_la_francaise(v) for v in valeur]
     if isinstance(valeur, str):
+        if _NOMBRE_A_VIRGULE.match(valeur):
+            return float(valeur.strip().replace(",", "."))
         return reglages.date_francaise_en_iso(valeur) or valeur
     return valeur
 
@@ -915,10 +926,22 @@ class MainWindow(QMainWindow):
         # sur la Saisie se pose donc AVANT, pas une fois la nouvelle ouverte.
         if not self._saisies_reglees("avant d'ouvrir vos réglages"):
             return
+        # Un reglage illisible ne laisse plus le clic sans effet visible
+        # (audit du 08/10/2026) : on dit lequel, en francais.
+        try:
+            valeurs = reglages.lire_reglages(self.data.cfg)
+            recalages = reglages.lire_recalages(self.data.cfg)
+        except (ValueError, TypeError, KeyError, OSError) as exc:
+            QMessageBox.warning(
+                self, "Réglages illisibles",
+                "Vos réglages n'ont pas pu être lus : "
+                f"{erreur_en_clair(exc)}\n\nCorrigez cette valeur dans "
+                "config.yaml (Paramètres indique son dossier), puis relancez "
+                "l'application.")
+            return
         fenetre = FenetreReglages(
-            reglages.lire_reglages(self.data.cfg),
-            self._enregistrer_reglages, self,
-            recalages=reglages.lire_recalages(self.data.cfg),
+            valeurs, self._enregistrer_reglages, self,
+            recalages=recalages,
             enregistrer_recalages=self._enregistrer_recalages)
         if fenetre.exec() == QDialog.Accepted:
             self._recharger_fenetre()

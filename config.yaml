@@ -10,6 +10,7 @@
 #
 # Les dates s'ecrivent "2024-06-01" ou "01/06/2024" (jour, mois, annee) :
 # les deux designent le 1er juin 2024.
+# Les nombres s'ecrivent 0.22 ou 0,22.
 # =====================================================================
 installation:
   puissance_kwc: 3.0                   # puissance crete des panneaux
