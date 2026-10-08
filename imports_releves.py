@@ -183,6 +183,17 @@ def parse_enedis_csv_texte(texte: str, notes: list | None = None
     lignes datees sans valeur lisible."""
     bas = texte.lower()
     colonne = _type_de_donnees(texte)
+    # « Production » sans « injection » : chez Enedis c'est l'injection, mais
+    # c'est aussi le mot d'un export d'onduleur passe par le mauvais bouton,
+    # range alors en Injection sans un mot (audit du 08/10/2026). On le dit
+    # dans le recapitulatif, qui s'affiche avant d'appliquer.
+    if (notes is not None and colonne == "Inj_Jour"
+            and "injection" not in _entete_du_fichier(texte).lower()):
+        notes.append(
+            "Ce fichier parle de « production » : il est rangé en Injection "
+            "(ce que votre compteur envoie au réseau). Si c'est l'export de "
+            "votre onduleur, cliquez sur Annuler et utilisez plutôt "
+            "« Importer la production… ».")
 
     # Unite explicite dans les entetes ; None -> heuristique plus bas.
     unite_kwh = _unite_annoncee(bas)
