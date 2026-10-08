@@ -12,8 +12,14 @@ import pytest
 pytest.importorskip("pandas")
 
 from accords import nombre  # noqa: E402
-from views._helpers import (fmt_eur, fmt_kwh, fmt_kwh_seul,  # noqa: E402
-                            fmt_pct, fmt_prix_kwh, nombre_barre)
+from views._helpers import (  # noqa: E402
+    fmt_eur,
+    fmt_kwh,
+    fmt_kwh_seul,
+    fmt_pct,
+    fmt_prix_kwh,
+    nombre_barre,
+)
 
 NBSP = "\xa0"
 
@@ -91,7 +97,7 @@ def _fautes_d_espace():
             if id(n) in ignores:
                 continue
             if isinstance(n, ast.JoinedStr):
-                for a, b in zip(n.values, n.values[1:]):
+                for a, b in zip(n.values, n.values[1:], strict=False):
                     if (isinstance(a, ast.FormattedValue)
                             and isinstance(b, ast.Constant)
                             and EN_TETE.search(b.value)):
