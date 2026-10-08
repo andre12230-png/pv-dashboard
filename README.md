@@ -60,8 +60,9 @@ plafonds de saisie s'y adaptent.
 
 La **version** de l'application s'affiche dans le titre de sa fenetre et en
 bas du menu de gauche. Elle n'est ecrite qu'a un seul endroit du code,
-`APP_VERSION` dans `app_desktop.py` ; le detail de chaque version figure dans
-l'historique du depot.
+`APP_VERSION` dans `app_desktop.py` ; seul le site (`softwareVersion` de
+`docs/index.html`) la recopie, a remettre a jour a chaque sortie. Le detail
+de chaque version figure dans l'historique du depot.
 
 ## Premier demarrage
 
@@ -514,8 +515,9 @@ garde une copie quotidienne dans `backups/` (les 30 dernieres).
   toujours ete en heures creuses met sa date de mise en service ; qui est
   encore en prix unique met une date future. Absente : 01/01/2026
 - `tarifs_reseau.bleu_base` : abonnement et historique des prix Bleu
-  Base par periode. **Facultative** : sans elle, l'application considere
-  qu'il n'y a rien eu avant la bascule
+  Base par periode. **Facultative** : sans elle, les journees d'avant la
+  bascule sont comptees au tarif heures pleines / creuses (la bascule est
+  ramenee au premier releve)
 - `tarifs_reseau.contrat_hphc.nom` / `.offre` : nom de VOTRE fournisseur tel
   qu'il s'affiche — le court pour le menu de gauche, le long pour les titres
   (chez l'auteur : "Octopus" / "Octopus Go"). Idem pour `comparaison_edf`.

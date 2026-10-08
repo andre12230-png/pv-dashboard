@@ -55,8 +55,9 @@ recharge seule à l'enregistrement. L'onglet <b>Paramètres</b> montre ensuite
 à tout moment ce qui est pris en compte : c'est là qu'on vérifie qu'on ne
 s'est pas trompé.<br>
 Les réglages plus rares (TVA, grille EDF de comparaison, prix d'un ancien
-contrat à prix unique, durée du contrat de vente — 20 ans par défaut ;
-au-delà, la vente compte pour 0\xa0€) se font dans le fichier <code>config.yaml</code>,
+contrat à prix unique, durée du contrat de vente — 20 ans dans le modèle
+livré ; au-delà, la vente compte pour 0\xa0€ ; sans cette ligne, la vente ne
+s'arrête pas) se font dans le fichier <code>config.yaml</code>,
 avec le Bloc-notes, dans le dossier de vos données : <code>{dossier}</code>
 (menu Démarrer, raccourci « Dossier des données », si l'application a été
 installée). Relancez alors l'application pour appliquer.</p>
@@ -127,8 +128,9 @@ pas EDF : il compare votre contrat au Tarif Bleu d'EDF.</p>
 <p><b>Paramètres</b> — récapitulatif de la configuration (tarifs, contrat), et
 bouton <b>Modifier mes réglages</b> pour la changer.</p>
 <p><b>Votre avis</b> — signaler un problème ou proposer une idée : ouvre un
-court questionnaire dans votre navigateur. L'application, elle, n'envoie
-rien.</p>
+court questionnaire dans votre navigateur, après avoir copié dans le
+presse-papiers le numéro de version et celui de Windows, à coller dans la
+réponse si vous le souhaitez. L'application, elle, n'envoie rien.</p>
 
 <h3 style="color:#1F3A6B">Vos données sont-elles à jour ?</h3>
 <p>Un bandeau en haut du <b>Tableau de bord</b> indique l'âge de chaque
@@ -140,9 +142,13 @@ plus tard encore.</p>
 <p>Si une grandeur dépasse <b>3 jours</b>, le bandeau devient orange : c'est
 qu'un import a probablement été oublié. La barre d'état, en bas, rappelle la
 date du dernier relevé quel que soit l'onglet affiché.</p>
+<p>Si vous n'avez importé que la <b>production</b>, le tableau de bord le dit :
+ces journées attendent le relevé du réseau (injection et achat), sans lequel
+l'autoconsommation ne se calcule pas. Elles entrent dans les calculs dès qu'il
+est importé.</p>
 
 <h3 style="color:#1F3A6B">Choisir une période</h3>
-<p>La barre en haut à droite porte <b>‹ année mois ›</b> et filtre toutes les
+<p>La barre en haut à droite porte <b>‹ année mois ›</b> et filtre tous les
 onglets. Les deux flèches reculent ou avancent d'un cran : d'un mois quand un
 mois est affiché, d'une année quand c'est une année, d'une {annee_oa} quand
 c'est une {annee_oa}. Elles se grisent quand il n'y a plus rien de ce côté.</p>
@@ -364,6 +370,12 @@ dernières journées d'utilisation.</li>
 <p>Les copies quotidiennes échappent à la rotation des 15 : vous pouvez donc
 revenir plusieurs semaines en arrière. Pour restaurer, fermez l'application et
 recopiez le fichier voulu sur <code>Releves-pv.csv</code>.</p>
+<p>Vos réglages ont aussi leurs copies, dans <code>backups/</code> :
+<code>config-local_jour_…</code>, une par journée d'utilisation (les 30
+dernières), et <code>config_avant-reglages_…</code> /
+<code>config-local_avant-reglages_…</code>, faites juste avant chaque
+enregistrement de <b>Mes réglages</b> (les 30 plus récentes de chaque
+sorte).</p>
 <p><b>Sur une clé USB ou un disque externe.</b> Toutes ces copies restent sur
 le même disque que vos données : si ce disque lâche, elles partent avec lui.
 Le bouton <b>💾 Sauvegarde externe</b>, section <b>Mes données</b> du menu de

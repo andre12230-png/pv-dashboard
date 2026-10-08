@@ -1,7 +1,8 @@
 # =====================================================================
 # Configuration de l'installation photovoltaique - MODELE
 # =====================================================================
-# Ce fichier est un EXEMPLE : les valeurs ci-dessous sont inventees.
+# Ce fichier est un EXEMPLE : les valeurs ci-dessous sont inventees, sauf
+# la grille EDF de comparaison (comparaison_edf), tiree des tarifs publics.
 # Remplacez-les par celles de votre installation et de vos contrats
 # (elles se lisent sur vos factures), puis relancez l'application.
 #
