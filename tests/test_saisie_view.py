@@ -15,6 +15,7 @@ import data_loaders as dl
 
 pytest.importorskip("PySide6")
 
+from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtWidgets import (  # noqa: E402
     QApplication,
     QLabel,
@@ -839,3 +840,57 @@ def test_le_cadre_et_l_invite_sont_lisibles():
     assert contrast_ratio(saisie_module.CADRE_A_SAISIR, "#FFFFFF") >= 3
     assert contrast_ratio(saisie_module.CADRE_A_SAISIR, "#FFFBE6") >= 3
     assert contrast_ratio(saisie_module.TEXTE_INVITE, "#FFFFFF") >= 4.5
+
+
+# ---------------------------------------------------------------------------
+# Demande du 09/10/2026 (suite) : dans un jour deja enregistre, une case vide
+# (heures creuses / pleines pas encore importees) s'encadre aussi, mais
+# seulement si sa colonne sert : sans heures creuses, toutes ces cases sont
+# vides et le tableau entier dirait « à saisir ».
+# ---------------------------------------------------------------------------
+
+CSV_TROU_HC_HP = (
+    "Date;Prod_Jour;Inj_Jour;Conso_réseau_Jour;Conso_HC;Conso_HP\n"
+    "01/05/2026;20,5;15,2;3,1;1,0;2,1\n"
+    "02/05/2026;18;12;2;1,5;1,6\n"
+    "03/05/2026;19;13;2,5;;\n"
+)
+
+CSV_SANS_HC_HP = (
+    "Date;Prod_Jour;Inj_Jour;Conso_réseau_Jour;Conso_HC;Conso_HP\n"
+    "01/05/2026;20,5;15,2;3,1;;\n"
+    "02/05/2026;18;12;2;;\n"
+)
+
+
+def _vue_sur(qapp, tmp_path, contenu):
+    csv = tmp_path / "Releves-pv.csv"
+    csv.write_text(contenu, encoding="utf-8")
+    data = SimpleNamespace(releves_path=str(csv), current_period="all",
+                           puissance_kwc=6.0)
+    v = SaisieView(data, gui_theme.LIGHT)
+    v.populate("all")
+    return v
+
+
+def test_case_vide_d_un_jour_enregistre_est_a_saisir(qapp, tmp_path):
+    vue = _vue_sur(qapp, tmp_path, CSV_TROU_HC_HP)
+    role = saisie_module.ROLE_A_SAISIR
+    # Ligne 1 = 03/05/2026 (la plus recente, sous la ligne du jour).
+    assert vue.table.item(1, 0).text() == "03/05/2026"
+    assert vue.table.item(1, vue.COLS.index("Conso_HC")).data(role) is True
+    assert vue.table.item(1, vue.COLS.index("Conso_HP")).data(role) is True
+    # Ses cases remplies ne le sont pas, ni celles des autres jours.
+    assert not vue.table.item(1, vue.COLS.index("Prod_Jour")).data(role)
+    assert not vue.table.item(2, vue.COLS.index("Conso_HC")).data(role)
+    # Elles gardent le fond de leur ligne : seule la ligne du jour est jaune.
+    assert vue.table.item(1, vue.COLS.index("Conso_HC")).data(
+        Qt.BackgroundRole) is None
+
+
+def test_colonne_jamais_remplie_n_est_pas_a_saisir(qapp, tmp_path):
+    vue = _vue_sur(qapp, tmp_path, CSV_SANS_HC_HP)
+    role = saisie_module.ROLE_A_SAISIR
+    for r in range(1, vue.table.rowCount()):
+        for col in ("Conso_HC", "Conso_HP"):
+            assert not vue.table.item(r, vue.COLS.index(col)).data(role)

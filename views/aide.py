@@ -173,7 +173,9 @@ les chiffres d'un mois passé consulté la veille.</p>
 <p>1. Ouvrez <b>Saisie quotidienne</b>.<br>
 2. La première ligne, sur fond jaune pâle, est prête avec la date attendue.<br>
 3. Saisissez les valeurs dans ses cases encadrées de bleu (« à saisir »
-tant qu'elles sont vides ; touche Tab pour changer de case).<br>
+tant qu'elles sont vides ; touche Tab pour changer de case). Une valeur qui
+manque à un jour déjà enregistré (heures creuses et pleines pas encore
+importées, par exemple) est encadrée de même.<br>
 4. Cliquez sur <b>Enregistrer</b> : les autres onglets se mettent à jour.</p>
 <p>Une journée qui n'a encore que sa production (Enedis publie l'achat au
 réseau et l'injection un jour plus tard), comme la journée en cours, est

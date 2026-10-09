@@ -75,8 +75,12 @@ class _DelegueASaisir(QStyledItemDelegate):
             return
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
-        # Le fond jaune de la ligne autour de la case.
-        painter.fillRect(option.rect, QColor(FOND_LIGNE_DU_JOUR))
+        # Autour de la case, le fond propre de la case s'il en a un (le
+        # jaune de la ligne du jour) ; sinon le tableau a deja peint celui
+        # de la ligne (blanc ou gris alterne).
+        fond = index.data(Qt.BackgroundRole)
+        if fond is not None:
+            painter.fillRect(option.rect, fond)
         case = option.rect.adjusted(4, 4, -4, -4)
         active = bool(option.state & QStyle.State_Selected)
         stylo = QPen(QColor(CADRE_A_SAISIR), 2 if active else 1)
@@ -149,7 +153,8 @@ class SaisieView(BaseView):
         self.layout_inner.addWidget(SectionTitle(
             "",
             "La première ligne, sur fond jaune pâle, attend les relevés du "
-            "jour : tapez-les dans ses cases encadrées de bleu. Modifiez "
+            "jour : tapez-les dans ses cases encadrées de bleu (une valeur "
+            "qui manque à un jour passé est encadrée de même). Modifiez "
             "les valeurs puis cliquez sur Enregistrer. "
             "Décimales avec virgule ; une case peut rester vide.",
         ))
@@ -311,11 +316,25 @@ class SaisieView(BaseView):
         nouvelle["Date"] = self._prochaine_date()
 
         lignes = [nouvelle] + list(reversed(recents))  # plus recent en haut
+        # Colonnes qui servent : remplies au moins une fois dans le tableau.
+        # Une case vide d'un jour deja enregistre n'est « à saisir » que dans
+        # ces colonnes. Sans heures creuses, par exemple, ces deux colonnes
+        # sont vides partout et ne doivent pas toutes dire « à saisir ».
+        colonnes_servies = {
+            col for col in self.COLS[1:]
+            if any(str(ligne.get(col, "")).strip() for ligne in recents)
+        }
         self.table.setRowCount(len(lignes))
         for r, row_data in enumerate(lignes):
             for c, col in enumerate(self.COLS):
-                self.table.setItem(r, c, self._case(
-                    row_data.get(col, ""), c, nouvelle=(r == 0)))
+                texte = row_data.get(col, "")
+                item = self._case(texte, c, nouvelle=(r == 0))
+                if (r > 0 and col in colonnes_servies
+                        and not str(texte).strip()):
+                    item.setData(ROLE_A_SAISIR, True)
+                    item.setToolTip("Valeur manquante pour ce jour : "
+                                    "saisissez-la ou importez-la.")
+                self.table.setItem(r, c, item)
         self.table.setCurrentCell(0, 1)  # focus sur Prod_Jour de la nouvelle ligne
 
     def _case(self, texte: str, colonne: int,
