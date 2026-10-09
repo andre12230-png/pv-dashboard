@@ -800,3 +800,42 @@ def test_enregistrer_sans_rien_toucher_ne_compte_aucune_modif(qapp, tmp_path):
     assert v._enregistrer()
     assert "0 modif" in v.status_label.text()
     assert csv.read_text(encoding="utf-8") == contenu
+
+
+# ---------------------------------------------------------------------------
+# Les cases a remplir se voient (demande du 09/10/2026) : le jaune pale de la
+# ligne du jour se distinguait a peine des lignes alternees. Ses cinq cases
+# de valeurs sont dessinees comme des cases de formulaire (blanches,
+# encadrees de bleu, « à saisir » quand elles sont vides).
+# ---------------------------------------------------------------------------
+
+def test_les_cases_de_la_ligne_du_jour_sont_marquees_a_saisir(vue):
+    role = saisie_module.ROLE_A_SAISIR
+    for c in range(1, len(vue.COLS)):
+        assert vue.table.item(0, c).data(role) is True, vue.COLS[c]
+        # Les lignes deja enregistrees ne le sont pas.
+        assert not vue.table.item(1, c).data(role), vue.COLS[c]
+    # La date n'est pas a saisir : elle est deja pre-remplie.
+    assert not vue.table.item(0, 0).data(role)
+
+
+def test_une_ligne_ajoutee_a_aussi_ses_cases_a_saisir(vue):
+    vue._ajouter_ligne_vide()
+    role = saisie_module.ROLE_A_SAISIR
+    assert all(vue.table.item(0, c).data(role) is True
+               for c in range(1, len(vue.COLS)))
+
+
+def test_les_colonnes_de_valeurs_dessinent_les_cases_a_saisir(vue):
+    for c in range(1, len(vue.COLS)):
+        delegue = vue.table.itemDelegateForColumn(c)
+        assert isinstance(delegue, saisie_module._DelegueASaisir), c
+
+
+def test_le_cadre_et_l_invite_sont_lisibles():
+    """Charte : contour d'un element a remplir >= 3 pour 1 sur son fond,
+    texte >= 4,5 pour 1."""
+    from gui_theme import _contraste as contrast_ratio
+    assert contrast_ratio(saisie_module.CADRE_A_SAISIR, "#FFFFFF") >= 3
+    assert contrast_ratio(saisie_module.CADRE_A_SAISIR, "#FFFBE6") >= 3
+    assert contrast_ratio(saisie_module.TEXTE_INVITE, "#FFFFFF") >= 4.5

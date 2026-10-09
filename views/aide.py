@@ -171,8 +171,9 @@ les chiffres d'un mois passé consulté la veille.</p>
 
 <h3 style="color:#1F3A6B">Saisir les relevés du jour</h3>
 <p>1. Ouvrez <b>Saisie quotidienne</b>.<br>
-2. La première ligne, surlignée, est prête avec la date attendue.<br>
-3. Saisissez les valeurs (touche Tab pour changer de case).<br>
+2. La première ligne, sur fond jaune pâle, est prête avec la date attendue.<br>
+3. Saisissez les valeurs dans ses cases encadrées de bleu (« à saisir »
+tant qu'elles sont vides ; touche Tab pour changer de case).<br>
 4. Cliquez sur <b>Enregistrer</b> : les autres onglets se mettent à jour.</p>
 <p>Une journée qui n'a encore que sa production (Enedis publie l'achat au
 réseau et l'injection un jour plus tard), comme la journée en cours, est

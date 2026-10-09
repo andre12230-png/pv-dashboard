@@ -7,7 +7,7 @@ from datetime import datetime
 
 import pandas as pd
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QFont
+from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QMessageBox,
     QPushButton,
+    QStyle,
     QStyledItemDelegate,
     QTableWidget,
     QTableWidgetItem,
@@ -47,6 +48,54 @@ class _DelegueDate(QStyledItemDelegate):
         except ValueError:
             return texte
         return f"{JOURS_COURTS[jour.weekday()]} {texte}"
+
+
+# Marque posee sur les cases a remplir de la ligne du jour.
+ROLE_A_SAISIR = Qt.UserRole + 1
+# Bleu de selection de la charte : 5,2 pour 1 sur le blanc, 4,9 sur le jaune.
+CADRE_A_SAISIR = "#316AC5"
+# Gris discret de la charte pour l'invite « à saisir » (5,7 sur le blanc).
+TEXTE_INVITE = "#666666"
+FOND_LIGNE_DU_JOUR = "#FFFBE6"
+
+
+class _DelegueASaisir(QStyledItemDelegate):
+    """Dessine les cases a remplir comme des cases de formulaire.
+
+    Demande du 09/10/2026 : le seul fond jaune pale de la ligne du jour se
+    distinguait a peine des autres lignes. Chaque case a remplir devient une
+    case blanche encadree de bleu (cadre plus epais sur la case active), et
+    une case vide affiche « à saisir » en gris. Les autres cases gardent le
+    dessin ordinaire.
+    """
+
+    def paint(self, painter, option, index):
+        if not index.data(ROLE_A_SAISIR):
+            super().paint(painter, option, index)
+            return
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+        # Le fond jaune de la ligne autour de la case.
+        painter.fillRect(option.rect, QColor(FOND_LIGNE_DU_JOUR))
+        case = option.rect.adjusted(4, 4, -4, -4)
+        active = bool(option.state & QStyle.State_Selected)
+        stylo = QPen(QColor(CADRE_A_SAISIR), 2 if active else 1)
+        painter.setPen(stylo)
+        painter.setBrush(QColor("#FFFFFF"))
+        painter.drawRoundedRect(case, 4, 4)
+        # Le texte, cale a droite comme les autres chiffres.
+        zone = case.adjusted(6, 0, -10, 0)
+        texte = str(index.data(Qt.DisplayRole) or "")
+        police = QFont(option.font)
+        if texte.strip():
+            painter.setPen(QColor("#000000"))
+        else:
+            texte = "à saisir"
+            police.setItalic(True)
+            painter.setPen(QColor(TEXTE_INVITE))
+        painter.setFont(police)
+        painter.drawText(zone, Qt.AlignRight | Qt.AlignVCenter, texte)
+        painter.restore()
 
 
 class SaisieView(BaseView):
@@ -100,7 +149,8 @@ class SaisieView(BaseView):
         self.layout_inner.addWidget(SectionTitle(
             "",
             "La première ligne, sur fond jaune pâle, attend les relevés du "
-            "jour. Modifiez les valeurs puis cliquez sur Enregistrer. "
+            "jour : tapez-les dans ses cases encadrées de bleu. Modifiez "
+            "les valeurs puis cliquez sur Enregistrer. "
             "Décimales avec virgule ; une case peut rester vide.",
         ))
 
@@ -187,6 +237,10 @@ class SaisieView(BaseView):
             "QTableWidget::item { padding-left: 10px; padding-right: 14px;"
             " margin: 0; }")
         self.table.setItemDelegateForColumn(0, _DelegueDate(self.table))
+        # Un seul delegue pour les cinq colonnes de valeurs.
+        self._delegue_a_saisir = _DelegueASaisir(self.table)
+        for i in range(1, len(self.COLS)):
+            self.table.setItemDelegateForColumn(i, self._delegue_a_saisir)
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.table.horizontalHeaderItem(0).setTextAlignment(
@@ -285,13 +339,16 @@ class SaisieView(BaseView):
                 police = QFont(item.font())
                 police.setBold(True)
                 item.setFont(police)
+            else:
+                # Case a remplir : dessinee en case de formulaire.
+                item.setData(ROLE_A_SAISIR, True)
         return item
 
     def _couleur_nouvelle_ligne(self):
         # Le jaune d'information de la charte, celui des remarques sans
         # urgence (choix de l'auteur du 08/10/2026 ; c'etait un ambre hors
         # palette). La phrase d'en-tete dit ce qu'est cette ligne.
-        return QColor("#FFFBE6")
+        return QColor(FOND_LIGNE_DU_JOUR)
 
     def _ajouter_ligne_vide(self) -> None:
         assert self.table is not None
