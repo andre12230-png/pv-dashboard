@@ -245,7 +245,8 @@ class OctopusEdfView(BaseView):
             f"abonnement {fmt_eur(p['abonnement'])}/mois, "
             f"Base {fmt_prix_kwh(p['prix_base'])}, "
             f"HP {fmt_prix_kwh(p['prix_hp'])} et HC {fmt_prix_kwh(p['prix_hc'])}."
-            for p in ref
+            # La grille la plus recente d'abord (10/10/2026).
+            for p in reversed(ref)
         )
         # Des releves anterieurs a la premiere grille declaree recoivent
         # cette premiere grille : le dire, plutot que « en vigueur à chaque

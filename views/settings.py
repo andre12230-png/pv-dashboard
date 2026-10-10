@@ -17,6 +17,12 @@ from views._base import BaseView
 from views._helpers import du_au, fmt_date_fr, fmt_eur, fmt_kwc, fmt_pct, fmt_prix_kwh
 
 
+def _recentes_d_abord(periodes) -> list:
+    """Les periodes de prix, la plus recente en premier (10/10/2026)."""
+    return sorted(periodes or [], key=lambda t: str(t.get("debut") or ""),
+                  reverse=True)
+
+
 def _duree_ans(n) -> str:
     """'1 an', '5 ans' : l'ecran affichait « 1 ans »."""
     return f"{n} an" if float(n) <= 1 else f"{n} ans"
@@ -90,16 +96,20 @@ class SettingsView(BaseView):
         self.layout_inner.addLayout(grid_row(cards))
 
         # Libelles entiers, sans « Abonn. » ni « HC » (journal du 01/10/2026).
+        # La periode la plus recente en haut (10/10/2026), quel que soit
+        # l'ordre du fichier.
         bleu_abo_rows = [(f"Abonnement {du_au(t['debut'], t['fin'])}",
                           f"{fmt_eur(t['montant'])} / mois")
-                         for t in (bleu.get("abonnement_par_periode") or [])]
+                         for t in _recentes_d_abord(
+                             bleu.get("abonnement_par_periode"))]
         bleu_rows = [(f"Prix du kWh {du_au(t['debut'], t['fin'])}",
                       fmt_prix_kwh(t["prix"]))
-                     for t in (bleu.get("prix_kwh_par_periode") or [])]
+                     for t in _recentes_d_abord(
+                         bleu.get("prix_kwh_par_periode"))]
         # Une ligne par periode de prix Octopus : les tarifs changent en cours
         # de contrat (revalorisation du 01/08/2026), l'ecran les montre tous.
         octopus_rows = []
-        for p in calc.periodes_octopus(octopus):
+        for p in reversed(calc.periodes_octopus(octopus)):
             libelle = (du_au(p["debut"], p["fin"]).capitalize() if p.get("fin")
                        else f"Depuis le {fmt_date_fr(p['debut'])}, en cours")
             octopus_rows.append((libelle, (

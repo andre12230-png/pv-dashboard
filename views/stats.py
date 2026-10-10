@@ -80,7 +80,8 @@ class StatsView(BaseView):
             f"Référence France : 900 à 1\xa0200\xa0kWh/kWc/an — {texte_moyenne}",
         ))
         cards = []
-        for y, v in rendement.items():
+        # L'annee la plus recente en premier (10/10/2026), comme les tableaux.
+        for y, v in reversed(list(rendement.items())):
             if int(y) in partielles:
                 g = df[df.index.year == int(y)]
                 cards.append(KpiCard(

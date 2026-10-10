@@ -72,6 +72,13 @@ def _en_date(case: QDateEdit) -> date:
     return date(d.year(), d.month(), d.day())
 
 
+
+def _cle_debut(periode: dict) -> str:
+    """Cle de tri d'un recalage : sa date de debut, ecrite AAAA-MM-JJ (une
+    date ou un texte deja ISO). Une ligne sans date se range en tete."""
+    return str(periode.get("debut") or "")
+
+
 class LigneRecalage(QWidget):
     """Une periode de recalage : sa sorte, ses dates, son total, sa source.
 
@@ -389,9 +396,11 @@ class FenetreReglages(QDialog):
         self._lignes = QVBoxLayout()
         self._lignes.setSpacing(4)
         dehors.addLayout(self._lignes)
+        # Dans chaque sorte, la periode la plus recente en haut (10/10/2026).
         for cle in SORTES_RECALAGE:
-            for periode in recalages.get(cle) or []:
-                self._ajouter_ligne(cle, periode)
+            for periode in sorted(recalages.get(cle) or [], key=_cle_debut,
+                                  reverse=True):
+                self._ajouter_ligne(cle, periode, en_bas=True)
 
         ajouter = QPushButton("+ Ajouter une ligne")
         ajouter.clicked.connect(lambda: self._ajouter_ligne())
@@ -402,10 +411,16 @@ class FenetreReglages(QDialog):
         return groupe
 
     def _ajouter_ligne(self, cle: str = "injection_facturee",
-                       periode: dict | None = None) -> None:
+                       periode: dict | None = None,
+                       en_bas: bool = False) -> None:
+        """Une ligne de recalage. Une ligne neuve (bouton « + Ajouter une
+        ligne ») va en haut, avec les periodes les plus recentes."""
         ligne = LigneRecalage(cle, periode or {}, self._retirer_ligne,
                               self._acheteur_nom)
-        self._lignes.addWidget(ligne)
+        if en_bas:
+            self._lignes.addWidget(ligne)
+        else:
+            self._lignes.insertWidget(0, ligne)
 
     def _retirer_ligne(self, ligne: LigneRecalage) -> None:
         self._lignes.removeWidget(ligne)
@@ -421,6 +436,10 @@ class FenetreReglages(QDialog):
                 continue
             cle, periode = ligne.valeurs()
             tous[cle].append(periode)
+        # Le fichier garde l'ordre chronologique : l'ecran seul est a
+        # l'envers (10/10/2026).
+        for cle in tous:
+            tous[cle].sort(key=_cle_debut)
         return tous
 
     def _en_tout(self) -> bool:

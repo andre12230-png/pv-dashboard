@@ -329,8 +329,10 @@ class TvaView(BaseView):
 
         gras = QFont()
         gras.setBold(True)
-        # La periode la plus recente en haut, comme le tableau des annees.
-        for i, ligne in enumerate(reversed(controles)):
+        # La periode la plus recente en haut, comme le tableau des annees :
+        # triee ici, et non selon l'ordre du fichier de reglages (10/10/2026).
+        for i, ligne in enumerate(sorted(controles, key=lambda c: c["debut"],
+                                         reverse=True)):
             pct = ligne["ecart_pct"]
             items = [
                 QTableWidgetItem(du_au(ligne["debut"], ligne["fin"])),
