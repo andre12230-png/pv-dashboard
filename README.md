@@ -203,9 +203,9 @@ remplie) et la **comparaison avec EDF** (fournisseur autre qu'EDF).
 Le bandeau reprend celui de Pécule : boutons rectangulaires, un emoji devant
 chaque libellé, titres de section soulignés ; la page affichée est le bouton
 surligné en bleu. En haut du
-menu, la puissance et la date de début du contrat (« OA depuis... », ou
-« Vente depuis... » avec un autre acheteur) ; en pied, le numéro de
-version.
+menu, le nom de l'application et ce qu'elle apporte (« Ce que rapportent vos
+panneaux »), comme dans les deux autres applications ; en pied, le numéro de
+version. La puissance de l'installation se lit dans le titre de la fenêtre.
 
 ## Vues disponibles
 
