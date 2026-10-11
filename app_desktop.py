@@ -1239,7 +1239,11 @@ class MainWindow(QMainWindow):
                              f"{self.data.fournisseur_reference[1]}"),
             # Les memes mots que dans Pecule (11/10/2026).
             "aide":         ("Notice", "Mode d'emploi et glossaire"),
-            "settings":     ("Paramètres", "Configuration de l'application"),
+            # Ce que la page montre, carte par carte (11/10/2026 ; c'etait
+            # « Configuration de l'application »).
+            "settings":     ("Paramètres",
+                             "Votre installation, votre contrat de vente et "
+                             "vos tarifs d'électricité"),
         }
 
     def _apres_changement_de_page(self, key: str) -> None:

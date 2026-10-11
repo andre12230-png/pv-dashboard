@@ -202,6 +202,11 @@ def test_chaque_entree_du_bandeau_a_son_infobulle(fenetre):
     for key, entree in fenetre.nav_buttons.items():
         assert entree.toolTip() == titres[key][1], key
     assert fenetre.maj_btn.toolTip() == MAJ_COMMUNE
+    # Une phrase qui dit ce que contient la page (c'etait « Configuration
+    # de l'application », 11/10/2026).
+    assert titres["settings"][1] == (
+        "Votre installation, votre contrat de vente et vos tarifs "
+        "d'électricité")
     assert fenetre.sauvegarde_btn.toolTip() == (
         "Copie vos relevés et vos réglages sur une clé USB ou un disque "
         "externe, dans un dossier daté, et vérifie la copie")
