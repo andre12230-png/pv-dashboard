@@ -207,6 +207,10 @@ def test_chaque_entree_du_bandeau_a_son_infobulle(fenetre):
     assert titres["settings"][1] == (
         "Votre installation, votre contrat de vente et vos tarifs "
         "d'électricité")
+    # Comme les Statistiques de Recharges VE : ce que montrent les cartes
+    # (c'etait « Comparaisons annuelles et rendement », 11/10/2026).
+    assert titres["stats"][1] == (
+        "Énergie année par année, production mois par mois, et rendement")
     assert fenetre.sauvegarde_btn.toolTip() == (
         "Copie vos relevés et vos réglages sur une clé USB ou un disque "
         "externe, dans un dossier daté, et vérifie la copie")

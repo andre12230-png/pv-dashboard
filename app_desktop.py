@@ -1228,7 +1228,11 @@ class MainWindow(QMainWindow):
             "tva":          ("TVA autoconsommation",
                              "Livraison à soi-même — ligne 5A de la "
                              "déclaration CA12 / 3517-S"),
-            "stats":        ("Statistiques", "Comparaisons annuelles et rendement"),
+            # Ce que montrent les cartes, comme les Statistiques de Recharges
+            # VE (11/10/2026 ; c'etait « Comparaisons annuelles et rendement »).
+            "stats":        ("Statistiques",
+                             "Énergie année par année, production mois par "
+                             "mois, et rendement"),
             "comparaison":  ("Comparer à l'an passé",
                              f"Le mois, l'année ou l'{mot_annee('minuscule')} choisis en haut, "
                              "face à la même période un an plus tôt"),
