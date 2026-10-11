@@ -870,9 +870,15 @@ class MainWindow(QMainWindow):
             "(questionnaire en ligne, dans votre navigateur)")
         self.avis_btn.clicked.connect(self._ouvrir_avis)
 
+        titres_poses = 0
+
         def titre_de_section(nom: str) -> None:
-            # Comme dans Pecule : un peu d'air, le titre souligne.
-            v.addSpacing(11)
+            # Comme dans Pecule et Recharges VE : un peu d'air, le titre
+            # souligne. 6 px, 4 sous le nom de l'appli pour le premier titre
+            # (11/10/2026 ; c'etait 11 px partout).
+            nonlocal titres_poses
+            v.addSpacing(4 if titres_poses == 0 else 6)
+            titres_poses += 1
             sec = QLabel(nom)
             sec.setObjectName("NavSection")
             v.addWidget(sec)

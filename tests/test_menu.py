@@ -184,6 +184,21 @@ def test_une_page_du_petit_menu_surligne_son_bouton(fenetre):
     assert fenetre.nav_buttons["stats"].isChecked()
 
 
+def test_air_avant_les_titres_comme_les_deux_autres_applis(fenetre):
+    """6 px d'air avant chaque titre de section, 4 sous le nom de l'appli,
+    comme Pecule et Recharges VE (11/10/2026 ; c'etait 11 px)."""
+    from PySide6.QtWidgets import QFrame
+    disposition = fenetre.findChild(QFrame, "Sidebar").layout()
+    airs = []
+    for i in range(1, disposition.count()):
+        w = disposition.itemAt(i).widget()
+        if w is not None and w.objectName() == "NavSection":
+            espace = disposition.itemAt(i - 1).spacerItem()
+            airs.append(espace.sizeHint().height() if espace else None)
+    assert airs[0] == 4
+    assert set(airs[1:]) == {6}
+
+
 def test_le_bandeau_defile_sur_un_petit_ecran(fenetre):
     """Comme Pecule et Recharges VE : le bandeau est dans une zone qui
     defile. Sans elle, la fenetre ne pouvait pas descendre sous la hauteur
