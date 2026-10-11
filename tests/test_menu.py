@@ -132,6 +132,20 @@ def test_fin_du_menu_comme_pecule(fenetre):
     assert "AUTRES" not in lus
 
 
+def test_seule_la_page_affichee_est_surlignee(fenetre):
+    """La page affichée se reconnaît à son bouton coché, et à lui seul
+    (11/10/2026 : la propriété « active » qui doublait ce marquage est
+    retirée, la feuille de style ne connaît plus que « :checked »)."""
+    from gui_theme import LIGHT, qss_for
+    fenetre._switch_view("stats")
+    coches = [k for k, b in fenetre.nav_buttons.items() if b.isChecked()]
+    assert coches == ["stats"]
+    fenetre._switch_view("dashboard")
+    coches = [k for k, b in fenetre.nav_buttons.items() if b.isChecked()]
+    assert coches == ["dashboard"]
+    assert "[active" not in qss_for(LIGHT)
+
+
 def test_le_bandeau_defile_sur_un_petit_ecran(fenetre):
     """Comme Pecule et Recharges VE : le bandeau est dans une zone qui
     defile. Sans elle, la fenetre ne pouvait pas descendre sous la hauteur

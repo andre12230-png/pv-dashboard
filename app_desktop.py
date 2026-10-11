@@ -904,8 +904,9 @@ class MainWindow(QMainWindow):
         return btn
 
     def _entree_visible(self, key: str) -> bool:
-        """Deux onglets ne concernent qu'une partie des utilisateurs :
+        """Trois onglets ne concernent qu'une partie des utilisateurs :
 
+        - Années OA : qui revend son surplus sous contrat.
         - TVA : les seuls producteurs assujettis a la TVA, une petite
           minorite. Visible si la section tva_lasm de config.yaml est remplie.
         - la comparaison avec EDF : sans objet pour qui est deja chez EDF.
@@ -1141,11 +1142,11 @@ class MainWindow(QMainWindow):
         self.current_view = key
         idx = [n[0] for n in NAV_ITEMS].index(key)
         self.stack.setCurrentIndex(idx)
+        # Le bouton coché est la page affichée : la feuille de style le
+        # surligne par « :checked » (une propriété « active » doublait ce
+        # marquage, retirée le 11/10/2026).
         for k, btn in self.nav_buttons.items():
             btn.setChecked(k == key)
-            btn.setProperty("active", "true" if k == key else "false")
-            btn.style().unpolish(btn)
-            btn.style().polish(btn)
         titles = {
             "dashboard":    ("Tableau de bord", "Vue d'ensemble de votre installation"),
             "saisie":       ("Saisie quotidienne", "Ajouter ou corriger les relevés d'un jour"),

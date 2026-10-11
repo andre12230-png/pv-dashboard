@@ -164,7 +164,7 @@ QFrame#Card QLabel {{
 
 /* Sidebar : sur le modele du bandeau de Pecule (14/09/2026) - boutons
    rectangulaires, emoji devant le libelle, titres de section soulignes.
-   En theme clair, les couleurs de Pecule ; en sombre, leur transposition.
+   Les couleurs de Pecule (theme clair seul depuis le 14/09/2026).
    La page affichee est le bouton surligne (Pecule n'en a pas besoin : ses
    boutons lancent des actions). */
 QFrame#Sidebar {{
@@ -221,7 +221,7 @@ QPushButton#NavItem:hover {{
 QPushButton#NavItem:pressed {{
     background: {t["sb_btn_pressed"]};
 }}
-QPushButton#NavItem:checked, QPushButton#NavItem[active="true"] {{
+QPushButton#NavItem:checked {{
     background: {t["sb_actif"]};
     border-color: {t["sb_actif_border"]};
     color: {t["sb_actif_text"]};
