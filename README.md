@@ -190,11 +190,15 @@ d'**années de contrat** (« Année de contrat n° 3 ») au lieu d'années OA.
 
 ## Le menu de gauche
 
-Les pages sont rangées en six sections — Principal, Contrats, Analyse,
-Mes données (sauvegarde externe), Réglages, Aide (notice, votre avis, mise
-à jour), dans l'ordre de Pécule — chacune avec un pictogramme, séparées par
-un filet. Le menu défile si la fenêtre est basse. Trois n'apparaissent
-que si elles vous concernent : **Années OA** (si vous vendez votre électricité
+Les pages sont rangées en cinq sections — Principal, Analyse, Mes données
+(sauvegarde externe), Réglages, Aide (notice, votre avis, mise à jour), dans
+l'ordre de Pécule — chacune avec un pictogramme, séparées par un filet. Les
+pages qui servent de temps en temps (années de contrat, TVA, comparaison avec
+l'an passé et avec un autre fournisseur) sont réunies sous un seul bouton,
+**🗂️ Bilans et comparaisons…**, qui les propose dans un petit menu : le menu
+tient ainsi sans défiler sur un portable 1366 × 768. Il défile si la fenêtre
+est plus basse encore. Trois pages n'apparaissent que si elles vous
+concernent : **Années OA** (si vous vendez votre électricité
 et que la date de début du contrat est renseignée : masquée avec
 `oa.type: aucune` ; « Années de contrat » avec un autre acheteur qu'EDF OA),
 **TVA autoconsommation** (section `tva_lasm`

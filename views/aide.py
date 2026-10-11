@@ -83,6 +83,11 @@ d'autre</b>, vos relevés seraient réécrits pour retomber sur des totaux qui n
 sont pas les vôtres.</p>
 
 <h3 style="color:#1F3A6B">Les onglets (menu de gauche)</h3>
+<p>Les pages qui servent de temps en temps — {annees_oa}, TVA
+autoconsommation, Comparer à l'an passé et la comparaison avec un autre
+fournisseur — sont réunies sous le bouton <b>🗂️ Bilans et
+comparaisons…</b>, qui les propose dans un petit menu. La page affichée y
+est cochée, et le bouton reste surligné.</p>
 <p><b>Tableau de bord</b> — vue d'ensemble de la période choisie : la part de
 soleil dans votre consommation (jauge), la production comparée à l'an passé,
 où va votre soleil et d'où vient votre électricité, le bilan financier, où

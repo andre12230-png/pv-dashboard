@@ -20,7 +20,7 @@ matplotlib.use("QtAgg")
 import pandas as pd
 import yaml
 from PySide6.QtCore import QSettings, Qt
-from PySide6.QtGui import QIcon, QKeySequence, QShortcut
+from PySide6.QtGui import QAction, QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -31,6 +31,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QMenu,
     QMessageBox,
     QPushButton,
     QScrollArea,
@@ -143,7 +144,7 @@ APP_NAME = "Gestion Photovoltaique"
 # APP_NAME garde sa forme d'origine : c'est le nom de l'application pour Qt,
 # qu'il vaut mieux ne pas changer d'une version a l'autre (29/09/2026).
 NOM_AFFICHE = "Gestion Photovoltaïque"
-APP_VERSION = "1.52.24"
+APP_VERSION = "1.52.25"
 
 
 TAILLE_MAX_LOG = 1_000_000  # 1 Mo
@@ -642,9 +643,11 @@ NAV_ITEMS = [
     ("transactions", "Relevés journaliers",  None,        "📋"),
     ("categories",   "Répartition énergie",  None,        "🔀"),
     ("accounts",     "Synthèse financière",  None,        "💶"),
-    ("oa",           "Années OA",            "CONTRATS",  "📅"),
-    ("tva",          "TVA autoconsommation", None,        "🧾"),
     ("stats",        "Statistiques",         "ANALYSE",   "📊"),
+    # Les quatre suivantes forment BILANS_ET_COMPARAISONS : un seul bouton
+    # du bandeau, qui les propose dans un petit menu (11/10/2026).
+    ("oa",           "Années OA",            None,        "📅"),
+    ("tva",          "TVA autoconsommation", None,        "🧾"),
     ("comparaison",  "Comparer à l'an passé", None,       "🔁"),
     # Libelle recalcule au demarrage a partir des noms de fournisseurs
     # declares en config (voir AppData.libelle_comparaison).
@@ -656,6 +659,13 @@ NAV_ITEMS = [
     ("settings",     "Paramètres",           "RÉGLAGES",  "⚙️"),
     ("aide",         "Notice",               "AIDE",      "📖"),
 ]
+
+# Les pages qui servent une fois l'an ou de temps en temps : un seul bouton
+# du bandeau, « 🗂️ Bilans et comparaisons… », les propose dans un petit menu,
+# comme « 🧹 Mettre au propre… » dans Pecule. Sans lui, le bandeau defilait
+# sur un portable 1366 x 768 (815 px pour ~689 utiles ; choix de l'auteur du
+# 11/10/2026). Elles restent des pages : seul le chemin pour y aller change.
+BILANS_ET_COMPARAISONS = ("oa", "tva", "comparaison", "octopus_edf")
 
 
 class MainWindow(QMainWindow):
@@ -821,7 +831,22 @@ class MainWindow(QMainWindow):
 
         self.nav_group = QButtonGroup(self)
         self.nav_group.setExclusive(True)
-        self.nav_buttons: dict[str, QPushButton] = {}
+        # Une page = un bouton du bandeau, ou une ligne (QAction) du petit
+        # menu « Bilans et comparaisons… » : les deux se cochent pareil.
+        self.nav_buttons: dict[str, QPushButton | QAction] = {}
+
+        # Le bouton qui ouvre le petit menu des pages occasionnelles. Il ne
+        # mene a aucune page lui-meme : un clic deroule le menu. Il est
+        # surligne quand l'une de ses pages est affichee.
+        self.bouton_bilans = self._bouton_menu("🗂️ Bilans et comparaisons…")
+        self.bouton_bilans.setCheckable(True)
+        self.bouton_bilans.setToolTip(
+            "Bilans des années de contrat, TVA, comparaison avec l'an passé "
+            "et avec un autre fournisseur")
+        self.menu_bilans = QMenu(self.bouton_bilans)
+        self.menu_bilans.setToolTipsVisible(True)
+        self.bouton_bilans.setMenu(self.menu_bilans)
+        self.nav_group.addButton(self.bouton_bilans)
 
         # Trois actions, pas des pages : hors du groupe de navigation, elles
         # ne restent jamais « enfoncees ». Sauvegarde externe : les backups/
@@ -874,6 +899,17 @@ class MainWindow(QMainWindow):
                     v.addWidget(self.sauvegarde_btn)
                 titre_de_section(section_courante)
                 section_affichee = section_courante
+            if key in BILANS_ET_COMPARAISONS:
+                # Une ligne du petit menu ; le bouton qui l'ouvre prend place
+                # dans le bandeau a la premiere ligne visible.
+                if not self.menu_bilans.actions():
+                    v.addWidget(self.bouton_bilans)
+                action = self.menu_bilans.addAction(f"{picto} {label}")
+                action.setCheckable(True)
+                action.triggered.connect(
+                    lambda checked=False, k=key: self._switch_view(k))
+                self.nav_buttons[key] = action
+                continue
             btn = self._bouton_menu(f"{picto} {label}")
             btn.setCheckable(True)
             btn.clicked.connect(lambda checked=False, k=key: self._switch_view(k))
@@ -1147,6 +1183,10 @@ class MainWindow(QMainWindow):
         # marquage, retirée le 11/10/2026).
         for k, btn in self.nav_buttons.items():
             btn.setChecked(k == key)
+        # Le bouton du petit menu, surligne quand l'une de ses pages est
+        # affichee. APRES la boucle : dans un groupe exclusif, cocher un
+        # bouton decoche les autres, mais rien ne decoche le seul coche.
+        self.bouton_bilans.setChecked(key in BILANS_ET_COMPARAISONS)
         titles = {
             "dashboard":    ("Tableau de bord", "Vue d'ensemble de votre installation"),
             "saisie":       ("Saisie quotidienne", "Ajouter ou corriger les relevés d'un jour"),

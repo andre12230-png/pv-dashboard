@@ -146,6 +146,44 @@ def test_seule_la_page_affichee_est_surlignee(fenetre):
     assert "[active" not in qss_for(LIGHT)
 
 
+def test_les_pages_occasionnelles_sous_un_seul_bouton(fenetre):
+    """11/10/2026 (choix de l'auteur) : le bandeau defilait sur un portable
+    1366 x 768. Les pages qui servent une fois l'an ou de temps en temps
+    passent sous « 🗂️ Bilans et comparaisons… », comme « Mettre au
+    propre… » dans Pecule ; la section CONTRATS disparait."""
+    lus = _bandeau_lu(fenetre)
+    assert "CONTRATS" not in lus
+    debut = lus[:lus.index("MES DONNÉES")]
+    assert debut == ["PRINCIPAL", "Tableau de bord", "Saisie quotidienne",
+                     "Relevés journaliers", "Répartition énergie",
+                     "Synthèse financière",
+                     "ANALYSE", "Statistiques", "Bilans et comparaisons…"]
+    bouton = fenetre.bouton_bilans
+    textes = [a.text() for a in bouton.menu().actions()]
+    # Le modele livre a un contrat de vente et pas de TVA : la ligne TVA,
+    # masquee, n'apparait pas dans le petit menu non plus.
+    assert textes[0].startswith("📅 ")
+    assert textes[1] == "🔁 Comparer à l'an passé"
+    assert textes[2].startswith("⚖️ ")
+    assert len(textes) == 3
+    assert "tva" not in fenetre.nav_buttons
+
+
+def test_une_page_du_petit_menu_surligne_son_bouton(fenetre):
+    """La page choisie dans le petit menu s'affiche ; son bouton est
+    surligne et la ligne cochee. Revenir a une autre page les libere."""
+    action = fenetre.nav_buttons["comparaison"]
+    action.trigger()
+    assert fenetre.current_view == "comparaison"
+    assert fenetre.bouton_bilans.isChecked()
+    assert action.isChecked()
+    fenetre.nav_buttons["stats"].click()
+    assert fenetre.current_view == "stats"
+    assert not fenetre.bouton_bilans.isChecked()
+    assert not action.isChecked()
+    assert fenetre.nav_buttons["stats"].isChecked()
+
+
 def test_le_bandeau_defile_sur_un_petit_ecran(fenetre):
     """Comme Pecule et Recharges VE : le bandeau est dans une zone qui
     defile. Sans elle, la fenetre ne pouvait pas descendre sous la hauteur
