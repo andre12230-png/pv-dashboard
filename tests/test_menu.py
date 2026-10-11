@@ -197,6 +197,8 @@ def test_air_avant_les_titres_comme_les_deux_autres_applis(fenetre):
             airs.append(espace.sizeHint().height() if espace else None)
     assert airs[0] == 4
     assert set(airs[1:]) == {6}
+    # Et 6 px au-dessus du nom, comme les deux autres (c'etait 12).
+    assert disposition.contentsMargins().top() == 6
 
 
 def test_le_bandeau_defile_sur_un_petit_ecran(fenetre):
