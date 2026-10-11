@@ -90,17 +90,22 @@ def test_mes_reglages_de_bout_en_bout(fenetre_neuve, tmp_path):
     # Le libelle suit l'emoji du bouton, comme dans Pecule.
     # « ou » et non « vs » (anglicisme, relecture du 29/09/2026)
     assert suivante.nav_buttons["octopus_edf"].text().endswith("Engie ou EDF")
-    assert "4,5\xa0kWc" in suivante.findChild(QLabel, "BrandSub").text()
+    # La puissance se lit dans le titre de la fenetre (le sous-titre du
+    # menu est une phrase depuis le 11/10/2026).
+    assert "4,5\xa0kWc" in suivante.windowTitle()
     detruire(suivante)
 
 
 def test_le_titre_du_menu_ne_porte_plus_la_puissance(fenetre_neuve):
-    """« Photovoltaique 4,5 kWc » depassait la largeur du menu : la
-    puissance est passee sur la ligne du dessous."""
+    """« Photovoltaique 4,5 kWc » depassait la largeur du menu. Le
+    sous-titre dit ce que l'appli apporte, comme dans Pecule et Recharges VE
+    (choix de l'auteur du 11/10/2026 ; c'etait la puissance et le debut du
+    contrat). La puissance reste dans le titre de la fenetre."""
     marque = fenetre_neuve.findChild(QLabel, "Brand")
     assert marque.text() == "Photovoltaïque"
     sous_titre = fenetre_neuve.findChild(QLabel, "BrandSub")
-    assert "kWc" in sous_titre.text()
+    assert sous_titre.text() == "Ce que rapportent vos panneaux"
+    assert "kWc" in fenetre_neuve.windowTitle()
 
 
 # -----------------------------------------------------------------------------

@@ -98,7 +98,8 @@ def test_sans_revente_chaque_ecran_s_ouvre(qapp, tmp_path, monkeypatch):
     try:
         for key, _, _, _ in app_desktop.NAV_ITEMS:
             win._switch_view(key)
-        # Pas d'onglet « Années OA » ni de « OA depuis » sous le titre.
+        # Pas d'onglet « Années OA », et rien sous le titre qui parle d'un
+        # contrat (le sous-titre est une phrase depuis le 11/10/2026).
         assert "oa" not in win.nav_buttons
         sous_titre = " ".join(lbl.text() for lbl in win.findChildren(QLabel)
                               if lbl.objectName() == "BrandSub")

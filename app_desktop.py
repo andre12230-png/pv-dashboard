@@ -143,7 +143,7 @@ APP_NAME = "Gestion Photovoltaique"
 # APP_NAME garde sa forme d'origine : c'est le nom de l'application pour Qt,
 # qu'il vaut mieux ne pas changer d'une version a l'autre (29/09/2026).
 NOM_AFFICHE = "Gestion Photovoltaïque"
-APP_VERSION = "1.52.23"
+APP_VERSION = "1.52.24"
 
 
 TAILLE_MAX_LOG = 1_000_000  # 1 Mo
@@ -810,12 +810,12 @@ class MainWindow(QMainWindow):
         brand = QLabel("Photovoltaïque")
         brand.setObjectName("Brand")
         v.addWidget(brand)
-        puissance = fmt_kwc(self.data.puissance_kwc)
-        debut = self.data.start_oa
-        sub = QLabel(" · ".join(filter(None, [
-            puissance,
-            (f"{'OA' if self.data.acheteur == 'EDF OA' else 'Vente'} depuis "
-             f"{debut.strftime('%d/%m/%Y')}") if debut else None])))
+        # Une phrase qui dit ce que l'appli apporte, comme Pecule (« Vos
+        # comptes et votre budget ») et Recharges VE (« Cout reel de vos
+        # recharges ») : choix de l'auteur du 11/10/2026. C'etait la puissance
+        # et le debut du contrat ; la puissance reste dans le titre de la
+        # fenetre, la date du contrat dans « Annees OA ».
+        sub = QLabel("Ce que rapportent vos panneaux")
         sub.setObjectName("BrandSub")
         v.addWidget(sub)
 
