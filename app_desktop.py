@@ -814,9 +814,9 @@ class MainWindow(QMainWindow):
         sidebar = QFrame()
         sidebar.setObjectName("Sidebar")
         v = QVBoxLayout(sidebar)
-        # 6 px au-dessus du nom, comme Pecule et Recharges VE (11/10/2026 ;
-        # c'etait 12).
-        v.setContentsMargins(10, 6, 10, 10)
+        # 6 px au-dessus du nom, 4 sous la version, comme Pecule et
+        # Recharges VE (11/10/2026 ; c'etait 12 et 10).
+        v.setContentsMargins(10, 6, 10, 4)
         v.setSpacing(4)
 
         brand = QLabel("Photovoltaïque")
