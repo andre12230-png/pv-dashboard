@@ -184,6 +184,29 @@ def test_une_page_du_petit_menu_surligne_son_bouton(fenetre):
     assert fenetre.nav_buttons["stats"].isChecked()
 
 
+MAJ_COMMUNE = ("Voir s'il existe une version plus récente (la page s'ouvre "
+               "dans votre navigateur ; rien n'est vérifié automatiquement)")
+
+
+def test_chaque_entree_du_bandeau_a_son_infobulle(fenetre):
+    """11/10/2026, comme Pecule : chaque bouton du bandeau, et chaque ligne
+    du petit menu, a son infobulle. Pour une page, c'est le sous-titre
+    qu'elle affiche en tete : une seule phrase, qui ne contredit pas
+    l'ecran. Les trois boutons communs disent la meme chose dans les trois
+    applis."""
+    from PySide6.QtWidgets import QFrame, QPushButton
+    bandeau = fenetre.findChild(QFrame, "Sidebar")
+    for b in bandeau.findChildren(QPushButton):
+        assert b.toolTip(), b.text()
+    titres = fenetre._titres_des_pages()
+    for key, entree in fenetre.nav_buttons.items():
+        assert entree.toolTip() == titres[key][1], key
+    assert fenetre.maj_btn.toolTip() == MAJ_COMMUNE
+    assert fenetre.sauvegarde_btn.toolTip() == (
+        "Copie vos relevés et vos réglages sur une clé USB ou un disque "
+        "externe, dans un dossier daté, et vérifie la copie")
+
+
 def test_air_avant_les_titres_comme_les_deux_autres_applis(fenetre):
     """6 px d'air avant chaque titre de section, 4 sous le nom de l'appli,
     comme Pecule et Recharges VE (11/10/2026 ; c'etait 11 px)."""

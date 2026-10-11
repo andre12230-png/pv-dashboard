@@ -846,7 +846,7 @@ class MainWindow(QMainWindow):
             "Bilans des années de contrat, TVA, comparaison avec l'an passé "
             "et avec un autre fournisseur")
         self.menu_bilans = QMenu(self.bouton_bilans)
-        self.menu_bilans.setToolTipsVisible(True)
+        self.menu_bilans.setToolTipsVisible(True)   # infobulle de chaque ligne
         self.bouton_bilans.setMenu(self.menu_bilans)
         self.nav_group.addButton(self.bouton_bilans)
 
@@ -855,13 +855,17 @@ class MainWindow(QMainWindow):
         # restent sur le meme disque que les donnees. Mise a jour : repris
         # de Pecule, sans aucun acces reseau. Creees ici, placees plus bas.
         self.sauvegarde_btn = self._bouton_menu("💾 Sauvegarde externe")
+        # Infobulles des trois actions communes : les memes mots dans les
+        # trois applis (11/10/2026).
         self.sauvegarde_btn.setToolTip(
-            "Copier vos relevés et vos réglages sur une clé USB ou un disque")
+            "Copie vos relevés et vos réglages sur une clé USB ou un disque "
+            "externe, dans un dossier daté, et vérifie la copie")
         self.sauvegarde_btn.clicked.connect(self._sauvegarder_externe)
 
         self.maj_btn = self._bouton_menu("🔄 Mise à jour")
         self.maj_btn.setToolTip(
-            "Voir s'il existe une version plus récente (dans votre navigateur)")
+            "Voir s'il existe une version plus récente (la page s'ouvre "
+            "dans votre navigateur ; rien n'est vérifié automatiquement)")
         self.maj_btn.clicked.connect(self._ouvrir_mise_a_jour)
 
         # « Votre avis » (repris de Pecule), comme dans Pecule : un bouton de
@@ -891,6 +895,8 @@ class MainWindow(QMainWindow):
         # emporter avec lui le titre de sa section.
         section_courante = None
         section_affichee = None
+        # L'infobulle d'une page : le sous-titre qu'elle affiche en tete.
+        sous_titres = {k: sous for k, (_, sous) in self._titres_des_pages().items()}
         for key, label, section, picto in NAV_ITEMS:
             if section:
                 section_courante = section
@@ -914,12 +920,14 @@ class MainWindow(QMainWindow):
                     v.addWidget(self.bouton_bilans)
                 action = self.menu_bilans.addAction(f"{picto} {label}")
                 action.setCheckable(True)
+                action.setToolTip(sous_titres[key])
                 action.triggered.connect(
                     lambda checked=False, k=key: self._switch_view(k))
                 self.nav_buttons[key] = action
                 continue
             btn = self._bouton_menu(f"{picto} {label}")
             btn.setCheckable(True)
+            btn.setToolTip(sous_titres[key])
             btn.clicked.connect(lambda checked=False, k=key: self._switch_view(k))
             self.nav_group.addButton(btn)
             self.nav_buttons[key] = btn
@@ -1195,7 +1203,16 @@ class MainWindow(QMainWindow):
         # affichee. APRES la boucle : dans un groupe exclusif, cocher un
         # bouton decoche les autres, mais rien ne decoche le seul coche.
         self.bouton_bilans.setChecked(key in BILANS_ET_COMPARAISONS)
-        titles = {
+        title, sub = self._titres_des_pages()[key]
+        self.title_lbl.setText(title)
+        self.sub_lbl.setText(sub)
+        self._apres_changement_de_page(key)
+
+    def _titres_des_pages(self) -> dict[str, tuple[str, str]]:
+        """Titre et sous-titre de chaque page : affiches en tete de la page,
+        et le sous-titre sert aussi d'infobulle a son entree du bandeau
+        (11/10/2026), pour qu'une seule phrase decrive chaque page."""
+        return {
             "dashboard":    ("Tableau de bord", "Vue d'ensemble de votre installation"),
             "saisie":       ("Saisie quotidienne", "Ajouter ou corriger les relevés d'un jour"),
             "transactions": ("Relevés journaliers",
@@ -1220,15 +1237,16 @@ class MainWindow(QMainWindow):
             "octopus_edf":  (self.data.libelle_comparaison,
                              f"{self.data.fournisseur[1]} face à "
                              f"{self.data.fournisseur_reference[1]}"),
-            "aide":         ("Notice", "Mode d'emploi et glossaire des termes"),
+            # Les memes mots que dans Pecule (11/10/2026).
+            "aide":         ("Notice", "Mode d'emploi et glossaire"),
             "settings":     ("Paramètres", "Configuration de l'application"),
         }
-        title, sub = titles[key]
-        self.title_lbl.setText(title)
-        self.sub_lbl.setText(sub)
 
-        # Grise le selecteur de periode sur les onglets qui ne l'utilisent pas
-        # (sinon on croit qu'il est en panne). L'infobulle explique pourquoi.
+    def _apres_changement_de_page(self, key: str) -> None:
+        """Le selecteur de periode et le dessin de la page qui s'affiche.
+
+        Grise le selecteur sur les onglets qui ne l'utilisent pas (sinon on
+        croit qu'il est en panne) ; l'infobulle explique pourquoi."""
         vue = self.views[key]
         self._selecteur_actif = vue.utilise_periode
         inutile = ("" if vue.utilise_periode
