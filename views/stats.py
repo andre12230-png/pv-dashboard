@@ -28,6 +28,10 @@ AXE_MILLIERS = FuncFormatter(lambda valeur, _pos: milliers(valeur))
 # d'avant ne faisaient que 2,0 et 2,6 (01/10/2026).
 COULEURS_ANNEES = ["#b45309", "#0369a1", "#15803d", "#7c3aed", "#dc2626",
                    "#0e7490"]
+# Les memes teintes eclaircies pour le theme sombre (12/10/2026) : sur le
+# fond sombre des cartes, les fonces ci-dessus se perdaient.
+COULEURS_ANNEES_SOMBRE = ["#fb923c", "#38bdf8", "#4ade80", "#a78bfa",
+                          "#f87171", "#22d3ee"]
 
 
 class StatsView(BaseView):
@@ -189,7 +193,8 @@ class StatsView(BaseView):
         canvas = MplCanvas(width=5, height=3.2, dpi=100)
         canvas.apply_theme(mpl_style(self.theme))
         ax = canvas.fig.add_subplot(111)
-        palette = COULEURS_ANNEES
+        palette = (COULEURS_ANNEES_SOMBRE if self.theme.get("name") == "dark"
+                   else COULEURS_ANNEES)
         # La couleur ne porte jamais seule le sens (charte, 30/09/2026) :
         # chaque annee a aussi son trait et sa forme de point.
         traits = ["-", "--", "-.", ":"]

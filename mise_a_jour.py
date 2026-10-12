@@ -19,6 +19,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from gui_theme import theme_actif
+
 # La page de la derniere version publiee, et son installeur. Le nom de
 # l'installeur est fixe (faire_installeur.py) : ce lien vise donc toujours
 # la version la plus recente.
@@ -58,7 +60,7 @@ class MiseAJourDialog(QDialog):
 
         # Confirmation affichee une fois le navigateur sollicite.
         self.confirmation = QLabel("")
-        self.confirmation.setStyleSheet("color:#18733A")
+        self.confirmation.setStyleSheet(f"color:{theme_actif()['credit']}")
         self.confirmation.setWordWrap(True)
         self.confirmation.hide()
         v.addWidget(self.confirmation)

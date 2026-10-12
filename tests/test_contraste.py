@@ -140,6 +140,18 @@ import re  # noqa: E402
 from gui_theme import qss_for  # noqa: E402
 
 
+def _nom_du_style(app) -> str:
+    """Le nom du style de base : depuis le 12/10/2026, Fusion est enrobe
+    d'un QProxyStyle (contour des cases et des ronds, comme Pecule), qui ne
+    porte pas de nom lui-meme."""
+    style = app.style()
+    # Une feuille de style ajoute une enveloppe de plus : on les deballe
+    # jusqu'au style qui porte un nom.
+    while not style.name() and hasattr(style, "baseStyle"):
+        style = style.baseStyle()
+    return style.name()
+
+
 def _bloc(qss: str, selecteur: str) -> str:
     """Contenu des accolades qui suivent un sélecteur de la feuille de style."""
     trouve = re.search(re.escape(selecteur) + r"\s*\{([^}]*)\}", qss)
@@ -198,7 +210,7 @@ def test_la_palette_ignore_le_mode_sombre_de_windows():
     assert palette.color(QPalette.WindowText).name() == "#000000"
     assert palette.color(QPalette.Text).name() == "#000000"
     assert palette.color(QPalette.Base).name() == "#ffffff"
-    assert app.style().name().lower() == "fusion"
+    assert _nom_du_style(app).lower() == "fusion"
     app.setStyleSheet(ancienne_feuille)
 
 
@@ -217,7 +229,7 @@ def test_le_message_deja_ouvert_est_deja_en_clair(monkeypatch):
     app = QApplication.instance() or QApplication([])
     ancienne_feuille = app.styleSheet()
     ancienne_palette = app.palette()
-    ancien_style = app.style().name()
+    ancien_style = _nom_du_style(app)
     app.setStyleSheet("")
     # Un poste regle en sombre : Qt fournit des textes blancs, style natif.
     sombre = QPalette()
@@ -231,7 +243,7 @@ def test_le_message_deja_ouvert_est_deja_en_clair(monkeypatch):
     def boite(*_args, **_kwargs):
         # Ce que la boite « deja ouvert » trouverait au moment de s'afficher.
         vu["texte"] = app.palette().color(QPalette.WindowText).name()
-        vu["style"] = app.style().name().lower()
+        vu["style"] = _nom_du_style(app).lower()
         return QMessageBox.Ok
     monkeypatch.setattr(run, "prendre_le_verrou", lambda: None)
     monkeypatch.setattr(run.QMessageBox, "warning", boite)
@@ -244,11 +256,13 @@ def test_le_message_deja_ouvert_est_deja_en_clair(monkeypatch):
     assert vu == {"texte": "#000000", "style": "fusion"}
 
 
-def test_pas_de_theme_sombre():
-    """Un seul thème, le clair (décision du 14/09/2026)."""
+def test_le_clair_reste_le_theme_par_defaut():
+    """Le 12/10/2026, un mode sombre est revenu (il remplace « un seul
+    thème, le clair » du 14/09/2026), mais le clair reste la référence :
+    sans réglage, c'est lui. Les tests du sombre : test_theme_sombre.py."""
     import gui_theme
-    assert not hasattr(gui_theme, "DARK"), (
-        "un thème sombre est réapparu dans gui_theme.py")
+    assert gui_theme.nom_du_theme(None) == "clair"
+    assert gui_theme.theme_actif() is LIGHT
 
 
 def test_survol_du_bouton_enregistrer_dans_la_palette():

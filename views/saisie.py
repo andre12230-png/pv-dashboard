@@ -25,6 +25,7 @@ import data_loaders as dl
 from accords import accorde, pluriel
 from app_data import AppData
 from erreurs import erreur_en_clair
+from gui_theme import theme_actif
 from gui_widgets import SectionTitle, confirmer
 from views._base import BaseView
 from views._helpers import phrase_import
@@ -52,11 +53,11 @@ class _DelegueDate(QStyledItemDelegate):
 
 # Marque posee sur les cases a remplir de la ligne du jour.
 ROLE_A_SAISIR = Qt.UserRole + 1
-# Bleu de selection de la charte : 5,2 pour 1 sur le blanc, 4,9 sur le jaune.
-CADRE_A_SAISIR = "#316AC5"
-# Gris discret de la charte pour l'invite « à saisir » (5,7 sur le blanc).
-TEXTE_INVITE = "#666666"
-FOND_LIGNE_DU_JOUR = "#FFFBE6"
+# Les couleurs de ces cases viennent du theme (12/10/2026, mode sombre) :
+# - cadre : le bleu d'accent (#316AC5 en clair, 5,2 pour 1 sur le blanc,
+#   4,9 sur le jaune) ;
+# - invite « à saisir » : le gris discret (#666666 en clair) ;
+# - fond de la ligne du jour : le jaune d'information (#FFFBE6 en clair).
 
 
 class _DelegueASaisir(QStyledItemDelegate):
@@ -83,20 +84,21 @@ class _DelegueASaisir(QStyledItemDelegate):
             painter.fillRect(option.rect, fond)
         case = option.rect.adjusted(4, 4, -4, -4)
         active = bool(option.state & QStyle.State_Selected)
-        stylo = QPen(QColor(CADRE_A_SAISIR), 2 if active else 1)
+        t = theme_actif()
+        stylo = QPen(QColor(t["primary"]), 2 if active else 1)
         painter.setPen(stylo)
-        painter.setBrush(QColor("#FFFFFF"))
+        painter.setBrush(QColor(t["bg_saisie"]))
         painter.drawRoundedRect(case, 4, 4)
         # Le texte, cale a droite comme les autres chiffres.
         zone = case.adjusted(6, 0, -10, 0)
         texte = str(index.data(Qt.DisplayRole) or "")
         police = QFont(option.font)
         if texte.strip():
-            painter.setPen(QColor("#000000"))
+            painter.setPen(QColor(t["text_primary"]))
         else:
             texte = "à saisir"
             police.setItalic(True)
-            painter.setPen(QColor(TEXTE_INVITE))
+            painter.setPen(QColor(t["text_muted"]))
         painter.setFont(police)
         painter.drawText(zone, Qt.AlignRight | Qt.AlignVCenter, texte)
         painter.restore()
@@ -367,7 +369,7 @@ class SaisieView(BaseView):
         # Le jaune d'information de la charte, celui des remarques sans
         # urgence (choix de l'auteur du 08/10/2026 ; c'etait un ambre hors
         # palette). La phrase d'en-tete dit ce qu'est cette ligne.
-        return QColor(FOND_LIGNE_DU_JOUR)
+        return QColor(self.theme["jaune_bg"])
 
     def _ajouter_ligne_vide(self) -> None:
         assert self.table is not None
@@ -651,7 +653,7 @@ class SaisieView(BaseView):
     def _set_status(self, msg: str, ok: bool = True) -> None:
         if self.status_label is None:
             return
-        couleur = "#18733A" if ok else "#BC3729"
+        couleur = self.theme["credit"] if ok else self.theme["debit"]
         self.status_label.setStyleSheet(
             f"color: {couleur}; font-size: 12px; font-weight: 600;"
         )

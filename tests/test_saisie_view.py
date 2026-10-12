@@ -835,11 +835,16 @@ def test_les_colonnes_de_valeurs_dessinent_les_cases_a_saisir(vue):
 
 def test_le_cadre_et_l_invite_sont_lisibles():
     """Charte : contour d'un element a remplir >= 3 pour 1 sur son fond,
-    texte >= 4,5 pour 1."""
+    texte >= 4,5 pour 1. Les couleurs viennent du theme depuis le
+    12/10/2026 : verifie dans le clair et dans le sombre."""
+    from gui_theme import DARK, LIGHT
     from gui_theme import _contraste as contrast_ratio
-    assert contrast_ratio(saisie_module.CADRE_A_SAISIR, "#FFFFFF") >= 3
-    assert contrast_ratio(saisie_module.CADRE_A_SAISIR, "#FFFBE6") >= 3
-    assert contrast_ratio(saisie_module.TEXTE_INVITE, "#FFFFFF") >= 4.5
+    for t in (LIGHT, DARK):
+        assert contrast_ratio(t["primary"], t["bg_saisie"]) >= 3, t["name"]
+        assert contrast_ratio(t["primary"], t["jaune_bg"]) >= 3, t["name"]
+        assert contrast_ratio(t["text_muted"], t["bg_saisie"]) >= 4.5, t["name"]
+    # Le clair n'a pas bouge.
+    assert LIGHT["primary"] == "#316AC5" and LIGHT["jaune_bg"] == "#FFFBE6"
 
 
 # ---------------------------------------------------------------------------

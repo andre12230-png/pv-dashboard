@@ -131,7 +131,9 @@ perdre) par rapport au Tarif Bleu d'EDF, mois par mois. Cet onglet
 n'apparaît que si votre fournisseur n'est
 pas EDF : il compare votre contrat au Tarif Bleu d'EDF.</p>
 <p><b>Paramètres</b> — récapitulatif de la configuration (tarifs, contrat), et
-bouton <b>Modifier mes réglages</b> pour la changer.</p>
+bouton <b>Modifier mes réglages</b> pour la changer. En bas de la page,
+<b>Apparence</b> : thème <b>Clair</b> ou <b>Sombre</b>. Le choix s'applique au
+prochain démarrage de l'application, quel que soit le réglage de Windows.</p>
 <p><b>Votre avis</b> — signaler un problème ou proposer une idée : ouvre un
 court questionnaire dans votre navigateur, après avoir copié dans le
 presse-papiers le numéro de version et celui de Windows, à coller dans la
@@ -495,7 +497,11 @@ class AideView(BaseView):
         # l'application » redisait le titre et le sous-titre de la page.
         # Une carte par rubrique, et un sommaire qui y mene : la notice etait
         # un seul long bloc de texte (audit du 14/09/2026).
-        rubriques = self._decouper(NOTICE_HTML.format(**champs))
+        # Les titres de la notice sont ecrits en bleu nuit : en sombre, le bleu
+        # clair de la marque (12/10/2026).
+        nuit = self.theme["sb_brand"]
+        rubriques = self._decouper(
+            NOTICE_HTML.format(**champs).replace("#1F3A6B", nuit))
         self.layout_inner.addWidget(
             self._sommaire([titre for titre, _ in rubriques] + ["Glossaire"]))
         self._cibles = []
@@ -506,7 +512,8 @@ class AideView(BaseView):
             self._cibles.append(carte)
             self.layout_inner.addWidget(carte)
         # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
-        glossaire = self._carte(GLOSSAIRE_HTML.format(**champs),
+        glossaire = self._carte(
+            GLOSSAIRE_HTML.format(**champs).replace("#1F3A6B", nuit),
                                 titre="Glossaire",
                                 sous_titre="Définitions des termes employés")
         self._cibles.append(glossaire)

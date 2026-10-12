@@ -18,12 +18,12 @@ import os
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QDir, QLockFile, Qt
+from PySide6.QtCore import QDir, QLockFile, QSettings, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QMessageBox, QSplashScreen
 
 from erreurs import erreur_en_clair
-from gui_theme import appliquer_style, installer_traduction_qt
+from gui_theme import appliquer_style, choisir_theme, installer_traduction_qt, nom_du_theme
 
 WIN_APP_ID = "pvdashboard.gestion.6kwc"
 
@@ -64,26 +64,27 @@ def _set_windows_app_id() -> None:
         pass
 
 
-def _make_splash() -> QSplashScreen:
+def _make_splash(t: dict) -> QSplashScreen:
     """Ecran de chargement simple : panneau creme, barre d'accent et titre,
-    aux couleurs de Pecule (25/09/2026)."""
+    aux couleurs de Pecule (25/09/2026), ou du theme sombre s'il est choisi
+    (12/10/2026)."""
     w, h = 460, 250
     pix = QPixmap(w, h)
-    pix.fill(QColor("#ECE9D8"))
+    pix.fill(QColor(t["bg_app"]))
 
     painter = QPainter(pix)
     painter.setRenderHint(QPainter.Antialiasing)
     # Barre d'accent en haut : le bleu nuit de Pecule.
-    painter.fillRect(0, 0, w, 6, QColor("#1F3A6B"))
+    painter.fillRect(0, 0, w, 6, QColor(t["sb_brand"]))
 
-    painter.setPen(QColor("#1F3A6B"))
+    painter.setPen(QColor(t["sb_brand"]))
     title_font = QFont()
     title_font.setPointSize(20)
     title_font.setBold(True)
     painter.setFont(title_font)
     painter.drawText(0, 80, w, 40, Qt.AlignHCenter, "Gestion Photovoltaïque")
 
-    painter.setPen(QColor("#5A5A5A"))
+    painter.setPen(QColor(t["sb_sub"]))
     sub_font = QFont()
     sub_font.setPointSize(11)
     painter.setFont(sub_font)
@@ -95,9 +96,10 @@ def _make_splash() -> QSplashScreen:
     return splash
 
 
-def _message(splash: QSplashScreen, app: QApplication, text: str) -> None:
+def _message(splash: QSplashScreen, app: QApplication, text: str,
+             t: dict) -> None:
     splash.showMessage(f"   {text}", Qt.AlignBottom | Qt.AlignLeft,
-                       QColor("#555555"))
+                       QColor(t["text_secondary"]))
     app.processEvents()
 
 
@@ -134,7 +136,11 @@ def main() -> int:
     # Tout de suite : le message « deja ouvert » ci-dessous a deja des
     # boutons fournis par Qt.
     installer_traduction_qt(app)
-    # Et deja les couleurs claires (29/09/2026) : sans cela, les messages
+    # Le theme choisi (Clair ou Sombre, dans les Parametres) : avant tout le
+    # reste, pour que les premiers messages et les vues, importees plus bas,
+    # prennent deja ses couleurs (12/10/2026).
+    t = choisir_theme(nom_du_theme(QSettings("pv-dashboard", "pv-dashboard")))
+    # Et deja les couleurs du theme (29/09/2026) : sans cela, les messages
     # « deja ouvert » et « Impossible de demarrer » gardaient la palette de
     # Windows, textes blancs sur un poste regle en sombre. La fenetre
     # principale reapplique le style ensuite, avec sa feuille de style.
@@ -152,15 +158,15 @@ def main() -> int:
             "Utilisez la fenêtre déjà ouverte.")
         return 1
 
-    splash = _make_splash()
+    splash = _make_splash(t)
     splash.show()
-    _message(splash, app, "Chargement des bibliothèques…")
+    _message(splash, app, "Chargement des bibliothèques…", t)
 
     # Imports lourds (pandas, matplotlib, vues) APRES l'affichage du splash.
     try:
         import app_desktop
         app_desktop.configure_application(app)
-        _message(splash, app, "Préparation des données…")
+        _message(splash, app, "Préparation des données…", t)
         win = app_desktop.create_window()
     except Exception as exc:  # frontiere applicative : tout doit etre signale
         _log_traceback()

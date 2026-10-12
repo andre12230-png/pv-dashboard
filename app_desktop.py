@@ -50,7 +50,7 @@ import sauvegarde_externe
 from app_data import AppData
 from erreurs import erreur_en_clair
 from fenetre_reglages import FenetreReglages
-from gui_theme import LIGHT, appliquer_style, mpl_style, qss_for
+from gui_theme import CLE_THEME, appliquer_style, mpl_style, nom_du_theme, qss_for, theme_actif
 from gui_widgets import demander_enregistrement
 from views import (
     MOIS_TOUS,
@@ -144,7 +144,7 @@ APP_NAME = "Gestion Photovoltaique"
 # APP_NAME garde sa forme d'origine : c'est le nom de l'application pour Qt,
 # qu'il vaut mieux ne pas changer d'une version a l'autre (29/09/2026).
 NOM_AFFICHE = "Gestion Photovoltaïque"
-APP_VERSION = "1.52.30"
+APP_VERSION = "1.53.0"
 
 
 TAILLE_MAX_LOG = 1_000_000  # 1 Mo
@@ -679,10 +679,10 @@ class MainWindow(QMainWindow):
         # les tests utilisent un fichier temporaire au lieu des vraies prefs.
         self.settings = settings if settings is not None else QSettings(
             "pv-dashboard", "pv-dashboard")
-        # Un seul theme, le clair, comme Pecule : decision de l'auteur du
-        # 14/09/2026, valable pour toutes ses applications. Le theme sombre
-        # et son bouton de bascule ont ete retires.
-        self.theme = LIGHT
+        # Le theme choisi au demarrage (run.py, choisir_theme) : le clair,
+        # ou le sombre si l'utilisateur l'a demande dans les Parametres
+        # (12/10/2026, remplace « un seul theme » du 14/09/2026).
+        self.theme = theme_actif()
         self.current_view = "dashboard"
         self.current_period = self._startup_period()
         self.data.current_period = self.current_period
@@ -790,6 +790,8 @@ class MainWindow(QMainWindow):
         self.views["dashboard"].ouvrir_reglages = self._ouvrir_reglages
         self.views["dashboard"].rappel_sauvegarde = self._rappel_sauvegarde
         self.views["settings"].ouvrir_reglages = self._ouvrir_reglages
+        self.views["settings"].apparence_choisie = self._apparence_choisie
+        self.views["settings"].choisir_apparence = self._choisir_apparence
         for key in [n[0] for n in NAV_ITEMS]:
             self.stack.addWidget(self.views[key])
         right.addWidget(self.stack, stretch=1)
@@ -1177,6 +1179,22 @@ class MainWindow(QMainWindow):
         return bar
 
     # ---------- Theme ----------
+    def _apparence_choisie(self) -> str:
+        """« clair » ou « sombre » : le choix enregistre, qui peut differer
+        du theme affiche tant que l'application n'a pas redemarre."""
+        return nom_du_theme(self.settings)
+
+    def _choisir_apparence(self, nom: str) -> None:
+        """Enregistre le theme ; il s'applique au prochain demarrage."""
+        if nom == self._apparence_choisie():
+            return
+        self.settings.setValue(CLE_THEME, nom)
+        self.settings.sync()
+        QMessageBox.information(
+            self, "Apparence",
+            f"Le thème {nom} s'appliquera au prochain démarrage de "
+            "l'application.\n\nFermez-la puis rouvrez-la pour le voir.")
+
     def _apply_theme(self) -> None:
         # Fusion et palette claire d'abord (resistent au mode sombre de
         # Windows), puis la feuille de style par-dessus.

@@ -264,3 +264,31 @@ def test_le_selecteur_porte_le_libelle_periode(fenetre):
     fenetre._selecteur_actif = True
     fenetre._maj_etat_selecteur()
     assert libelle.isEnabled()
+
+
+# ---------- le choix Clair / Sombre (12/10/2026) ----------
+
+def test_les_parametres_proposent_clair_ou_sombre(fenetre, monkeypatch):
+    """Deux boutons, Clair coche par defaut ; choisir Sombre l'enregistre
+    dans les preferences (pas dans les donnees) et previent que cela
+    s'applique au prochain demarrage."""
+    from PySide6.QtWidgets import QMessageBox, QRadioButton
+
+    from gui_theme import CLE_THEME
+    messages = []
+    monkeypatch.setattr(QMessageBox, "information",
+                        lambda *a, **k: messages.append(a[2]))
+    fenetre._switch_view("settings")
+    boutons = {b.text(): b for b in
+               fenetre.views["settings"].findChildren(QRadioButton)}
+    assert set(boutons) == {"Clair", "Sombre"}
+    assert boutons["Clair"].isChecked()
+
+    boutons["Sombre"].click()
+    assert fenetre.settings.value(CLE_THEME) == "sombre"
+    assert len(messages) == 1 and "prochain démarrage" in messages[0]
+    # La fenetre ouverte garde son theme jusqu'au redemarrage.
+    assert fenetre.theme["name"] == "light"
+
+    boutons["Clair"].click()
+    assert fenetre.settings.value(CLE_THEME) == "clair"

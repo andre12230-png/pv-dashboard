@@ -4,10 +4,12 @@ from __future__ import annotations
 import pandas as pd
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QFrame,
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QRadioButton,
 )
 
 import calculations as calc
@@ -32,6 +34,11 @@ class SettingsView(BaseView):
     utilise_periode = False  # simple lecture de config.yaml
     # Ouvre la fenetre « Mes reglages » ; branche par MainWindow.
     ouvrir_reglages = None
+    # Theme Clair / Sombre (12/10/2026) ; branches par MainWindow :
+    # apparence_choisie() rend « clair » ou « sombre », choisir_apparence(nom)
+    # l'enregistre dans les preferences.
+    apparence_choisie = None
+    choisir_apparence = None
 
     def populate(self, period: str) -> None:
         cfg = self.data.cfg
@@ -138,7 +145,37 @@ class SettingsView(BaseView):
         self.layout_inner.addLayout(grid_row(cards2))
 
         self.layout_inner.addWidget(self._carte_recalages())
+        if callable(self.apparence_choisie) and callable(self.choisir_apparence):
+            self.layout_inner.addWidget(self._carte_apparence())
         self.layout_inner.addStretch(1)
+
+    def _carte_apparence(self) -> QFrame:
+        """Le choix du theme, Clair ou Sombre (12/10/2026).
+
+        Il s'applique au prochain demarrage : changer a chaud obligerait
+        chaque page ouverte a se redessiner (voir gui_theme.py). Le reglage
+        de Windows n'est jamais suivi : c'est l'application qui decide.
+        """
+        card = Card(titre="Apparence",
+                    sous_titre="S'applique au prochain démarrage de l'application")
+        v = card.corps
+        v.setContentsMargins(20, 10, 20, 14)
+        self._groupe_apparence = QButtonGroup(card)
+        ligne = QHBoxLayout()
+        ligne.setSpacing(24)
+        choisi = self.apparence_choisie()
+        for nom, libelle in (("clair", "Clair"), ("sombre", "Sombre")):
+            bouton = QRadioButton(libelle)
+            bouton.setChecked(nom == choisi)
+            bouton.setCursor(Qt.PointingHandCursor)
+            # nom=nom : chaque bouton garde son propre nom.
+            bouton.toggled.connect(
+                lambda coche, nom=nom: coche and self.choisir_apparence(nom))
+            self._groupe_apparence.addButton(bouton)
+            ligne.addWidget(bouton)
+        ligne.addStretch(1)
+        v.addLayout(ligne)
+        return card
 
     # Sections de config-local.yaml qui REECRIVENT les releves journaliers,
     # et ce qu'elles font, en clair.

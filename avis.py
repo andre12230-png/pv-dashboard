@@ -27,6 +27,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from gui_theme import theme_actif
+
 # Questionnaire en ligne (Microsoft Forms « Gestion Photovoltaique — votre
 # avis », cree le 15/09/2026 dans le compte de l'auteur). Changer le lien =
 # changer cette constante et republier.
@@ -110,9 +112,10 @@ class AvisDialog(QDialog):
         intro.setWordWrap(True)
         v.addWidget(intro)
 
+        discret = theme_actif()["text_muted"]
         version_lbl = QLabel(
             f"Votre version : <b>{description_systeme(version)}</b><br>"
-            "<span style='color:#666'>Elle sera copiée pour vous : collez-la "
+            f"<span style='color:{discret}'>Elle sera copiée pour vous : collez-la "
             "(Ctrl+V) dans la question « Votre version ».</span>")
         version_lbl.setTextFormat(Qt.RichText)
         version_lbl.setWordWrap(True)
@@ -120,7 +123,7 @@ class AvisDialog(QDialog):
 
         # Confirmation affichee une fois le questionnaire ouvert.
         self.confirmation = QLabel("")
-        self.confirmation.setStyleSheet("color:#18733A")
+        self.confirmation.setStyleSheet(f"color:{theme_actif()['credit']}")
         self.confirmation.setWordWrap(True)
         self.confirmation.hide()
         v.addWidget(self.confirmation)
@@ -130,7 +133,7 @@ class AvisDialog(QDialog):
             f"<a href='{TICKETS_GITHUB_URL}'>ouvrir un ticket</a>.")
         github.setTextFormat(Qt.RichText)
         github.setOpenExternalLinks(True)
-        github.setStyleSheet("color:#666")
+        github.setStyleSheet(f"color:{theme_actif()['text_muted']}")
         v.addWidget(github)
 
         boutons = QHBoxLayout()
@@ -164,11 +167,12 @@ def inviter(parent, settings: QSettings, aujourdhui: date, version: str) -> None
     boite.setIcon(QMessageBox.Question)
     boite.setWindowTitle(TITRE)
     boite.setTextFormat(Qt.RichText)
+    discret = theme_actif()["text_muted"]
     boite.setText(
         "Vous utilisez l'application depuis deux semaines.<br><br>"
         "Qu'est-ce qui marche, qu'est-ce qui coince ? Deux minutes de "
         "questionnaire aident à l'améliorer.<br><br>"
-        "<span style='color:#666'>Cette question ne vous sera plus posée. "
+        f"<span style='color:{discret}'>Cette question ne vous sera plus posée. "
         "Le bouton « Votre avis » du menu de gauche reste à votre "
         "disposition.</span>")
     oui = boite.addButton("Donner mon avis…", QMessageBox.AcceptRole)

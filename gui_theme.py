@@ -7,9 +7,9 @@ from __future__ import annotations
 
 import os
 
-from PySide6.QtCore import QLibraryInfo, QTranslator
-from PySide6.QtGui import QColor, QPalette
-from PySide6.QtWidgets import QToolTip
+from PySide6.QtCore import QLibraryInfo, QRectF, Qt, QTranslator
+from PySide6.QtGui import QColor, QPalette, QPen
+from PySide6.QtWidgets import QProxyStyle, QStyle, QStyleFactory, QToolTip
 
 
 def installer_traduction_qt(app) -> bool:
@@ -124,15 +124,120 @@ LIGHT = {
     "sb_brand":            "#1F3A6B",   # le bleu nuit de Pecule
     "sb_sub":              "#5A5A5A",
     "sb_version":          "#5A5A5A",
+    # Ajoutees le 12/10/2026 avec le mode sombre : des couleurs jusque-la
+    # ecrites en dur dans la feuille de style, la palette Qt et les vues.
+    "text_disabled":       "#666666",   # ce qui est desactive
+    "bg_saisie":           "#FFFFFF",   # cases de saisie (on voit ou taper)
+    "selection":           "#316AC5",   # fond de selection, bouton Enregistrer
+    "selection_survol":    "#1F3A6B",   # survol du bouton Enregistrer
+    "texte_selection":     "#FFFFFF",   # texte sur le fond de selection
+    "bulle_bg":            "#FFFFDC",   # infobulles
+    "bulle_texte":         "#000000",
+    "lien":                "#0B5AA8",
+    "lien_vu":             "#6A3FA0",
+    "jaune_bg":            "#FFFBE6",   # ligne du jour de la Saisie
+    "barre_neutre":        "#94a3b8",   # l'annee de comparaison, en gris
 }
 
 
-# Un seul theme, le clair, comme Pecule : decision de l'auteur du 14/09/2026,
-# valable pour toutes ses applications. La palette sombre a ete retiree.
+# Le mode sombre (decision de l'auteur du 12/10/2026, qui remplace « un seul
+# theme, le clair » du 14/09/2026). Palette commune aux trois applications,
+# validee sur maquette le 12/10/2026 : voir la charte d'interface. Chaque cle
+# est la jumelle de la meme cle de LIGHT. Un sombre CHAUD (brun tres fonce),
+# transposition du creme et de l'ivoire. Contrastes aux memes seuils que le
+# clair : tests/test_contraste.py les verifie pour les deux palettes.
+DARK = {
+    "name":           "dark",
+    "bg_app":         "#1C1B18",
+    "bg_carte":       "#262521",
+    # Tableaux et cases un cran plus clairs que la carte : on voit ou taper.
+    "bg_panel":       "#302F2B",
+    "bg_panel_alt":   "#2A2925",
+    "border":         "#4A4944",
+    "border_strong":  "#5E5C56",
+    "cadre":          "#55565B",
+    "cadre_controle": "#8A919C",
+    # Blanc casse, jamais blanc pur : moins fatigant le soir.
+    "text_primary":   "#EDEAE2",
+    "text_secondary": "#C9C6BD",
+    "text_muted":     "#ADAAA1",
+    "credit":         "#5CC281",
+    "credit_bg":      "#1B3324",
+    "debit":          "#F2806F",
+    "debit_bg":       "#3E201D",
+    # Le bleu d'accent ecrit aussi (periode choisie, survol) : eclairci.
+    "primary":        "#6FA0E8",
+    "primary_bg":     "#24334A",
+    "warm":           "#E67E22",
+    "warm_bg":        "#3A2D16",
+    "warm_ink":       "#F3C783",
+    "info":           "#6FA0E8",
+    "info_bg":        "#24334A",
+    "info_ink":       "#A9C2EC",
+    "table_row_alt":  "#2A2925",
+    "entete_haut":    "#2E3B52",
+    "entete_bas":     "#27344A",
+    "entete_texte":   "#CFDCF3",
+    "entete_filet":   "#41557A",
+    "shadow":         "rgba(0, 0, 0, 0.30)",
+    "sb_bg":               "#1C1B18",
+    "sb_btn":              "#2B2A26",
+    "sb_btn_border":       "#8A8780",
+    "sb_btn_text":         "#E6E3DA",
+    "sb_btn_hover":        "#24334A",
+    "sb_btn_hover_border": "#6FA0E8",
+    "sb_btn_pressed":      "#2A3F5F",
+    "sb_actif":            "#2A3F5F",
+    "sb_actif_border":     "#6FA0E8",
+    "sb_actif_text":       "#CFDCF3",
+    "sb_titre":            "#ADAAA1",
+    "sb_titre_filet":      "#5E5C56",
+    # Le bleu nuit de la marque devient un bleu clair.
+    "sb_brand":            "#A9C2EC",
+    "sb_sub":              "#ADAAA1",
+    "sb_version":          "#ADAAA1",
+    "text_disabled":       "#ADAAA1",
+    "bg_saisie":           "#302F2B",
+    "selection":           "#316AC5",
+    "selection_survol":    "#25509A",
+    "texte_selection":     "#FFFFFF",
+    "bulle_bg":            "#3B3826",
+    "bulle_texte":         "#F2EFE6",
+    "lien":                "#82B6F5",
+    "lien_vu":             "#BBA2EA",
+    "jaune_bg":            "#35321C",
+    "barre_neutre":        "#94a3b8",
+}
+
+# Le reglage, garde dans les preferences de l'application (QSettings, comme
+# la taille de la fenetre) : jamais dans les donnees. Il s'applique au
+# prochain demarrage : changer de theme a chaud obligerait chaque page
+# ouverte a se redessiner, et c'est la que se cachent les oublis.
+CLE_THEME = "ui/theme"
+THEMES = {"clair": LIGHT, "sombre": DARK}
+
+
+# Le theme choisi pour cette session (voir choisir_theme, plus bas).
+_THEME_ACTIF = LIGHT
+
+
+def theme_actif() -> dict:
+    """La palette de la session : LIGHT ou DARK."""
+    return _THEME_ACTIF
+
+
+def nom_du_theme(settings) -> str:
+    """« clair » ou « sombre », lu dans les preferences. Une valeur
+    inconnue ou absente donne le clair, le theme de reference."""
+    valeur = settings.value(CLE_THEME) if settings is not None else None
+    return valeur if valeur in THEMES else "clair"
 
 
 def qss_for(t: dict) -> str:
     """Genere une feuille QSS complete a partir d'une palette."""
+    # Les couleurs des series qui vont avec cette palette (traits des
+    # tuiles), et non celles du theme de la session.
+    cc = CHART_COLORS_SOMBRE if t is DARK else CHART_COLORS_CLAIR
     return f"""
 QWidget {{
     background: {t["bg_app"]};
@@ -145,20 +250,20 @@ QWidget {{
    noir « Ce mois-ci » et les fleches grisees : on les croyait cliquables
    (29/09/2026). */
 QWidget:disabled {{
-    color: #666666;
+    color: {t["text_disabled"]};
 }}
 /* Les cases de saisie sont blanches : on voit ou taper (charte). Sans cette
    regle, la regle universelle QWidget leur donnait le fond beige de la page
    et, sur une carte ivoire, elles semblaient grisees (30/09/2026). Les menus
    deroulants ne sont pas concernes : ils gardent l'allure standard. */
 QLineEdit, QAbstractSpinBox {{
-    background: #FFFFFF;
+    background: {t["bg_saisie"]};
 }}
 /* Les textes poses dans une carte prennent le fond de la carte. Sans cette
    regle, la regle universelle QWidget ci-dessus leur donnait le fond gris
    de la page : un bandeau gris derriere les titres de graphiques, les
    hypotheses, les Parametres... (audit du 14/09/2026). */
-QFrame#Card QLabel {{
+QFrame#Card QLabel, QFrame#Card QRadioButton, QFrame#Card QCheckBox {{
     background: transparent;
 }}
 
@@ -257,18 +362,18 @@ QPushButton#ActionBtn:hover {{
     color: {t["primary"]};
 }}
 QPushButton#SaveBtn {{
-    background: {t["primary"]};
-    border: 1px solid {t["primary"]};
+    background: {t["selection"]};
+    border: 1px solid {t["selection"]};
     border-radius: 4px;
     padding: 8px 18px;
-    color: white;
+    color: {t["texte_selection"]};
     font-weight: 700;
 }}
 QPushButton#SaveBtn:hover {{
     /* Au survol, le bleu nuit de Pecule (29/09/2026 : c'etait un indigo
        #4338ca, etranger a la palette commune). */
-    background: {t["sb_brand"]};
-    border-color: {t["sb_brand"]};
+    background: {t["selection_survol"]};
+    border-color: {t["selection_survol"]};
 }}
 
 /* Selecteur de periode : deux menus encadres par deux fleches, puis « Ce
@@ -357,11 +462,11 @@ QFrame[role="kpi"][variant="primary"]  {{ border-top-color: {t["primary"]}; }}
 QFrame[role="kpi"][variant="warm"]     {{ border-top-color: {t["warm"]}; }}
 QFrame[role="kpi"][variant="info"]     {{ border-top-color: {t["info"]}; }}
 QFrame[role="kpi"][variant="neutral"]  {{ border-top-color: {t["text_muted"]}; }}
-QFrame[role="kpi"][variant="prod"]     {{ border-top-color: {CHART_COLORS["production"]}; }}
-QFrame[role="kpi"][variant="solaire"]  {{ border-top-color: {CHART_COLORS["autoconso"]}; }}
-QFrame[role="kpi"][variant="vente"]    {{ border-top-color: {CHART_COLORS["injection"]}; }}
-QFrame[role="kpi"][variant="reseau"]   {{ border-top-color: {CHART_COLORS["soutirage"]}; }}
-QFrame[role="kpi"][variant="total"]    {{ border-top-color: {CHART_COLORS["primary"]}; }}
+QFrame[role="kpi"][variant="prod"]     {{ border-top-color: {cc["production"]}; }}
+QFrame[role="kpi"][variant="solaire"]  {{ border-top-color: {cc["autoconso"]}; }}
+QFrame[role="kpi"][variant="vente"]    {{ border-top-color: {cc["injection"]}; }}
+QFrame[role="kpi"][variant="reseau"]   {{ border-top-color: {cc["soutirage"]}; }}
+QFrame[role="kpi"][variant="total"]    {{ border-top-color: {cc["primary"]}; }}
 
 QLabel#KpiLabel {{
     color: {t["text_muted"]};
@@ -392,8 +497,8 @@ QFrame[role="tile"] {{
     border-radius: 12px;
     border-top-width: 3px;
 }}
-QFrame[role="tile"][variant="solaire"] {{ border-top-color: {CHART_COLORS["autoconso"]}; }}
-QFrame[role="tile"][variant="prod"]    {{ border-top-color: {CHART_COLORS["production"]}; }}
+QFrame[role="tile"][variant="solaire"] {{ border-top-color: {cc["autoconso"]}; }}
+QFrame[role="tile"][variant="prod"]    {{ border-top-color: {cc["production"]}; }}
 QFrame[role="tile"][variant="credit"]  {{ border-top-color: {t["credit"]}; }}
 QFrame[role="tile"][variant="debit"]   {{ border-top-color: {t["debit"]}; }}
 QFrame[role="tile"][variant="neutral"] {{ border-top-color: {t["text_muted"]}; }}
@@ -549,6 +654,9 @@ def mpl_style(t: dict) -> dict:
         "grid.linestyle":      "--",
         "grid.linewidth":      0.5,
         "grid.alpha":          0.5,
+        # Hachures des periodes incompletes : noires en clair (la valeur
+        # par defaut de matplotlib), claires en sombre.
+        "hatch.color":         t["text_primary"],
     }
 
 
@@ -567,9 +675,12 @@ def mpl_style(t: dict) -> dict:
 # soit le type de daltonisme. Chaque couleur garde un contraste d'au moins
 # 3:1 sur le fond sombre, et toutes les paires restent separees a l'oeil.
 #
-# Ces couleurs sont volontairement independantes du theme clair/sombre :
-# ce sont des couleurs d'accent, elles fonctionnent sur les deux fonds.
-CHART_COLORS = {
+# En sombre, le vert, le bleu et l'orange sont eclaircis d'un cran pour
+# ressortir sur le fond des cartes, et le bleu nuit des totaux devient bleu
+# clair (palette validee le 12/10/2026). Le jaune ne change pas.
+# CHART_COLORS est le dictionnaire du theme de la session : choisir_theme()
+# le remplit avec l'un ou l'autre jeu.
+CHART_COLORS_CLAIR = {
     # Jaune franc : la production brute. Ecarte de l'orange du soutirage pour
     # que les deux ne se confondent pas dans les graphiques a quatre barres.
     "production":    "#e8b21f",
@@ -583,6 +694,14 @@ CHART_COLORS = {
     # Indigo : les totaux et les cumuls, qui ne sont pas un flux d'energie.
     "primary":       "#1F3A6B",
 }
+CHART_COLORS_SOMBRE = {
+    "production":    "#e8b21f",
+    "autoconso":     "#22b07f",
+    "injection":     "#4a95ec",
+    "soutirage":     "#e3693a",
+    "primary":       "#A9C2EC",
+}
+CHART_COLORS = dict(CHART_COLORS_CLAIR)
 
 def _luminance(couleur: str) -> float:
     """Luminance relative d'une couleur « #rrggbb » (formule WCAG)."""
@@ -599,9 +718,10 @@ def _contraste(a: str, b: str) -> float:
     return (clair + 0.05) / (fonce + 0.05)
 
 
-# Les fonds sur lesquels on ecrit : cases blanches, lignes alternees des
-# tableaux, ivoire des cartes.
-_FONDS_D_ECRITURE = ("#FFFFFF", "#F5F5F0", "#FAF8F1")
+def _fonds_d_ecriture(t: dict) -> tuple:
+    """Les fonds sur lesquels on ecrit : cases et tableaux, lignes
+    alternees, cartes."""
+    return (t["bg_panel"], t["table_row_alt"], t["bg_carte"])
 
 
 def encre(couleur: str, seuil: float = 4.8) -> str:
@@ -613,16 +733,28 @@ def encre(couleur: str, seuil: float = 4.8) -> str:
     composantes par un meme facteur, ce qui garde la teinte, jusqu'a
     atteindre le seuil sur les trois fonds. Une couleur deja assez foncee
     ne bouge pas.
+
+    En sombre (12/10/2026), c'est l'inverse : on ECLAIRCIT la teinte, en la
+    rapprochant du blanc, jusqu'au meme seuil sur les fonds sombres.
     """
+    t = theme_actif()
+    fonds = _fonds_d_ecriture(t)
     r, g, b = (int(couleur[i:i + 2], 16) for i in (1, 3, 5))
-    facteur = 1.0
-    while facteur > 0:
-        trace = "#%02x%02x%02x" % (round(r * facteur), round(g * facteur),
-                                    round(b * facteur))
-        if min(_contraste(trace, f) for f in _FONDS_D_ECRITURE) >= seuil:
-            return couleur if facteur == 1.0 else trace
-        facteur = round(facteur - 0.01, 2)
-    return "#000000"
+    sombre = t is DARK
+    pas = 0.0
+    while pas <= 1.0:
+        if sombre:
+            # Melange avec le blanc : pas = 0 la couleur, pas = 1 le blanc.
+            trace = "#%02x%02x%02x" % tuple(
+                round(c + (255 - c) * pas) for c in (r, g, b))
+        else:
+            facteur = 1.0 - pas
+            trace = "#%02x%02x%02x" % tuple(
+                round(c * facteur) for c in (r, g, b))
+        if min(_contraste(trace, f) for f in fonds) >= seuil:
+            return couleur if pas == 0.0 else trace
+        pas = round(pas + 0.01, 2)
+    return "#FFFFFF" if sombre else "#000000"
 
 
 # Encre des variations et des montants ecrits (+ favorable / - defavorable) :
@@ -631,8 +763,50 @@ def encre(couleur: str, seuil: float = 4.8) -> str:
 # les daltoniens) faisaient deux verts et deux rouges sur la meme page
 # (relecture du 05/10/2026). Les daltoniens n'y perdent rien : chaque
 # variation porte aussi son signe, la couleur n'est jamais seule.
+# Remplacees par celles du theme sombre si c'est lui qui est choisi.
 COULEUR_FAVORABLE = LIGHT["credit"]       # #18733A, 5,6 pour 1 sur l'ivoire
 COULEUR_DEFAVORABLE = LIGHT["debit"]      # #BC3729 : 5,3 pour 1 sur l'ivoire, 4,6 sur le creme
+
+
+def choisir_theme(nom: str) -> dict:
+    """Fixe le theme de la session, « clair » ou « sombre », et le rend.
+
+    A appeler au demarrage, AVANT d'importer les vues : certaines prennent
+    CHART_COLORS ou COULEUR_FAVORABLE au moment ou elles sont importees.
+    Le dictionnaire CHART_COLORS est rempli sur place, pour que ceux qui
+    l'ont deja importe voient aussi les bonnes couleurs.
+    """
+    global _THEME_ACTIF, COULEUR_FAVORABLE, COULEUR_DEFAVORABLE
+    _THEME_ACTIF = THEMES.get(nom, LIGHT)
+    sombre = _THEME_ACTIF is DARK
+    CHART_COLORS.clear()
+    CHART_COLORS.update(CHART_COLORS_SOMBRE if sombre else CHART_COLORS_CLAIR)
+    COULEUR_FAVORABLE = _THEME_ACTIF["credit"]
+    COULEUR_DEFAVORABLE = _THEME_ACTIF["debit"]
+    return _THEME_ACTIF
+
+
+def palette_pour(t: dict) -> QPalette:
+    """La palette Qt d'un theme, construite de zero — fonds ET textes.
+    Voir palette_claire() pour la raison."""
+    pal = QPalette()
+    for role, cle in (
+            (QPalette.Window, "bg_app"), (QPalette.WindowText, "text_primary"),
+            (QPalette.Base, "bg_saisie"), (QPalette.Text, "text_primary"),
+            (QPalette.AlternateBase, "table_row_alt"),
+            (QPalette.Button, "bg_app"), (QPalette.ButtonText, "text_primary"),
+            (QPalette.ToolTipBase, "bulle_bg"),
+            (QPalette.ToolTipText, "bulle_texte"),
+            (QPalette.Highlight, "selection"),
+            (QPalette.HighlightedText, "texte_selection"),
+            (QPalette.PlaceholderText, "text_muted"),
+            (QPalette.BrightText, "texte_selection"),
+            (QPalette.Link, "lien"), (QPalette.LinkVisited, "lien_vu")):
+        pal.setColor(role, QColor(t[cle]))
+    # Ce qui est desactive s'efface, sans disparaitre pour autant.
+    for role in (QPalette.WindowText, QPalette.Text, QPalette.ButtonText):
+        pal.setColor(QPalette.Disabled, role, QColor(t["text_disabled"]))
+    return pal
 
 
 def palette_claire() -> QPalette:
@@ -644,29 +818,77 @@ def palette_claire() -> QPalette:
     deroulants, fenetres de choix de fichier). Rien n'est pris a la palette
     du systeme : un Windows regle en mode sombre ne change plus rien (defaut
     vu dans Pecule le 16/09/2026 : texte blanc sur fond clair)."""
-    pal = QPalette()
-    for role, couleur in (
-            (QPalette.Window, "#ECE9D8"), (QPalette.WindowText, "#000000"),
-            (QPalette.Base, "#FFFFFF"), (QPalette.Text, "#000000"),
-            (QPalette.AlternateBase, "#F5F5F0"),
-            (QPalette.Button, "#ECE9D8"), (QPalette.ButtonText, "#000000"),
-            (QPalette.ToolTipBase, "#FFFFDC"), (QPalette.ToolTipText, "#000000"),
-            (QPalette.Highlight, "#316AC5"), (QPalette.HighlightedText, "#FFFFFF"),
-            (QPalette.PlaceholderText, "#666666"), (QPalette.BrightText, "#FFFFFF"),
-            (QPalette.Link, "#0B5AA8"), (QPalette.LinkVisited, "#6A3FA0")):
-        pal.setColor(role, QColor(couleur))
-    # Ce qui est desactive s'efface, sans disparaitre pour autant.
-    for role in (QPalette.WindowText, QPalette.Text, QPalette.ButtonText):
-        pal.setColor(QPalette.Disabled, role, QColor("#666666"))
-    return pal
+    return palette_pour(LIGHT)
+
+
+class StyleContoure(QProxyStyle):
+    """Le style « Fusion », plus un contour lisible aux cases a cocher et aux
+    boutons radio : celui de Pecule (comptesbudget/app.py, StyleClair).
+
+    Fusion cerne ces controles d'une teinte tiree du fond de la page : a
+    peine visible sur le creme, presque invisible en sombre (choix Clair /
+    Sombre des Parametres, 12/10/2026). La charte veut 3 pour 1 pour ce
+    qu'on clique : le contour des controles du theme.
+    """
+
+    def __init__(self, contour: str, cadrer_les_cases: bool = False):
+        super().__init__(QStyleFactory.create("Fusion"))
+        self.contour = QColor(contour)
+        # En sombre seulement (12/10/2026) : les cases de saisie recoivent
+        # elles aussi ce contour. Fusion le tire du fond de la page, presque
+        # noir en sombre : on voyait mal ou taper. Le clair garde son allure.
+        self.cadrer_les_cases = cadrer_les_cases
+
+    def _cadrer(self, painter, rect) -> None:
+        """Le contour d'une case de saisie, aux coins arrondis de Fusion."""
+        painter.save()
+        painter.setRenderHint(painter.RenderHint.Antialiasing, True)
+        painter.setPen(QPen(self.contour, 1))
+        painter.setBrush(Qt.NoBrush)
+        # Le demi-pixel cale le trait sur une seule rangee de pixels : sans
+        # lui, il se partage entre deux et sort pale.
+        painter.drawRoundedRect(QRectF(rect).adjusted(0.5, 0.5, -0.5, -0.5),
+                                2, 2)
+        painter.restore()
+
+    def drawComplexControl(self, control, option, painter, widget=None):
+        super().drawComplexControl(control, option, painter, widget)
+        if (self.cadrer_les_cases and control == QStyle.CC_SpinBox
+                and option.frame):
+            self._cadrer(painter, option.rect)
+
+    def drawPrimitive(self, element, option, painter, widget=None):
+        super().drawPrimitive(element, option, painter, widget)
+        if self.cadrer_les_cases and element == QStyle.PE_FrameLineEdit:
+            self._cadrer(painter, option.rect)
+        if element in (QStyle.PE_IndicatorCheckBox,
+                       QStyle.PE_IndicatorItemViewItemCheck,
+                       QStyle.PE_IndicatorRadioButton):
+            painter.save()
+            rond = element == QStyle.PE_IndicatorRadioButton
+            painter.setRenderHint(painter.RenderHint.Antialiasing, rond)
+            painter.setPen(QPen(self.contour, 1))
+            painter.setBrush(Qt.NoBrush)
+            cadre = option.rect.adjusted(0, 0, -1, -1)
+            if rond:
+                painter.drawEllipse(cadre)
+            else:
+                painter.drawRect(cadre)
+            painter.restore()
 
 
 def appliquer_style(app) -> None:
-    """Style « Fusion » et palette claire, comme Pecule. Fusion est
+    """Style « Fusion » et palette du theme choisi (le clair par defaut),
+    comme Pecule. Fusion est
     indispensable : les styles natifs de Windows peignent certains textes
     eux-memes, sans consulter la palette."""
-    app.setStyle("Fusion")
-    app.setPalette(palette_claire())
+    t = theme_actif()
+    # Garde une reference vivante : Qt ne garde pas l'objet Python.
+    app._style_contoure = StyleContoure(t["cadre_controle"],
+                                        cadrer_les_cases=t is DARK)
+    app.setStyle(app._style_contoure)
+    palette = palette_pour(t)
+    app.setPalette(palette)
     # Les infobulles ont leur palette a elles, prise au systeme (fond
     # #3C3C3C sur un Windows sombre) : setPalette() ne la touche pas.
-    QToolTip.setPalette(palette_claire())
+    QToolTip.setPalette(palette)

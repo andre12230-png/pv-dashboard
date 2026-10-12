@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 
 import calculations as calc
 from erreurs import erreur_en_clair
+from gui_theme import theme_actif
 from gui_widgets import Card
 from reglages import (
     SORTES_RECALAGE,
@@ -231,7 +232,8 @@ class FenetreReglages(QDialog):
         self.total_prime = QLabel()
         self.total_prime.setWordWrap(True)
         self.total_prime.setStyleSheet(
-            "color: #000000; font-size: 12px; font-weight: 600;")
+            f"color: {theme_actif()['text_primary']}; font-size: 12px; "
+            "font-weight: 600;")
         for case in (self.puissance, self.prime):
             case.valueChanged.connect(self._montrer_total_prime)
         self.prime_duree.valueChanged.connect(self._montrer_total_prime)
@@ -282,7 +284,8 @@ class FenetreReglages(QDialog):
         # L'estimation d'apres les plages, a cote de la case, et un bouton
         # pour la reprendre. Elle suit les plages tapees.
         self.estimation_hc = QLabel()
-        self.estimation_hc.setStyleSheet("color: #555555;")
+        self.estimation_hc.setStyleSheet(
+            f"color: {theme_actif()['text_secondary']};")
         self.bouton_estimation = QPushButton("Reprendre")
         self.bouton_estimation.setToolTip(
             "Mettre dans la case l'estimation d'après vos heures creuses.")
@@ -379,7 +382,8 @@ class FenetreReglages(QDialog):
             "jamais avec le programme.")
         note.setTextFormat(Qt.RichText)
         note.setWordWrap(True)
-        note.setStyleSheet("color: #666666; font-size: 11px;")
+        note.setStyleSheet(
+            f"color: {theme_actif()['text_muted']}; font-size: 11px;")
         dehors.addWidget(note)
 
         entetes = QHBoxLayout()
@@ -389,7 +393,8 @@ class FenetreReglages(QDialog):
                                ("D'où ça vient", 130), ("", 30)):
             case = QLabel(titre)
             case.setMinimumWidth(largeur)
-            case.setStyleSheet("color: #666666; font-size: 11px;")
+            case.setStyleSheet(
+            f"color: {theme_actif()['text_muted']}; font-size: 11px;")
             entetes.addWidget(case)
         dehors.addLayout(entetes)
 
@@ -489,7 +494,8 @@ class FenetreReglages(QDialog):
         note = QLabel(aide)
         note.setTextFormat(Qt.RichText)
         note.setWordWrap(True)
-        note.setStyleSheet("color: #666666; font-size: 11px;")
+        note.setStyleSheet(
+            f"color: {theme_actif()['text_muted']}; font-size: 11px;")
         form.addRow(note)
         return groupe
 
