@@ -214,7 +214,7 @@ def test_la_palette_ignore_le_mode_sombre_de_windows():
     app.setStyleSheet(ancienne_feuille)
 
 
-def test_le_message_deja_ouvert_est_deja_en_clair(monkeypatch):
+def test_le_message_deja_ouvert_est_deja_en_clair(monkeypatch, tmp_path):
     """29/09/2026 : run.main() posait la palette claire seulement en
     construisant la fenetre (MainWindow._apply_theme). Les boites « deja
     ouvert » et « Impossible de demarrer », affichees avant, gardaient la
@@ -247,9 +247,18 @@ def test_le_message_deja_ouvert_est_deja_en_clair(monkeypatch):
         return QMessageBox.Ok
     monkeypatch.setattr(run, "prendre_le_verrou", lambda: None)
     monkeypatch.setattr(run.QMessageBox, "warning", boite)
+    # Des preferences jetables : run.main() lit le choix Clair / Sombre, et
+    # celles de l'utilisateur (registre) ne doivent rien decider ici. Le
+    # 12/10/2026, l'auteur passe en sombre pour essayer : ce test echouait.
+    from PySide6.QtCore import QSettings
+    jetables = str(tmp_path / "prefs.ini")
+    monkeypatch.setattr(run, "QSettings", lambda *a: QSettings(
+        jetables, QSettings.Format.IniFormat))
     try:
         assert run.main() == 1
     finally:
+        import gui_theme
+        gui_theme.choisir_theme("clair")
         app.setStyle(ancien_style)
         app.setPalette(ancienne_palette)
         app.setStyleSheet(ancienne_feuille)

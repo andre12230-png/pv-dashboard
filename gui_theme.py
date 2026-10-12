@@ -137,6 +137,10 @@ LIGHT = {
     "lien_vu":             "#6A3FA0",
     "jaune_bg":            "#FFFBE6",   # ligne du jour de la Saisie
     "barre_neutre":        "#94a3b8",   # l'annee de comparaison, en gris
+    # Ligne choisie d'une liste deroulante ouverte : le creme de la page,
+    # comme Fusion le peignait deja (audit du 12/10/2026 : on l'ecrit).
+    "liste_choix_bg":      "#ECE9D8",
+    "liste_choix_texte":   "#000000",
 }
 
 
@@ -207,6 +211,10 @@ DARK = {
     "lien_vu":             "#BBA2EA",
     "jaune_bg":            "#35321C",
     "barre_neutre":        "#94a3b8",
+    # Le fond de la page en faisait un « trou » a peine visible (1,29 pour
+    # 1) : le bleu de selection, texte blanc (audit du 12/10/2026).
+    "liste_choix_bg":      "#316AC5",
+    "liste_choix_texte":   "#FFFFFF",
 }
 
 # Le reglage, garde dans les preferences de l'application (QSettings, comme
@@ -332,6 +340,13 @@ QPushButton#NavItem:checked {{
     color: {t["sb_actif_text"]};
     font-weight: 600;
 }}
+/* Le curseur clavier se voit (audit du 12/10/2026, WCAG 2.4.7) : arrive
+   avec Tab sur un bouton, rien ne changeait. Bord bleu de 2 px ; le retrait
+   perd 1 px pour que le bouton garde sa taille. */
+QPushButton#NavItem:focus {{
+    border: 2px solid {t["primary"]};
+    padding-left: 7px;
+}}
 
 /* Toolbar */
 QFrame#Toolbar {{
@@ -361,6 +376,16 @@ QPushButton#ActionBtn:hover {{
     border-color: {t["primary"]};
     color: {t["primary"]};
 }}
+/* Desactive : bord et texte pales, il n'a plus l'air cliquable (audit du
+   12/10/2026 ; il gardait le cadre d'un bouton actif). */
+QPushButton#ActionBtn:disabled {{
+    border-color: {t["border_strong"]};
+    color: {t["text_disabled"]};
+}}
+QPushButton#ActionBtn:focus {{
+    border: 2px solid {t["primary"]};
+    padding: 7px 13px;
+}}
 QPushButton#SaveBtn {{
     background: {t["selection"]};
     border: 1px solid {t["selection"]};
@@ -374,6 +399,11 @@ QPushButton#SaveBtn:hover {{
        #4338ca, etranger a la palette commune). */
     background: {t["selection_survol"]};
     border-color: {t["selection_survol"]};
+}}
+/* Deja bleu : son curseur clavier est un bord de la couleur du texte. */
+QPushButton#SaveBtn:focus {{
+    border: 2px solid {t["text_primary"]};
+    padding: 7px 17px;
 }}
 
 /* Selecteur de periode : deux menus encadres par deux fleches, puis « Ce
@@ -398,6 +428,33 @@ QComboBox QAbstractItemView {{
     selection-background-color: {t["primary_bg"]};
     selection-color: {t["primary"]};
     outline: none;
+}}
+/* La ligne choisie (ou survolee) d'une liste ouverte : sans cette regle,
+   Fusion la peignait du fond de la page, a peine visible en sombre. Fusion
+   dessine ses listes comme des menus : seul QComboBox::item les atteint
+   (QAbstractItemView::item restait sans effet). */
+QComboBox::item:selected {{
+    background: {t["liste_choix_bg"]};
+    color: {t["liste_choix_texte"]};
+}}
+/* Menus (« Bilans et comparaisons… ») : un liseré, celui des cartes, et
+   l'entree survolee en bleu de selection. Sans ces regles, le menu avait la
+   couleur de la page, sans bord, et la regle universelle QWidget effacait
+   la mise en valeur de l'entree survolee (audit du 12/10/2026). */
+QMenu {{
+    border: 1px solid {t["cadre"]};
+}}
+QMenu::item:selected {{
+    background: {t["selection"]};
+    color: {t["texte_selection"]};
+}}
+/* Cette regle fait dessiner a Qt une coche devant la ligne choisie, qui
+   decalait ce seul mot vers la droite : la couleur suffit. Toucher aux
+   marges des lignes, lui, les etirait sur toute la hauteur. */
+QComboBox::indicator {{
+    width: 0px;
+    height: 0px;
+    image: none;
 }}
 
 /* Content area */
@@ -763,6 +820,34 @@ def encre(couleur: str, seuil: float = 4.8) -> str:
 # les daltoniens) faisaient deux verts et deux rouges sur la meme page
 # (relecture du 05/10/2026). Les daltoniens n'y perdent rien : chaque
 # variation porte aussi son signe, la couleur n'est jamais seule.
+def _melange(a: str, b: str, part_a: float) -> str:
+    """La couleur a melangee a la couleur b (part_a de a, le reste de b)."""
+    ca = [int(a[i:i + 2], 16) for i in (1, 3, 5)]
+    cb = [int(b[i:i + 2], 16) for i in (1, 3, 5)]
+    return "#%02x%02x%02x" % tuple(
+        round(x * part_a + y * (1 - part_a)) for x, y in zip(ca, cb, strict=True))
+
+
+# Le gris neutre qui adoucit une couleur en sombre (voir adoucir).
+_GRIS_ADOUCI_SOMBRE = "#77736A"
+
+
+def adoucir(couleur: str) -> str:
+    """La teinte pale d'une couleur de serie, pour les barres qui ne sont
+    pas mises en valeur (production jour par jour, tuile Production).
+
+    En clair : la couleur a 45 % sur l'ivoire des cartes, le pastel d'avant.
+    En sombre (audit du 12/10/2026) : la meme recette donnait un brun olive
+    terne (#7D6420, 2,71 pour 1 sur la carte). La couleur est melangee a
+    parts egales a un gris neutre : un « sable » lisible (5,1 pour 1),
+    distinct du jaune plein.
+    """
+    t = theme_actif()
+    if t is DARK:
+        return _melange(couleur, _GRIS_ADOUCI_SOMBRE, 0.5)
+    return _melange(couleur, t["bg_carte"], 0.45)
+
+
 # Remplacees par celles du theme sombre si c'est lui qui est choisi.
 COULEUR_FAVORABLE = LIGHT["credit"]       # #18733A, 5,6 pour 1 sur l'ivoire
 COULEUR_DEFAVORABLE = LIGHT["debit"]      # #BC3729 : 5,3 pour 1 sur l'ivoire, 4,6 sur le creme
@@ -831,36 +916,71 @@ class StyleContoure(QProxyStyle):
     qu'on clique : le contour des controles du theme.
     """
 
-    def __init__(self, contour: str, cadrer_les_cases: bool = False):
+    def __init__(self, contour: str, cadrer_les_cases: bool = False,
+                 focus: str = "#316AC5", eteint: str = "#C8D0DC"):
         super().__init__(QStyleFactory.create("Fusion"))
         self.contour = QColor(contour)
+        # Bord d'un bouton ou d'un menu deroulant desactive : pale, pour
+        # qu'il n'ait plus l'air cliquable (audit du 12/10/2026).
+        self.eteint = QColor(eteint)
+        # Bord d'une case de saisie qui a le curseur clavier, dans les deux
+        # themes (audit du 12/10/2026) : la feuille de style, qui donne leur
+        # fond aux cases, effacait celui de Fusion.
+        self.focus = QColor(focus)
         # En sombre seulement (12/10/2026) : les cases de saisie recoivent
         # elles aussi ce contour. Fusion le tire du fond de la page, presque
         # noir en sombre : on voyait mal ou taper. Le clair garde son allure.
         self.cadrer_les_cases = cadrer_les_cases
 
-    def _cadrer(self, painter, rect) -> None:
+    def _cadrer(self, painter, rect, couleur, epaisseur=1) -> None:
         """Le contour d'une case de saisie, aux coins arrondis de Fusion."""
         painter.save()
         painter.setRenderHint(painter.RenderHint.Antialiasing, True)
-        painter.setPen(QPen(self.contour, 1))
+        painter.setPen(QPen(couleur, 1))
         painter.setBrush(Qt.NoBrush)
         # Le demi-pixel cale le trait sur une seule rangee de pixels : sans
-        # lui, il se partage entre deux et sort pale.
-        painter.drawRoundedRect(QRectF(rect).adjusted(0.5, 0.5, -0.5, -0.5),
-                                2, 2)
+        # lui, il se partage entre deux et sort pale. Un trait par pixel
+        # d'epaisseur, de l'exterieur vers l'interieur.
+        for i in range(epaisseur):
+            marge = 0.5 + i
+            painter.drawRoundedRect(
+                QRectF(rect).adjusted(marge, marge, -marge, -marge), 2, 2)
         painter.restore()
+
+    def _case(self, painter, option) -> None:
+        """Bord d'une case de saisie : bleu de 2 px si elle a le curseur,
+        sinon le contour des controles (en sombre seulement)."""
+        if option.state & QStyle.State_HasFocus:
+            self._cadrer(painter, option.rect, self.focus, 2)
+        elif self.cadrer_les_cases:
+            self._cadrer(painter, option.rect, self.contour)
+
+    def _bouton(self, painter, option) -> None:
+        """Bord d'un bouton ou d'un menu deroulant standard (fleches de
+        periode, « Ce mois-ci », choix de l'annee...) : le contour des
+        controles, 3 pour 1 sur la page comme le veut la charte, ou un bord
+        pale s'il est desactive. Fusion ne leur donnait que 2 pour 1 en
+        clair et 1,6 en sombre, desactives ou non (audit du 12/10/2026)."""
+        if not option.state & QStyle.State_Enabled:
+            self._cadrer(painter, option.rect, self.eteint)
+        elif option.state & QStyle.State_HasFocus:
+            self._cadrer(painter, option.rect, self.focus, 2)
+        else:
+            self._cadrer(painter, option.rect, self.contour)
 
     def drawComplexControl(self, control, option, painter, widget=None):
         super().drawComplexControl(control, option, painter, widget)
-        if (self.cadrer_les_cases and control == QStyle.CC_SpinBox
-                and option.frame):
-            self._cadrer(painter, option.rect)
+        if control == QStyle.CC_SpinBox and option.frame:
+            self._case(painter, option)
+        elif control == QStyle.CC_ComboBox and option.frame:
+            self._bouton(painter, option)
 
     def drawPrimitive(self, element, option, painter, widget=None):
         super().drawPrimitive(element, option, painter, widget)
-        if self.cadrer_les_cases and element == QStyle.PE_FrameLineEdit:
-            self._cadrer(painter, option.rect)
+        if element == QStyle.PE_FrameLineEdit:
+            self._case(painter, option)
+        elif element == QStyle.PE_PanelButtonCommand:
+            self._bouton(painter, option)
         if element in (QStyle.PE_IndicatorCheckBox,
                        QStyle.PE_IndicatorItemViewItemCheck,
                        QStyle.PE_IndicatorRadioButton):
@@ -885,7 +1005,9 @@ def appliquer_style(app) -> None:
     t = theme_actif()
     # Garde une reference vivante : Qt ne garde pas l'objet Python.
     app._style_contoure = StyleContoure(t["cadre_controle"],
-                                        cadrer_les_cases=t is DARK)
+                                        cadrer_les_cases=t is DARK,
+                                        focus=t["primary"],
+                                        eteint=t["border_strong"])
     app.setStyle(app._style_contoure)
     palette = palette_pour(t)
     app.setPalette(palette)

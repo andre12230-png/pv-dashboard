@@ -10,7 +10,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 from gui_theme import CHART_COLORS as CC
-from gui_theme import mpl_style
+from gui_theme import adoucir, mpl_style
 from gui_widgets import (
     BarMeter,
     BarreRepartition,
@@ -656,7 +656,8 @@ class DashboardView(BaseView):
         canvas.apply_theme(mpl_style(self.theme))
         ax = canvas.fig.add_subplot(111)
         x = np.arange(len(serie.index))
-        adoucie = mcolors.to_rgba(CC["production"], 0.45)
+        # La teinte pale du theme : sable en sombre, pastel en clair.
+        adoucie = adoucir(CC["production"])
         couleurs = [CC["production"] if i == meilleur else adoucie
                     for i in range(len(x))]
         barres = ax.bar(x, valeurs, 0.7, color=couleurs)

@@ -26,6 +26,8 @@ matplotlib.use("QtAgg")
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
+from gui_theme import adoucir
+
 # ----------------------------------------------------------------------
 # Helpers
 # ----------------------------------------------------------------------
@@ -487,8 +489,9 @@ class MiniBarres(QWidget):
         pas = float(self.width()) / n
         largeur = max(1.0, pas * 0.7)
         maxi = max(self.valeurs)
-        adouci = QColor(self.color)
-        adouci.setAlphaF(0.45)
+        # La teinte pale du theme (gui_theme.adoucir), opaque : un jaune
+        # transparent pose sur le fond sombre virait au brun olive.
+        adouci = QColor(adoucir(self.color.name()))
         for i, v in enumerate(self.valeurs):
             h = (float(self.height()) - 2) * v / maxi
             p.setBrush(self.color if v == maxi else adouci)
