@@ -245,3 +245,68 @@ def test_les_cases_de_saisie_ont_un_bord_en_sombre(classe):
         appliquer_style(app)
         app.setPalette(ancienne)
         app.setStyleSheet(ancienne_feuille)
+
+
+# --- Reglage abime ou non enregistre (audit du 13/10/2026) -------------------
+
+def test_un_reglage_abime_donne_le_clair_sans_planter(tmp_path):
+    """« theme=clair, sombre » se lit comme une liste : le test « in THEMES »
+    levait TypeError, avant le demarrage de la fenetre."""
+    from PySide6.QtCore import QSettings
+    from PySide6.QtWidgets import QApplication
+    QApplication.instance() or QApplication([])
+    ini = tmp_path / "prefs.ini"
+    ini.write_text("[ui]\ntheme=clair, sombre\n", encoding="utf-8")
+    prefs = QSettings(str(ini), QSettings.Format.IniFormat)
+    assert nom_du_theme(prefs) == "clair"
+
+
+class _PrefsEnLectureSeule:
+    """Preferences dont l'ecriture echoue (fichier verrouille)."""
+
+    def __init__(self, statut):
+        self.statut = statut
+        self.valeurs = {}
+
+    def setValue(self, cle, valeur):
+        self.valeurs[cle] = valeur
+
+    def sync(self):
+        pass
+
+    def status(self):
+        return self.statut
+
+    def value(self, cle, defaut=None):
+        return self.valeurs.get(cle, defaut)
+
+
+def _choisir(monkeypatch, statut):
+    from types import SimpleNamespace
+
+    import app_desktop
+    messages = []
+    monkeypatch.setattr(
+        app_desktop.QMessageBox, "information",
+        staticmethod(lambda *a, **k: messages.append(("info", a[2]))))
+    monkeypatch.setattr(
+        app_desktop.QMessageBox, "warning",
+        staticmethod(lambda *a, **k: messages.append(("alerte", a[2]))))
+    fenetre = SimpleNamespace(settings=_PrefsEnLectureSeule(statut),
+                              _apparence_choisie=lambda: "clair")
+    app_desktop.MainWindow._choisir_apparence(fenetre, "sombre")
+    return messages
+
+
+def test_choix_du_theme_non_enregistre_est_dit(monkeypatch):
+    from PySide6.QtCore import QSettings
+    messages = _choisir(monkeypatch, QSettings.Status.AccessError)
+    assert [genre for genre, _ in messages] == ["alerte"]
+    assert "pas pu être enregistré" in messages[0][1]
+
+
+def test_choix_du_theme_enregistre_est_annonce(monkeypatch):
+    from PySide6.QtCore import QSettings
+    messages = _choisir(monkeypatch, QSettings.Status.NoError)
+    assert [genre for genre, _ in messages] == ["info"]
+    assert "prochain démarrage" in messages[0][1]

@@ -238,6 +238,11 @@ def nom_du_theme(settings) -> str:
     """« clair » ou « sombre », lu dans les preferences. Une valeur
     inconnue ou absente donne le clair, le theme de reference."""
     valeur = settings.value(CLE_THEME) if settings is not None else None
+    # Un fichier de preferences abime peut rendre une liste
+    # (« clair, sombre ») : « in THEMES » levait alors une erreur et
+    # l'application ne demarrait plus (audit du 13/10/2026).
+    if not isinstance(valeur, str):
+        return "clair"
     return valeur if valeur in THEMES else "clair"
 
 

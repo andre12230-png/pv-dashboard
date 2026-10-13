@@ -384,6 +384,12 @@ def recale_sur_facture(df_daily: pd.DataFrame,
             out.loc[periode & ~deja_servis, "conso_recalee"] = 1.0
             continue
 
+        # Les jours deja servis (combles par une facture) gardent leur part :
+        # les jours releves visent le reste du total, sans quoi ces kWh
+        # etaient comptes deux fois (audit du 13/10/2026). La branche des
+        # jours a reconstituer, plus haut, les deduit deja.
+        deja = float(out.loc[deja_servis, "soutirage_kwh"].sum())
+        total = max(total - deja, 0.0)
         valeurs = out.loc[dans, "soutirage_kwh"].astype(float)
         for _ in range(10):
             reste = total - float(valeurs.sum())
@@ -676,15 +682,8 @@ def _prix_bleu_for_date(d: pd.Timestamp, tranches: list[dict]) -> float:
     # erreur : les jours concernes n'ont simplement pas de tarif Bleu.
     if not tranches:
         return 0.0
-    for tranche in tranches:
-        debut = pd.Timestamp(tranche["debut"])
-        fin = pd.Timestamp(tranche["fin"])
-        if debut <= d <= fin:
-            return float(tranche["prix"])
-    # Hors plage definie : on prend le plus proche
-    if d < pd.Timestamp(tranches[0]["debut"]):
-        return float(tranches[0]["prix"])
-    return float(tranches[-1]["prix"])
+    # Meme regle que les autres grilles, trous compris (13/10/2026).
+    return _valeur_periode(d, tranches, "prix")
 
 
 def _prix_bleu_series(idx: pd.DatetimeIndex,
@@ -692,18 +691,9 @@ def _prix_bleu_series(idx: pd.DatetimeIndex,
     """Version vectorisee de _prix_bleu_for_date sur un index complet."""
     if not tranches:
         return pd.Series(0.0, index=idx, dtype=float)
-    prix = pd.Series(float("nan"), index=idx, dtype=float)
-    for tranche in tranches:
-        debut = pd.Timestamp(tranche["debut"])
-        fin = pd.Timestamp(tranche["fin"])
-        mask = (idx >= debut) & (idx <= fin)
-        prix[mask] = float(tranche["prix"])
-    # Fallback : dates hors tranches -> tranche la plus proche
-    avant = idx < pd.Timestamp(tranches[0]["debut"])
-    apres = idx > pd.Timestamp(tranches[-1]["fin"])
-    prix[avant] = float(tranches[0]["prix"])
-    prix[apres] = float(tranches[-1]["prix"])
-    return prix
+    # Meme regle que les autres grilles : un jour entre deux tranches
+    # sortait des sommes (NaN) sans un mot (audit du 13/10/2026).
+    return _valeur_periode_series(idx, tranches, "prix")
 
 
 # Date a laquelle on change de facon de facturer : prix unique (Tarif Bleu
@@ -755,20 +745,35 @@ def _fin_periode(periode: dict) -> pd.Timestamp:
     return pd.Timestamp(fin)
 
 
+def _periodes_triees(periodes: list[dict]) -> list[dict]:
+    """Les periodes dans l'ordre de leur debut, quel que soit le fichier."""
+    return sorted(periodes, key=lambda p: pd.Timestamp(p["debut"]))
+
+
 def _valeur_periode(jour: pd.Timestamp, periodes: list[dict], cle: str) -> float:
     """Valeur d'une grille tarifaire (abonnement, prix_hp...) a une date donnee.
 
     Les bornes "debut" et "fin" designent des journees entieres : on compare
     donc a la date, pas a l'heure (une charge de 23h30 reste dans sa journee).
+
+    Regle unique, la meme que _valeur_periode_series (audit du 13/10/2026) :
+    - le jour est dans une periode : sa valeur ; dans plusieurs (periodes qui
+      se chevauchent), celle de la periode commencee le plus tard ;
+    - le jour tombe dans un trou entre deux periodes : le tarif precedent
+      reste en vigueur, comme un vrai tarif jusqu'a son changement (le jour
+      sortait des calculs vectorises, et prenait ici la derniere periode) ;
+    - avant la premiere periode : la premiere.
     """
     d = pd.Timestamp(jour).normalize()
-    for p in periodes:
-        if pd.Timestamp(p["debut"]) <= d <= _fin_periode(p):
-            return float(p[cle])
-    # Hors des periodes decrites : on prend la plus proche.
-    if d < pd.Timestamp(periodes[0]["debut"]):
-        return float(periodes[0][cle])
-    return float(periodes[-1][cle])
+    triees = _periodes_triees(periodes)
+    dedans = [p for p in triees
+              if pd.Timestamp(p["debut"]) <= d <= _fin_periode(p)]
+    if dedans:
+        return float(dedans[-1][cle])
+    commencees = [p for p in triees if pd.Timestamp(p["debut"]) <= d]
+    if commencees:
+        return float(commencees[-1][cle])
+    return float(triees[0][cle])
 
 
 def periodes_octopus(cfg_octopus: dict) -> list[dict]:
@@ -823,17 +828,20 @@ def periodes_edf(cfg_comparaison: dict) -> list[dict]:
 
 def _valeur_periode_series(idx: pd.DatetimeIndex, periodes: list[dict],
                            cle: str) -> pd.Series:
-    """Version vectorisee de _valeur_periode sur un index complet."""
+    """Version vectorisee de _valeur_periode sur un index complet : meme
+    regle, aucun jour laisse sans valeur."""
     jours = pd.DatetimeIndex(idx).normalize()
-    val = pd.Series(float("nan"), index=idx, dtype=float)
-    for p in periodes:
+    triees = _periodes_triees(periodes)
+    # Avant la premiere periode : la premiere.
+    val = pd.Series(float(triees[0][cle]), index=idx, dtype=float)
+    # Trous et apres la derniere : le dernier tarif commence reste en vigueur.
+    for p in triees:
+        val[jours >= pd.Timestamp(p["debut"])] = float(p[cle])
+    # Jours couverts par une periode : la sienne ; la plus recente gagne.
+    for p in triees:
         mask = ((jours >= pd.Timestamp(p["debut"]))
                 & (jours <= _fin_periode(p)))
         val[mask] = float(p[cle])
-    avant = jours < pd.Timestamp(periodes[0]["debut"])
-    apres = jours > _fin_periode(periodes[-1])
-    val[avant] = float(periodes[0][cle])
-    val[apres] = float(periodes[-1][cle])
     return val
 
 
@@ -1023,13 +1031,9 @@ def abonnement_mensuel_eur(jour: pd.Timestamp, bleu: BleuBaseConfig,
         return octopus.abonnement(jour)
     if not bleu.abonnement_tranches:
         return 0.0
-    for t in bleu.abonnement_tranches:
-        if pd.Timestamp(t["debut"]) <= jour <= pd.Timestamp(t["fin"]):
-            return float(t["montant"])
-    # Hors plage definie : on prend la tranche la plus proche.
-    if jour < pd.Timestamp(bleu.abonnement_tranches[0]["debut"]):
-        return float(bleu.abonnement_tranches[0]["montant"])
-    return float(bleu.abonnement_tranches[-1]["montant"])
+    # Meme regle que les grilles de prix ; un jour entre deux tranches
+    # prenait la DERNIERE tranche de la liste (audit du 13/10/2026).
+    return _valeur_periode(jour, bleu.abonnement_tranches, "montant")
 
 
 # ----------------------------------------------------------------------

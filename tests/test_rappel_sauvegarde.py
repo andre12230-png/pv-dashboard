@@ -59,7 +59,9 @@ def test_le_bouton_retient_la_date(prefs, monkeypatch, tmp_path):
         settings=prefs, data=SimpleNamespace(releves_path=tmp_path / "a.csv"),
         CLE_DESTINATION_SAUVEGARDE=app_desktop.MainWindow
         .CLE_DESTINATION_SAUVEGARDE,
-        CLE_DERNIERE_SAUVEGARDE=app_desktop.MainWindow.CLE_DERNIERE_SAUVEGARDE)
+        CLE_DERNIERE_SAUVEGARDE=app_desktop.MainWindow.CLE_DERNIERE_SAUVEGARDE,
+        # Aucune saisie en cours (la question existe depuis le 13/10/2026).
+        _saisies_reglees=lambda avant: True)
     app_desktop.MainWindow._sauvegarder_externe(fenetre)
     assert prefs.value(app_desktop.MainWindow.CLE_DERNIERE_SAUVEGARDE) == \
         date.today().isoformat()

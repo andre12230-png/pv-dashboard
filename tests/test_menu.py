@@ -184,6 +184,20 @@ def test_une_page_du_petit_menu_surligne_son_bouton(fenetre):
     assert fenetre.nav_buttons["stats"].isChecked()
 
 
+def test_ouvrir_le_petit_menu_sans_choisir_garde_la_page_surlignee(fenetre):
+    """Audit du 13/10/2026 : un clic sur « Bilans et comparaisons… » cochait
+    ce bouton (groupe exclusif) et decochait la page affichee ; refermer le
+    menu sans rien choisir laissait le mauvais bouton surligne."""
+    from PySide6.QtCore import QTimer
+    fenetre._switch_view("dashboard")
+    # Le clic ouvre le menu et attend ; on le referme sans rien choisir.
+    QTimer.singleShot(50, fenetre.menu_bilans.hide)
+    fenetre.bouton_bilans.click()
+    assert fenetre.current_view == "dashboard"
+    assert fenetre.nav_buttons["dashboard"].isChecked()
+    assert not fenetre.bouton_bilans.isChecked()
+
+
 MAJ_COMMUNE = ("Voir s'il existe une version plus récente (la page s'ouvre "
                "dans votre navigateur ; rien n'est vérifié automatiquement)")
 

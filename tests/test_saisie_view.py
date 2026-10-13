@@ -899,3 +899,57 @@ def test_colonne_jamais_remplie_n_est_pas_a_saisir(qapp, tmp_path):
     for r in range(1, vue.table.rowCount()):
         for col in ("Conso_HC", "Conso_HP"):
             assert not vue.table.item(r, vue.COLS.index(col)).data(role)
+
+
+# ---------------------------------------------------------------------------
+# Audit du 13/10/2026 : « + Ajouter une ligne » ajoutait le lendemain de la
+# ligne du jour, deja prete en haut. La date etait dans le futur, et
+# l'enregistrement de ce qu'on y tapait etait refuse.
+# ---------------------------------------------------------------------------
+
+def test_ajouter_une_ligne_ne_cree_pas_de_date_future(qapp, tmp_path):
+    import datetime as _dt
+    hier = _dt.date.today() - _dt.timedelta(days=1)
+    contenu = (
+        "Date;Prod_Jour;Inj_Jour;Conso_réseau_Jour;Conso_HC;Conso_HP\n"
+        f"{hier:%d/%m/%Y};20,5;15,2;3,1;1,0;2,1\n"
+    )
+    vue = _vue_sur(qapp, tmp_path, contenu)
+    lignes_avant = vue.table.rowCount()
+    # La ligne du haut est deja celle d'aujourd'hui.
+    assert vue.table.item(0, 0).text() == f"{_dt.date.today():%d/%m/%Y}"
+
+    vue._ajouter_ligne_vide()
+
+    assert vue.table.rowCount() == lignes_avant
+    assert vue.table.currentRow() == 0
+    assert "aujourd" in vue.status_label.text()
+
+
+def test_ajouter_une_ligne_rattrape_les_jours_en_retard(vue):
+    # Dernier releve le 03/05/2026, ligne du haut le 04/05 : le bouton
+    # ajoute le 05/05, une journee passee.
+    lignes_avant = vue.table.rowCount()
+    vue._ajouter_ligne_vide()
+    assert vue.table.rowCount() == lignes_avant + 1
+    assert vue.table.item(0, 0).text() == "05/05/2026"
+
+
+def test_import_n_ecrit_ni_negatif_ni_date_future(vue, monkeypatch):
+    """Audit du 13/10/2026 : de bout en bout, par le bouton d'import."""
+    messages = []
+    monkeypatch.setattr(saisie_module.QFileDialog, "getOpenFileName",
+                        staticmethod(lambda *a, **k: ("releve.csv", "")))
+    monkeypatch.setattr(saisie_module, "confirmer",
+                        lambda parent, titre, message, *a, **k:
+                        messages.append(message) or True)
+
+    def lecteur(fichier, notes=None):
+        return {"Prod_Jour": {"04/05/2026": "-3,5", "05/05/2026": "21",
+                              "01/05/2062": "9"}}
+    vue._importer_fichier("Essai", "", "", lecteur)
+
+    lignes = {r["Date"]: r for r in dl.read_releves_raw(vue.data.releves_path)}
+    assert "04/05/2026" not in lignes and "01/05/2062" not in lignes
+    assert lignes["05/05/2026"]["Prod_Jour"] == "21"
+    assert "écarté" in messages[0] and "négatif" in messages[0]

@@ -179,3 +179,32 @@ def test_vraisemblance_production_suit_la_puissance():
                                      puissance_kwc=3.0) is not None
     assert dl.controle_vraisemblance("Prod_Jour", valeurs, "Production",
                                      puissance_kwc=6.0) is None
+
+
+# --- Valeurs impossibles a l'import (audit du 13/10/2026) --------------------
+# La saisie a la main refuse un nombre negatif et une date future ; l'import
+# les ecrivait tels quels dans le CSV, sans un mot.
+
+def test_import_ecarte_negatifs_et_dates_futures():
+    from datetime import date
+    valeurs = {
+        "01/06/2026": "12,5",
+        "02/06/2026": "-3,5",          # negatif : ecarte
+        "03/06/2026": "0",             # zero : garde
+        "13/10/2026": "4",             # aujourd'hui : garde
+        "14/10/2026": "4",             # demain : ecarte
+        "01/06/2062": "9",             # faute de frappe sur l'annee : ecarte
+    }
+    gardees, ecartees = dl.ecarter_impossibles(
+        valeurs, aujourdhui=date(2026, 10, 13))
+    assert gardees == {"01/06/2026": "12,5", "03/06/2026": "0",
+                       "13/10/2026": "4"}
+    assert ecartees == ["02/06/2026 : -3,5 (négatif)",
+                        "14/10/2026 : date future",
+                        "01/06/2062 : date future"]
+
+
+def test_import_sans_valeur_impossible_rien_a_ecarter():
+    valeurs = {"01/06/2026": "12,5", "02/06/2026": ""}
+    gardees, ecartees = dl.ecarter_impossibles(valeurs)
+    assert gardees == valeurs and ecartees == []

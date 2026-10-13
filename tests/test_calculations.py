@@ -634,6 +634,28 @@ def test_recale_repartit_l_ecart_a_parts_egales():
     assert out["conso_recalee"].sum() == 4
 
 
+def test_recale_ne_recompte_pas_les_jours_deja_factures():
+    """Audit du 13/10/2026 : une tranche de recalage qui couvre des jours
+    deja combles par une facture (conso_reseau_facturee) visait son total
+    sur les seuls jours releves. Les kWh des jours factures etaient comptes
+    deux fois (ici 164 au lieu de 134)."""
+    idx = pd.date_range("2024-03-01", periods=6, freq="D")
+    df = pd.DataFrame({
+        "soutirage_kwh": [0.0, 0.0, 10.0, 20.0, 30.0, 40.0],
+        "autoconsommation_kwh": [5.0] * 6,
+        "conso_absente": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+    }, index=idx)
+    df["consommation_kwh"] = df["autoconsommation_kwh"] + df["soutirage_kwh"]
+    df = calc.repartit_conso_facturee(df, [
+        {"debut": "2024-03-01", "fin": "2024-03-02", "total_kwh": 30.0}])
+    out = calc.recale_sur_facture(df, [
+        {"debut": "2024-03-01", "fin": "2024-03-06", "total_kwh": 134.0}])
+    assert out["soutirage_kwh"].sum() == pytest.approx(134.0)
+    # Les jours factures gardent leur part ; les releves prennent l'ecart.
+    assert list(out["soutirage_kwh"]) == pytest.approx(
+        [15.0, 15.0, 11.0, 21.0, 31.0, 41.0])
+
+
 def test_recale_recalcule_la_consommation():
     out = calc.recale_sur_facture(_df_arrondi(), [
         {"debut": "2024-03-01", "fin": "2024-03-04", "total_kwh": 104.0}])
@@ -673,8 +695,12 @@ def test_recale_ignore_les_jours_sans_releve():
     out = calc.recale_sur_facture(df, [
         {"debut": "2024-03-01", "fin": "2024-03-04", "total_kwh": 93.0}])
     assert out.loc[pd.Timestamp("2024-03-01"), "soutirage_kwh"] == 10.0  # intact
+    # Le total facture couvre toute la tranche, ce jour compris : les jours
+    # releves en prennent le reste (93 - 10), et la tranche vaut bien 93.
+    # Avant le 13/10/2026, ils visaient 93 a eux seuls (103 en tout).
     releves = out.loc[out["conso_absente"] == 0, "soutirage_kwh"]
-    assert releves.sum() == pytest.approx(93.0)
+    assert releves.sum() == pytest.approx(83.0)
+    assert out["soutirage_kwh"].sum() == pytest.approx(93.0)
 
 
 def test_marque_conso_douteuse_pose_les_deux_marqueurs():

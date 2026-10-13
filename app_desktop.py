@@ -19,7 +19,7 @@ import matplotlib
 matplotlib.use("QtAgg")
 import pandas as pd
 import yaml
-from PySide6.QtCore import QSettings, Qt
+from PySide6.QtCore import QSettings, Qt, QTimer
 from PySide6.QtGui import QAction, QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
@@ -851,6 +851,15 @@ class MainWindow(QMainWindow):
         self.menu_bilans.setToolTipsVisible(True)   # infobulle de chaque ligne
         self.bouton_bilans.setMenu(self.menu_bilans)
         self.nav_group.addButton(self.bouton_bilans)
+        # Un clic coche ce bouton (groupe exclusif) et decoche la page
+        # affichee, meme si l'on referme le menu sans rien choisir (audit du
+        # 13/10/2026). A la fin du clic, et une fois le menu referme, le
+        # surlignage revient a la page reellement affichee.
+        self.bouton_bilans.clicked.connect(
+            lambda checked=False: self._cocher_page(self.current_view))
+        self.menu_bilans.aboutToHide.connect(
+            lambda: QTimer.singleShot(
+                0, lambda: self._cocher_page(self.current_view)))
 
         # Trois actions, pas des pages : hors du groupe de navigation, elles
         # ne restent jamais « enfoncees ». Sauvegarde externe : les backups/
@@ -1060,6 +1069,10 @@ class MainWindow(QMainWindow):
     def _sauvegarder_externe(self) -> None:
         """Copie les donnees sur une cle USB ou un disque choisi par
         l'utilisateur. La copie et sa verification : sauvegarde_externe.py."""
+        # Une saisie en cours n'est pas dans le fichier : la copie l'aurait
+        # laissee de cote sans un mot (audit du 13/10/2026).
+        if not self._saisies_reglees("avant de sauvegarder"):
+            return
         depart = str(self.settings.value(self.CLE_DESTINATION_SAUVEGARDE, "")
                      or "")
         choisi = QFileDialog.getExistingDirectory(
@@ -1190,6 +1203,17 @@ class MainWindow(QMainWindow):
             return
         self.settings.setValue(CLE_THEME, nom)
         self.settings.sync()
+        # Fichier des preferences verrouille ou en lecture seule : le choix
+        # serait perdu a la fermeture. On le dit au lieu d'annoncer qu'il
+        # s'appliquera (audit du 13/10/2026).
+        if self.settings.status() != QSettings.Status.NoError:
+            QMessageBox.warning(
+                self, "Apparence",
+                f"Le thème {nom} n'a pas pu être enregistré : les "
+                "préférences de l'application ne sont pas modifiables pour "
+                "le moment.\n\nFermez l'application, rouvrez-la, puis "
+                "choisissez à nouveau.")
+            return
         QMessageBox.information(
             self, "Apparence",
             f"Le thème {nom} s'appliquera au prochain démarrage de "
@@ -1212,6 +1236,14 @@ class MainWindow(QMainWindow):
         self.current_view = key
         idx = [n[0] for n in NAV_ITEMS].index(key)
         self.stack.setCurrentIndex(idx)
+        self._cocher_page(key)
+        title, sub = self._titres_des_pages()[key]
+        self.title_lbl.setText(title)
+        self.sub_lbl.setText(sub)
+        self._apres_changement_de_page(key)
+
+    def _cocher_page(self, key: str) -> None:
+        """Surligne l'entree du bandeau de la page affichee, et elle seule."""
         # Le bouton coché est la page affichée : la feuille de style le
         # surligne par « :checked » (une propriété « active » doublait ce
         # marquage, retirée le 11/10/2026).
@@ -1221,10 +1253,6 @@ class MainWindow(QMainWindow):
         # affichee. APRES la boucle : dans un groupe exclusif, cocher un
         # bouton decoche les autres, mais rien ne decoche le seul coche.
         self.bouton_bilans.setChecked(key in BILANS_ET_COMPARAISONS)
-        title, sub = self._titres_des_pages()[key]
-        self.title_lbl.setText(title)
-        self.sub_lbl.setText(sub)
-        self._apres_changement_de_page(key)
 
     def _titres_des_pages(self) -> dict[str, tuple[str, str]]:
         """Titre et sous-titre de chaque page : affiches en tete de la page,

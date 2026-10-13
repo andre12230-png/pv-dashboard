@@ -261,3 +261,62 @@ def test_recharger_sans_saisie_ne_demande_rien(win, monkeypatch):
                         lambda *a, **k: questions.append(a) or False)
     win.views["saisie"]._recharger()
     assert questions == []
+
+
+# --- Sauvegarde externe (audit du 13/10/2026) -------------------------------
+# Elle copiait le fichier sans la saisie en cours, et annoncait « fichiers
+# copies et verifies » sans un mot sur ce qui manquait.
+
+@pytest.fixture
+def sauvegarde(win, monkeypatch, tmp_path):
+    """Remplace le choix du dossier et la copie : on note ce que contenait le
+    fichier des releves au moment ou la copie aurait ete faite."""
+    copies: list[dict] = []
+    cle = tmp_path / "cle"
+    cle.mkdir()
+    monkeypatch.setattr(app_desktop.QFileDialog, "getExistingDirectory",
+                        staticmethod(lambda *a, **k: str(cle)))
+
+    def fausse_copie(fichiers, *a, **k):
+        copies.append(_releves(win))
+        return cle, ["Releves-pv.csv"]
+    monkeypatch.setattr(app_desktop.sauvegarde_externe, "sauvegarder",
+                        fausse_copie)
+    return copies
+
+
+def _messages_muets(monkeypatch):
+    monkeypatch.setattr(_FauxQMessageBox, "information",
+                        staticmethod(lambda *a, **k: None), raising=False)
+    monkeypatch.setattr(_FauxQMessageBox, "warning",
+                        staticmethod(lambda *a, **k: None), raising=False)
+
+
+def test_sauvegarde_avec_saisie_en_cours_annuler_ne_copie_rien(
+        win, dialogue, sauvegarde, monkeypatch):
+    _messages_muets(monkeypatch)
+    _taper(win, "17")
+    dialogue.reponse = QMessageBox.Cancel
+    win._sauvegarder_externe()
+    assert "pas encore enregistr" in dialogue.questions[0]
+    assert sauvegarde == []
+    assert _case(win) == "17"
+
+
+def test_sauvegarde_avec_saisie_enregistree_copie_la_saisie(
+        win, dialogue, sauvegarde, monkeypatch):
+    _messages_muets(monkeypatch)
+    jour = win.views["saisie"].table.item(0, 0).text()
+    _taper(win, "17")
+    dialogue.reponse = QMessageBox.Save
+    win._sauvegarder_externe()
+    assert len(sauvegarde) == 1
+    assert sauvegarde[0][jour]["Prod_Jour"] == "17"
+
+
+def test_sauvegarde_sans_saisie_ne_demande_rien(
+        win, dialogue, sauvegarde, monkeypatch):
+    _messages_muets(monkeypatch)
+    win._sauvegarder_externe()
+    assert dialogue.questions == []
+    assert len(sauvegarde) == 1

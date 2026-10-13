@@ -373,8 +373,18 @@ class SaisieView(BaseView):
 
     def _ajouter_ligne_vide(self) -> None:
         assert self.table is not None
-        self.table.insertRow(0)
         prochaine = self._prochaine_date_apres_table()
+        # Le tableau va deja jusqu'a aujourd'hui : un jour de plus serait
+        # dans le futur, et ce qu'on y taperait serait refuse a
+        # l'enregistrement (audit du 13/10/2026). On montre la ligne du
+        # haut au lieu d'en ajouter une.
+        if pd.to_datetime(prochaine, dayfirst=True).date() > datetime.now().date():
+            self.table.setCurrentCell(0, 1)
+            self._set_status(
+                "Aucune ligne ajoutée : le tableau va déjà jusqu'à "
+                "aujourd'hui. Tapez vos valeurs dans la ligne du haut.")
+            return
+        self.table.insertRow(0)
         valeurs = [prochaine, "", "", "", "", ""]
         for c, val in enumerate(valeurs):
             self.table.setItem(0, c, self._case(val, c, nouvelle=True))
@@ -536,6 +546,17 @@ class SaisieView(BaseView):
         for colonne, valeurs in imports.items():
             if ignorer_jour_en_cours:
                 jour_ignore = dl.retirer_jour_en_cours(valeurs) or jour_ignore
+            # Ce que la saisie a la main refuse ne s'ecrit pas non plus par
+            # un import : negatifs et dates futures (audit du 13/10/2026).
+            valeurs, impossibles = dl.ecarter_impossibles(valeurs)
+            if impossibles:
+                libelle = self.LIBELLES_IMPORT.get(colonne, colonne)
+                n = len(impossibles)
+                recap.append(
+                    f"  - {libelle} : {pluriel(n, 'journée')} "
+                    f"{accorde(n, 'écartée')}, valeur impossible :\n"
+                    + "\n".join(f"      {phrase}" for phrase in impossibles[:3])
+                    + ("\n      …" if n > 3 else ""))
             respectees = 0
             if colonne in colonnes_a_completer:
                 valeurs, respectees = dl.garder_si_case_vide(

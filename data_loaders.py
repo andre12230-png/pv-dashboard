@@ -573,6 +573,38 @@ def retirer_jour_en_cours(valeurs: dict[str, str],
     return cle if valeurs.pop(cle, None) is not None else None
 
 
+def ecarter_impossibles(valeurs: dict[str, str],
+                        aujourdhui: _date | None = None,
+                        ) -> tuple[dict[str, str], list[str]]:
+    """
+    Ecarte d'un import ce que la saisie a la main refuse deja : un nombre
+    negatif (un compteur ne recule pas) et une date future (faute de frappe
+    sur l'annee). L'import les ecrivait tels quels dans le CSV, sans un mot
+    (audit du 13/10/2026).
+
+    Retourne (valeurs_gardees, ecartees), ecartees etant une liste de
+    phrases courtes a montrer a l'utilisateur, dans l'ordre du fichier.
+    """
+    reference = aujourdhui or _date.today()
+    gardees: dict[str, str] = {}
+    ecartees: list[str] = []
+    for jour, val in valeurs.items():
+        try:
+            d, m, y = (int(x) for x in jour.split("/"))
+            futur = _date(y, m, d) > reference
+        except ValueError:
+            futur = False           # date illisible : d'autres controles
+        if futur:
+            ecartees.append(f"{jour} : date future")
+            continue
+        nombre = _parse_nombre(val or "")
+        if nombre is not None and nombre < 0:
+            ecartees.append(f"{jour} : {val} (négatif)")
+            continue
+        gardees[jour] = val
+    return gardees, ecartees
+
+
 def merge_import(rows: list[dict[str, str]], colonne: str,
                  valeurs: dict[str, str]) -> tuple[list[dict[str, str]], int, int, int]:
     """
