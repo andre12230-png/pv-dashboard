@@ -365,7 +365,10 @@ def recale_sur_facture(df_daily: pd.DataFrame,
                        else periode & False)
         dans = periode & ~a_reconstituer & ~deja_servis
         nb = int(dans.sum())
-        if nb == 0:
+        # Sans jour fiable, il reste les jours a reconstituer : une tranche
+        # entierement douteuse etait sautee, et sa facture ignoree
+        # (contre-audit du 13/10/2026).
+        if nb == 0 and not a_reconstituer.any():
             continue
 
         if a_reconstituer.any():
@@ -410,7 +413,8 @@ def recale_sur_facture(df_daily: pd.DataFrame,
         out.loc[dans, "conso_recalee"] = 1.0
 
     # Le detail HC / HP suit le recalage, a proportion gardee : le cout s'en
-    # sert des qu'il couvre 90 % du jour, et ne bougeait presque pas quand
+    # sert des qu'il concorde avec le total du jour (detail_hphc_utilisable),
+    # et ne bougeait presque pas quand
     # le total etait recale (audit du 04/10/2026).
     if {"soutirage_hc_kwh", "soutirage_hp_kwh"} <= set(out.columns):
         hc = out["soutirage_hc_kwh"].fillna(0.0)
@@ -845,6 +849,23 @@ def _valeur_periode_series(idx: pd.DatetimeIndex, periodes: list[dict],
     return val
 
 
+# Le detail HC / HP d'un jour ne sert que s'il concorde avec le total du jour.
+# Par le bas, 90 % : un detail incomplet sous-facturerait. Par le haut, 120 % :
+# 10 + 10 pour un total de 10 etait facture 20 kWh (contre-audit du
+# 13/10/2026). Un ecart d'environ 10 % est normal, le fournisseur et le
+# gestionnaire de reseau ne relevant pas a la meme seconde : la borne haute
+# garde de la marge.
+DETAIL_HPHC_MIN = 0.9
+DETAIL_HPHC_MAX = 1.2
+
+
+def detail_hphc_utilisable(hp: pd.Series, hc: pd.Series,
+                           sout: pd.Series) -> pd.Series:
+    """Vrai pour chaque jour dont le detail HC + HP concorde avec le total."""
+    somme = hp + hc
+    return (somme >= DETAIL_HPHC_MIN * sout) & (somme <= DETAIL_HPHC_MAX * sout)
+
+
 def _ratio_hc_observe(df: pd.DataFrame, octopus: OctopusConfig) -> float:
     """
     Part de la consommation tombant en heures creuses, mesuree sur les jours
@@ -863,7 +884,7 @@ def _ratio_hc_observe(df: pd.DataFrame, octopus: OctopusConfig) -> float:
     hp = apres["soutirage_hp_kwh"].fillna(0.0)
     hc = apres["soutirage_hc_kwh"].fillna(0.0)
     sout = apres["soutirage_kwh"].fillna(0.0)
-    detaille = (hp + hc) >= 0.9 * sout
+    detaille = detail_hphc_utilisable(hp, hc, sout)
     total = float((hp[detaille] + hc[detaille]).sum())
     if total <= 0:
         return defaut
@@ -921,16 +942,16 @@ def cout_reseau_journalier(
 
         if has_daily_hphc:
             # Cas Linky / releve manuel : HP et HC deja repartis au jour.
-            # Si HP+HC est nul (ou < 90% du soutirage) sur une journee,
-            # on retombe sur l'estimation par ratio plages HC pour cette journee
-            # afin de ne pas sous-facturer.
+            # Si HP+HC est nul, ou ne concorde pas avec le soutirage du jour
+            # (moins de 90 % ou plus de 120 %), on retombe sur l'estimation par
+            # ratio plages HC pour cette journee : ni sous- ni surfacturation.
             hp = out["soutirage_hp_kwh"].fillna(0.0)
             hc = out["soutirage_hc_kwh"].fillna(0.0)
             sout = out["soutirage_kwh"].fillna(0.0)
             cout_hphc = hp * prix_hp_jour + hc * prix_hc_jour
             cout_ratio = sout * prix_moyen
-            seuil = sout * 0.9  # HP+HC doit couvrir au moins 90% du soutirage
-            utilise_hphc = (hp + hc) >= seuil
+            # Le detail doit concorder avec le total (90 % a 120 %).
+            utilise_hphc = detail_hphc_utilisable(hp, hc, sout)
             cout_apres = cout_hphc.where(utilise_hphc, cout_ratio)
             out.loc[mask_apres, "cout_reseau_eur"] = cout_apres.loc[mask_apres]
         elif soutirage_par_heure is not None and not soutirage_par_heure.empty:
@@ -1090,7 +1111,7 @@ def comparaison_octopus_edf(df_daily: pd.DataFrame,
     sout = out["soutirage_kwh"].fillna(0.0)
     hp = out["soutirage_hp_kwh"].fillna(0.0) if "soutirage_hp_kwh" in out.columns else sout * 0
     hc = out["soutirage_hc_kwh"].fillna(0.0) if "soutirage_hc_kwh" in out.columns else sout * 0
-    detail_ok = (hp + hc) >= 0.9 * sout
+    detail_ok = detail_hphc_utilisable(hp, hc, sout)
     total_ok = float((hp[detail_ok] + hc[detail_ok]).sum())
     ratio_hc = (float(hc[detail_ok].sum()) / total_ok) if total_ok > 0 else 1 / 3
     cout_hphc_reel = hc * edf_hc + hp * edf_hp

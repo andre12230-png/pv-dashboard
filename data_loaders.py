@@ -377,6 +377,25 @@ def valeurs_illisibles(path: str) -> list[str]:
     08/10/2026). Comme pour dates_illisibles, c'est un constat : le CSV n'est
     pas modifie, la correction se fait dans la vue Saisie.
     """
+    return _cases_fautives(path, lambda remplies, lues: remplies & lues.isna())
+
+
+def valeurs_negatives(path: str) -> list[str]:
+    """
+    Cases de chiffres negatives, dans l'ordre du fichier :
+    « 01/06/2026 (Inj_Jour : « -5 ») ». Un compteur ne recule pas : 20
+    produits et -5 injectes donnaient 25 kWh d'autoconsommation.
+
+    La saisie et l'import les refusent (13/10/2026), mais un fichier plus
+    ancien peut en contenir (contre-audit du 13/10/2026). Constat seulement,
+    comme valeurs_illisibles : le CSV n'est pas modifie.
+    """
+    return _cases_fautives(path, lambda remplies, lues: lues < 0)
+
+
+def _cases_fautives(path: str, est_fautive) -> list[str]:
+    """Les cases de chiffres du CSV que `est_fautive(remplies, lues)` designe,
+    colonne par colonne, rendues « date (colonne : « texte ») »."""
     if not os.path.exists(path):
         return []
     df = _read_releves_csv(path)
@@ -398,7 +417,7 @@ def valeurs_illisibles(path: str) -> list[str]:
         lues = pd.to_numeric(brutes.str.replace(",", ".", regex=False),
                              errors="coerce")
         remplies = brutes.ne("") & brutes.str.lower().ne("nan")
-        for rang in brutes.index[remplies & lues.isna()]:
+        for rang in brutes.index[est_fautive(remplies, lues)]:
             fautes.setdefault(rang, []).append(
                 f"{dates[rang]} ({col} : « {brutes[rang]} »)")
     return [faute for rang in sorted(fautes) for faute in fautes[rang]]

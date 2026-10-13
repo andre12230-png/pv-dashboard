@@ -144,7 +144,7 @@ APP_NAME = "Gestion Photovoltaique"
 # APP_NAME garde sa forme d'origine : c'est le nom de l'application pour Qt,
 # qu'il vaut mieux ne pas changer d'une version a l'autre (29/09/2026).
 NOM_AFFICHE = "Gestion Photovoltaïque"
-APP_VERSION = "1.53.2"
+APP_VERSION = "1.53.3"
 
 
 TAILLE_MAX_LOG = 1_000_000  # 1 Mo
@@ -615,6 +615,7 @@ def build_dataset(cfg: dict) -> AppData:
                    dernieres_saisies=dl.dernieres_saisies(str(releves_path)),
                    dates_illisibles=dl.dates_illisibles(str(releves_path)),
                    valeurs_illisibles=dl.valeurs_illisibles(str(releves_path)),
+                   valeurs_negatives=dl.valeurs_negatives(str(releves_path)),
                    jours_en_attente=[d.date() for d in attente],
                    dossier_donnees=str(BASE_DIR))
 

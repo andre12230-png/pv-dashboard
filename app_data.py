@@ -42,6 +42,8 @@ class AppData:
     dates_illisibles: list = field(default_factory=list)
     # Cases de chiffres illisibles, comptees pour 0 kWh (audit 08/10/2026).
     valeurs_illisibles: list = field(default_factory=list)
+    # Cases negatives, d'un fichier d'avant le 13/10/2026 : signalees.
+    valeurs_negatives: list = field(default_factory=list)
     # Journees de fin de serie dont seule la production est connue : Enedis
     # publie conso et injection le lendemain. Mises de cote jusqu'a leur
     # import, et nommees par le tableau de bord pour qu'on ne les croie pas

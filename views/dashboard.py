@@ -480,7 +480,8 @@ class DashboardView(BaseView):
         texte, en_retard = fraicheur_donnees(
             self.data.dernieres_saisies,
             illisibles=getattr(self.data, "dates_illisibles", None),
-            valeurs_illisibles=getattr(self.data, "valeurs_illisibles", None))
+            valeurs_illisibles=getattr(self.data, "valeurs_illisibles", None),
+            valeurs_negatives=getattr(self.data, "valeurs_negatives", None))
         lbl = QLabel(("⚠ " if en_retard else "✓ ") + texte)
         lbl.setWordWrap(True)
         couleur = self.theme["warm_ink"] if en_retard else self.theme["text_muted"]

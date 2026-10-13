@@ -159,8 +159,10 @@ remplie, et une désinstallation laisse ce dossier en place.
 L'exe construit dans le projet, lui, continue de lire les données du projet :
 il les reconnaît au `config.yaml` présent deux dossiers au-dessus de lui.
 
-L'app s'affiche toujours en **thème clair**, comme Pécule (le thème sombre a
-été retire en 1.32.0), et s'ouvre **toujours sur le mois en cours** : la période n'est
+L'app s'affiche en **thème clair** par défaut, comme Pécule. Un **thème
+sombre** se choisit dans **Paramètres › Apparence** (Clair / Sombre) et
+s'applique au prochain démarrage ; l'app ne suit jamais le thème de Windows.
+Elle s'ouvre **toujours sur le mois en cours** : la période n'est
 volontairement pas mémorisée, pour ne pas retrouver au lancement suivant
 les chiffres d'un mois passé consulté la veille. À défaut de relevé pour
 le mois en cours, elle s'ouvre sur toute la période.
@@ -267,7 +269,9 @@ accepte aussi la forme sans accent, ainsi que `Conso_Jour`, `Soutirage` et
 
 Cases vides autorisees. L'app gère le passage d'un prix unique (Base) aux
 heures pleines / creuses en utilisant les colonnes HC/HP quand elles sont
-remplies.
+remplies et concordent avec le total du jour (entre 90 % et 120 % de
+`Conso_réseau_Jour`) ; sinon le jour est estimé comme s'il n'avait pas de
+détail.
 
 À chaque enregistrement depuis l'app, l'écriture est atomique (une
 interruption ne peut pas laisser un CSV à moitié écrit) et **trois
@@ -291,12 +295,15 @@ Ouvrez l'app → onglet **Saisie quotidienne**. Une ligne vide est
 pre-remplie avec la date du jour suivant le dernier relevé. Saisissez
 vos valeurs (Tab pour passer de cellule en cellule), cliquez sur
 **Enregistrer**. Les autres vues se rafraîchissent automatiquement.
-La ligne neuve laissée telle quelle n'est pas enregistree.
+La ligne neuve laissée telle quelle n'est pas enregistree. Le bouton
+**+ Ajouter une ligne** ajoute la journée suivante, pour rattraper
+plusieurs jours d'un coup, jusqu'à aujourd'hui.
 
 Ce qui est refusé à l'enregistrement, avec un message explicite :
 
 - une **date incomplète** (`2026`, `08/2026`) ou inexistante (`31/02/2026`) :
   format attendu : `JJ/MM/AAAA` ;
+- une **date dans le futur** (une faute de frappe sur l'année) ;
 - une valeur **négative**, ou `inf` / `nan` (qui contaminaient les totaux) ;
 - une valeur **au-delà du plausible** : 150 kWh pour la consommation,
   et **10 kWh par kWc** pour la production et l'injection (60 kWh sur une
@@ -347,7 +354,11 @@ doublon** : les jours nouveaux sont ajoutes, les dates déjà présentes
 voient leur valeur remplacée par celle du fichier (seule la colonne
 importée change — la production saisie à la main n'est jamais
 touchée). Un récapitulatif est affiché avant d'appliquer, et les
-sauvegardes décrites plus haut conservent l'état précédent.
+sauvegardes décrites plus haut conservent l'état précédent. Les valeurs
+négatives et les dates futures du fichier sont écartées, et le
+récapitulatif les cite ; une valeur négative déjà présente dans le CSV
+(écrite par une version plus ancienne) est signalée dans le bandeau du
+tableau de bord, sans que le fichier soit modifié.
 
 Trois garde-fous évitent qu'une grandeur atterrisse dans la mauvaise
 colonne ou avec la mauvaise unité :
@@ -440,7 +451,8 @@ ou `production`. Sans cela l'application refuse d'importer plutôt que de
 ranger les valeurs dans la mauvaise colonne.
 
 Ce qui n'à pas d'équivalent ailleurs : le **détail heures creuses / pleines**
-au jour le jour, que tous les fournisseurs ne publient pas. Sans lui,
+au jour le jour, que tous les fournisseurs ne publient pas. Sans lui (ou
+quand il ne concorde pas avec le total du jour),
 l'application estime la répartition à partir du ratio observé sur les jours
 qui ont ce détail, ou à défaut de la durée des plages d'heures creuses.
 
@@ -805,7 +817,7 @@ pv-dashboard/
 ├── imports_releves.py    #   ... lecture des fichiers a importer (Enedis,
 │                         #   fournisseur, onduleur, Enphase)
 ├── lecture_recharges_ve.py #  ... le recharges.json de Recharges VE
-├── gui_theme.py          # Theme clair + QSS + style matplotlib
+├── gui_theme.py          # Themes clair et sombre + QSS + style matplotlib
 ├── gui_widgets.py        # Widgets reutilisables (cards, KPI, pill...)
 ├── reglages.py           # « Mes reglages » : lire et ecrire config.yaml
 ├── fenetre_reglages.py   #   ... et la fenetre qui les presente

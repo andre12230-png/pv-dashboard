@@ -1344,3 +1344,59 @@ def test_le_recalage_sur_facture_suit_dans_les_heures_creuses_et_pleines():
     assert total.sum() == pytest.approx(105.0)
     assert (total - out["soutirage_kwh"]).abs().max() == pytest.approx(0.0)
     assert (out["soutirage_hc_kwh"] / total).iloc[0] == pytest.approx(0.4)
+
+
+# -----------------------------------------------------------------------------
+# Contre-audit du 13/10/2026
+# -----------------------------------------------------------------------------
+
+def test_detail_hphc_doit_concorder_avec_le_total():
+    """Le detail HC/HP n'etait verifie que par le bas (au moins 90 % du
+    total) : 10 + 10 pour un total de 10 etait facture 20 kWh. Un ecart de
+    10 % est normal (le fournisseur et le gestionnaire de reseau ne relevent
+    pas a la meme seconde) : la borne haute est a 120 %."""
+    sout = pd.Series([10.0, 10.0, 10.0, 10.0, 0.0])
+    hc = pd.Series([4.0, 4.0, 10.0, 3.0, 0.0])
+    hp = pd.Series([6.0, 7.0, 10.0, 5.0, 0.0])
+    assert list(calc.detail_hphc_utilisable(hp, hc, sout)) == [
+        True, True, False, False, True]
+
+
+def test_detail_hphc_trop_grand_n_est_pas_facture(octopus, bleu):
+    idx = pd.DatetimeIndex(["2026-01-01"])
+    df = pd.DataFrame({
+        "soutirage_kwh": [10.0],
+        "soutirage_hc_kwh": [10.0],
+        "soutirage_hp_kwh": [10.0],
+    }, index=idx)
+    out = calc.cout_reseau_journalier(df, None, bleu, octopus)
+    energie = out.loc[idx[0], "cout_reseau_eur"] - out.loc[idx[0], "abonnement_eur"]
+    # 10 kWh au plus cher couteraient 3 EUR ; le detail en facturait 4,80.
+    assert 10.0 * 0.18 <= energie <= 10.0 * 0.30
+
+
+def test_ratio_hc_ignore_un_detail_incoherent(octopus):
+    idx = pd.DatetimeIndex(["2026-01-01", "2026-01-02"])
+    df = pd.DataFrame({
+        "soutirage_kwh": [10.0, 10.0],
+        "soutirage_hc_kwh": [10.0, 0.0],
+        "soutirage_hp_kwh": [0.0, 30.0],
+    }, index=idx)
+    assert calc._ratio_hc_observe(df, octopus) == pytest.approx(1.0)
+
+
+def test_recale_une_periode_entierement_douteuse():
+    """Tous les jours de la tranche declares douteux : le recalage sortait
+    avant de les reconstituer, et la facture (40) etait ignoree (30)."""
+    idx = pd.date_range("2024-02-01", periods=2, freq="D")
+    df = pd.DataFrame({
+        "soutirage_kwh": [10.0, 20.0],
+        "autoconsommation_kwh": [5.0, 5.0],
+    }, index=idx)
+    df["consommation_kwh"] = df["autoconsommation_kwh"] + df["soutirage_kwh"]
+    df = calc.marque_conso_douteuse(df, [
+        {"debut": "2024-02-01", "fin": "2024-02-02"}])
+    out = calc.recale_sur_facture(df, [
+        {"debut": "2024-02-01", "fin": "2024-02-02", "total_kwh": 40.0}])
+    assert out["soutirage_kwh"].sum() == pytest.approx(40.0)
+    assert list(out["conso_recalee"]) == [1.0, 1.0]

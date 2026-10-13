@@ -219,7 +219,7 @@ class OctopusEdfView(BaseView):
         hc = comp.get("soutirage_hc_kwh", sout * 0).fillna(0.0)
         hp = comp.get("soutirage_hp_kwh", sout * 0).fillna(0.0)
         utiles = sout > 0
-        part = (float(((hc + hp) >= 0.9 * sout)[utiles].mean())
+        part = (float(calc.detail_hphc_utilisable(hp, hc, sout)[utiles].mean())
                 if utiles.any() else 1.0)
         if part >= 0.99:
             return f"Le coût {mon_offre} est calculé sur vos relevés HP/HC réels."
