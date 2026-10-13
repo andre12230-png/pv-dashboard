@@ -54,11 +54,18 @@ def verifier_archive(archive: Path) -> list[str]:
     suspects = []
     with zipfile.ZipFile(archive) as z:
         for nom in z.namelist():
-            if nom.startswith(f"{DOSSIER}/_internal/"):
+            chemin = nom.replace("\\", "/")
+            chemin_minuscule = chemin.lower()
+            if chemin_minuscule.startswith(f"{DOSSIER.lower()}/_internal/"):
                 continue
-            court = nom.rsplit("/", 1)[-1]
-            if (court in NOMS_INTERDITS or court.lower().endswith(".csv")
-                    or "backups/" in nom):
+            court = chemin.rsplit("/", 1)[-1]
+            modele_config_autorise = (
+                chemin_minuscule == f"{DOSSIER.lower()}/config.yaml")
+            config_hors_modele = (
+                court.lower() == "config.yaml" and not modele_config_autorise)
+            if (config_hors_modele or court in NOMS_INTERDITS
+                    or court.lower().endswith(".csv")
+                    or "backups/" in chemin_minuscule):
                 suspects.append(nom)
     return suspects
 

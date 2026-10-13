@@ -13,6 +13,7 @@ import zipfile
 import pytest
 
 import data_loaders as dl
+import imports_releves as ir
 
 
 def _fichier(tmp_path, contenu: str, nom: str = "releve.csv") -> str:
@@ -140,6 +141,16 @@ def test_zip_un_seul_fichier_rien_a_dire(tmp_path):
     dl.parse_enphase_fichier(_zip(tmp_path, {
         "rapport.csv": "Date;Production (kWh)\n01/09/2026;18\n"}), notes)
     assert not any("fichiers" in n for n in notes)
+
+
+def test_zip_taille_decompressee_cumulee_limitee(tmp_path, monkeypatch):
+    monkeypatch.setattr(ir, "TAILLE_MAX_CSV_ZIP_OCTETS", 64)
+    archive = _zip(tmp_path, {
+        "a.csv": "x" * 40,
+        "b.csv": "y" * 40,
+    })
+    with pytest.raises(ValueError, match="trop de données"):
+        dl.parse_enphase_fichier(archive)
 
 
 # --- Valeurs invraisemblables (28/09/2026) -----------------------------------

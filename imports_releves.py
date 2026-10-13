@@ -19,6 +19,9 @@ from datetime import date as _date
 
 from accords import accorde, pluriel
 
+# Évite qu'une archive très volumineuse soit entièrement chargée en mémoire.
+TAILLE_MAX_CSV_ZIP_OCTETS = 50 * 1024 * 1024
+
 # ----------------------------------------------------------------------
 # Import d'un export quotidien Enedis (consommation ou injection)
 # ----------------------------------------------------------------------
@@ -1013,16 +1016,29 @@ def _lire_archive(path: str, notes: list | None) -> dict[str, str]:
     import zipfile
 
     with zipfile.ZipFile(path) as zf:
-        noms = sorted(n for n in zf.namelist() if n.lower().endswith(".csv"))
-        if not noms:
-            noms = sorted(n for n in zf.namelist()
-                          if n.lower().endswith(".txt"))
-        if not noms:
+        infos = sorted(
+            (info for info in zf.infolist()
+             if info.filename.lower().endswith(".csv")),
+            key=lambda info: info.filename)
+        if not infos:
+            infos = sorted(
+                (info for info in zf.infolist()
+                 if info.filename.lower().endswith(".txt")),
+                key=lambda info: info.filename)
+        if not infos:
             raise ValueError(
                 "Cette archive ne contient aucun fichier .csv. "
                 "Attendu : un relevé de production, par exemple le "
                 "rapport Enphase reçu par e-mail.")
-        contenus = [(nom, _decode_texte(zf.read(nom))) for nom in noms]
+        taille_totale = sum(info.file_size for info in infos)
+        if taille_totale > TAILLE_MAX_CSV_ZIP_OCTETS:
+            raise ValueError(
+                "L’archive contient trop de données décompressées pour être "
+                "importée. Réduisez-la ou séparez ses fichiers, puis "
+                "réessayez.")
+        noms = [info.filename for info in infos]
+        contenus = [(info.filename, _decode_texte(zf.read(info)))
+                    for info in infos]
 
     valeurs: dict[str, str] = {}
     origine: dict[str, str] = {}
