@@ -60,7 +60,11 @@ livré ; au-delà, la vente compte pour 0\xa0€ ; sans cette ligne, la vente ne
 s'arrête pas) se font dans le fichier <code>config.yaml</code>,
 avec le Bloc-notes, dans le dossier de vos données : <code>{dossier}</code>
 (menu Démarrer, raccourci « Dossier des données », si l'application a été
-installée). Relancez alors l'application pour appliquer.</p>
+installée). Relancez alors l'application pour appliquer.<br>
+Les prix se déclarent par <b>périodes datées</b>. Un jour qui n'entre dans
+aucune (une date de fin oubliée, un jour sauté entre deux périodes) garde le
+dernier prix entré en vigueur avant lui ; si deux périodes se chevauchent,
+la plus récente l'emporte.</p>
 <p><b>2. Faire entrer vos relevés.</b> Onglet <b>Saisie quotidienne</b> :
 les boutons <b>Importer…</b> chargent d'un coup un fichier téléchargé chez
 votre gestionnaire de réseau, votre fournisseur ou votre onduleur. À défaut,
@@ -191,14 +195,16 @@ réseau ne sont pas arrivés, et le tableau de bord le signale. Elle revient
 d'elle-même au prochain import.</p>
 <p>Des valeurs tapées et <b>pas encore enregistrées</b> restent dans le tableau
 si vous allez voir un autre onglet. Avant de fermer l'application, d'ouvrir
-« Mes réglages » ou d'importer un fichier, elle vous demande quoi en faire.</p>
+« Mes réglages », d'importer un fichier ou de faire une sauvegarde externe,
+elle vous demande quoi en faire.</p>
 <p>Les décimales s'écrivent avec une virgule (ex. 24,8). Les cases sans donnée
 peuvent rester vides. Le bouton <b>+ Ajouter une ligne</b> permet de saisir
-plusieurs jours d'un coup.</p>
+plusieurs jours d'un coup, jusqu'à aujourd'hui.</p>
 <p>La <b>date s'écrit en entier</b> : 05/08/2026. Une date incomplète (« 2026 »,
 « 08/2026 ») est refusée avec un message — auparavant elle était comprise comme
 le 1<sup>er</sup> janvier et écrasait le relevé de ce jour-là. Les valeurs
-négatives sont refusées elles aussi.</p>
+négatives et les dates futures sont refusées elles aussi ; dans un fichier
+importé, elles sont écartées, et le récapitulatif de l'import les cite.</p>
 <p>Pour <b>effacer une journée</b>, videz toutes ses cases et enregistrez :
 l'application demande confirmation, puis retire la ligne du fichier. L'ancienne
 version reste dans le <code>.bak</code>.</p>
