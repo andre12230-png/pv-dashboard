@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (
 
 import calculations as calc
 from erreurs import erreur_en_clair
-from gui_theme import theme_actif
+from gui_theme import calendrier_lisible, theme_actif
 from gui_widgets import Card
 from reglages import (
     SORTES_RECALAGE,
@@ -63,6 +63,7 @@ def _date(valeur: date) -> QDateEdit:
     """Une case a date, avec un petit calendrier."""
     case = QDateEdit(QDate(valeur.year, valeur.month, valeur.day))
     case.setCalendarPopup(True)
+    calendrier_lisible(case)
     case.setDisplayFormat("dd/MM/yyyy")
     case.setMinimumWidth(140)
     return case

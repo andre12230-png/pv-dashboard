@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 import calculations as calc
 from app_data import AppData
 from gui_theme import CHART_COLORS as CC
-from gui_theme import mpl_style
+from gui_theme import calendrier_lisible, mpl_style
 from gui_widgets import Card, MplCanvas
 from views._base import BaseView
 from views._helpers import (
@@ -200,6 +200,7 @@ class ComparaisonView(BaseView):
         cal = QDateEdit()
         cal.setObjectName("PeriodSelector")
         cal.setCalendarPopup(True)
+        calendrier_lisible(cal)
         cal.setDisplayFormat("dd/MM/yyyy")
         # Sans largeur minimale, le dernier chiffre de l'annee etait rogne.
         cal.setMinimumWidth(130)

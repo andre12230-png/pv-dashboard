@@ -1002,6 +1002,18 @@ class StyleContoure(QProxyStyle):
             painter.restore()
 
 
+def calendrier_lisible(case) -> None:
+    """Samedis et dimanches du calendrier d'une case a date dans le rouge
+    des depenses du theme. Qt les ecrit dans un rouge vif et pur : 4,0 pour
+    1 sur le blanc, 3,35 sur le fond sombre, sous les 4,5 de la charte
+    (relecture du 14/10/2026, meme correction que Pecule)."""
+    calendrier = case.calendarWidget()
+    for jour in (Qt.Saturday, Qt.Sunday):
+        forme = calendrier.weekdayTextFormat(jour)
+        forme.setForeground(QColor(theme_actif()["debit"]))
+        calendrier.setWeekdayTextFormat(jour, forme)
+
+
 def appliquer_style(app) -> None:
     """Style « Fusion » et palette du theme choisi (le clair par defaut),
     comme Pecule. Fusion est
