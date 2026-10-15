@@ -206,7 +206,9 @@ le 1<sup>er</sup> janvier et écrasait le relevé de ce jour-là. Les valeurs
 négatives et les dates futures sont refusées elles aussi ; dans un fichier
 importé, elles sont écartées, et le récapitulatif de l'import les cite. Une
 valeur négative laissée dans le fichier par une version plus ancienne est
-signalée en tête du tableau de bord.</p>
+signalée en tête du tableau de bord, et comptée comme une case vide. Une
+journée qui manque entre deux lignes du fichier compte, elle aussi, comme une
+journée aux cases vides.</p>
 <p>Pour <b>effacer une journée</b>, videz toutes ses cases et enregistrez :
 l'application demande confirmation, puis retire la ligne du fichier. L'ancienne
 version reste dans le <code>.bak</code>.</p>

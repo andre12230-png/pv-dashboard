@@ -127,10 +127,24 @@ class DashboardView(BaseView):
             # Toute la periode apres la fin du contrat : plus de prix a
             # citer, la vente vaut 0 (audit du 04/10/2026).
             fin = fin_du_contrat(data)
-            sous_titre = (f"contrat terminé le {fin:%d/%m/%Y}"
-                          if fin is not None and not df.empty
-                          and df.index.min() >= fin
-                          else f"à {fmt_prix_kwh(data.oa.prix_kwh)}")
+            prix = fmt_prix_kwh(data.oa.prix_kwh)
+            sous_titre = f"à {prix}"
+            aide_prix = ""
+            if fin is not None and not df.empty:
+                if df.index.min() >= fin:
+                    sous_titre = f"contrat terminé le {fin:%d/%m/%Y}"
+                elif df.index.max() >= fin:
+                    # Periode a cheval sur la fin : seuls les jours d'avant
+                    # sont payes, on dit lequel est le dernier (audit du
+                    # 13/10/2026 ; le total, lui, etait deja juste). Le
+                    # prix passe dans l'infobulle : les deux ensemble ne
+                    # tiennent pas sur une ligne, et une seconde ligne sort
+                    # de la carte (mesure du 15/10/2026).
+                    dernier = fin - pd.Timedelta(days=1)
+                    sous_titre = f"jusqu'au {dernier:%d/%m/%Y}"
+                    aide_prix = (f"\n\nPayée à {prix} jusqu'au "
+                                 f"{dernier:%d/%m/%Y}, fin du contrat ; "
+                                 "rien n'est compté après.")
             carte_vente = KpiCard(
                 f"💶 Vente à {data.acheteur}", fmt_eur(revenu, signed=True),
                 sous_titre, "credit",
@@ -138,8 +152,8 @@ class DashboardView(BaseView):
                 # Synthese (relecture du 05/10/2026).
                 value_color=self._couleur_montant(revenu),
                 aide=f"Ce que {data.acheteur} vous verse pour {quoi} sur "
-                     "la période.\n\nLe prix du kWh se règle dans "
-                     "« Mes réglages » : tout le bilan en dépend.")
+                     f"la période.{aide_prix}\n\nLe prix du kWh se règle "
+                     "dans « Mes réglages » : tout le bilan en dépend.")
             recu = f", {fmt_eur(revenu)} reçus {data.d_acheteur}"
         else:
             carte_vente = KpiCard(

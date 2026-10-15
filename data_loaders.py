@@ -175,7 +175,11 @@ def load_releves_pv(path: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     def _to_num(series: pd.Series) -> pd.Series:
         s = series.astype(str).str.strip().str.replace(",", ".", regex=False)
         s = s.replace({"": None, "nan": None, "NaN": None})
-        return pd.to_numeric(s, errors="coerce")
+        nombres = pd.to_numeric(s, errors="coerce")
+        # Un compteur ne recule pas : une valeur negative d'un fichier ancien
+        # (l'import et la saisie les refusent) est ecartee comme une case
+        # vide. Elle reste signalee au tableau de bord (valeurs_negatives).
+        return nombres.mask(nombres < 0)
 
     out = pd.DataFrame()
     out["timestamp"] = pd.to_datetime(df[date_col], errors="coerce", dayfirst=True)
@@ -187,6 +191,15 @@ def load_releves_pv(path: str) -> tuple[pd.DataFrame, pd.DataFrame]:
 
     out = out.dropna(subset=["timestamp"]).set_index("timestamp").sort_index()
     out = out[~out.index.duplicated(keep="last")]
+
+    # Une date qui manque entre la premiere et la derniere ligne devient une
+    # ligne aux cases vides. Sans cela, le regroupement par jour la creait
+    # plus loin remplie de zeros : journee a 0 partout, ni signalee ni
+    # comblee par une facture (audit du 13/10/2026). Seulement pour un
+    # fichier jour par jour (dates sans heure), le seul que l'appli ecrit.
+    if not out.empty and (out.index == out.index.normalize()).all():
+        out = out.reindex(pd.date_range(out.index.min(), out.index.max(),
+                                        freq="D", name=out.index.name))
 
     # Soutirage total : preference au champ direct ; sinon HC+HP.
     sout_direct = out["soutirage_jour_kwh"]

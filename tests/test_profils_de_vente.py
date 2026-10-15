@@ -24,7 +24,7 @@ from PySide6.QtWidgets import QApplication, QLabel, QTableWidget  # noqa: E402
 
 import app_desktop  # noqa: E402
 import data_loaders as dl  # noqa: E402
-from gui_widgets import MplCanvas  # noqa: E402
+from gui_widgets import KpiCard, MplCanvas  # noqa: E402
 
 JOURS = pd.date_range("2024-01-01", "2025-01-10", freq="D")
 JOURNEES = "".join(f"{j:%d/%m/%Y};20;12;5;2;3\n" for j in JOURS)
@@ -121,6 +121,22 @@ def test_contrat_termine_la_carte_ne_donne_plus_de_prix(fenetre):
     textes = _textes(win, "dashboard", "month-2025-01")
     assert "0,1000 €/kWh" not in textes
     assert "contrat terminé le 01/01/2025" in textes
+
+
+def test_periode_a_cheval_sur_la_fin_du_contrat_dit_jusqu_a_quand(fenetre):
+    # Le total etait juste (rien n'est paye apres la fin), mais la carte
+    # citait le prix comme si toute la periode etait vendue (audit du
+    # 13/10/2026). Elle dit desormais le dernier jour paye.
+    def court(cfg):
+        cfg["oa"]["duree_contrat_annees"] = 1     # fin le 01/01/2025
+    win = fenetre(court)
+    textes = _textes(win, "dashboard", "all")
+    assert "jusqu'au 31/12/2024" in textes
+    carte = next(c for c in win.views["dashboard"].findChildren(KpiCard)
+                 if "jusqu'au" in c.sub.text())
+    # Une seule ligne : une seconde sortait du bas de la carte.
+    assert "\n" not in carte.sub.text()
+    assert "0,1000\xa0€/kWh jusqu'au 31/12/2024" in carte.toolTip()
 
 
 def test_une_projection_au_dela_du_contrat_le_dit(fenetre):

@@ -358,7 +358,10 @@ sauvegardes décrites plus haut conservent l'état précédent. Les valeurs
 négatives et les dates futures du fichier sont écartées, et le
 récapitulatif les cite ; une valeur négative déjà présente dans le CSV
 (écrite par une version plus ancienne) est signalée dans le bandeau du
-tableau de bord, sans que le fichier soit modifié.
+tableau de bord et comptée comme une case vide, sans que le fichier soit
+modifié. De même, une date qui manque entre deux lignes du fichier est
+traitée comme une ligne aux cases vides : signalée, et comblée par une
+facture quand il y en a une.
 
 Trois garde-fous évitent qu'une grandeur atterrisse dans la mauvaise
 colonne ou avec la mauvaise unité :

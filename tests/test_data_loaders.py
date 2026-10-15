@@ -7,6 +7,7 @@ from datetime import date as _date
 import pandas as pd
 import pytest
 
+import calculations as calc
 import data_loaders as dl
 
 # Deux jours volontairement dans le desordre : 02/05 avant 01/05.
@@ -1390,6 +1391,49 @@ def test_load_pv_marque_conso_absente(tmp_path):
     assert reseau.loc[pd.Timestamp("2026-05-01"), "conso_absente"] == 1.0
     assert reseau.loc[pd.Timestamp("2026-05-02"), "conso_absente"] == 0.0
     assert reseau.loc[pd.Timestamp("2026-05-03"), "conso_absente"] == 0.0
+
+
+def test_load_pv_date_absente_traitee_comme_case_vide(tmp_path):
+    # Une date qui manque entre deux lignes du CSV devenait une journee a 0
+    # partout, ni signalee ni comblee par une facture, alors qu'une ligne aux
+    # cases vides l'est (audit du 13/10/2026). Elle doit suivre le meme chemin.
+    p = tmp_path / "r.csv"
+    p.write_text(
+        "Date;Prod_Jour;Inj_Jour;Conso_réseau_Jour\n"
+        "01/05/2026;10,0;5,0;2,0\n"
+        # le 02/05 manque
+        "03/05/2026;12,0;5,0;3,0\n",
+        encoding="utf-8",
+    )
+    production, reseau = dl.load_releves_pv(str(p))
+    jour = pd.Timestamp("2026-05-02")
+    assert jour in reseau.index
+    assert reseau.loc[jour, "conso_absente"] == 1.0
+    assert production.loc[jour, "production_kwh"] == 0.0
+    # Comme une ligne aux cases vides : pas de production saisie, donc pas
+    # de « releve incomplet » d'injection.
+    assert reseau.loc[jour, "releve_incomplet"] == 0.0
+    # Les jours presents ne bougent pas.
+    assert reseau.loc[pd.Timestamp("2026-05-01"), "conso_absente"] == 0.0
+    assert reseau.loc[pd.Timestamp("2026-05-03"), "soutirage_kwh"] == 3.0
+
+
+def test_date_absente_comblee_par_une_facture(tmp_path):
+    # Bout a bout : la date absente recoit sa part du total d'une facture,
+    # comme une case vide.
+    p = tmp_path / "r.csv"
+    p.write_text(
+        "Date;Prod_Jour;Inj_Jour;Conso_réseau_Jour\n"
+        "01/05/2026;10,0;5,0;2,0\n"
+        "03/05/2026;12,0;5,0;3,0\n",
+        encoding="utf-8",
+    )
+    production, reseau = dl.load_releves_pv(str(p))
+    df = calc.merge_series(production, reseau)
+    df = calc.repartit_conso_facturee(df, [
+        {"debut": "2026-05-01", "fin": "2026-05-03", "total_kwh": 9.0},
+    ])
+    assert df.loc[pd.Timestamp("2026-05-02"), "soutirage_kwh"] == 4.0
 
 
 def test_load_pv_marque_jours_incomplets(tmp_path):

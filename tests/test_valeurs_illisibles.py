@@ -63,6 +63,36 @@ def test_le_bandeau_dit_les_negatifs():
     assert "Saisie quotidienne" in texte
 
 
+def test_un_negatif_est_ecarte_comme_une_case_vide(tmp_path):
+    # Signalees depuis la 1.53.3, elles comptaient pourtant encore dans les
+    # calculs jusqu'a leur correction : 20 produits et -5 injectes donnaient
+    # 25 kWh d'autoconsommation. Elles suivent desormais le chemin d'une case
+    # vide (injection estimee, achat au reseau comble par une facture).
+    import pandas as pd
+    chemin = tmp_path / "Releves-pv.csv"
+    chemin.write_text(
+        "Date;Prod_Jour;Inj_Jour;Conso_réseau_Jour\n"
+        "01/06/2026;20;-5;4\n"
+        "02/06/2026;-3;2;-1\n"
+        "03/06/2026;10;0;-0\n", encoding="utf-8")   # « -0 » reste un zero
+    production, reseau = dl.load_releves_pv(str(chemin))
+    j1, j2, j3 = (pd.Timestamp(f"2026-06-0{i}") for i in (1, 2, 3))
+    assert reseau.loc[j1, "injection_kwh"] == 0.0
+    assert reseau.loc[j1, "releve_incomplet"] == 1.0
+    assert production.loc[j2, "production_kwh"] == 0.0
+    assert reseau.loc[j2, "soutirage_kwh"] == 0.0
+    assert reseau.loc[j2, "conso_absente"] == 1.0
+    assert reseau.loc[j3, "conso_absente"] == 0.0
+
+
+def test_le_bandeau_dit_que_le_negatif_est_ecarte():
+    texte, _ = fraicheur_donnees(
+        {"Prod_Jour": date(2026, 6, 3)}, aujourdhui=date(2026, 6, 4),
+        valeurs_negatives=["01/06/2026 (Inj_Jour : « -5 »)"])
+    assert "fausse" not in texte
+    assert "case vide" in texte
+
+
 def test_les_negatifs_arrivent_jusqu_au_tableau_de_bord(tmp_path, monkeypatch):
     import yaml
 

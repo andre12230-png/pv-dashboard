@@ -434,19 +434,19 @@ def _alerte_valeurs_illisibles(valeurs: list[str] | None) -> str:
 
 def _alerte_valeurs_negatives(valeurs: list[str] | None) -> str:
     """Phrase a accoler au bandeau quand le fichier contient des valeurs
-    negatives : un compteur ne recule pas, elles faussent les calculs
-    (contre-audit du 13/10/2026)."""
+    negatives (contre-audit du 13/10/2026). Un compteur ne recule pas :
+    elles sont ecartees des calculs comme une case vide."""
     if not valeurs:
         return ""
     n = len(valeurs)
     apercu = ", ".join(valeurs[:3]) + (" ..." if n > 3 else "")
     if n == 1:
         return (f" ⚠ 1 valeur négative dans le fichier ({apercu}) : un "
-                "compteur ne recule pas, elle fausse les calculs. "
-                "Corrigez-la dans Saisie quotidienne.")
+                "compteur ne recule pas, elle est comptée comme une case "
+                "vide. Corrigez-la dans Saisie quotidienne.")
     return (f" ⚠ {n} valeurs négatives dans le fichier ({apercu}) : un "
-            "compteur ne recule pas, elles faussent les calculs. "
-            "Corrigez-les dans Saisie quotidienne.")
+            "compteur ne recule pas, elles sont comptées comme des cases "
+            "vides. Corrigez-les dans Saisie quotidienne.")
 
 
 def milliers(valeur: float) -> str:
