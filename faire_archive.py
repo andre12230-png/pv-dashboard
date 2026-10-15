@@ -22,10 +22,10 @@ from pathlib import Path
 
 from faire_installeur import (
     CONSTRUIT,
-    INTERDITS,
     RACINE,
     SORTIE,
     lire_version,
+    verifier_dossier_construit,
     verifier_modele,
 )
 
@@ -49,22 +49,26 @@ def verifier_archive(archive: Path) -> list[str]:
     """Relit l'archive et renvoie la liste des fichiers suspects.
 
     Les bibliotheques embarquees par PyInstaller (_internal) apportent leurs
-    propres fichiers d'exemple, .csv compris : le controle ne regarde pas
-    la-dedans."""
+    propres fichiers d'exemple, .csv compris : la-dedans, seuls les .csv sont
+    toleres. Nos fichiers personnels, eux, sont cherches partout, _internal
+    compris (depuis le 15/10/2026)."""
+    interdits = {n.lower() for n in NOMS_INTERDITS}
     suspects = []
     with zipfile.ZipFile(archive) as z:
         for nom in z.namelist():
             chemin = nom.replace("\\", "/")
             chemin_minuscule = chemin.lower()
-            if chemin_minuscule.startswith(f"{DOSSIER.lower()}/_internal/"):
-                continue
-            court = chemin.rsplit("/", 1)[-1]
+            dans_internal = chemin_minuscule.startswith(
+                f"{DOSSIER.lower()}/_internal/")
+            court = chemin_minuscule.rsplit("/", 1)[-1]
             modele_config_autorise = (
                 chemin_minuscule == f"{DOSSIER.lower()}/config.yaml")
             config_hors_modele = (
-                court.lower() == "config.yaml" and not modele_config_autorise)
-            if (config_hors_modele or court in NOMS_INTERDITS
-                    or court.lower().endswith(".csv")
+                court == "config.yaml" and not modele_config_autorise)
+            csv_hors_bibliotheques = court.endswith(".csv") and not dans_internal
+            if (config_hors_modele or court in interdits
+                    or court.startswith("releves-pv")
+                    or csv_hors_bibliotheques
                     or "backups/" in chemin_minuscule):
                 suspects.append(nom)
     return suspects
@@ -75,11 +79,7 @@ def main() -> int:
         raise SystemExit(
             f"ARRET : {CONSTRUIT}\\pv-dashboard.exe n'existe pas.\n"
             "Construisez d'abord l'exe (commande de Construire-Exe.bat).")
-    trouves = [nom for nom in INTERDITS if (CONSTRUIT / nom).exists()]
-    if trouves:
-        raise SystemExit(
-            "ARRET : donnees personnelles dans le dossier construit : "
-            + ", ".join(trouves))
+    verifier_dossier_construit()
     verifier_modele()
 
     version = lire_version()

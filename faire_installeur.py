@@ -33,9 +33,10 @@ CONSTRUIT = RACINE / "dist" / "pv-dashboard"
 RECETTE = RACINE / "installeur" / "pv-dashboard.iss"
 SORTIE = RACINE / "distribution"
 
-# Donnees personnelles : si l'une d'elles se trouvait a la racine du dossier
-# construit, elle partirait chez un inconnu. La recette les exclut deja ; ce
-# controle double la ceinture de bretelles.
+# Donnees personnelles : si l'une d'elles se trouvait dans le dossier
+# construit, a n'importe quelle profondeur, elle partirait chez un inconnu.
+# La recette les exclut deja a la racine ; ce controle double la ceinture de
+# bretelles et fouille aussi les sous-dossiers (_internal compris).
 INTERDITS = ("config.yaml", "config-local.yaml", "Releves-pv.csv", "backups",
              "pv-dashboard.log")
 
@@ -56,6 +57,34 @@ def lire_version() -> str:
     if not trouve:
         raise SystemExit("ARRET : APP_VERSION introuvable dans app_desktop.py.")
     return trouve.group(1)
+
+
+def chercher_donnees_personnelles(dossier: Path) -> list[str]:
+    """Chemins (relatifs, avec des /) des fichiers ou dossiers interdits
+    trouves dans `dossier`, a toutes les profondeurs, tries.
+
+    La comparaison ignore majuscules et minuscules, comme Windows. Un dossier
+    interdit (backups) est signale une seule fois, sans son contenu."""
+    interdits = {nom.lower() for nom in INTERDITS}
+    trouves = []
+    for chemin in sorted(dossier.rglob("*")):
+        relatif = chemin.relative_to(dossier).as_posix()
+        # Deja couvert par un dossier interdit signale plus haut ?
+        if any(relatif.startswith(t + "/") for t in trouves):
+            continue
+        if chemin.name.lower() in interdits:
+            trouves.append(relatif)
+    return sorted(trouves)
+
+
+def verifier_dossier_construit() -> None:
+    """Arrete tout si une donnee personnelle se trouve dans le dossier
+    construit, a quelque profondeur que ce soit."""
+    trouves = chercher_donnees_personnelles(CONSTRUIT)
+    if trouves:
+        raise SystemExit(
+            "ARRET : donnees personnelles dans le dossier construit : "
+            + ", ".join(trouves))
 
 
 def verifier_modele() -> None:
@@ -95,11 +124,7 @@ def main() -> int:
     version = lire_version()
     print(f"Version : {version}")
 
-    trouves = [nom for nom in INTERDITS if (CONSTRUIT / nom).exists()]
-    if trouves:
-        raise SystemExit(
-            "ARRET : donnees personnelles dans le dossier construit : "
-            + ", ".join(trouves))
+    verifier_dossier_construit()
     verifier_modele()
 
     iscc = trouver_iscc()
