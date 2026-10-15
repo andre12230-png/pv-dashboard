@@ -6,8 +6,16 @@ from __future__ import annotations
 import matplotlib.colors as mcolors
 import numpy as np
 import pandas as pd
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+from PySide6.QtCore import QEvent, Qt
+from PySide6.QtWidgets import (
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from gui_theme import CHART_COLORS as CC
 from gui_theme import adoucir, mpl_style
@@ -20,7 +28,6 @@ from gui_widgets import (
     MiniBarres,
     MplCanvas,
     SectionTitle,
-    grid_row,
     police_tabulaire,
 )
 from views._base import BaseView
@@ -42,6 +49,45 @@ from views._helpers import (
     phrase_apres_contrat,
 )
 from views.comparaison import couper_aux_memes_dates
+
+
+class _MontantsAdaptatifs(QWidget):
+    """Garde les montants entiers, sur quatre, deux ou une colonne."""
+
+    def __init__(self, cartes, viewport, marges):
+        super().__init__()
+        self._cartes = cartes
+        self._viewport = viewport
+        self._marges = marges
+        self._colonnes = 0
+        self._grille = QGridLayout(self)
+        self._grille.setContentsMargins(0, 0, 0, 0)
+        self._grille.setSpacing(14)
+        viewport.installEventFilter(self)
+        self._repartir()
+
+    def eventFilter(self, objet, evenement):
+        if objet is self._viewport and evenement.type() == QEvent.Resize:
+            self._repartir()
+        return super().eventFilter(objet, evenement)
+
+    def _repartir(self):
+        # On mesure les textes, sans seuil arbitraire en pixels : un long
+        # montant ou une police plus grande demandent davantage de place.
+        largeur = max(c.minimumSizeHint().width() for c in self._cartes)
+        disponible = self._viewport.width() - self._marges
+        colonnes = next((n for n in (4, 2, 1)
+                         if n * largeur + (n - 1) * self._grille.spacing()
+                         <= disponible), 1)
+        if colonnes == self._colonnes:
+            return
+        while self._grille.count():
+            self._grille.takeAt(0)
+        for colonne in range(4):
+            self._grille.setColumnStretch(colonne, int(colonne < colonnes))
+        for i, carte in enumerate(self._cartes):
+            self._grille.addWidget(carte, i // colonnes, i % colonnes)
+        self._colonnes = colonnes
 
 
 class DashboardView(BaseView):
@@ -162,7 +208,7 @@ class DashboardView(BaseView):
                 aide="Sans contrat de vente, l'électricité que vous ne "
                      "consommez pas part sur le réseau sans être payée.")
             recu = ""
-        self.layout_inner.addLayout(grid_row([
+        cartes_montants = [
             carte_vente,
             KpiCard("🐷 Économies", fmt_eur(eco, signed=True),
                     "kWh du soleil, non achetés", "credit",
@@ -196,7 +242,11 @@ class DashboardView(BaseView):
                         f"fournisseur{recu}.\n\n"
                         "Sans l'installation, vous auriez payé "
                         f"{fmt_eur(cout + eco)}.")),
-        ]))
+        ]
+        marges = self.layout_inner.contentsMargins()
+        self.layout_inner.addWidget(_MontantsAdaptatifs(
+            cartes_montants, self.scroll.viewport(),
+            marges.left() + marges.right()))
 
         # Remarques sur les chiffres ci-dessus : ce qui est reconstitue, et ce
         # qui n'est pas encore arrive. Chacune nomme SA grandeur avant de

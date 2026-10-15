@@ -12,7 +12,7 @@ import yaml
 pytest.importorskip("PySide6")
 
 from conftest import detruire  # noqa: E402
-from PySide6.QtCore import QSettings, Qt  # noqa: E402
+from PySide6.QtCore import QCoreApplication, QEvent, QSettings, Qt  # noqa: E402
 from PySide6.QtWidgets import (  # noqa: E402
     QApplication,
     QLabel,
@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (  # noqa: E402
 import app_desktop  # noqa: E402
 import data_loaders as dl  # noqa: E402
 from gui_theme import LIGHT  # noqa: E402
-from gui_widgets import MplCanvas  # noqa: E402
+from gui_widgets import KpiCard, MplCanvas  # noqa: E402
 
 JOURNEES = ("01/09/2026;20;12;5;2;3\n"
             "02/09/2026;18;10;6;3;3\n"
@@ -164,6 +164,24 @@ def test_synthese_l_axe_du_remboursement_est_en_euros(win):
 
 
 # --- Textes longs ----------------------------------------------------------------
+
+@pytest.mark.parametrize("largeur", [1000, 1280])
+def test_tableau_de_bord_les_quatre_montants_restent_visibles(win, qapp, largeur):
+    """Une fenêtre étroite doit garder les quatre montants dans la page."""
+    win.setAttribute(Qt.WA_DontShowOnScreen, True)
+    win.resize(largeur, 900)
+    win.show()
+    win._switch_view("dashboard")
+    QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+    for _ in range(10):
+        qapp.processEvents()
+    vue = win.views["dashboard"]
+    cartes = vue.findChildren(KpiCard)
+    assert len(cartes) == 4
+    for carte in cartes:
+        coin = carte.mapTo(vue.scroll.viewport(), carte.rect().topRight())
+        assert coin.x() < vue.scroll.viewport().width(), carte.label.text()
+
 
 def test_aucune_page_ne_coupe_un_texte(win, qapp):
     """Generalise le test de la Notice : tout texte qui passe a la ligne
