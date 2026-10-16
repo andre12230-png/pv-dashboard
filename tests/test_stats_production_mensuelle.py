@@ -53,7 +53,7 @@ def trois_annees():
 
 
 def _ligne(ax, etiquette):
-    return next(l for l in ax.get_lines() if l.get_label() == etiquette)
+    return next(ligne for ligne in ax.get_lines() if ligne.get_label() == etiquette)
 
 
 def test_l_annee_la_plus_recente_est_en_jaune(qapp, trois_annees):
@@ -95,7 +95,7 @@ def test_une_seule_annee_ni_moyenne_ni_zone(qapp):
     from gui_theme import LIGHT
     df = _releves("2026-01-01", "2026-06-30", {2026: 12.0})
     ax = _axes(_vue(LIGHT)._monthly_lines(df))[0]
-    assert [l.get_label() for l in ax.get_lines()] == ["2026"]
+    assert [ligne.get_label() for ligne in ax.get_lines()] == ["2026"]
     assert not [c for c in ax.collections if isinstance(c, PolyCollection)]
 
 
@@ -106,7 +106,7 @@ def test_janvier_sans_mois_complet_montre_l_annee_d_avant(qapp):
     df = _releves("2025-01-01", "2027-01-05",
                   {2025: 10.0, 2026: 20.0, 2027: 30.0})
     ax = _axes(_vue(LIGHT)._monthly_lines(df))[0]
-    labels = [l.get_label() for l in ax.get_lines()]
+    labels = [ligne.get_label() for ligne in ax.get_lines()]
     assert "2026" in labels and "2027" not in labels
     assert "Moyenne 2025" in labels
 
