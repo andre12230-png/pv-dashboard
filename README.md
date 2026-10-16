@@ -160,8 +160,9 @@ L'exe construit dans le projet, lui, continue de lire les données du projet :
 il les reconnaît au `config.yaml` présent deux dossiers au-dessus de lui.
 
 L'app s'affiche en **thème clair** par défaut, comme Pécule. Un **thème
-sombre** se choisit dans **Paramètres › Apparence** (Clair / Sombre) et
-s'applique au prochain démarrage ; l'app ne suit jamais le thème de Windows.
+sombre** est proposé au tout premier lancement, puis se change dans
+**Paramètres › Apparence** (Clair / Sombre), au prochain démarrage ; l'app
+ne suit jamais le thème de Windows.
 Elle s'ouvre **toujours sur le mois en cours** : la période n'est
 volontairement pas mémorisée, pour ne pas retrouver au lancement suivant
 les chiffres d'un mois passé consulté la veille. À défaut de relevé pour

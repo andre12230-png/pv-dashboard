@@ -140,7 +140,8 @@ n'apparaît que si votre fournisseur n'est
 pas EDF : il compare votre contrat au Tarif Bleu d'EDF.</p>
 <p><b>Paramètres</b> — récapitulatif de la configuration (tarifs, contrat), et
 bouton <b>Modifier mes réglages</b> pour la changer. En bas de la page,
-<b>Apparence</b> : thème <b>Clair</b> ou <b>Sombre</b>. Le choix s'applique au
+<b>Apparence</b> : thème <b>Clair</b> ou <b>Sombre</b>, proposé une première fois
+au tout premier lancement. Un changement s'applique au
 prochain démarrage de l'application, quel que soit le réglage de Windows.</p>
 <p><b>Votre avis</b> — signaler un problème ou proposer une idée : ouvre un
 court questionnaire dans votre navigateur, après avoir copié dans le

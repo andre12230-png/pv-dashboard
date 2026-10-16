@@ -22,6 +22,7 @@ from PySide6.QtCore import QDir, QLockFile, QSettings, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QMessageBox, QSplashScreen
 
+import premier_theme
 from erreurs import erreur_en_clair
 from gui_theme import appliquer_style, choisir_theme, installer_traduction_qt, nom_du_theme
 
@@ -139,7 +140,8 @@ def main() -> int:
     # Le theme choisi (Clair ou Sombre, dans les Parametres) : avant tout le
     # reste, pour que les premiers messages et les vues, importees plus bas,
     # prennent deja ses couleurs (12/10/2026).
-    t = choisir_theme(nom_du_theme(QSettings("pv-dashboard", "pv-dashboard")))
+    reglages = QSettings("pv-dashboard", "pv-dashboard")
+    t = choisir_theme(nom_du_theme(reglages))
     # Et deja les couleurs du theme (29/09/2026) : sans cela, les messages
     # « deja ouvert » et « Impossible de demarrer » gardaient la palette de
     # Windows, textes blancs sur un poste regle en sombre. La fenetre
@@ -157,6 +159,14 @@ def main() -> int:
             "saisies de l'autre.\n\n"
             "Utilisez la fenêtre déjà ouverte.")
         return 1
+
+    # Tout premier lancement : demander Clair ou Sombre (16/10/2026, voir
+    # premier_theme.py). Apres le verrou (pas de question si l'application
+    # est deja ouverte), avant d'importer les vues (elles prennent leurs
+    # couleurs a l'import).
+    if premier_theme.demander_au_premier_lancement(reglages, _base_dir()):
+        t = choisir_theme(nom_du_theme(reglages))
+        appliquer_style(app)
 
     splash = _make_splash(t)
     splash.show()
