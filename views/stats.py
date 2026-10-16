@@ -23,17 +23,6 @@ def milliers(valeur: float) -> str:
 # Graduations des axes en kWh : « 8 000 » et non « 8000 ».
 AXE_MILLIERS = FuncFormatter(lambda valeur, _pos: milliers(valeur))
 
-# Une couleur par annee, foncee : sans chiffre a cote, une courbe tient au
-# moins 3 pour 1 sur l'ivoire des cartes (charte). L'orange et le bleu clair
-# d'avant ne faisaient que 2,0 et 2,6 (01/10/2026).
-COULEURS_ANNEES = ["#b45309", "#0369a1", "#15803d", "#7c3aed", "#dc2626",
-                   "#0e7490"]
-# Les memes teintes eclaircies pour le theme sombre (12/10/2026) : sur le
-# fond sombre des cartes, les fonces ci-dessus se perdaient.
-COULEURS_ANNEES_SOMBRE = ["#fb923c", "#38bdf8", "#4ade80", "#a78bfa",
-                          "#f87171", "#22d3ee"]
-
-
 class StatsView(BaseView):
     utilise_periode = False  # comparaisons multi-annees : toujours tout l'historique
     selecteur_annuel = True  # un mois n'a aucun sens ici : menu des mois masque
@@ -190,19 +179,52 @@ class StatsView(BaseView):
             note.setWordWrap(True)
             v.addWidget(note)
             return card
+        # Les douze mois, meme sans releve : la moyenne et la zone grise
+        # s'interrompent la ou il n'y a rien a comparer.
+        pivot = pivot.reindex(range(1, 13))
         canvas = MplCanvas(width=5, height=3.2, dpi=100)
         canvas.apply_theme(mpl_style(self.theme))
         ax = canvas.fig.add_subplot(111)
-        palette = (COULEURS_ANNEES_SOMBRE if self.theme.get("name") == "dark"
-                   else COULEURS_ANNEES)
-        # La couleur ne porte jamais seule le sens (charte, 30/09/2026) :
-        # chaque annee a aussi son trait et sa forme de point.
-        traits = ["-", "--", "-.", ":"]
-        points = ["o", "s", "^", "D", "v", "P"]
-        for i, col in enumerate(pivot.columns):
-            ax.plot(pivot.index, pivot[col], lw=2,
-                    ls=traits[i % len(traits)], marker=points[i % len(points)],
-                    color=palette[i % len(palette)], label=str(col))
+        # Cinq courbes de couleurs superposees faisaient brouillon (avis de
+        # l'auteur du 16/10/2026). L'annee la plus recente ressort en jaune,
+        # avec son chiffre a chaque mois ; les autres sont resumees par leur
+        # moyenne et une zone grise de la plus basse a la plus haute. Le
+        # graphique reste lisible quel que soit le nombre d'annees.
+        # Annee mise en avant : la plus recente qui a un mois complet (le
+        # 5 janvier, la nouvelle annee n'en a pas encore).
+        annee = max(col for col in pivot.columns if pivot[col].notna().any())
+        # Les autres annees qui ont au moins un mois complet (pas l'annee
+        # nouvelle, vide, de l'exemple ci-dessus).
+        autres = pivot.drop(columns=annee).dropna(axis=1, how="all")
+        gris = self.theme["text_muted"]
+        if not autres.empty:
+            noms = [int(c) for c in autres.columns]
+            periode = (str(noms[0]) if len(noms) == 1
+                       else f"{noms[0]} à {noms[-1]}")
+            # Zone grise : sans chiffre, elle n'a pas a tenir 3 pour 1 ; la
+            # moyenne en tirets, elle, se lit (gris des textes discrets).
+            ax.fill_between(pivot.index, autres.min(axis=1),
+                            autres.max(axis=1), color=gris, alpha=0.22,
+                            lw=0, label="Écart des autres années")
+            ax.plot(pivot.index, autres.mean(axis=1), color=gris, lw=1.6,
+                    ls="--", label=f"Moyenne {periode}")
+        serie = pivot[annee]
+        ax.plot(pivot.index, serie, color=CC["production"], lw=3,
+                marker="o", ms=6, label=str(int(annee)), zorder=3)
+        # Le chiffre de chaque mois : le jaune seul ne tient pas 3 pour 1 sur
+        # l'ivoire (charte : une courbe pale porte sa valeur ecrite).
+        for mois, valeur in serie.dropna().items():
+            ax.annotate(milliers(valeur), (mois, valeur), xytext=(0, 8),
+                        textcoords="offset points", ha="center", fontsize=8,
+                        color=self.theme["text_primary"], zorder=4,
+                        # Un fond de la couleur de la carte : les tirets de la
+                        # moyenne barraient certains chiffres.
+                        bbox=dict(boxstyle="square,pad=0.1", lw=0,
+                                  facecolor=self.theme["bg_carte"],
+                                  alpha=0.85))
+        # De la place au-dessus du point le plus haut pour son chiffre.
+        haut = np.nanmax(pivot.to_numpy())
+        ax.set_ylim(0, haut * 1.15)
         ax.set_xticks(range(1, 13))
         # Les mois comme sur les autres pages (« janv. », « sept. »).
         ax.set_xticklabels(["janv.", "févr.", "mars", "avr.", "mai", "juin",
@@ -214,10 +236,12 @@ class StatsView(BaseView):
         ax.yaxis.set_major_formatter(AXE_MILLIERS)
         # Legende au-dessus du trace : en haut a droite, elle recouvrait les
         # points d'aout et de septembre (audit du 14/09/2026).
-        # Trois annees par ligne au plus : cinq sur une seule ne tenaient pas,
-        # la derniere s'affichait « 20. » (01/10/2026).
-        ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0),
-                  frameon=False, ncol=min(len(pivot.columns), 3))
+        # L'annee en premier, puis ce qui la compare ; deux par ligne.
+        poignees, libelles = ax.get_legend_handles_labels()
+        ordre = list(reversed(range(len(poignees))))
+        ax.legend([poignees[i] for i in ordre], [libelles[i] for i in ordre],
+                  loc="lower center", bbox_to_anchor=(0.5, 1.0),
+                  frameon=False, ncol=2)
         canvas.fig.tight_layout()
         v.addWidget(canvas)
         if incomplets:

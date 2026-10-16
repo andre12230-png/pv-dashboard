@@ -118,9 +118,12 @@ vous le paieriez même sans panneaux.</p>
 déclarer sur l'électricité autoconsommée, année civile par année civile. Sans
 intérêt pour les autres : cet onglet n'apparaît dans le menu que si la
 section <code>tva_lasm</code> de <code>config.yaml</code> est remplie.</p>
-<p><b>Statistiques</b> — comparaison des années civiles et rendement. Les
-mois incomplets (mise en service, mois en cours) ne sont pas tracés, et les
-années partielles restent hors de la moyenne.</p>
+<p><b>Statistiques</b> — comparaison des années civiles et rendement. La
+production mensuelle montre l'année la plus récente en jaune, avec son
+chiffre à chaque mois, face aux autres années : leur moyenne en tirets, et
+une zone grise qui va de la plus basse à la plus haute. Les mois incomplets
+(mise en service, mois en cours) ne sont pas tracés, et les années partielles
+restent hors de la moyenne de rendement.</p>
 <p><b>Comparer à l'an passé</b> — compare la période choisie en haut à droite
 à la même période un an plus tôt : un mois au même mois de l'année d'avant,
 une année à la précédente, une {annee_oa} à l'{annee_oa} précédente. Sur « Toute la

@@ -48,14 +48,15 @@ def _axes(vue):
 
 
 def test_la_legende_des_courbes_tient_dans_le_graphique(vue):
-    """Cinq annees sur une ligne : la derniere s'affichait « 20. »."""
+    """Cinq annees sur une ligne : la derniere s'affichait « 20. ».
+    Depuis le 16/10/2026, l'annee la plus recente et le resume des autres."""
     _barres, courbes = _axes(vue)
     canvas = courbes.figure.canvas
     canvas.figure.set_size_inches(5, 3.2)
     canvas.draw()
     legende = courbes.get_legend()
     assert [t.get_text() for t in legende.get_texts()] == [
-        "2022", "2023", "2024", "2025", "2026"]
+        "2026", "Moyenne 2022 à 2025", "Écart des autres années"]
     cadre = legende.get_window_extent(canvas.get_renderer())
     assert cadre.x0 >= 0 and cadre.x1 <= canvas.figure.bbox.width
 
@@ -66,10 +67,12 @@ def test_un_mois_incomplet_n_est_pas_trace(vue):
     et une phrase le dit."""
     _barres, courbes = _axes(vue)
     lignes = {ligne.get_label(): ligne for ligne in courbes.get_lines()}
-    avril_2022 = dict(zip(lignes["2022"].get_xdata(), lignes["2022"].get_ydata(),
-                          strict=True))
-    assert math.isnan(avril_2022[4])
-    assert avril_2022[5] == pytest.approx(31 * 18)          # mai entier, trace
+    # Depuis le 16/10/2026, 2022 n'a plus sa courbe : elle compte dans la
+    # moyenne des autres annees, sans son avril de deux jours.
+    moyenne = dict(zip(lignes["Moyenne 2022 à 2025"].get_xdata(),
+                       lignes["Moyenne 2022 à 2025"].get_ydata(), strict=True))
+    assert moyenne[4] == pytest.approx(30 * 18)   # avril 2023 a 2025 seuls
+    assert moyenne[5] == pytest.approx(31 * 18)   # mai, 2022 compris
     septembre_2026 = dict(zip(lignes["2026"].get_xdata(),
                               lignes["2026"].get_ydata(), strict=True))
     assert math.isnan(septembre_2026[9])
@@ -92,10 +95,15 @@ def test_les_milliers_sont_separes(vue):
 
 def test_les_courbes_se_detachent_du_fond(vue):
     """Sans chiffre a cote, une courbe tient 3 pour 1 sur l'ivoire (charte) :
-    l'orange de 2022 faisait 2,0 et le bleu clair de 2023, 2,6."""
+    l'orange de 2022 faisait 2,0 et le bleu clair de 2023, 2,6. Depuis le
+    16/10/2026, la courbe jaune porte son chiffre a chaque mois : seule la
+    moyenne, sans chiffre, doit tenir 3 pour 1."""
     from matplotlib.colors import to_hex
     _barres, courbes = _axes(vue)
-    for ligne in courbes.get_lines():
+    sans_chiffre = [ligne for ligne in courbes.get_lines()
+                    if ligne.get_label().startswith("Moyenne")]
+    assert sans_chiffre
+    for ligne in sans_chiffre:
         couleur = to_hex(ligne.get_color())
         assert _contraste(couleur, LIGHT["bg_carte"]) >= 3, (ligne.get_label(),
                                                              couleur)

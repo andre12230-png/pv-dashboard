@@ -149,10 +149,6 @@ def test_l_encre_sombre_eclaircit_et_se_lit(sombre, serie):
         assert contraste(trace, DARK[fond]) >= 4.5, (serie, trace, fond)
 
 
-def test_les_annees_des_statistiques_se_voient_en_sombre():
-    from views.stats import COULEURS_ANNEES_SOMBRE
-    for couleur in COULEURS_ANNEES_SOMBRE:
-        assert contraste(couleur, DARK["bg_carte"]) >= 3.0, couleur
 
 
 def test_la_palette_qt_sombre_ignore_windows(sombre):

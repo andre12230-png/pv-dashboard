@@ -128,24 +128,6 @@ def test_statistiques_annuelles_chiffrees(qapp):
     assert len(ax.texts) == 8
 
 
-def test_les_courbes_des_annees_se_distinguent_sans_la_couleur(qapp):
-    """30/09/2026 : les courbes 2024, 2025, 2026 ne differaient que par leur
-    couleur (meme trait, memes points ronds). Chaque annee a maintenant son
-    trait et sa forme de point ; les mois s'ecrivent comme ailleurs."""
-    from gui_theme import LIGHT
-    from views.stats import StatsView
-    jours = pd.date_range("2024-01-01", "2026-09-28", freq="D")
-    df = pd.DataFrame({"production_kwh": 10.0}, index=jours)
-    vue = StatsView.__new__(StatsView)
-    vue.theme = LIGHT
-    ax = _axes(vue._monthly_lines(df))[0]
-    courbes = ax.get_lines()
-    assert len(courbes) == 3
-    assert len({c.get_marker() for c in courbes}) == 3
-    assert len({c.get_linestyle() for c in courbes}) == 3
-    assert [t.get_text() for t in ax.get_xticklabels()] == [
-        "janv.", "févr.", "mars", "avr.", "mai", "juin",
-        "juil.", "août", "sept.", "oct.", "nov.", "déc."]
 
 
 def test_les_tuiles_de_la_repartition_ont_leur_trait(qapp):
