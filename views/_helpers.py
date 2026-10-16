@@ -632,6 +632,21 @@ def periode_annuelle(df: pd.DataFrame, period: str) -> str | None:
     return cible if cible in valeurs else valeurs[0]
 
 
+def periode_pour_annee(df: pd.DataFrame, period: str, annee: str) -> str:
+    """La periode a appliquer quand une page annuelle passe a `annee`
+    (« year-2024 »). Le mois affiche est garde s'il a des releves dans cette
+    annee (fevrier 2026 -> fevrier 2024) : les autres pages restent sur un
+    mois au lieu de passer a l'annee entiere (revue du 16/10/2026). Sinon,
+    ou s'il n'y avait pas de mois, l'annee entiere."""
+    if period.startswith("month-"):
+        candidat = f"month-{annee.split('-')[1]}-{period[-2:]}"
+        mois = {f"month-{m.strftime('%Y-%m')}"
+                for m in df.index.to_period("M").unique().tolist()}
+        if candidat in mois:
+            return candidat
+    return annee
+
+
 def annee_de_reference(df: pd.DataFrame, aujourdhui=None) -> str | None:
     """Annee visee par « Cette année » : celle du mois de reference (l'annee
     en cours, ou la derniere relevee avant le premier releve de janvier)."""

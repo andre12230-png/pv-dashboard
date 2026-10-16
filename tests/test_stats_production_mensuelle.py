@@ -80,7 +80,7 @@ def test_chaque_mois_complet_de_l_annee_a_son_chiffre(qapp, trois_annees):
 def test_les_autres_annees_sont_resumees(qapp, trois_annees):
     from gui_theme import LIGHT
     ax = _axes(_vue(LIGHT)._monthly_lines(trois_annees))[0]
-    moyenne = _ligne(ax, "Moyenne 2024 à 2025")
+    moyenne = _ligne(ax, "Moyenne des autres années")
     assert moyenne.get_linestyle() == "--"
     # Janvier : 310 kWh en 2024, 620 en 2025 -> moyenne 465.
     assert moyenne.get_ydata()[0] == pytest.approx(465.0)
@@ -108,7 +108,7 @@ def test_janvier_sans_mois_complet_montre_l_annee_d_avant(qapp):
     ax = _axes(_vue(LIGHT)._monthly_lines(df))[0]
     labels = [ligne.get_label() for ligne in ax.get_lines()]
     assert "2026" in labels and "2027" not in labels
-    assert "Moyenne 2025" in labels
+    assert "Moyenne des autres années" in labels
 
 
 def test_les_mois_s_ecrivent_comme_ailleurs(qapp, trois_annees):
@@ -126,7 +126,7 @@ def test_moyenne_et_chiffres_se_lisent(qapp, trois_annees, nom):
     theme = getattr(gui_theme, nom)
     ax = _axes(_vue(theme)._monthly_lines(trois_annees))[0]
     fond = theme["bg_carte"]
-    moyenne = _ligne(ax, "Moyenne 2024 à 2025")
+    moyenne = _ligne(ax, "Moyenne des autres années")
     assert contraste(matplotlib.colors.to_hex(moyenne.get_color()), fond) >= 3.0
     for t in ax.texts:
         assert contraste(matplotlib.colors.to_hex(t.get_color()), fond) >= 4.5
@@ -137,7 +137,7 @@ def test_mois_sans_autre_annee_pas_de_moyenne(qapp):
     from gui_theme import LIGHT
     df = _releves("2025-05-01", "2026-08-31", {2025: 10.0, 2026: 20.0})
     ax = _axes(_vue(LIGHT)._monthly_lines(df))[0]
-    moyenne = _ligne(ax, "Moyenne 2025")
+    moyenne = _ligne(ax, "Moyenne des autres années")
     assert np.isnan(moyenne.get_ydata()[:4]).all()
     assert not np.isnan(moyenne.get_ydata()[4])
 
@@ -147,7 +147,7 @@ def test_l_annee_choisie_passe_en_jaune(qapp, trois_annees):
     from gui_theme import LIGHT
     ax = _axes(_vue(LIGHT)._monthly_lines(trois_annees, annee=2024))[0]
     assert {ligne.get_label() for ligne in ax.get_lines()} == {
-        "2024", "Moyenne 2025 à 2026"}
+        "2024", "Moyenne des autres années"}
 
 
 def test_une_annee_sans_mois_complet_le_dit(qapp):
@@ -161,6 +161,16 @@ def test_une_annee_sans_mois_complet_le_dit(qapp):
     carte = _vue(LIGHT)._monthly_lines(df, annee=2027)
     ax = _axes(carte)[0]
     assert [ligne.get_label() for ligne in ax.get_lines()] == [
-        "Moyenne 2025 à 2026"]
+        "Moyenne des autres années"]
     textes = " ".join(lbl.text() for lbl in carte.findChildren(QLabel))
     assert "2027 n'a pas encore de mois complet" in textes
+
+
+def test_la_legende_de_la_moyenne_ne_cite_pas_l_annee_choisie(qapp, trois_annees):
+    """Revue du 16/10/2026 : 2024 choisie, la legende disait « Moyenne 2022
+    à 2026 », comme si 2024 y etait comptee alors qu'elle en est exclue."""
+    from gui_theme import LIGHT
+    ax = _axes(_vue(LIGHT)._monthly_lines(trois_annees, annee=2025))[0]
+    libelles = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert libelles == ["2025", "Moyenne des autres années",
+                        "Écart des autres années"]

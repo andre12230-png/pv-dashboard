@@ -52,13 +52,17 @@ def test_la_legende_des_courbes_tient_dans_le_graphique(vue):
     Depuis le 16/10/2026, l'annee la plus recente et le resume des autres."""
     _barres, courbes = _axes(vue)
     canvas = courbes.figure.canvas
-    canvas.figure.set_size_inches(5, 3.2)
-    canvas.draw()
     legende = courbes.get_legend()
     assert [t.get_text() for t in legende.get_texts()] == [
-        "2026", "Moyenne 2022 à 2025", "Écart des autres années"]
-    cadre = legende.get_window_extent(canvas.get_renderer())
-    assert cadre.x0 >= 0 and cadre.x1 <= canvas.figure.bbox.width
+        "2026", "Moyenne des autres années", "Écart des autres années"]
+    # 4,73 pouces : la largeur reelle de la carte a 1 280 px (mesuree le
+    # 16/10/2026) ; « Écart des autres année » y perdait son « s ». 4,4 :
+    # une fenetre un peu plus etroite.
+    for largeur in (5, 4.73, 4.4):
+        canvas.figure.set_size_inches(largeur, 3.2)
+        canvas.draw()
+        cadre = legende.get_window_extent(canvas.get_renderer())
+        assert cadre.x0 >= 0 and cadre.x1 <= canvas.figure.bbox.width, largeur
 
 
 def test_un_mois_incomplet_n_est_pas_trace(vue):
@@ -69,8 +73,8 @@ def test_un_mois_incomplet_n_est_pas_trace(vue):
     lignes = {ligne.get_label(): ligne for ligne in courbes.get_lines()}
     # Depuis le 16/10/2026, 2022 n'a plus sa courbe : elle compte dans la
     # moyenne des autres annees, sans son avril de deux jours.
-    moyenne = dict(zip(lignes["Moyenne 2022 à 2025"].get_xdata(),
-                       lignes["Moyenne 2022 à 2025"].get_ydata(), strict=True))
+    moyenne = dict(zip(lignes["Moyenne des autres années"].get_xdata(),
+                       lignes["Moyenne des autres années"].get_ydata(), strict=True))
     assert moyenne[4] == pytest.approx(30 * 18)   # avril 2023 a 2025 seuls
     assert moyenne[5] == pytest.approx(31 * 18)   # mai, 2022 compris
     septembre_2026 = dict(zip(lignes["2026"].get_xdata(),

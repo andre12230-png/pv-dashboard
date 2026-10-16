@@ -85,6 +85,7 @@ from views._helpers import (
     mot_annee,
     options_annees_seules,
     periode_annuelle,
+    periode_pour_annee,
 )
 
 # ----------------------------------------------------------------------
@@ -1453,13 +1454,10 @@ class MainWindow(QMainWindow):
             return
         # En changeant d'annee on garde le mois affiche s'il existe la-bas :
         # c'est ce qu'on veut pour comparer un mois d'une annee sur l'autre.
-        # Sinon on montre l'annee entiere plutot qu'un ecran vide.
-        if (self.current_period.startswith("month-") and valeur.startswith("year-")
-                and not self._page_annuelle()):
-            annee = int(valeur.split("-")[1])
-            candidat = f"month-{annee}-{self.current_period[-2:]}"
-            if candidat in {v for _, v in options_mois(self.data.df, annee)}:
-                valeur = candidat
+        # Sinon on montre l'annee entiere plutot qu'un ecran vide. Vaut aussi
+        # sur Statistiques : les autres pages y gardent leur mois (16/10/2026).
+        if valeur.startswith("year-"):
+            valeur = periode_pour_annee(self.data.df, self.current_period, valeur)
         self._appliquer_periode(valeur)
 
     def _on_month_changed(self, idx: int) -> None:
@@ -1475,13 +1473,20 @@ class MainWindow(QMainWindow):
         un mois reste un mois, une annee reste une annee."""
         voisine = periode_voisine(self.data.df, self.data.start_oa,
                                   self._periode_affichee(), sens)
-        if voisine is not None:
-            self._appliquer_periode(voisine)
+        if voisine is None:
+            return
+        if self._page_annuelle():
+            # Une annee de plus ou de moins, le mois affiche garde (16/10/2026).
+            voisine = periode_pour_annee(self.data.df, self.current_period, voisine)
+        self._appliquer_periode(voisine)
 
     def _aller_au_mois_en_cours(self) -> None:
         """Bouton « Ce mois-ci » : le mois en cours, ou le dernier mois
         releve tant que le mois en cours n'a rien."""
-        cible = self._periode_de_reference()
+        # Le mois de reference, meme sur une page annuelle : « Cette année »
+        # y montre son annee, et les autres pages retrouvent le mois en cours
+        # (16/10/2026). Le bouton se grise d'apres _periode_de_reference.
+        cible = mois_de_reference(self.data.df)
         if cible is not None:
             self._appliquer_periode(cible)
 

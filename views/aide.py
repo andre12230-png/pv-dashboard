@@ -178,8 +178,10 @@ vous y êtes déjà. Au clavier : <b>Ctrl+←</b> période précédente,
 <p>Sur <b>Statistiques</b>, le menu des mois disparaît et le bouton devient
 <b>Cette année</b> : un mois n'y a pas de sens. Le menu ne propose que les
 années civiles, et l'année choisie passe en jaune dans la production
-mensuelle ; les flèches avancent d'une année. Le reste de l'onglet compare
-toujours toutes les années.</p>
+mensuelle ; les flèches avancent d'une année. Le mois affiché sur les autres
+onglets est gardé : depuis février 2026, choisir 2024 mène à février 2024 (ou
+à l'année entière si ce mois n'a pas de relevé). <b>Cette année</b> ramène au
+mois en cours. Le reste de l'onglet compare toujours toutes les années.</p>
 <p>L'application s'ouvre <b>toujours sur le mois en cours</b> (ou sur toute
 la période tant que ce mois n'a aucun relevé) : la période n'est pas
 mémorisée d'une fois sur l'autre, pour ne pas retrouver au lancement suivant

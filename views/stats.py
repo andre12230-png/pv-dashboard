@@ -209,16 +209,16 @@ class StatsView(BaseView):
         autres = pivot.drop(columns=annee).dropna(axis=1, how="all")
         gris = self.theme["text_muted"]
         if not autres.empty:
-            noms = [int(c) for c in autres.columns]
-            periode = (str(noms[0]) if len(noms) == 1
-                       else f"{noms[0]} à {noms[-1]}")
             # Zone grise : sans chiffre, elle n'a pas a tenir 3 pour 1 ; la
             # moyenne en tirets, elle, se lit (gris des textes discrets).
             ax.fill_between(pivot.index, autres.min(axis=1),
                             autres.max(axis=1), color=gris, alpha=0.22,
                             lw=0, label="Écart des autres années")
             ax.plot(pivot.index, autres.mean(axis=1), color=gris, lw=1.6,
-                    ls="--", label=f"Moyenne {periode}")
+                    # Sans fourchette d'annees : « Moyenne 2022 a 2026 »,
+                    # 2024 choisie, la laissait croire comptee (revue du
+                    # 16/10/2026).
+                    ls="--", label="Moyenne des autres années")
         serie = pivot[annee]
         if not sans_mois_complet:
             ax.plot(pivot.index, serie, color=CC["production"], lw=3,
@@ -248,12 +248,14 @@ class StatsView(BaseView):
         ax.yaxis.set_major_formatter(AXE_MILLIERS)
         # Legende au-dessus du trace : en haut a droite, elle recouvrait les
         # points d'aout et de septembre (audit du 14/09/2026).
-        # L'annee en premier, puis ce qui la compare ; deux par ligne.
+        # L'annee en premier, puis ce qui la compare. Une seule colonne : sur
+        # deux, « Écart des autres années » sortait du graphique a 1 280 px
+        # (473 px de large, 16/10/2026).
         poignees, libelles = ax.get_legend_handles_labels()
         ordre = list(reversed(range(len(poignees))))
         ax.legend([poignees[i] for i in ordre], [libelles[i] for i in ordre],
                   loc="lower center", bbox_to_anchor=(0.5, 1.0),
-                  frameon=False, ncol=2)
+                  frameon=False, ncol=1)
         canvas.fig.tight_layout()
         v.addWidget(canvas)
         if sans_mois_complet:
