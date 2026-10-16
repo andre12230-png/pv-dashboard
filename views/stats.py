@@ -11,7 +11,7 @@ from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
 from gui_widgets import Card, KpiCard, MplCanvas, SectionTitle, grid_row
 from views._base import BaseView
-from views._helpers import chiffres_sur_barres
+from views._helpers import annee_de_periode, chiffres_sur_barres
 
 
 def milliers(valeur: float) -> str:
@@ -24,7 +24,9 @@ def milliers(valeur: float) -> str:
 AXE_MILLIERS = FuncFormatter(lambda valeur, _pos: milliers(valeur))
 
 class StatsView(BaseView):
-    utilise_periode = False  # comparaisons multi-annees : toujours tout l'historique
+    # Le selecteur choisit l'annee mise en avant dans « Production mensuelle »
+    # (16/10/2026) ; le reste de la page compare toujours toutes les annees.
+    utilise_periode = True
     selecteur_annuel = True  # un mois n'a aucun sens ici : menu des mois masque
 
     def populate(self, period: str) -> None:
@@ -54,7 +56,7 @@ class StatsView(BaseView):
         graphs = QHBoxLayout()
         graphs.setSpacing(14)
         graphs.addWidget(self._yearly_bars(yearly, partielles))
-        graphs.addWidget(self._monthly_lines(df))
+        graphs.addWidget(self._monthly_lines(df, annee_de_periode(period)))
         self.layout_inner.addLayout(graphs)
 
         p_crete = self.data.cfg["installation"]["puissance_kwc"]
@@ -150,7 +152,10 @@ class StatsView(BaseView):
         v.addWidget(canvas)
         return card
 
-    def _monthly_lines(self, df: pd.DataFrame) -> QFrame:
+    def _monthly_lines(self, df: pd.DataFrame,
+                       annee: int | None = None) -> QFrame:
+        """`annee` : l'annee choisie au selecteur ; None (toute la periode,
+        annee OA), ou une annee sans releve : la plus recente."""
         # Titre dans le bandeau de la carte, comme dans Pecule (29/09/2026).
         card = Card(titre="Production mensuelle, année par année")
         v = card.corps
@@ -165,10 +170,10 @@ class StatsView(BaseView):
         # (01/10/2026). Un mois compte s'il a un releve chaque jour.
         jours = df_m.groupby(["annee", "mois"]).size()
         incomplets = False
-        for (annee, mois), nombre in jours.items():
-            if nombre < pd.Period(year=int(annee), month=int(mois),
+        for (an, mois), nombre in jours.items():
+            if nombre < pd.Period(year=int(an), month=int(mois),
                                   freq="M").days_in_month:
-                pivot.loc[mois, annee] = np.nan
+                pivot.loc[mois, an] = np.nan
                 incomplets = True
         if pivot.isna().all().all():
             # Aucun mois complet : un graphique vide, sa legende et un axe
@@ -192,7 +197,13 @@ class StatsView(BaseView):
         # graphique reste lisible quel que soit le nombre d'annees.
         # Annee mise en avant : la plus recente qui a un mois complet (le
         # 5 janvier, la nouvelle annee n'en a pas encore).
-        annee = max(col for col in pivot.columns if pivot[col].notna().any())
+        avec_mois = [col for col in pivot.columns if pivot[col].notna().any()]
+        if annee not in pivot.columns:
+            annee = max(avec_mois)
+        # Annee choisie sans aucun mois complet (le 5 janvier) : pas de courbe
+        # jaune vide sans un mot, ni une autre annee a sa place ; une phrase
+        # le dit, et les autres annees restent tracees.
+        sans_mois_complet = annee not in avec_mois
         # Les autres annees qui ont au moins un mois complet (pas l'annee
         # nouvelle, vide, de l'exemple ci-dessus).
         autres = pivot.drop(columns=annee).dropna(axis=1, how="all")
@@ -209,8 +220,9 @@ class StatsView(BaseView):
             ax.plot(pivot.index, autres.mean(axis=1), color=gris, lw=1.6,
                     ls="--", label=f"Moyenne {periode}")
         serie = pivot[annee]
-        ax.plot(pivot.index, serie, color=CC["production"], lw=3,
-                marker="o", ms=6, label=str(int(annee)), zorder=3)
+        if not sans_mois_complet:
+            ax.plot(pivot.index, serie, color=CC["production"], lw=3,
+                    marker="o", ms=6, label=str(int(annee)), zorder=3)
         # Le chiffre de chaque mois : le jaune seul ne tient pas 3 pour 1 sur
         # l'ivoire (charte : une courbe pale porte sa valeur ecrite).
         for mois, valeur in serie.dropna().items():
@@ -244,6 +256,12 @@ class StatsView(BaseView):
                   frameon=False, ncol=2)
         canvas.fig.tight_layout()
         v.addWidget(canvas)
+        if sans_mois_complet:
+            note = QLabel(f"{int(annee)} n'a pas encore de mois complet : "
+                          "seules les autres années sont tracées.")
+            note.setObjectName("SectionSub")
+            note.setWordWrap(True)
+            v.addWidget(note)
         if incomplets:
             note = QLabel("Les mois incomplets (mise en service, mois en "
                           "cours) ne sont pas tracés.")

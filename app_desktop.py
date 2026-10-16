@@ -79,7 +79,13 @@ from views import (
     period_options,
     periode_voisine,
 )
-from views._helpers import definir_acheteur, mot_annee
+from views._helpers import (
+    annee_de_reference,
+    definir_acheteur,
+    mot_annee,
+    options_annees_seules,
+    periode_annuelle,
+)
 
 # ----------------------------------------------------------------------
 # Resolution des chemins
@@ -1319,7 +1325,14 @@ class MainWindow(QMainWindow):
         if not inutile:
             self.prev_btn.setToolTip("Période précédente (Ctrl+←)")
             self.next_btn.setToolTip("Période suivante (Ctrl+→)")
-        self._maj_etat_selecteur()
+            if vue.selecteur_annuel:
+                self.prev_btn.setToolTip("Année précédente (Ctrl+←)")
+                self.next_btn.setToolTip("Année suivante (Ctrl+→)")
+                self.btn_ce_mois.setToolTip(
+                    "Revenir à l'année en cours (Ctrl+Origine)")
+        # Le menu change d'une page a l'autre : les seules annees sur une page
+        # annuelle, le menu complet ailleurs (16/10/2026).
+        self._peupler_selecteur()
 
         # Une vue qui porte des valeurs tapees et pas encore enregistrees n'est
         # pas redessinee : le dessin repart du fichier et les effacait sans un
@@ -1340,6 +1353,16 @@ class MainWindow(QMainWindow):
             combo.blockSignals(True)
 
         self.year_combo.clear()
+        if self._page_annuelle():
+            # Statistiques : les annees civiles seules (16/10/2026).
+            for label, value in options_annees_seules(self.data.df):
+                self.year_combo.addItem(label, value)
+            self.year_combo.setCurrentIndex(self._index_de(
+                self.year_combo, self._periode_affichee()))
+            self.year_combo.blockSignals(False)
+            self.month_combo.blockSignals(False)
+            self._maj_etat_selecteur()
+            return
         for label, value in options_annees(self.data.df, self.data.start_oa):
             self.year_combo.addItem(label, value)
             # Les annees OA sont a cheval sur deux annees civiles : leurs
@@ -1383,16 +1406,39 @@ class MainWindow(QMainWindow):
         """
         actif = getattr(self, "_selecteur_actif", True)
         annee = annee_de_periode(self.current_period)
+        affichee = self._periode_affichee()
         self.lbl_periode.setEnabled(actif)
         self.year_combo.setEnabled(actif)
         self.month_combo.setEnabled(actif and annee is not None)
         for bouton, sens in ((self.prev_btn, -1), (self.next_btn, +1)):
             voisine = periode_voisine(self.data.df, self.data.start_oa,
-                                      self.current_period, sens)
+                                      affichee, sens)
             bouton.setEnabled(actif and voisine is not None)
-        cible = mois_de_reference(self.data.df)
+        cible = self._periode_de_reference()
         self.btn_ce_mois.setEnabled(
-            actif and cible is not None and self.current_period != cible)
+            actif and cible is not None and affichee != cible)
+
+    def _page_annuelle(self) -> bool:
+        """Vrai sur une page ou seule l'annee civile a un sens
+        (Statistiques) : le selecteur y choisit une annee."""
+        vue = self.views.get(self.current_view) if hasattr(self, "views") else None
+        return bool(getattr(vue, "selecteur_annuel", False))
+
+    def _periode_affichee(self) -> str:
+        """La periode que montre le selecteur. Sur une page annuelle, venue
+        d'un mois ou de toute la periode, c'est son annee (ou la plus recente) :
+        les fleches partent de la et avancent d'une annee. La periode des autres
+        pages ne change qu'au premier geste sur le selecteur."""
+        if self._page_annuelle():
+            return periode_annuelle(self.data.df, self.current_period) or PERIOD_ALL
+        return self.current_period
+
+    def _periode_de_reference(self) -> str | None:
+        """Cible de « Ce mois-ci » (ou de « Cette année » sur une page
+        annuelle)."""
+        if self._page_annuelle():
+            return annee_de_reference(self.data.df)
+        return mois_de_reference(self.data.df)
 
     def _appliquer_periode(self, periode: str) -> None:
         """Change la periode affichee et remet toute la barre d'aplomb."""
@@ -1408,7 +1454,8 @@ class MainWindow(QMainWindow):
         # En changeant d'annee on garde le mois affiche s'il existe la-bas :
         # c'est ce qu'on veut pour comparer un mois d'une annee sur l'autre.
         # Sinon on montre l'annee entiere plutot qu'un ecran vide.
-        if self.current_period.startswith("month-") and valeur.startswith("year-"):
+        if (self.current_period.startswith("month-") and valeur.startswith("year-")
+                and not self._page_annuelle()):
             annee = int(valeur.split("-")[1])
             candidat = f"month-{annee}-{self.current_period[-2:]}"
             if candidat in {v for _, v in options_mois(self.data.df, annee)}:
@@ -1427,14 +1474,14 @@ class MainWindow(QMainWindow):
         """Un cran en arriere (sens=-1) ou en avant (+1), a echelle constante :
         un mois reste un mois, une annee reste une annee."""
         voisine = periode_voisine(self.data.df, self.data.start_oa,
-                                  self.current_period, sens)
+                                  self._periode_affichee(), sens)
         if voisine is not None:
             self._appliquer_periode(voisine)
 
     def _aller_au_mois_en_cours(self) -> None:
         """Bouton « Ce mois-ci » : le mois en cours, ou le dernier mois
         releve tant que le mois en cours n'a rien."""
-        cible = mois_de_reference(self.data.df)
+        cible = self._periode_de_reference()
         if cible is not None:
             self._appliquer_periode(cible)
 

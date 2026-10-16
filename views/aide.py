@@ -119,9 +119,10 @@ déclarer sur l'électricité autoconsommée, année civile par année civile. S
 intérêt pour les autres : cet onglet n'apparaît dans le menu que si la
 section <code>tva_lasm</code> de <code>config.yaml</code> est remplie.</p>
 <p><b>Statistiques</b> — comparaison des années civiles et rendement. La
-production mensuelle montre l'année la plus récente en jaune, avec son
-chiffre à chaque mois, face aux autres années : leur moyenne en tirets, et
-une zone grise qui va de la plus basse à la plus haute. Les mois incomplets
+production mensuelle montre en jaune l'année choisie en haut à droite (la
+plus récente, au départ), avec son chiffre à chaque mois, face aux autres
+années : leur moyenne en tirets, et une zone grise qui va de la plus basse à
+la plus haute. Les mois incomplets
 (mise en service, mois en cours) ne sont pas tracés, et les années partielles
 restent hors de la moyenne de rendement.</p>
 <p><b>Comparer à l'an passé</b> — compare la période choisie en haut à droite
@@ -175,9 +176,10 @@ dernier mois relevé, tant que le mois en cours n'a rien) ; il est grisé quand
 vous y êtes déjà. Au clavier : <b>Ctrl+←</b> période précédente,
 <b>Ctrl+→</b> période suivante, <b>Ctrl+Origine</b> mois en cours.</p>
 <p>Sur <b>Statistiques</b>, le menu des mois disparaît et le bouton devient
-<b>Cette année</b> : l'onglet compare toujours toutes les années, un mois n'y a
-pas de sens. Le sélecteur y reste grisé, comme sur les autres onglets qui ne
-dépendent pas de la période.</p>
+<b>Cette année</b> : un mois n'y a pas de sens. Le menu ne propose que les
+années civiles, et l'année choisie passe en jaune dans la production
+mensuelle ; les flèches avancent d'une année. Le reste de l'onglet compare
+toujours toutes les années.</p>
 <p>L'application s'ouvre <b>toujours sur le mois en cours</b> (ou sur toute
 la période tant que ce mois n'a aucun relevé) : la période n'est pas
 mémorisée d'une fois sur l'autre, pour ne pas retrouver au lancement suivant

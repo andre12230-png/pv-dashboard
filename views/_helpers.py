@@ -607,6 +607,38 @@ def mois_de_reference(df: pd.DataFrame, aujourdhui=None) -> str | None:
     return f"month-{cible.strftime('%Y-%m')}"
 
 
+# Pages ou seule l'annee civile a un sens (Statistiques, 16/10/2026) : le
+# selecteur y choisit l'annee mise en avant. Ni « Toute la periode » ni annee
+# OA, et les fleches avancent d'une annee.
+
+def options_annees_seules(df: pd.DataFrame) -> list[tuple[str, str]]:
+    """Menu des annees d'une page annuelle : les annees civiles, de la plus
+    recente a la plus ancienne."""
+    if df.empty:
+        return []
+    return [(str(y), f"year-{y}")
+            for y in sorted(df.index.year.unique().tolist(), reverse=True)]
+
+
+def periode_annuelle(df: pd.DataFrame, period: str) -> str | None:
+    """L'annee qu'une page annuelle affiche pour la periode choisie ailleurs :
+    l'annee du mois ou de l'annee choisie, sinon (toute la periode, annee OA,
+    annee sans releve) la plus recente. None sans aucun releve."""
+    valeurs = [v for _, v in options_annees_seules(df)]
+    if not valeurs:
+        return None
+    annee = annee_de_periode(period)
+    cible = f"year-{annee}" if annee is not None else None
+    return cible if cible in valeurs else valeurs[0]
+
+
+def annee_de_reference(df: pd.DataFrame, aujourdhui=None) -> str | None:
+    """Annee visee par « Cette année » : celle du mois de reference (l'annee
+    en cours, ou la derniere relevee avant le premier releve de janvier)."""
+    mois = mois_de_reference(df, aujourdhui)
+    return f"year-{annee_de_periode(mois)}" if mois is not None else None
+
+
 def periode_voisine(df: pd.DataFrame, start_oa, period: str, sens: int) -> str | None:
     """Periode d'un cran plus ancienne (sens=-1) ou plus recente (sens=+1).
 

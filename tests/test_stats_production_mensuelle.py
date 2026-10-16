@@ -140,3 +140,27 @@ def test_mois_sans_autre_annee_pas_de_moyenne(qapp):
     moyenne = _ligne(ax, "Moyenne 2025")
     assert np.isnan(moyenne.get_ydata()[:4]).all()
     assert not np.isnan(moyenne.get_ydata()[4])
+
+
+def test_l_annee_choisie_passe_en_jaune(qapp, trois_annees):
+    """Le selecteur « Période » choisit l'annee mise en avant (16/10/2026)."""
+    from gui_theme import LIGHT
+    ax = _axes(_vue(LIGHT)._monthly_lines(trois_annees, annee=2024))[0]
+    assert {ligne.get_label() for ligne in ax.get_lines()} == {
+        "2024", "Moyenne 2025 à 2026"}
+
+
+def test_une_annee_sans_mois_complet_le_dit(qapp):
+    """Le 5 janvier, 2027 choisie : pas de courbe jaune vide sans un mot, ni
+    une autre annee en jaune a sa place. Les autres restent tracees."""
+    from PySide6.QtWidgets import QLabel
+
+    from gui_theme import LIGHT
+    df = _releves("2025-01-01", "2027-01-05",
+                  {2025: 10.0, 2026: 20.0, 2027: 30.0})
+    carte = _vue(LIGHT)._monthly_lines(df, annee=2027)
+    ax = _axes(carte)[0]
+    assert [ligne.get_label() for ligne in ax.get_lines()] == [
+        "Moyenne 2025 à 2026"]
+    textes = " ".join(lbl.text() for lbl in carte.findChildren(QLabel))
+    assert "2027 n'a pas encore de mois complet" in textes
