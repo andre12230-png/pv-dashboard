@@ -435,7 +435,7 @@ bonnes.
 ### Une autre marque d'onduleur, un autre fournisseur
 
 Les deux lecteurs ne connaissent pas de marque : ils acceptent **tout export
-"date + valeur"**, vérifie sur des exports type SolarEdge, Huawei et un
+"date + valeur"**, vérifié sur des exports type SolarEdge, Huawei et un
 fournisseur autre qu'Octopus.
 
 - dates **françaises** (`01/08/2026`) ou **ISO** (`2026-08-01`) ;
