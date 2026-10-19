@@ -839,6 +839,23 @@ def controler_recalages(recalages: dict) -> None:
             if champ and float(p.get(champ) or 0) < 0:
                 raise ReglagesRefuses(
                     f"{libelle} : un total en kWh ne peut pas être négatif.")
+        # Deux totaux de factures sur les memes jours : ces jours seraient
+        # recales deux fois, et le total compte serait faux (analyse critique
+        # du 16-10-2026). Les « Jours douteux » ne portent pas de total : les
+        # marquer deux fois ne change rien, on les laisse passer.
+        if not champ:
+            continue
+        periodes = sorted(recalages.get(cle) or [],
+                          key=lambda p: _date(p["debut"]))
+        for avant, apres in zip(periodes, periodes[1:], strict=False):
+            if _date(apres["debut"]) <= _date(avant["fin"]):
+                fin_commune = min(_date(avant["fin"]), _date(apres["fin"]))
+                raise ReglagesRefuses(
+                    f"{libelle} : deux périodes se chevauchent, du "
+                    f"{_date(apres['debut']):%d/%m/%Y} au "
+                    f"{fin_commune:%d/%m/%Y}. Ces jours seraient comptés "
+                    "deux fois. Faites commencer la seconde le lendemain de "
+                    "la fin de la première.")
 
 
 # Fichier cree quand il n'existe pas encore : le strict necessaire, le modele

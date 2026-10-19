@@ -451,6 +451,45 @@ def test_un_total_negatif_est_refuse(tmp_path):
     with pytest.raises(rg.ReglagesRefuses):
         rg.enregistrer_recalages(tmp_path / "c.yaml", recalages, tmp_path / "b")
 
+
+def test_deux_periodes_qui_se_chevauchent_sont_refusees(tmp_path):
+    """Analyse critique du 16-10-2026 : deux factures qui couvrent les memes
+    jours etaient acceptees sans un mot, et les jours communs etaient
+    recales deux fois (13 kWh comptes au lieu de 10 dans l'exemple). Valeurs
+    inventees."""
+    recalages = rg.recalages_vides()
+    recalages["injection_facturee"] += [
+        {"debut": date(2025, 1, 1), "fin": date(2025, 6, 30),
+         "total_kwh": 1000, "source": ""},
+        {"debut": date(2025, 6, 1), "fin": date(2025, 12, 31),
+         "total_kwh": 1000, "source": ""},
+    ]
+    chemin = tmp_path / "c.yaml"
+    with pytest.raises(rg.ReglagesRefuses) as erreur:
+        rg.enregistrer_recalages(chemin, recalages, tmp_path / "b")
+    message = str(erreur.value)
+    assert "chevauchent" in message
+    # Le message dit quelles periodes, en dates francaises.
+    assert "01/06/2025" in message and "30/06/2025" in message
+    assert not chemin.exists()            # rien n'a ete ecrit
+
+
+def test_des_periodes_bout_a_bout_sont_acceptees(tmp_path):
+    """Une facture qui commence le lendemain de la precedente ne chevauche
+    rien. Des sortes differentes sur les memes jours non plus : elles ne
+    corrigent pas la meme grandeur."""
+    recalages = rg.recalages_vides()
+    recalages["injection_facturee"] += [
+        {"debut": date(2025, 1, 1), "fin": date(2025, 6, 30),
+         "total_kwh": 1000, "source": ""},
+        {"debut": date(2025, 7, 1), "fin": date(2025, 12, 31),
+         "total_kwh": 1000, "source": ""},
+    ]
+    recalages["conso_reseau_recalee"].append(
+        {"debut": date(2025, 1, 1), "fin": date(2025, 12, 31),
+         "total_kwh": 2000, "source": ""})
+    rg.controler_recalages(recalages)     # aucune exception
+
 # ======================================================================
 # La fenetre : les recalages saisis ressortent tels quels
 # ======================================================================
