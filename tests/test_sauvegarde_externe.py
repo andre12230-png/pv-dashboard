@@ -104,6 +104,44 @@ def test_une_copie_differente_est_denoncee(donnees, monkeypatch):
         _sauver(dossier, cle)
 
 
+def _sauvegardes_d_allure_complete(cle):
+    """Les dossiers de la cle qui se presentent comme une sauvegarde
+    complete : nom « Sauvegarde ... » sans la mention INCOMPLÈTE."""
+    return [d.name for d in cle.iterdir()
+            if d.name.startswith("Sauvegarde") and "INCOMPLÈTE" not in d.name]
+
+
+def test_une_copie_interrompue_ne_laisse_pas_de_fausse_sauvegarde(
+        donnees, monkeypatch):
+    """Analyse critique du 16-10-2026 : la cle se remplit au second fichier.
+    L'erreur etait bien dite, mais un dossier « Sauvegarde ... » restait sur
+    la cle, avec le premier fichier seulement : retrouve plus tard, il
+    passait pour une sauvegarde complete."""
+    dossier, cle = donnees
+    vraie_copie = se.shutil.copy2
+
+    def copie_puis_cle_pleine(source, dest):
+        if Path(source).name == "releves.csv":
+            raise OSError(28, "No space left on device")
+        return vraie_copie(source, dest)
+    monkeypatch.setattr(se.shutil, "copy2", copie_puis_cle_pleine)
+    with pytest.raises(se.SauvegardeImpossible, match="La copie a échoué"):
+        _sauver(dossier, cle)
+    assert _sauvegardes_d_allure_complete(cle) == []
+
+
+def test_une_copie_differente_ne_laisse_pas_de_fausse_sauvegarde(
+        donnees, monkeypatch):
+    dossier, cle = donnees
+
+    def copie_abimee(source, dest):
+        Path(dest).write_bytes(b"abime")
+    monkeypatch.setattr(se.shutil, "copy2", copie_abimee)
+    with pytest.raises(se.SauvegardeImpossible):
+        _sauver(dossier, cle)
+    assert _sauvegardes_d_allure_complete(cle) == []
+
+
 def test_la_sauvegarde_ne_touche_pas_aux_originaux(donnees):
     dossier, cle = donnees
     avant = {p.name: p.read_bytes() for p in dossier.iterdir()}

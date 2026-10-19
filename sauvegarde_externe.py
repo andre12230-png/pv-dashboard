@@ -82,31 +82,67 @@ def sauvegarder(fichiers: list[Path | None], destination: Path,
     base = f"Sauvegarde {nom_appli} {quand:%Y-%m-%d %Hh%M}"
     cible = destination / base
     n = 2
-    while cible.exists():            # deux sauvegardes dans la meme minute
+    while cible.exists() or _en_cours(cible).exists():
+        # deux sauvegardes dans la meme minute
         cible = destination / f"{base} ({n})"
         n += 1
 
+    # La copie se fait dans un dossier dont le nom dit « INCOMPLÈTE », et ne
+    # prend son vrai nom qu'une fois chaque fichier copie ET verifie. Une
+    # copie interrompue (cle pleine, retiree) laissait sinon un dossier
+    # « Sauvegarde ... » qui, retrouve plus tard, passait pour complet
+    # (analyse critique du 16-10-2026).
+    en_cours = _en_cours(cible)
     noms = [f.name for f in presents]
     try:
-        cible.mkdir(parents=True)
+        en_cours.mkdir(parents=True)
+    except OSError as e:
+        # Rien n'a ete cree : surtout ne rien retirer.
+        raise SauvegardeImpossible(
+            f"La copie a échoué ({e.strerror or e}). La clé est-elle pleine, "
+            "retirée ou protégée en écriture ?") from e
+    try:
         for f in presents:
-            shutil.copy2(f, cible / f.name)
-        (cible / "LISEZMOI.txt").write_text(
+            shutil.copy2(f, en_cours / f.name)
+        (en_cours / "LISEZMOI.txt").write_text(
             texte_lisezmoi(nom_appli, version, quand, noms, dossier_donnees),
             encoding="utf-8")
     except OSError as e:
+        _retirer(en_cours)
         raise SauvegardeImpossible(
             f"La copie a échoué ({e.strerror or e}). La clé est-elle pleine, "
             "retirée ou protégée en écriture ?") from e
 
     # Une copie n'est une sauvegarde que si elle est identique a l'original.
     for f in presents:
-        if _empreinte(f) != _empreinte(cible / f.name):
+        if _empreinte(f) != _empreinte(en_cours / f.name):
+            _retirer(en_cours)
             raise SauvegardeImpossible(
                 f"La copie de {f.name} ne correspond pas à l'original : ne "
                 "comptez pas sur cette sauvegarde, et réessayez sur un autre "
                 "support.")
+
+    # Tout est verifie : le dossier prend son nom definitif.
+    try:
+        en_cours.rename(cible)
+    except OSError as e:
+        raise SauvegardeImpossible(
+            f"La copie est faite, mais le dossier « {en_cours.name} » n'a "
+            f"pas pu être renommé ({e.strerror or e}). Réessayez la "
+            "sauvegarde.") from e
     return cible, noms
+
+
+def _en_cours(cible: Path) -> Path:
+    """Le nom du dossier tant que la sauvegarde n'est pas finie."""
+    return cible.with_name(f"{cible.name} (INCOMPLÈTE)")
+
+
+def _retirer(dossier: Path) -> None:
+    """Retire le dossier d'une sauvegarde ratee : il ne contient que les
+    copies qu'on vient d'y faire, jamais les donnees d'origine. Si la cle a
+    ete arrachee, on n'y peut rien : son nom dit alors qu'il est incomplet."""
+    shutil.rmtree(dossier, ignore_errors=True)
 
 
 # ---------- rappel de sauvegarde externe (28/09/2026) ----------
