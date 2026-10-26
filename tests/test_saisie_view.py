@@ -233,7 +233,7 @@ def test_effacement_volontaire_refuse_ne_touche_a_rien(vue, dialogue):
     vue._enregistrer()
 
     assert open(vue.data.releves_path, encoding="utf-8").read() == avant
-    assert "annule" in vue.status_label.text().lower()
+    assert "annulé" in vue.status_label.text().lower()
 
 
 def test_ajout_normal_ne_demande_rien(vue, dialogue):

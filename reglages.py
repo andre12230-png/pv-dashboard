@@ -861,11 +861,11 @@ def controler_recalages(recalages: dict) -> None:
 # Fichier cree quand il n'existe pas encore : le strict necessaire, le modele
 # livre restant la reference commentee.
 _LOCAL_NEUF = (
-    "# Ce fichier complete config.yaml. Il n'appartient qu'a CETTE\n"
+    "# Ce fichier complète config.yaml. Il n'appartient qu'à CETTE\n"
     "# installation : ne le recopiez jamais ailleurs, ses totaux de factures\n"
-    "# reecrivent les releves journaliers.\n"
+    "# réécrivent les relevés journaliers.\n"
     "#\n"
-    "# Ecrit par la fenetre « Mes reglages ». Le modele commente livre a cote,\n"
+    "# Écrit par la fenêtre « Mes réglages ». Le modèle commenté livré à côté,\n"
     "# config-local.exemple.yaml, montre tout ce qu'on peut y mettre.\n"
     "sources:\n"
 )
@@ -893,7 +893,7 @@ def enregistrer_recalages(chemin, recalages: dict, dossier_sauvegardes) -> bool:
     if relu is None or lire_recalages(relu) != recalages:
         raise ReglagesRefuses(
             "Les recalages n'ont pas été enregistrés : config-local.yaml a "
-            "une forme que la fenetre ne sait pas modifier sans risque. Rien "
+            "une forme que la fenêtre ne sait pas modifier sans risque. Rien "
             "n'a été changé. Modifiez-le avec le Bloc-notes.")
 
     if existait:

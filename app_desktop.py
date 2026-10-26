@@ -408,9 +408,9 @@ REGLAGES_OBLIGATOIRES = [
 # Exiges seulement si l'on vend son electricite (oa.type « surplus » ou
 # « totale ») : sans revente, il n'y a ni contrat, ni prix, ni date.
 REGLAGES_VENTE = [
-    ("installation.date_debut_contrat_oa", "la date de debut du contrat de vente"),
+    ("installation.date_debut_contrat_oa", "la date de début du contrat de vente"),
     ("oa.prix_kwh_eur", "le prix d'achat du kWh vendu, en EUR/kWh"),
-    ("oa.duree_contrat_annees", "la duree du contrat de vente, en annees"),
+    ("oa.duree_contrat_annees", "la durée du contrat de vente, en années"),
 ]
 # Les trois facons de vendre (ou non) son electricite.
 TYPES_VENTE = ("surplus", "totale", "aucune")
@@ -462,8 +462,8 @@ def verifier_config(cfg: dict) -> None:
         "La configuration est incomplète. Il manque :\n\n"
         + details
         + f"\nCorrigez config.yaml (ou config-local.yaml), dans {BASE_DIR}, "
-          "puis relancez. Le fichier livre avec l'application sert de "
-          "modele."
+          "puis relancez. Le fichier livré avec l'application sert de "
+          "modèle."
     )
 
 
@@ -480,7 +480,7 @@ def build_dataset(cfg: dict) -> AppData:
     if not releves_path.is_relative_to(BASE_DIR.resolve()):
         raise RuntimeError(
             f"config.yaml : sources.releves_csv pointe hors du dossier de "
-            f"l'application ({releves_path}). Placez le CSV a cote de l'app."
+            f"l'application ({releves_path}). Placez le CSV à côté de l'application."
         )
     if not releves_path.exists():
         # Premier lancement : on cree le fichier vide au lieu de refuser de

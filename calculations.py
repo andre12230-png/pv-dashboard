@@ -447,7 +447,7 @@ def _anniversaire(annee: int, mois: int, jour: int) -> date:
 def oa_year_bounds(start_date: date, year_index: int) -> tuple[date, date]:
     """Retourne (debut, fin) inclusifs de la N-ieme annee OA (1-indexe)."""
     if year_index < 1:
-        raise ValueError("year_index doit etre >= 1")
+        raise ValueError("year_index doit être >= 1")
     # On repart toujours du jour d'origine, jamais du debut calcule : sinon
     # un 29 fevrier ramene au 28 le resterait pour toutes les annees suivantes.
     debut = _anniversaire(

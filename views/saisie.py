@@ -423,7 +423,7 @@ class SaisieView(BaseView):
                 return
         self._cache_mtime = None  # force la relecture disque dans populate
         self.refresh(self.data.current_period)
-        self._set_status("Données rechargees depuis le disque.", ok=True)
+        self._set_status("Données rechargées depuis le disque.", ok=True)
 
     def _importer_enedis(self) -> None:
         """Importe un releve du reseau dans le CSV. Quatre fichiers passent :
@@ -886,7 +886,7 @@ class SaisieView(BaseView):
         pertes = dl.pertes_a_l_ecriture(path, lignes_finales)
         if pertes:
             if not self._confirmer_suppression(pertes, videes):
-                self._set_status("Enregistrement annule.", ok=False)
+                self._set_status("Enregistrement annulé.", ok=False)
                 return False
             autoriser_reduction = True
 
