@@ -191,7 +191,7 @@ class SaisieView(BaseView):
             "Classeur Excel Enedis (achat au réseau + injection),\n"
             "export d'index quotidiens Enedis (achat au réseau, détail\n"
             "heures creuses / pleines ET injection), CSV\n"
-            "'suivi_conso' de votre fournisseur, ou tout export\n"
+            "« suivi_conso » de votre fournisseur, ou tout export\n"
             "CSV « date + valeur » d'une seule grandeur.")
         btn_importer.clicked.connect(self._importer_enedis)
 
@@ -200,7 +200,7 @@ class SaisieView(BaseView):
         btn_enphase.setCursor(Qt.PointingHandCursor)
         btn_enphase.setToolTip(
             "Ce que vos panneaux ont produit.\n\n"
-            "Rapport Enphase 'Énergie mensuelle' reçu par email\n"
+            "Rapport Enphase « Énergie mensuelle » reçu par e-mail\n"
             "(Enlighten > Menu > Système > Rapports), ou l'export\n"
             "de production de votre onduleur : tout fichier\n"
             "« date + valeur » convient, les pas infrajournaliers\n"
@@ -280,7 +280,7 @@ class SaisieView(BaseView):
         if self._dates_illisibles:
             apercu = ", ".join(self._dates_illisibles[:3])
             if len(self._dates_illisibles) > 3:
-                apercu += " ..."
+                apercu += " …"
             n = len(self._dates_illisibles)
             texte_info += (
                 f"\n⚠ {pluriel(n, 'date')} {accorde(n, 'illisible')} : "
@@ -771,7 +771,7 @@ class SaisieView(BaseView):
         """
         message = f"{pertes}.\n\n"
         if videes:
-            apercu = ", ".join(videes[:5]) + (" ..." if len(videes) > 5 else "")
+            apercu = ", ".join(videes[:5]) + (" …" if len(videes) > 5 else "")
             message += (
                 f"{pluriel(len(videes), 'journée')} "
                 f"{accorde(len(videes), 'vidée')} dans le tableau : "

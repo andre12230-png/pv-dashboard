@@ -82,7 +82,7 @@ def _textes_tableaux(win, cle: str) -> str:
 
 
 def test_annees_oa_et_tableau_de_bord_ont_le_meme_bilan(win):
-    """Annee OA #1 : la prime est versee, mais elle reste dans sa colonne."""
+    """Annee OA n° 1 : la prime est versee, mais elle reste dans sa colonne."""
     df = win.data.df
     attendu = df[df["annee_oa"] == 1]["bilan_jour_eur"].sum()
     win._switch_view("oa")
@@ -133,7 +133,7 @@ def test_l_annee_oa_en_cours_est_signalee(win):
     vue = win.views["oa"]
     ax = vue.findChildren(MplCanvas)[0].fig.axes[0]
     noms = [t.get_text() for t in ax.get_xticklabels()]
-    assert noms[-1].startswith("OA #2") and "en cours" in noms[-1]
+    assert noms[-1].startswith("OA n° 2") and "en cours" in noms[-1]
     assert "en cours" not in noms[0]
     hachures = [bool(p.get_hatch()) for p in ax.patches]
     assert hachures[:2] == [False, True]          # production #1, #2
@@ -151,7 +151,7 @@ def test_une_annee_oa_commencee_en_route_est_partielle(win):
     win.views["oa"].refresh("all")
     ax = win.views["oa"].findChildren(MplCanvas)[-1].fig.axes[0]
     noms = [t.get_text() for t in ax.get_xticklabels()]
-    assert noms[0] == "OA #1 (partielle)"
+    assert noms[0] == "OA n° 1 (partielle)"
 
 
 def test_annees_oa_milliers_separes(win):

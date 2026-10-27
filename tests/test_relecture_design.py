@@ -1,7 +1,7 @@
 """Relecture de design de la 1.52.16 (05/10/2026), charte des applis.
 
 Donnees inventees : modele livre (3 kWc, contrat depuis le 01/01/2024),
-releves du 26/04/2024 au 30/06/2025 (annee OA #1 partielle), 20 kWh
+releves du 26/04/2024 au 30/06/2025 (annee OA n° 1 partielle), 20 kWh
 produits, 12 injectes, 5 achetes par jour.
 
     py -m pytest tests/test_relecture_design.py

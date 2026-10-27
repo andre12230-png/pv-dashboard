@@ -161,7 +161,7 @@ def _type_de_donnees(texte: str) -> str:
                 "savoir s'il s'agit de l'injection ou de la consommation. "
                 "Utilisez le classeur Excel Enedis, qui indique clairement "
                 "chaque grandeur, ou un export de votre fournisseur qui le "
-                "fait aussi (par exemple le CSV 'suivi de consommation' "
+                "fait aussi (par exemple le CSV « suivi de consommation » "
                 "d'Octopus)."
             )
         if inj:
@@ -170,10 +170,11 @@ def _type_de_donnees(texte: str) -> str:
             return "Conso_réseau_Jour"
     raise ValueError(
         "Type de données introuvable : l'en-tête du fichier ne mentionne ni "
-        "'injection'/'production' ni 'consommation', et l'application refuse "
-        "de deviner dans quelle colonne ranger ces valeurs. Tout export "
-        "quotidien 'date + valeur' convient -- Enedis, un fournisseur ou un "
-        "onduleur -- pourvu que son en-tête dise de quelle grandeur il "
+        "« injection » / « production » ni « consommation », et "
+        "l'application refuse de deviner dans quelle colonne ranger ces "
+        "valeurs. Tout export quotidien « date + valeur » convient — Enedis, "
+        "un fournisseur ou un onduleur — pourvu que son en-tête dise de "
+        "quelle grandeur il "
         "s'agit."
     )
 
@@ -230,7 +231,7 @@ def parse_enedis_csv_texte(texte: str, notes: list | None = None
 
     if not brutes:
         raise ValueError(
-            "Aucune ligne 'date;valeur' reconnue. Attendu : un export "
+            "Aucune ligne « date;valeur » reconnue. Attendu : un export "
             "quotidien Enedis (une date et un nombre par ligne, séparés "
             "par des points-virgules, des virgules ou des tabulations)."
         )
@@ -364,8 +365,8 @@ def parse_octopus_suivi_conso(texte: str, notes: list | None = None
                     f"Colonne {colonne_manquante} introuvable : ce fichier "
                     f"donne les heures {presente}, mais pas les heures "
                     f"{manquante}. Pour importer le détail, il faut les deux "
-                    "colonnes, nommées par exemple 'Consommation HC (kWh)' "
-                    "et 'Consommation HP (kWh)', ou simplement 'HC' et 'HP'."
+                    "colonnes, nommées par exemple « Consommation HC (kWh) » "
+                    "et « Consommation HP (kWh) », ou simplement « HC » et « HP »."
                 )
             continue
 
@@ -459,7 +460,7 @@ def _charger_openpyxl():
         import openpyxl
     except ImportError as exc:
         raise ValueError(
-            "La lecture d'un fichier Excel demande le module 'openpyxl' "
+            "La lecture d'un fichier Excel demande le module « openpyxl » "
             "(installez-le avec : py -m pip install openpyxl)."
         ) from exc
     return openpyxl
@@ -626,7 +627,7 @@ def parse_enedis_xlsx(path: str, notes: list | None = None
         import openpyxl
     except ImportError as exc:
         raise ValueError(
-            "La lecture d'un fichier Excel demande le module 'openpyxl' "
+            "La lecture d'un fichier Excel demande le module « openpyxl » "
             "(installez-le avec : py -m pip install openpyxl)."
         ) from exc
 
@@ -674,8 +675,8 @@ def parse_enedis_xlsx(path: str, notes: list | None = None
 
     if not resultat:
         raise ValueError(
-            "Aucune feuille 'Consommation' ou 'Production' avec des lignes "
-            "'date + valeur' dans ce classeur. Attendu : le classeur Excel "
+            "Aucune feuille « Consommation » ou « Production » avec des lignes "
+            "« date + valeur » dans ce classeur. Attendu : le classeur Excel "
             "d'un gestionnaire de réseau (Enedis) ou un export équivalent."
         )
     return resultat
@@ -956,9 +957,9 @@ def parse_enphase_texte(texte: str, notes: list | None = None
 
     if not totaux:
         raise ValueError(
-            "Aucune ligne 'date;valeur' reconnue. Attendu : la production "
-            "journalière de votre onduleur -- par exemple le rapport "
-            "Enphase 'Énergie mensuelle' (Enlighten > Menu > Système > "
+            "Aucune ligne « date;valeur » reconnue. Attendu : la production "
+            "journalière de votre onduleur — par exemple le rapport "
+            "Enphase « Énergie mensuelle » (Enlighten > Menu > Système > "
             "Rapports), ou le rapport d'onduleur au format Excel."
         )
 

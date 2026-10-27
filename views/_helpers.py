@@ -406,7 +406,7 @@ def _alerte_dates_illisibles(illisibles: list[str] | None) -> str:
     """Phrase a accoler au bandeau quand des journees sont hors des calculs."""
     if not illisibles:
         return ""
-    apercu = ", ".join(illisibles[:3]) + (" ..." if len(illisibles) > 3 else "")
+    apercu = ", ".join(illisibles[:3]) + (" …" if len(illisibles) > 3 else "")
     accord = "s" if len(illisibles) > 1 else ""
     return (
         f" ⚠ {len(illisibles)} date{accord} illisible{accord} dans le "
@@ -424,7 +424,7 @@ def _alerte_valeurs_illisibles(valeurs: list[str] | None) -> str:
     if not valeurs:
         return ""
     n = len(valeurs)
-    apercu = ", ".join(valeurs[:3]) + (" ..." if n > 3 else "")
+    apercu = ", ".join(valeurs[:3]) + (" …" if n > 3 else "")
     if n == 1:
         return (f" ⚠ 1 valeur illisible dans le fichier ({apercu}) : elle "
                 "compte pour 0 kWh. Corrigez-la dans Saisie quotidienne.")
@@ -439,7 +439,7 @@ def _alerte_valeurs_negatives(valeurs: list[str] | None) -> str:
     if not valeurs:
         return ""
     n = len(valeurs)
-    apercu = ", ".join(valeurs[:3]) + (" ..." if n > 3 else "")
+    apercu = ", ".join(valeurs[:3]) + (" …" if n > 3 else "")
     if n == 1:
         return (f" ⚠ 1 valeur négative dans le fichier ({apercu}) : un "
                 "compteur ne recule pas, elle est comptée comme une case "
@@ -497,7 +497,8 @@ MOIS_TOUS = "*"       # entree « Toute l'annee » du menu des mois
 # date de bascule HP/HC de calculations.
 _MOTS_EDF_OA = {"pluriel": "Années OA", "singulier": "Année OA",
                 "minuscule": "année OA", "colonne": "Année OA",
-                "long": "Année OA #{n}", "court": "OA #{n}", "numero": "#{n}"}
+                "long": "Année OA n° {n}", "court": "OA n° {n}",
+                "numero": "n° {n}"}
 _MOTS_AUTRE = {"pluriel": "Années de contrat", "singulier": "Année de contrat",
                "minuscule": "année de contrat", "colonne": "Année",
                "long": "Année de contrat n° {n}", "court": "Année n° {n}",

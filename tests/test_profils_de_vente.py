@@ -161,7 +161,7 @@ def remet_le_nom_d_annee():
 
 def test_un_autre_acheteur_n_a_plus_d_annees_oa(fenetre, remet_le_nom_d_annee):
     """Audit du 04/10/2026 : avec un autre acheteur, le menu, les titres,
-    les barres et le selecteur gardaient « Années OA », « OA #1 »."""
+    les barres et le selecteur gardaient « Années OA », « OA n° 1 »."""
     from views._helpers import libelle_periode
 
     def autre(cfg):
@@ -170,7 +170,7 @@ def test_un_autre_acheteur_n_a_plus_d_annees_oa(fenetre, remet_le_nom_d_annee):
     boutons = " ".join(b.text() for b in win.nav_buttons.values())
     assert "Années de contrat" in boutons and "Années OA" not in boutons
     textes = _textes(win, "oa", "all")
-    assert "OA #" not in textes and "année OA" not in textes.lower()
+    assert "OA n°" not in textes and "année OA" not in textes.lower()
     assert libelle_periode("oa-2") == "Année de contrat n° 2"
     entetes = [win.views["oa"].findChildren(QTableWidget)[-1]
                .horizontalHeaderItem(0).text()]
@@ -180,7 +180,7 @@ def test_un_autre_acheteur_n_a_plus_d_annees_oa(fenetre, remet_le_nom_d_annee):
 def test_edf_oa_garde_ses_annees_oa(fenetre):
     from views._helpers import libelle_periode
     fenetre(lambda cfg: None)
-    assert libelle_periode("oa-2") == "Année OA #2"
+    assert libelle_periode("oa-2") == "Année OA n° 2"
 
 
 def test_des_libelles_entiers_et_un_seul_nom_par_mesure(fenetre):

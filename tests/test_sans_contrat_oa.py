@@ -199,7 +199,7 @@ def test_annees_oa_la_plus_recente_en_haut(qapp, tmp_path, monkeypatch):
                             for i in range(table.rowCount())]
         # Comme la page TVA : l'annee la plus recente d'abord, et la periode
         # d'avant-contrat, la plus ancienne, en dernier.
-        assert premiere_colonne == ["#2", "#1", "avant OA"]
+        assert premiere_colonne == ["n° 2", "n° 1", "avant OA"]
     finally:
         detruire(win)
 

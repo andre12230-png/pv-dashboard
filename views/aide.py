@@ -474,7 +474,7 @@ comprise dans le prix payé au fournisseur. Elle entre dans la base de la
 livraison à soi-même ; la TVA, elle, n'y entre pas.</p>
 <p><b>Prix unique (type Tarif Bleu Base)</b> — le kWh est facturé au même
 prix à toute heure. {phrase_prix_unique}</p>
-<p><b>Heures Pleines / Heures Creuses (HP/HC)</b> — l'électricité est facturée
+<p><b>Heures pleines / heures creuses (HP/HC)</b> — l'électricité est facturée
 moins cher pendant les heures creuses. {phrase_hphc}</p>
 <p><b>Compteur Linky</b> — compteur communicant qui mesure l'énergie injectée
 et soutirée.</p>

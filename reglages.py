@@ -692,8 +692,8 @@ def controler(v: dict) -> None:
 # ne porte pas de total : les jours douteux n'ont qu'un motif.
 SORTES_RECALAGE = {
     "conso_reseau_douteuse": ("Jours douteux", None),
-    "conso_reseau_recalee": ("Conso recalée sur facture", "total_kwh"),
-    "conso_reseau_facturee": ("Conso connue par la facture", "total_kwh"),
+    "conso_reseau_recalee": ("Consommation recalée sur facture", "total_kwh"),
+    "conso_reseau_facturee": ("Consommation connue par la facture", "total_kwh"),
     "injection_facturee": ("Injection payée par {acheteur}", "total_kwh"),
 }
 

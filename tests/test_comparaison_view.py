@@ -69,10 +69,10 @@ def test_une_annee_est_comparee_a_la_precedente(vue):
 
 
 def test_une_annee_oa_est_comparee_a_la_precedente(vue):
-    # L'annee OA #2 court jusqu'au 11/05/2026 et le fichier s'arrete au
+    # L'annee OA n° 2 court jusqu'au 11/05/2026 et le fichier s'arrete au
     # 28/02/2026 : elle est en cours, donc coupee a la meme date.
     vue.refresh("oa-2")
-    assert any("Année OA #2 (au 28/02) face à année OA #1 (au 28/02)" in t
+    assert any("Année OA n° 2 (au 28/02) face à année OA n° 1 (au 28/02)" in t
                for t in textes(vue))
 
 
@@ -271,7 +271,7 @@ def test_le_mois_de_mise_en_service_est_compare_aux_memes_jours(vue):
 
 
 def test_une_annee_oa_entiere_n_est_pas_coupee_au_debut(vue):
-    """L'annee OA #1 commence le jour de la mise en service : rien a couper."""
+    """L'annee OA n° 1 commence le jour de la mise en service : rien a couper."""
     vue.refresh("oa-2")
     assert not any("depuis le" in t for t in textes(vue))
 

@@ -232,7 +232,7 @@ def _lire_yaml(chemin: Path) -> dict:
     if not isinstance(contenu, dict):
         raise RuntimeError(
             f"{chemin} ne contient pas une configuration valide "
-            "(il devrait commencer par des sections comme 'installation:')."
+            "(il devrait commencer par des sections comme « installation: »)."
         )
     try:
         return _valeurs_a_la_francaise(contenu)
@@ -409,7 +409,7 @@ REGLAGES_OBLIGATOIRES = [
 # « totale ») : sans revente, il n'y a ni contrat, ni prix, ni date.
 REGLAGES_VENTE = [
     ("installation.date_debut_contrat_oa", "la date de début du contrat de vente"),
-    ("oa.prix_kwh_eur", "le prix d'achat du kWh vendu, en EUR/kWh"),
+    ("oa.prix_kwh_eur", "le prix d'achat du kWh vendu, en €/kWh"),
     ("oa.duree_contrat_annees", "la durée du contrat de vente, en années"),
 ]
 # Les trois facons de vendre (ou non) son electricite.
