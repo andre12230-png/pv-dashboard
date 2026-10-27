@@ -10,6 +10,9 @@ et remboursement de l'installation. Données 100 % locales, open source (licence
 
 Page de présentation : **[andre12230-png.github.io/pv-dashboard](https://andre12230-png.github.io/pv-dashboard/)**
 
+[![Vidéo de présentation de Gestion Photovoltaïque (1 min 13) — cliquez pour la lancer](docs/media/video-apercu.jpg)](https://andre12230-png.github.io/pv-dashboard/#video)
+*▶ Vidéo de présentation (1 min 13), sur la page de présentation. Réalisée avec des données d'exemple.*
+
 ## Installer l'application
 
 Pas besoin d'être informaticien, ni d'installer Python :
