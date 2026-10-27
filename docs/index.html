@@ -3,23 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gestion Photovoltaïque — suivi d'une installation solaire en autoconsommation (Windows, gratuit)</title>
-<meta name="description" content="Application gratuite et en français pour suivre une installation photovoltaïque en autoconsommation, avec ou sans vente (surplus ou totale, à EDF OA ou à un autre acheteur) : production, autoconsommation, injection, économies, remboursement de l'installation. Windows 10/11. Données 100 % locales. Open source (MIT).">
+<title>Gestion Photovoltaïque — logiciel gratuit de suivi solaire</title>
+<meta name="description" content="Production solaire, autoconsommation, vente et économies de votre installation : un suivi sur Windows, gratuit et en français, avec des données locales.">
 <!-- Aperçu lors du partage (réseaux sociaux, forums, messageries) : une
      couverture 1200x630, le format que ces services attendent. -->
 <meta property="og:type" content="website">
 <meta property="og:locale" content="fr_FR">
 <meta property="og:site_name" content="Gestion Photovoltaïque">
 <meta property="og:url" content="https://andre12230-png.github.io/pv-dashboard/">
-<meta property="og:title" content="Gestion Photovoltaïque — suivi d'une installation solaire (Windows, gratuit)">
-<meta property="og:description" content="Suivez votre production solaire, votre autoconsommation et la vente de votre électricité. Gratuit, en français, données 100 % locales, open source (MIT).">
+<meta property="og:title" content="Gestion Photovoltaïque — logiciel gratuit de suivi solaire">
+<meta property="og:description" content="Production solaire, autoconsommation, vente et économies de votre installation : un suivi sur Windows, gratuit et en français, avec des données locales.">
 <meta property="og:image" content="https://andre12230-png.github.io/pv-dashboard/media/partage_1200x630.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Gestion Photovoltaïque — suivez votre production solaire, votre autoconsommation et la vente de votre électricité.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Gestion Photovoltaïque — suivi d'une installation solaire (Windows, gratuit)">
-<meta name="twitter:description" content="Production, autoconsommation, vente, remboursement de l'installation. Gratuit, en français, données 100 % locales.">
+<meta name="twitter:title" content="Gestion Photovoltaïque — logiciel gratuit de suivi solaire">
+<meta name="twitter:description" content="Production solaire, autoconsommation, vente et économies de votre installation : un suivi sur Windows, gratuit et en français, avec des données locales.">
 <meta name="twitter:image" content="https://andre12230-png.github.io/pv-dashboard/media/partage_1200x630.png">
 <link rel="canonical" href="https://andre12230-png.github.io/pv-dashboard/">
 
@@ -32,7 +32,7 @@
   "alternateName": "pv-dashboard",
   "url": "https://andre12230-png.github.io/pv-dashboard/",
   "sameAs": ["https://github.com/andre12230-png/pv-dashboard"],
-  "description": "Application de bureau gratuite et en français pour suivre une installation photovoltaïque en autoconsommation, avec ou sans vente (surplus ou totale, à EDF OA ou à un autre acheteur) : production, autoconsommation, injection, consommation réseau, économies, revenus de la vente, remboursement de l'installation, comparaison avec le Tarif Bleu d'EDF. Données stockées localement, sans compte ni cloud.",
+  "description": "Logiciel gratuit de suivi photovoltaïque pour Windows, en français : production solaire, autoconsommation, injection, consommation réseau, économies, revenus de la vente, remboursement de l'installation, comparaison avec le Tarif Bleu d'EDF. Avec ou sans vente (surplus ou totale, à EDF OA ou à un autre acheteur). Données stockées localement, sans compte ni cloud.",
   "applicationCategory": "UtilitiesApplication",
   "operatingSystem": "Windows 10, Windows 11",
   "softwareVersion": "1.53.4",
@@ -117,8 +117,8 @@
 <header>
   <div class="wrap">
     <h1>☀️ Gestion Photovoltaïque</h1>
-    <p class="sub">Suivez votre installation solaire en autoconsommation : ce qu'elle produit,
-    ce que vous consommez, ce que vous vendez, et quand elle sera remboursée.</p>
+    <p class="sub">Suivez la production de vos panneaux solaires, votre autoconsommation et
+    les économies de votre installation avec un logiciel gratuit pour Windows.</p>
     <div class="badges">
       <img src="https://badgen.net/github/assets-dl/andre12230-png/pv-dashboard?label=t%C3%A9l%C3%A9chargements&amp;color=green" alt="Téléchargements">
       <img src="https://badgen.net/github/release/andre12230-png/pv-dashboard/stable?label=version&amp;color=blue" alt="Version">
@@ -222,6 +222,27 @@
       <li>C'est tout : le tableau de bord se remplit. La <b>Notice</b>, dans l'application, explique
       chaque écran et chaque terme.</li>
     </ol>
+  </section>
+
+  <section id="suivi-photovoltaique">
+    <h2>Comment suivre sa production solaire et son autoconsommation ?</h2>
+    <p>Ce logiciel de suivi photovoltaïque rassemble les relevés de votre installation
+    pour comprendre ce que produisent vos panneaux solaires et comment cette énergie
+    est utilisée.</p>
+    <h3>Rassembler les relevés de production et de consommation</h3>
+    <p>Exportez la production depuis le portail de votre onduleur et les relevés de
+    consommation et d'injection depuis votre espace Enedis. Importez ces fichiers dans
+    l'application ; la saisie manuelle reste possible. Les données sont traitées sur
+    votre ordinateur, sans connexion automatique à ces services.</p>
+    <h3>Comprendre les économies et le remboursement</h3>
+    <p>L'électricité autoconsommée évite un achat au réseau : les économies sont estimées
+    avec les prix de votre propre contrat, heures pleines et heures creuses comprises.
+    La synthèse distingue ces économies des revenus de vente et de la prime, lorsque
+    votre installation est concernée.</p>
+    <p>Le suivi du remboursement rapproche ces résultats du coût renseigné de
+    l'installation. La projection au rythme actuel dépend des relevés et des tarifs
+    utilisés ; elle ne garantit pas les résultats des années à venir. L'application
+    peut aussi suivre une installation sans vente d'électricité.</p>
   </section>
 
   <section id="avis">

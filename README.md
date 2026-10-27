@@ -77,14 +77,14 @@ l'application **le crée vide** et s'ouvre dessus. Trois étapes ensuite :
    **Paramètres**. L'application se recharge seule à l'enregistrement.
    La fenêtre ne remplace dans `config.yaml` que les valeurs changées, à
    leur place : les commentaires restent, une copie datée part dans
-   `backups\` (`config_avant-reglages_...`, les 30 plus récentes sont
+   `backups\` (`config_avant-reglages_…`, les 30 plus récentes sont
    gardées), et rien n'est écrit si le
    fichier relu ne donne pas exactement ce qui était voulu. Changer de prix
    ajoute une période (l'ancienne est fermée la veille) au lieu d'écraser
    l'historique. Le reste (TVA, grille EDF, prix unique d'avant) se règle
    toujours dans `config.yaml` avec le Bloc-notes.
 2. **Faire entrer les relevés** : onglet **Saisie quotidienne**, boutons
-   **Importer...**, ou saisie à la main.
+   **Importer…**, ou saisie à la main.
 3. **Déclarer ses factures**, facultatif : fenêtre **Mes réglages**, section
    **Recalages sur mes factures** (ou directement `config-local.yaml`)
    ci-dessous.
@@ -97,18 +97,18 @@ français, de ce qu'il reste à renseigner.
 Double-cliquez sur **`Lancer.vbs`** : aucune fenêtre de terminal, l'app
 s'ouvre directement.
 
-Mode debug : **`Lancer.bat`** ouvre une console qui affiche les messages
+Mode diagnostic : **`Lancer.bat`** ouvre une console qui affiche les messages
 et erreurs Python en direct.
 
 Les deux lanceurs trouvent Python automatiquement via le Python Launcher
-Windows (`py.exe` / `pyw.exe`, installe avec Python) — aucun chemin à
+Windows (`py.exe` / `pyw.exe`, installés avec Python) — aucun chemin à
 configurer.
 
 **Une seule fenêtre à la fois.** Un deuxième lancement s'arrête sur un
 avertissement au lieu d'ouvrir une seconde fenêtre. Les deux liraient le même
 CSV au démarrage puis le réécriraient **en entier** à chaque enregistrement :
 la dernière à enregistrer gagnerait, et les saisies faites dans l'autre
-fenêtre disparaîtraient sans un mot. Le verrou est un petit fichier pose dans
+fenêtre disparaîtraient sans un mot. Le verrou est un petit fichier posé dans
 le dossier temporaire de Windows ; il ne peut pas rester coincé après un
 plantage, car il porte le numéro du processus qui l'a pris.
 
@@ -177,10 +177,10 @@ quand il n'y a plus rien de ce côté. Le menu des mois ne propose que les
 mois qui portent des relevés.
 
 Le bouton **Ce mois-ci** ramène au mois en cours (ou au dernier mois
-relevé, tant que le mois en cours n'a rien) ; il est grise quand on y est
+relevé, tant que le mois en cours n'a rien) ; il est grisé quand on y est
 déjà. Au clavier : **Ctrl+←** et **Ctrl+→** pour la période précédente ou
 suivante, **Ctrl+Origine** pour revenir au mois en cours. Sur les pages qui
-ne dépendent pas de la période, le sélecteur entier est grise. Sur les
+ne dépendent pas de la période, le sélecteur entier est grisé. Sur les
 **Statistiques**, qui comparent toujours toutes les années, le menu des
 mois disparaît et le bouton devient **Cette année**.
 
@@ -221,15 +221,15 @@ version. La puissance de l'installation se lit dans le titre de la fenêtre.
 | Tableau de bord | Fraîcheur des données ; tuiles « Autoproduction » (jauge) et « Production » (période avec badge d'évolution sur l'an passé (mêmes dates) et mini-courbe) ; carte « Circulation de l'énergie » : barres « où va votre soleil » / « d'où vient votre électricité » (part du véhicule en légende) ; bilan financier avec icônes ; carte « Remboursement de l'installation » (même calcul que la Synthèse) ; production jour par jour (semaine par semaine sur un an, mois par mois au-delà) avec le meilleur jour en valeur ; le mois de mise en service et la période en cours, incomplets, sont **hachurés** et ne comptent jamais comme meilleur mois |
 | Saisie quotidienne | Tableau éditable pour ajouter / corriger les relevés du jour. Ce qui est tapé et pas encore enregistré survit à un changement d'onglet ; avant de fermer l'application, d'ouvrir « Mes réglages » ou d'importer un fichier, une question évite de le perdre sans un mot |
 | Relevés journaliers | Journal jour par jour : production, autoconsommée, injectée, achetée au réseau (et part du véhicule), vente + économies, achat au réseau, bilan électricité ; ligne de totaux de la période sous le tableau (à part, pour que le tri ne la déplace pas) |
-| Répartition énergie | Taux d'autoconsommation, couverture solaire et bilan ; diagramme de flux (Sankey) production/réseau -> injection/consommation ; détail par poste avec prix au kWh ; comparaison avec l'année précédente |
+| Répartition énergie | Taux d'autoconsommation, couverture solaire et bilan ; diagramme de flux (Sankey) production/réseau → injection/consommation ; détail par poste avec prix au kWh ; comparaison avec l'année précédente |
 | Synthèse financière | Jusqu'à 6 postes selon le contrat (Vente, Prime, Économies, Achat au réseau, Investissement, Bilan de l'installation) + graphique « Remboursement de l'installation » (ce qu'elle a rapporté face à son coût, projection au rythme actuel ; chaque versement de la prime, qui fait une marche dans la courbe, est marqué d'un point et le dernier porte l'étiquette « Prime à l'autoconsommation » avec son montant, ou « N versements de X € » s'il y en a eu plusieurs).
 Avant un an de relevés, ni rythme annuel ni temps de retour : quelques mois
 d'été ou d'hiver, prolongés sur un an, les fausseraient de plusieurs années). Le **bilan de l'installation** = vente + économies + primes versées − coût de l'installation : l'achat au réseau n'y entre pas (on la paierait sans panneaux ; ce que les panneaux y changent est déjà dans les économies). Même calcul que la carte « Remboursement de l'installation » du tableau de bord (`amortissement()`) |
 | Années OA | Récap par année de contrat OA (de sa date de début à la veille de son anniversaire). L'année en cours et la première si elle est incomplète sont nommées « (en cours) » et « (partielle) », leurs barres hachurées. Devient **Années de contrat** avec un autre acheteur qu'EDF OA. **Masquée sans revente** (`oa.type: aucune`) |
 | TVA autoconsommation | Base de la livraison à soi-même par année civile (ligne 5A du 3517-S), TVA due, et recoupement des injections relevées avec les factures EDF OA. **N'apparaît que si la section `tva_lasm` est remplie** : elle ne concerne que les producteurs assujettis à la TVA |
 | Statistiques | Comparaisons annuelles, rendement kWh/kWc |
-| Comparer à l'an passé | La période choisie en haut (mois, année, année OA) face à la même période un an plus tôt (période en cours : mêmes dates de N-1) ; bouton « Une journée précise » pour comparer un jour donne |
-| *Fournisseur* ou *référence* | Coût réel du contrat en cours face à la simulation de l'offre de référence, options Base et HP/HC (depuis la bascule) ; mois incomplets hachurés. Le libellé porte les noms déclarés en config : "Mon fournisseur ou EDF" avec le modèle livré. **Masqué quand le fournisseur déclaré est EDF** (`nom: "EDF"`) : comparer EDF à EDF n'a pas de sens |
+| Comparer à l'an passé | La période choisie en haut (mois, année, année OA) face à la même période un an plus tôt (période en cours : mêmes dates de l'an passé) ; bouton « Une journée précise » pour comparer un jour donné |
+| *Fournisseur* ou *référence* | Coût réel du contrat en cours face à la simulation de l'offre de référence, options Base et HP/HC (depuis la bascule) ; mois incomplets hachurés. Le libellé porte les noms déclarés en config : « Mon fournisseur ou EDF » avec le modèle livré. **Masqué quand le fournisseur déclaré est EDF** (`nom: "EDF"`) : comparer EDF à EDF n'a pas de sens |
 | Notice | Mode d'emploi et glossaire des termes |
 | Paramètres | Vue lecture seule de la configuration, et la liste des recalages actifs ; bouton « Modifier mes réglages » |
 
@@ -316,16 +316,16 @@ vide ferait un jour fantôme à 0 kWh dans les statistiques).
 
 ### Importer achat au réseau et injection
 
-Le bouton **Importer achat au réseau / injection...** (onglet Saisie quotidienne)
+Le bouton **Importer achat au réseau / injection…** (onglet Saisie quotidienne)
 charge un relevé quotidien de ce que le compteur a échangé avec le réseau.
 **Aucune obligation d'être chez les mêmes fournisseurs que l'auteur** : tout
-export "date + valeur" passe (voir plus bas). Les trois sources habituelles :
+export « date + valeur » passe (voir plus bas). Les trois sources habituelles :
 
 - **chez Enedis** (mon-compte-particulier.enedis.fr), l'**export d'index
   quotidiens** (`Export_<PRM>_Index_<periode>.xlsx`) : c'est le plus complet,
   et il est disponible **quel que soit votre fournisseur**. Il ne contient pas
   des consommations mais les **index du compteur** — l'application fait les
-  soustractions elle-même et en tire la conso réseau **et le détail heures
+  soustractions elle-même et en tire l'achat au réseau **et le détail heures
   creuses / heures pleines**. Si vous injectez, sa feuille d'index de
   production donne en plus votre **injection** : un seul fichier remplit
   quatre colonnes. Pour l'obtenir : *Ma consommation > Suivre ma
@@ -334,9 +334,9 @@ export "date + valeur" passe (voir plus bas). Les trois sources habituelles :
   *Télécharger le .xlsx* ;
 - **chez Enedis** toujours, le **classeur Excel** officiel
   (`..._Export_energie_Consommation-Production_....xlsx`) : les feuilles
-  Consommation et Production sont importées d'un coup (la "production" Enedis
+  Consommation et Production sont importées d'un coup (la « production » Enedis
   = l'injection au réseau), mais **sans** le détail HC/HP ;
-- **chez votre fournisseur**, le **CSV "suivi de consommation"**
+- **chez votre fournisseur**, le **CSV « suivi de consommation »**
   (`suivi_conso_....csv` chez Octopus) : conso réseau **et détail heures
   creuses / heures pleines**. Malgré le numéro de PRM dans son nom, ce fichier
   vient du fournisseur et non d'Enedis : il est d'ailleurs le seul à porter
@@ -345,12 +345,12 @@ export "date + valeur" passe (voir plus bas). Les trois sources habituelles :
 
 Vous pouvez aussi **fabriquer vous-même** un CSV avec le détail HC/HP : une
 colonne date en premier, puis deux colonnes nommées `Consommation HC (kWh)`
-et `Consommation HP (kWh)` -- ou simplement `HC` et `HP`, ou encore
+et `Consommation HP (kWh)` — ou simplement `HC` et `HP`, ou encore
 `Heures creuses` et `Heures pleines`. Les deux doivent être présentes ; avec
 une seule, l'application refuse et dit laquelle manque.
 
 Le format est détecté automatiquement (lignes d'en-tête ignorées, dates
-ISO ou FR, valeurs en Wh ou kWh, jours "NA" ignorés). Fusion **sans
+ISO ou FR, valeurs en Wh ou kWh, jours « NA » ignorés). Fusion **sans
 doublon** : les jours nouveaux sont ajoutés, les dates déjà présentes
 voient leur valeur remplacée par celle du fichier (seule la colonne
 importée change — la production saisie à la main n'est jamais
@@ -370,7 +370,7 @@ colonne ou avec la mauvaise unité :
 - le type (injection ou consommation) est cherché **d'abord dans
   l'en-tête** du fichier, puis dans le reste du fichier si l'en-tête n'en dit
   rien ; s'il mentionne les deux
-  (le classeur s'appelle "Consommation-Production"...), l'app **refuse
+  (le classeur s'appelle « Consommation-Production »…), l'app **refuse
   de deviner** et le dit ;
 - après lecture, elle vérifie que **l'injection ne dépasse pas la
   production** du même jour — c'est physiquement impossible, on
@@ -384,7 +384,7 @@ colonne ou avec la mauvaise unité :
 
 ### Importer la production
 
-Le bouton **Importer la production...** (onglet Saisie quotidienne) remplit la
+Le bouton **Importer la production…** (onglet Saisie quotidienne) remplit la
 colonne Production à partir de l'export de l'onduleur. Avec un **Enphase**,
 depuis le rapport officiel Enlighten :
 
@@ -392,7 +392,7 @@ depuis le rapport officiel Enlighten :
 2. choisir **Énergie mensuelle** et le mois voulu, puis **Rapport par
    email** ;
 3. enregistrer la pièce jointe reçue (`.csv` ou `.zip`, peu importe) ;
-4. dans l'app : **Importer la production...** et choisir ce fichier.
+4. dans l'app : **Importer la production…** et choisir ce fichier.
 
 Le rapport donne la production toutes les 15 minutes : l'app **totalise
 par jour** et arrondit au dixième, comme l'affichage Enlighten. La
@@ -467,7 +467,7 @@ lors que le compteur est un **Linky**.
 ## Installation
 
 Prérequis : Python 3.10+ installé depuis [python.org](https://www.python.org)
-(garder l'option **"Install launcher"** cochée — c'est lui que les
+(garder l'option **« Install launcher »** cochée — c'est lui que les
 lanceurs utilisent).
 
 ```bash
@@ -508,7 +508,7 @@ exceptions déclarées pour les fichiers qui doivent importer après du code.
 | `config-local.yaml` | les totaux lus sur **vos factures** et les chemins propres à votre machine | **non** |
 
 Le second est facultatif et **remplace le premier section par section** : on
-n'y écrit que ce qui lui est propre. Un modèle commente est fourni,
+n'y écrit que ce qui lui est propre. Un modèle commenté est fourni,
 `config-local.exemple.yaml` : recopiez-le sous le nom `config-local.yaml`
 pour l'activer.
 
@@ -533,16 +533,16 @@ garde une copie quotidienne dans `backups/` (les 30 dernières).
 - `tarifs_reseau.bascule_hphc` : date du passage du prix unique aux heures
   pleines / creuses (chez l'auteur, un changement de fournisseur). Qui a
   toujours été en heures creuses met sa date de mise en service ; qui est
-  encore en prix unique met une date future. Absente : 01/01/2026
+  encore en prix unique met une date future. Absente : 01-01-2026
 - `tarifs_reseau.bleu_base` : abonnement et historique des prix Bleu
   Base par période. **Facultative** : sans elle, les journées d'avant la
   bascule sont comptées au tarif heures pleines / creuses (la bascule est
   ramenée au premier relevé)
 - `tarifs_reseau.contrat_hphc.nom` / `.offre` : nom de VOTRE fournisseur tel
   qu'il s'affiche — le court pour le menu de gauche, le long pour les titres
-  (chez l'auteur : "Octopus" / "Octopus Go"). Idem pour `comparaison_edf`.
+  (chez l'auteur : « Octopus » / « Octopus Go »). Idem pour `comparaison_edf`.
   Sans eux : "Mon contrat" et "Tarif de référence". Le bouton de
-  comparaison du menu porte ces noms : "Mon fournisseur ou EDF" avec le
+  comparaison du menu porte ces noms : « Mon fournisseur ou EDF » avec le
   modèle livré
 - `tarifs_reseau.contrat_hphc` : plages horaires HC, et `periodes` =
   abonnement + prix HP + prix HC pour chaque période de prix (les
@@ -555,8 +555,8 @@ garde une copie quotidienne dans `backups/` (les 30 dernières).
   comparaison, en `periodes` elle aussi (abonnement, prix Base,
   prix HP, prix HC). EDF révise ses tarifs réglementés au 1er février et
   au 1er août : ajoutez une période à chaque révision. Les prix se
-  relèvent sur particulier.edf.fr, guide "prix du kWh d'électricité",
-  ligne 9 kVA -- attention, EDF les publie en **centimes**
+  relèvent sur particulier.edf.fr, guide « prix du kWh d'électricité »,
+  ligne 9 kVA — attention, EDF les publie en **centimes**
 - `tva_lasm` : grille servant à valoriser l'autoconsommation pour la TVA
   (voir « TVA sur l'autoconsommation » plus bas). `taux` = taux de TVA,
   `periodes` = une entrée par période tarifaire avec `prix_ht` (énergie +
@@ -568,7 +568,7 @@ garde une copie quotidienne dans `backups/` (les 30 dernières).
 ### config-local.yaml (personnel, non versionné)
 
 - `sources.conso_reseau_facturee` : totaux de consommation lus sur les
-  factures EDF, pour les périodes ou le détail quotidien n'existe plus
+  factures EDF, pour les périodes où le détail quotidien n'existe plus
   chez Enedis (optionnel)
 - `sources.conso_reseau_recalee` : totaux factures servant à recaler
   des consommations saisies arrondies au kWh entier (optionnel)
@@ -586,8 +586,8 @@ garde une copie quotidienne dans `backups/` (les 30 dernières).
 Le cycle OA commence à la **date de début de votre contrat** et dure un an.
 Par exemple, pour un contrat qui débute le 1er juillet 2024 :
 
-- Année OA #1 : du 01/07/2024 au 30/06/2025
-- Année OA #2 : du 01/07/2025 au 30/06/2026
+- Année OA n° 1 : du 01-07-2024 au 30-06-2025
+- Année OA n° 2 : du 01-07-2025 au 30-06-2026
 - etc.
 
 EDF OA verse une fois par an la somme correspondant à la production
@@ -649,7 +649,7 @@ calcul.
 
 C'est lui qui rend les chiffres opposables. La somme des injections relevées
 est comparée, **année de contrat par année de contrat**, aux kWh réellement
-factures par EDF OA — un document que le producteur n'écrit pas lui-même,
+facturés par EDF OA — un document que le producteur n'écrit pas lui-même,
 établi sur l'index du compteur de production. Chez l'auteur, l'écart tient
 **sous 1 %**.
 
@@ -662,7 +662,7 @@ Les totaux factures se déclarent dans `sources.injection_facturee`
 
 ### L'année en cours
 
-Elle est **projetée** jusqu'au 31/12 et marquée « estimé » partout : dans le
+Elle est **projetée** jusqu'au 31-12 et marquée « estimé » partout : dans le
 tableau, sur le graphique (barre hachurée) et en note. La projection part de
 la part d'autoconsommation que les années passées avaient déjà atteinte **à
 la même date**, et applique cette part moyenne au réalisé. Ce n'est pas un
@@ -680,13 +680,13 @@ code les fait bouger un jour, le test tombe. Faites de même avec les vôtres.
 
 ## Hypothèses de calcul
 
-- **Autoconso** = Production − Injection (>= 0)
-- **Conso totale** = Autoconso + Soutirage réseau
-- **Économie d'autoconso** = kWh autoconsommés × prix achat réseau du
+- **Autoconsommation** = Production − Injection (≥ 0)
+- **Consommation totale** = Autoconsommation + Achat au réseau
+- **Économie d'autoconsommation** = kWh autoconsommés × prix d'achat au réseau du
   moment. Avant la bascule en heures pleines / creuses : prix Base de la
   date. Après : prix HP/HC pondéré par `part_hc_autoconso` (config, ou la
   case « Autoconsommation en heures creuses » de **Mes réglages**, en %), la
-  part d'autoconso qui tomberait en heures creuses — l'autoconso étant
+  part d'autoconsommation qui tomberait en heures creuses — l'autoconsommation étant
   diurne, elle est faible, sauf plage creuse l'après-midi. Absente du
   fichier, elle est **estimée d'après les plages HC** : la part d'une journée
   de soleil type qui tombe dedans (0 si elles sont toutes la nuit) ; « Mes
@@ -713,7 +713,7 @@ code les fait bouger un jour, le test tombe. Faites de même avec les vôtres.
 - **Jours sans relevé d'injection** (avant le contrat, ou panne du Linky
   dont les données ne sont plus disponibles chez Enedis) : injection
   estimée via le ratio injection/production du même mois observé sur les
-  jours complets ; autoconso et conso recalées. Le CSV n'est pas modifié,
+  jours complets ; autoconsommation et consommation recalées. Le CSV n'est pas modifié,
   ces jours restent signalés dans l'app
 - **Injection recalée sur les factures EDF OA** (facultatif,
   `sources.injection_facturee`) : le détail quotidien vient d'Enedis, mais
@@ -732,7 +732,7 @@ code les fait bouger un jour, le test tombe. Faites de même avec les vôtres.
 - **Consommations arrondies** (facultatif, `sources.conso_reseau_recalee`) :
   des consommations saisies au kWh entier perdent leur partie décimale. L'app
   recale chaque tranche sur le total de la facture correspondante. L'écart
-  est reparti **à parts égales** s'il est positif (la décimale perdue vaut 0
+  est réparti **à parts égales** s'il est positif (la décimale perdue vaut 0
   à 1 kWh quel que soit le jour) et **au prorata** s'il est négatif (l'excès
   vient des grosses valeurs). **Le total de la tranche est exact, le détail
   quotidien approche à ~1 kWh près.** CSV intact
@@ -744,7 +744,7 @@ code les fait bouger un jour, le test tombe. Faites de même avec les vôtres.
   glissants**, le détail quotidien des débuts d'une installation ancienne
   n'existe plus. Les totaux se reprennent des **factures** et se déclarent
   dans `config-local.yaml`, section `sources.conso_reseau_facturee` ; l'app
-  les repartit sur les jours non relevés. **Le total de chaque période est
+  les répartit sur les jours non relevés. **Le total de chaque période est
   exact, pas le détail quotidien.** Sans cela ces jours compteraient 0 kWh
   soutiré : facture sous-évaluée et autoproduction affichée à 100 %. Le CSV
   n'est pas modifié, ces jours sont signalés par un astérisque
@@ -763,7 +763,7 @@ code les fait bouger un jour, le test tombe. Faites de même avec les vôtres.
 ## Fraîcheur des données
 
 Un bandeau en tête du Tableau de bord donne l'âge de **chaque grandeur**
-(production, injection, conso, HC/HP) : elles n'avancent pas ensemble,
+(production, injection, consommation, HC/HP) : elles n'avancent pas ensemble,
 Enphase publie le jour même et Enedis avec environ deux jours de retard.
 Au-delà de **3 jours** sur l'une d'elles, le bandeau passe en orange et
 rappelle d'importer. La barre d'état affiche la date du dernier relevé
@@ -780,7 +780,7 @@ véhicule » / « dont reste du foyer » dans Répartition énergie.
 
 - Seules les recharges **à la maison** comptent : les recharges
   extérieures ne passent pas par votre compteur.
-- Une charge de nuit (23:30 → 05:00) est **repartie entre les deux
+- Une charge de nuit (23:30 → 05:00) est **répartie entre les deux
   journées** au prorata du temps, pour rester comparable aux relevés
   quotidiens Enedis.
 - Le **coût** est celui calculé par recharges-ve (vraies plages horaires),
@@ -799,80 +799,80 @@ Tout tourne sur votre machine. Aucun fichier n'est envoyé sur internet.
 ```
 pv-dashboard/
 │
-│   -- ce qu'on lance --
-├── run.py                # LANCEUR : ecran d'attente, puis l'application.
+│   — ce qu'on lance —
+├── run.py                # LANCEUR : écran d'attente, puis l'application.
 │                         #   C'est lui que lancent Lancer.vbs, Lancer.bat
 │                         #   et Construire-Exe.bat, PAS app_desktop.py.
-├── Lancer.vbs            # Lanceur silencieux (recommande)
-├── Lancer.bat            # Lanceur debug (console visible)
+├── Lancer.vbs            # Lanceur silencieux (recommandé)
+├── Lancer.bat            # Lanceur de diagnostic (console visible)
 ├── Construire-Exe.bat    # Fabrique le dossier dist
 ├── pv-dashboard.spec     # Recette PyInstaller de l'exe (Construire-Exe.bat n'en lit pas le contenu)
 ├── faire_installeur.py   # Fabrique distribution\pv-dashboard-Setup-X.Y.Z.exe
 ├── faire_archive.py      # Fabrique l'archive portable (.zip), sans installeur
 ├── installeur/
 │   └── pv-dashboard.iss  #   Recette Inno Setup. Son AppId ne doit JAMAIS
-│                         #   changer (reconnaissance des mises a jour)
+│                         #   changer (reconnaissance des mises à jour)
 │
-│   -- le programme --
-├── app_desktop.py        # MainWindow : chargement des donnees, verrou
+│   — le programme —
+├── app_desktop.py        # MainWindow : chargement des données, verrou
 │                         #   d'instance unique, assemblage des vues
-├── app_data.py           # AppData : le jeu de donnees partage par les vues
-├── calculations.py       # Calculs energetiques et financiers (pur metier)
-├── data_loaders.py       # Lecture/ecriture Releves-pv.csv (atomique + .bak)
-├── imports_releves.py    #   ... lecture des fichiers a importer (Enedis,
+├── app_data.py           # AppData : le jeu de données partagé par les vues
+├── calculations.py       # Calculs énergétiques et financiers (pur métier)
+├── data_loaders.py       # Lecture/écriture Releves-pv.csv (atomique + .bak)
+├── imports_releves.py    #   … lecture des fichiers à importer (Enedis,
 │                         #   fournisseur, onduleur, Enphase)
-├── lecture_recharges_ve.py #  ... le recharges.json de Recharges VE
-├── gui_theme.py          # Themes clair et sombre + QSS + style matplotlib
+├── lecture_recharges_ve.py #  … le recharges.json de Recharges VE
+├── gui_theme.py          # Thèmes clair et sombre + QSS + style matplotlib
 ├── premier_theme.py      # Question « Clair ou Sombre ? » au tout premier lancement
-├── gui_widgets.py        # Widgets reutilisables (cards, KPI, pill...)
-├── reglages.py           # « Mes reglages » : lire et ecrire config.yaml
-├── fenetre_reglages.py   #   ... et la fenetre qui les presente
+├── gui_widgets.py        # Widgets réutilisables (cards, KPI, pill…)
+├── reglages.py           # « Mes réglages » : lire et écrire config.yaml
+├── fenetre_reglages.py   #   … et la fenêtre qui les présente
 ├── accords.py           # Accorder un mot avec un nombre (« 1 jour », « 2 jours »)
-├── erreurs.py            # Erreurs techniques dites en francais (commun
+├── erreurs.py            # Erreurs techniques dites en français (commun
 │                         #   aux trois applications de l'auteur)
-├── sauvegarde_externe.py # Copie verifiee sur cle USB ou disque (commun)
-├── mise_a_jour.py        # Existe-t-il une version plus recente ?
+├── sauvegarde_externe.py # Copie vérifiée sur clé USB ou disque (commun)
+├── mise_a_jour.py        # Existe-t-il une version plus récente ?
 ├── avis.py               # « Votre avis » : le questionnaire en ligne
 ├── views/                # Une vue par fichier, une par section de l'app
 │   ├── _base.py          #   BaseView commune
-│   ├── _helpers.py       #   formatage FR + filtrage de periode
-│   ├── _sankey.py        #   diagramme de flux, dessine au QPainter
+│   ├── _helpers.py       #   formatage FR + filtrage de période
+│   ├── _sankey.py        #   diagramme de flux, dessiné au QPainter
 │   ├── dashboard.py      #   Tableau de bord
 │   ├── saisie.py         #   Saisie quotidienne
-│   ├── transactions.py   #   Releves journaliers
-│   ├── categories.py     #   Repartition energie
-│   ├── accounts.py       #   Synthese financiere
-│   ├── oa.py             #   Annees OA
+│   ├── transactions.py   #   Relevés journaliers
+│   ├── categories.py     #   Répartition énergie
+│   ├── accounts.py       #   Synthèse financière
+│   ├── oa.py             #   Années OA
 │   ├── tva.py            #   TVA autoconsommation (LASM, ligne 5A)
 │   ├── stats.py          #   Statistiques
-│   ├── comparaison.py    #   Comparer a l'an passe
+│   ├── comparaison.py    #   Comparer à l'an passé
 │   ├── octopus_edf.py    #   Mon fournisseur ou EDF
 │   ├── aide.py           #   Notice (mode d'emploi et glossaire)
-│   └── settings.py       #   Parametres
+│   └── settings.py       #   Paramètres
 │
-│   -- les donnees (aucune n'est versionnee, sauf le modele) --
-├── config.yaml           # Parametres editables (le modele est versionne)
-├── config-local.exemple.yaml  # Modele du fichier personnel
-│                         #   (config-local.yaml, jamais versionne)
-├── Releves-pv.csv        # Donnees, une ligne par jour
-├── Releves-pv.csv.bak    # Etat juste avant le dernier enregistrement
-├── backups/              # 15 copies horodatees + 30 quotidiennes
+│   — les données (aucune n'est versionnée, sauf le modèle) —
+├── config.yaml           # Paramètres éditables (le modèle est versionné)
+├── config-local.exemple.yaml  # Modèle du fichier personnel
+│                         #   (config-local.yaml, jamais versionné)
+├── Releves-pv.csv        # Données, une ligne par jour
+├── Releves-pv.csv.bak    # État juste avant le dernier enregistrement
+├── backups/              # 15 copies horodatées + 30 quotidiennes
 ├── factures/             # Vos PDF de factures, si vous voulez les ranger
-│                         #   la. Jamais lus par le programme : leurs totaux
-│                         #   se recopient a la main dans config-local.yaml
+│                         #   là. Jamais lus par le programme : leurs totaux
+│                         #   se recopient à la main dans config-local.yaml
 │
-│   -- verification et outillage --
+│   — vérification et outillage —
 ├── tests/                # Tests unitaires pytest
-├── smoke_desktop.py      # Test de bon demarrage (offscreen)
-├── demo_releves.py       # Releves INVENTES (smoke test, captures)
-├── captures_site.py      # Captures de la page de presentation
+├── smoke_desktop.py      # Test de bon démarrage (offscreen)
+├── demo_releves.py       # Relevés INVENTÉS (smoke test, captures)
+├── captures_site.py      # Captures de la page de présentation
 ├── pytest.ini
-├── ruff.toml             # Regles d'analyse statique
-├── requirements.txt      # Dependances d'execution
-├── requirements-dev.txt  # Developpement : pytest, ruff, pyinstaller
+├── ruff.toml             # Règles d'analyse statique
+├── requirements.txt      # Dépendances d'exécution
+├── requirements-dev.txt  # Développement : pytest, ruff, pyinstaller
 ├── LICENSE               # Licence MIT
-├── docs/                 # Page de presentation (GitHub Pages)
-├── pv-dashboard.ico      # Icone de l'application
+├── docs/                 # Page de présentation (GitHub Pages)
+├── pv-dashboard.ico      # Icône de l'application
 └── README.md
 ```
 
