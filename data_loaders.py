@@ -548,6 +548,20 @@ def normalise_date_saisie(texte: str, aujourdhui: _date | None = None) -> str:
     return jour
 
 
+def lit_date_saisie(texte: str) -> str | None:
+    """
+    Rend une date tapee au format 'DD/MM/YYYY', ou None si elle est vide ou
+    illisible. Meme exigence de forme que normalise_date_saisie, mais sans
+    juger le futur : c'est l'enregistrement qui refuse une date future, avec
+    son message. Sert a la vue Saisie pour remettre l'ancienne date des
+    qu'une case Date est effacee ou abimee.
+    """
+    texte = (texte or "").strip()
+    if not texte:
+        return None
+    return _parse_date_any(texte)
+
+
 def normalise_nombre_saisie(texte: str, colonne: str = "",
                             plafond: float = MAX_KWH_JOUR) -> str:
     """

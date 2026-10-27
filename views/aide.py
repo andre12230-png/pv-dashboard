@@ -210,7 +210,11 @@ peuvent rester vides. Le bouton <b>+ Ajouter une ligne</b> permet de saisir
 plusieurs jours d'un coup, jusqu'à aujourd'hui.</p>
 <p>La <b>date s'écrit en entier</b> : 05/08/2026. Une date incomplète (« 2026 »,
 « 08/2026 ») est refusée avec un message — auparavant elle était comprise comme
-le 1<sup>er</sup> janvier et écrasait le relevé de ce jour-là. Les valeurs
+le 1<sup>er</sup> janvier et écrasait le relevé de ce jour-là. Sur une ligne
+neuve, une date effacée ou mal écrite est aussitôt remplacée par la précédente :
+vos valeurs tapées restent en place. La date d'un jour <b>déjà enregistré</b>
+ne se modifie pas ; pour retirer ce jour, videz ses valeurs puis enregistrez.
+Les valeurs
 négatives et les dates futures sont refusées elles aussi ; dans un fichier
 importé, elles sont écartées, et le récapitulatif de l'import les cite. Une
 valeur négative laissée dans le fichier par une version plus ancienne est

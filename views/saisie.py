@@ -53,6 +53,9 @@ class _DelegueDate(QStyledItemDelegate):
 
 # Marque posee sur les cases a remplir de la ligne du jour.
 ROLE_A_SAISIR = Qt.UserRole + 1
+# Derniere bonne date d'une ligne neuve, remise si la case est effacee ou
+# abimee (demande du 27/10/2026).
+ROLE_DATE_VALIDE = Qt.UserRole + 2
 # Les couleurs de ces cases viennent du theme (12/10/2026, mode sombre) :
 # - cadre : le bleu d'accent (#316AC5 en clair, 5,2 pour 1 sur le blanc,
 #   4,9 sur le jaune) ;
@@ -259,6 +262,9 @@ class SaisieView(BaseView):
                 Qt.AlignRight | Qt.AlignVCenter)
 
         self._remplir_tableau()
+        # Branche apres le remplissage : seules les modifications faites
+        # ensuite (par l'utilisateur) sont surveillees.
+        self.table.itemChanged.connect(self._surveiller_date)
         self.layout_inner.addWidget(self.table, 1)
 
         texte_info = (
@@ -352,6 +358,15 @@ class SaisieView(BaseView):
             item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         else:
             item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        if colonne == 0 and not nouvelle:
+            # Jour deja enregistre : sa date ne se modifie plus. La changer
+            # creait une copie du jour a la nouvelle date, l'original restant
+            # dans le fichier ; l'effacer perdait la date. Les valeurs de la
+            # ligne, elles, restent modifiables.
+            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+            item.setToolTip("La date d'un jour enregistré ne se modifie "
+                            "pas. Pour retirer ce jour, videz ses valeurs "
+                            "puis enregistrez.")
         if nouvelle:
             item.setBackground(self._couleur_nouvelle_ligne())
             item.setToolTip("Nouvelle journée : saisissez ses relevés "
@@ -360,10 +375,44 @@ class SaisieView(BaseView):
                 police = QFont(item.font())
                 police.setBold(True)
                 item.setFont(police)
+                item.setData(ROLE_DATE_VALIDE, texte)
             else:
                 # Case a remplir : dessinee en case de formulaire.
                 item.setData(ROLE_A_SAISIR, True)
         return item
+
+    def _surveiller_date(self, item: QTableWidgetItem) -> None:
+        """Une date de ligne neuve effacee ou illisible : l'ancienne revient.
+
+        Avant (27/10/2026), une date effacee par megarde ne revenait plus :
+        il fallait la retaper de memoire, ou cliquer sur Recharger et perdre
+        toute la saisie. La date future, elle, reste refusee a
+        l'enregistrement, avec son propre message.
+        """
+        if item.column() != 0:
+            return
+        ancienne = item.data(ROLE_DATE_VALIDE)
+        if ancienne is None:
+            return  # pas une ligne neuve (date verrouillee)
+        texte = item.text().strip()
+        lue = dl.lit_date_saisie(texte)
+        # Les changements faits ici ne doivent pas relancer ce controle.
+        self.table.blockSignals(True)
+        try:
+            if lue is None:
+                item.setText(ancienne)
+            else:
+                item.setText(lue)
+                item.setData(ROLE_DATE_VALIDE, lue)
+        finally:
+            self.table.blockSignals(False)
+        if lue is None:
+            cause = "effacée" if not texte else f"illisible (« {texte} »)"
+            self._set_status(
+                f"Date {cause} : {ancienne} remise. Écrivez-la sous la "
+                "forme JJ/MM/AAAA, par exemple 30/07/2026.", ok=False)
+        # blockSignals a aussi empeche le tableau de se redessiner.
+        self.table.viewport().update()
 
     def _couleur_nouvelle_ligne(self):
         # Le jaune d'information de la charte, celui des remarques sans

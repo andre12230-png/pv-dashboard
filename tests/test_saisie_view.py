@@ -953,3 +953,68 @@ def test_import_n_ecrit_ni_negatif_ni_date_future(vue, monkeypatch):
     assert "04/05/2026" not in lignes and "01/05/2062" not in lignes
     assert lignes["05/05/2026"]["Prod_Jour"] == "21"
     assert "écarté" in messages[0] and "négatif" in messages[0]
+
+
+# ---------------------------------------------------------------------------
+# Colonne Date protegee (demande du 27/10/2026). Une date effacee par megarde
+# ne revenait plus : il fallait la retaper de memoire ou tout recharger, et
+# donc perdre la saisie. Et changer la date d'un jour deja enregistre en
+# creait une copie, l'original restant dans le fichier.
+# ---------------------------------------------------------------------------
+
+def _modifiable(item) -> bool:
+    return bool(item.flags() & Qt.ItemIsEditable)
+
+
+def test_la_date_d_un_jour_enregistre_ne_se_modifie_pas(vue):
+    # Lignes 1 a 3 : les journees lues dans le fichier.
+    for ligne in range(1, vue.table.rowCount()):
+        assert not _modifiable(vue.table.item(ligne, 0))
+        # Les valeurs, elles, restent modifiables.
+        assert _modifiable(vue.table.item(ligne, 1))
+
+
+def test_la_date_de_la_ligne_neuve_reste_modifiable(vue):
+    assert _modifiable(vue.table.item(0, 0))
+    _cellule(vue, 0, "Date", "28/04/2026")     # un jour oublie
+    assert vue.table.item(0, 0).text() == "28/04/2026"
+
+
+def test_date_effacee_sur_la_ligne_neuve_est_remise(vue):
+    _cellule(vue, 0, "Prod_Jour", "10")
+    _cellule(vue, 0, "Date", "")
+
+    assert vue.table.item(0, 0).text() == "04/05/2026"
+    assert vue.table.item(0, 1).text() == "10"          # la saisie reste
+    assert "remise" in vue.status_label.text()
+
+
+def test_date_illisible_sur_la_ligne_neuve_est_remise(vue):
+    _cellule(vue, 0, "Date", "04/05/202")
+    assert vue.table.item(0, 0).text() == "04/05/2026"
+    assert "illisible" in vue.status_label.text()
+
+
+def test_la_date_remise_est_la_derniere_bonne(vue):
+    _cellule(vue, 0, "Date", "28/04/2026")
+    _cellule(vue, 0, "Date", "")
+    assert vue.table.item(0, 0).text() == "28/04/2026"
+
+
+def test_date_ecrite_autrement_est_remise_en_forme(vue):
+    _cellule(vue, 0, "Date", "2026-04-28")
+    assert vue.table.item(0, 0).text() == "28/04/2026"
+
+
+def test_ligne_ajoutee_par_le_bouton_est_protegee_aussi(vue):
+    vue._ajouter_ligne_vide()                # 05/05/2026 en haut
+    _cellule(vue, 0, "Date", "")
+    assert vue.table.item(0, 0).text() == "05/05/2026"
+
+
+def test_date_effacee_puis_enregistrement_garde_la_saisie(vue):
+    _cellule(vue, 0, "Prod_Jour", "10")
+    _cellule(vue, 0, "Date", "")
+    assert vue._enregistrer()
+    lignes = {r["Date"]: r for r in dl.read_releves_raw(vue.data.releves_path)}
+    assert lignes["04/05/2026"]["Prod_Jour"] == "10"
