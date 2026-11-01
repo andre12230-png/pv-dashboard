@@ -25,6 +25,11 @@ from views._helpers import (
 )
 
 
+def _ans(x: float) -> str:
+    """Decimales a la francaise, comme partout ailleurs dans l'app."""
+    return f"{x:.1f}".replace(".", ",")
+
+
 class AccountsView(BaseView):
     def populate(self, period: str) -> None:
         df = filter_period(self.data.df, period, self.data.start_oa)
@@ -135,10 +140,6 @@ class AccountsView(BaseView):
         prime_totale = am["prime_totale"]
         reste_a_amortir = am["reste_a_amortir"]
         roi_an = am["roi_an"]
-        # Decimales a la francaise, comme partout ailleurs dans l'app.
-        def _ans(x: float) -> str:
-            return f"{x:.1f}".replace(".", ",")
-
         # Le bilan net n'est plus repete ici : il est deja dans la carte
         # « Bilan net global » du haut, meme calcul (relecture du 29/09/2026).
         gains = "vente + économies" if self.data.vend else "économies"
@@ -172,10 +173,11 @@ class AccountsView(BaseView):
                "seulement, est déduite du capital à amortir "
                "au lieu d'être comptée comme un revenu perpétuel."
                if oa.prime_duree else "")
+            # Avec des pointilles, la fin du contrat se lit sous le graphique.
             + (phrase_apres_contrat(
                 self.data, pd.Timestamp(df_total.index.min())
                 + pd.Timedelta(days=round(roi_an * 365.25)))
-               if roi_an else "")
+               if roi_an and self._fin_projetee is None else "")
         )
         note.setStyleSheet(
             f"color: {self.theme['text_muted']}; font-size: 11px; padding-top: 4px;")
@@ -288,10 +290,12 @@ class AccountsView(BaseView):
         # Projection au rythme actuel : la meme echeance que la barre du
         # tableau de bord et le ROI ci-dessous (amortissement()).
         roi_an = am["roi_an"] if am else None
+        self._fin_projetee = None
         if roi_an and len(x) and recupere.iloc[-1] < invest:
             fin = (pd.Timestamp(df_total.index.min())
                    + pd.Timedelta(days=round(roi_an * 365.25)))
             if fin > x[-1]:
+                self._fin_projetee = fin
                 ax.plot([x[-1], fin], [recupere.iloc[-1], invest],
                         color=CC["autoconso"], lw=1.5, ls=":",
                         label="Projection au rythme actuel")
@@ -309,4 +313,18 @@ class AccountsView(BaseView):
         ax.legend(loc="center left", frameon=False, fontsize=9)
         canvas.fig.tight_layout()
         v.addWidget(canvas)
+        if self._fin_projetee is not None:
+            # Ce que suppose la date, a cote de la date et non en bas de page
+            # (relecture du 16/10/2026).
+            gains = "vente + économies" if self.data.vend else "économies"
+            annees = am["annees"]
+            note = QLabel(
+                "Pointillés : une estimation, pas une garantie. Elle suppose "
+                f"que vos gains restent à {fmt_eur(am['gains_an'])} par an "
+                f"({gains}, moyenne sur {_ans(annees)} "
+                f"{'an' if annees < 2 else 'ans'}) : même production, même "
+                "consommation et mêmes prix de l'électricité."
+                + phrase_apres_contrat(self.data, self._fin_projetee))
+            note.setObjectName("SectionSub")
+            poser_texte_court(v, note)
         return card

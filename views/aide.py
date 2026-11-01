@@ -106,7 +106,8 @@ dernier.</p>
 <p><b>Synthèse financière</b> — vente, primes, économies et achat au réseau
 depuis votre premier relevé, et le graphique du remboursement de l'installation : ce
 qu'elle vous a rapporté face à ce qu'elle a coûté, avec l'année où elle sera
-remboursée au rythme actuel. La courbe fait une marche, marquée d'un point,
+remboursée au rythme actuel. Cette année est une estimation : la phrase sous
+le graphique dit ce qu'elle suppose. La courbe fait une marche, marquée d'un point,
 à chaque versement de la prime à l'autoconsommation : {acheteur} la paie d'un
 coup, à la date anniversaire du contrat. L'année du remboursement n'en dépend
 pas, la prime étant déduite une fois pour toutes du coût à rembourser. Le

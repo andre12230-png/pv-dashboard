@@ -283,3 +283,54 @@ def test_le_tableau_de_bord_dit_d_ou_part_le_remboursement(qapp, donnees):
     textes = " ".join(lbl.text() for lbl in carte.findChildren(QLabel))
     assert "Depuis le premier relevé, le 10/03/2024" in textes
     assert "avant n'est pas compté" in textes
+
+
+# --- Les hypotheses de la projection (relecture du 16/10/2026) ------------
+# La note du temps de retour est tout en bas de la page, loin des pointilles :
+# on lisait la date du remboursement sans ce qu'elle suppose.
+
+def _vue_synthese(donnees):
+    from views.accounts import AccountsView
+    vue = AccountsView(donnees, LIGHT)
+    vue.refresh("all")
+    return vue
+
+
+def _notes_projection(vue) -> list:
+    return [lbl for lbl in vue.findChildren(QLabel)
+            if lbl.text().startswith("Pointillés")]
+
+
+def test_la_projection_dit_ce_qu_elle_suppose(qapp, donnees):
+    from gui_widgets import Card
+    vue = _vue_synthese(donnees)
+    notes = _notes_projection(vue)
+    assert len(notes) == 1
+    texte = notes[0].text()
+    assert "une estimation, pas une garantie" in texte
+    assert fmt_eur(amortissement(donnees)["gains_an"]) in texte
+    assert "vente + économies, moyenne sur 2,0 ans" in texte
+    assert "même production" in texte and "mêmes prix" in texte
+    # Dans la carte du graphique, et en lignes courtes.
+    assert any(c.isAncestorOf(notes[0]) for c in vue.findChildren(Card))
+    assert notes[0].maximumWidth() <= 780
+
+
+def test_sans_vente_la_projection_ne_parle_pas_de_vente(qapp, donnees):
+    donnees.vend = False
+    vue = _vue_synthese(donnees)
+    assert "(économies, moyenne" in _notes_projection(vue)[0].text()
+
+
+def test_sans_projection_pas_de_note(qapp, donnees):
+    """Installation deja remboursee : plus de pointilles a expliquer."""
+    donnees.cfg["installation"]["cout_total_eur"] = 1000.0
+    assert not _notes_projection(_vue_synthese(donnees))
+
+
+def test_la_fin_du_contrat_se_lit_une_fois_pres_des_pointilles(qapp, donnees):
+    donnees.oa.duree_contrat = 5
+    vue = _vue_synthese(donnees)
+    assert "après la fin du contrat" in _notes_projection(vue)[0].text()
+    textes = " ".join(lbl.text() for lbl in vue.findChildren(QLabel))
+    assert textes.count("après la fin du contrat") == 1
