@@ -201,6 +201,7 @@ def main() -> int:
     win.show()
     # Apres le splash : affiche avant, le message passerait sous lui.
     app_desktop.annoncer_premier_lancement(win)
+    app_desktop.annoncer_recalages_a_verifier(win)
     # L'unique invitation « Votre avis », deux semaines apres le premier
     # lancement (voir avis.py).
     win.inviter_a_donner_son_avis()

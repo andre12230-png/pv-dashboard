@@ -73,7 +73,9 @@ la saisie à la main marche aussi bien.</p>
 plus justes que la somme des relevés quotidiens. Ils se déclarent dans
 <b>Modifier mes réglages</b>, section <b>Recalages sur mes factures</b> :
 choisissez ce que vous recalez, la période, le total en kWh, et d'où il
-vient. L'écart est réparti sur les jours de la période.</p>
+vient. L'écart est réparti sur les jours de la période. Deux périodes de même
+sorte ne doivent pas se chevaucher : si cela arrive dans un fichier modifié à
+la main, un message le signale à l'ouverture de l'application.</p>
 <p>Le cas le plus utile pour un producteur : <b>Injection payée par {acheteur}</b>.
 {acheteur} paie sur l'index du compteur, qui diffère un peu de ce qu'annonce
 l'onduleur — donner le total en kWh de votre autofacturation (pas le montant

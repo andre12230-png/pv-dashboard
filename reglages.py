@@ -858,6 +858,22 @@ def controler_recalages(recalages: dict) -> None:
                     "la fin de la première.")
 
 
+def defaut_des_recalages(cfg: dict) -> str:
+    """Le premier defaut des recalages lus au demarrage, "" s'il n'y en a pas.
+
+    Le meme controle que la fenetre « Mes réglages », pour un fichier modifie
+    a la main (analyse critique du 16-10-2026). Ne leve jamais d'exception :
+    un defaut se signale, il n'empeche pas d'ouvrir l'application."""
+    try:
+        controler_recalages(lire_recalages(cfg))
+    except ReglagesRefuses as exc:
+        return str(exc)
+    except (ValueError, TypeError, KeyError, AttributeError):
+        return ("Une période de recalage est illisible : vérifiez ses dates "
+                "et son total.")
+    return ""
+
+
 # Fichier cree quand il n'existe pas encore : le strict necessaire, le modele
 # livre restant la reference commentee.
 _LOCAL_NEUF = (

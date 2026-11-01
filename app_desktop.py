@@ -1611,3 +1611,24 @@ def annoncer_premier_lancement(parent: QWidget | None) -> None:
     boite.exec()
     if boite.clickedButton() is remplir and hasattr(parent, "_ouvrir_reglages"):
         parent._ouvrir_reglages()
+
+
+def annoncer_recalages_a_verifier(parent: MainWindow) -> None:
+    """Signale un recalage impossible dans config-local.yaml, a chaque
+    demarrage tant qu'il n'est pas corrige : il fausse les chiffres sans que
+    rien d'autre ne le montre. L'application reste ouverte."""
+    defaut = reglages.defaut_des_recalages(parent.data.cfg)
+    if not defaut:
+        return
+    boite = QMessageBox(parent)
+    boite.setIcon(QMessageBox.Warning)
+    boite.setWindowTitle("Recalages à vérifier")
+    boite.setText(
+        f"{defaut}\n\n"
+        "Tant que ce n'est pas corrigé, les chiffres de ces jours peuvent "
+        "être faux.")
+    corriger = boite.addButton("Corriger mes réglages", QMessageBox.AcceptRole)
+    boite.addButton("Plus tard", QMessageBox.RejectRole)
+    boite.exec()
+    if boite.clickedButton() is corriger:
+        parent._ouvrir_reglages()
