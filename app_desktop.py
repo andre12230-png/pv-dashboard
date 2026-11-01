@@ -1287,9 +1287,11 @@ class MainWindow(QMainWindow):
             "stats":        ("Statistiques",
                              "Énergie année par année, production mois par "
                              "mois, et rendement"),
+            # Court : ce sous-titre ne passe pas a la ligne, et l'ancien (85
+            # signes) elargissait la fenetre de 1280 a 1291 px.
             "comparaison":  ("Comparer à l'an passé",
-                             f"Le mois, l'année ou l'{mot_annee('minuscule')} choisis en haut, "
-                             "face à la même période un an plus tôt"),
+                             "La période choisie en haut, face à la même "
+                             "période un an plus tôt"),
             # Le nom du menu, pour arriver la ou l'on a clique ; les noms
             # complets des deux offres en sous-titre (30/09/2026).
             "octopus_edf":  (self.data.libelle_comparaison,

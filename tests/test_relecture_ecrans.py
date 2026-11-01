@@ -219,6 +219,21 @@ def test_les_phrases_d_en_tete_passent_a_la_ligne(win):
     assert not rigides, rigides
 
 
+def test_aucun_sous_titre_n_elargit_la_fenetre(win):
+    """Le sous-titre de la page ne passe pas a la ligne : trop long, il impose
+    sa largeur a la barre du haut. Celui de « Comparer à l'an passé » (85
+    signes) forcait la fenetre de 1280 a 1291 px (analyse du 16/10/2026).
+
+    On compte les signes et non les pixels : les polices de remplacement de
+    l'environnement de test faussent la mesure."""
+    trop_longs = []
+    for cle in win.views:
+        win._switch_view(cle)
+        if len(win.sub_lbl.text()) > 72:
+            trop_longs.append((cle, win.sub_lbl.text()))
+    assert not trop_longs, trop_longs
+
+
 @pytest.mark.parametrize("cle, debut", [
     ("accounts", "Le temps de retour suppose"),
     ("octopus_edf", "Le coût "),
