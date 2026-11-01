@@ -122,7 +122,9 @@ section <code>tva_lasm</code> de <code>config.yaml</code> est remplie.</p>
 production mensuelle montre en jaune l'année choisie en haut à droite (la
 plus récente, au départ), avec son chiffre à chaque mois, face aux autres
 années : leur moyenne en tirets, et une zone grise qui va de la plus basse à
-la plus haute. Les mois incomplets
+la plus haute. Passez la souris sur le graphique pour lire ces chiffres, mois
+par mois. La tuile de rendement de l'année choisie porte un trait orange et la
+mention « année choisie ». Les mois incomplets
 (mise en service, mois en cours) ne sont pas tracés, et les années partielles
 restent hors de la moyenne de rendement.</p>
 <p><b>Comparer à l'an passé</b> — compare la période choisie en haut à droite

@@ -5,13 +5,14 @@ import numpy as np
 import pandas as pd
 from matplotlib.patches import Patch
 from matplotlib.ticker import FuncFormatter
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QSizePolicy
+from PySide6.QtGui import QCursor
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QSizePolicy, QToolTip
 
 from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
 from gui_widgets import Card, KpiCard, MplCanvas, SectionTitle, grid_row
 from views._base import BaseView
-from views._helpers import annee_de_periode, chiffres_sur_barres
+from views._helpers import MOIS_FR, annee_de_periode, chiffres_sur_barres
 
 
 def milliers(valeur: float) -> str:
@@ -22,6 +23,41 @@ def milliers(valeur: float) -> str:
 
 # Graduations des axes en kWh : « 8 000 » et non « 8000 ».
 AXE_MILLIERS = FuncFormatter(lambda valeur, _pos: milliers(valeur))
+
+
+def bulle_autres_annees(autres: pd.DataFrame, mois: int) -> str:
+    """Le texte de la zone grise pour un mois : elle n'a pas de chiffre
+    ecrit, l'infobulle les donne (charte, relecture du 16/10/2026). `autres` :
+    une colonne par annee, une ligne par mois."""
+    valeurs = autres.loc[mois].dropna()
+    if valeurs.empty:
+        return ""
+    nom = MOIS_FR[mois - 1].capitalize()
+    if len(valeurs) == 1:
+        return f"{nom}, autre année : {milliers(valeurs.iloc[0])}\xa0kWh"
+    return (f"{nom}, autres années : plus basse {milliers(valeurs.min())}\xa0kWh"
+            f" — moyenne {milliers(valeurs.mean())}\xa0kWh"
+            f" — plus haute {milliers(valeurs.max())}\xa0kWh")
+
+
+def brancher_survol(canvas: MplCanvas, ax, autres: pd.DataFrame) -> None:
+    """Au survol du graphique, l'infobulle du mois le plus proche."""
+    def survol(event) -> None:
+        texte = ""
+        if event.inaxes is ax and event.xdata is not None:
+            texte = bulle_autres_annees(
+                autres, min(12, max(1, round(event.xdata))))
+        if texte == canvas.toolTip():
+            return
+        canvas.setToolTip(texte)
+        # setToolTip seul n'attend pas : Qt ne changerait la bulle qu'apres
+        # une pause de la souris, sur un autre mois que celui affiche.
+        if texte:
+            QToolTip.showText(QCursor.pos(), texte, canvas)
+        else:
+            QToolTip.hideText()
+    canvas.mpl_connect("motion_notify_event", survol)
+
 
 class StatsView(BaseView):
     # Le selecteur choisit l'annee mise en avant dans « Production mensuelle »
@@ -75,19 +111,25 @@ class StatsView(BaseView):
             f"Référence France : 900 à 1\xa0200\xa0kWh/kWc/an — {texte_moyenne}",
         ))
         cards = []
+        # L'annee du selecteur ressort : trait orange ET mention ecrite, la
+        # couleur ne portant jamais seule le sens (relecture du 16/10/2026).
+        choisie = annee_de_periode(period)
         # L'annee la plus recente en premier (10/10/2026), comme les tableaux.
         for y, v in reversed(list(rendement.items())):
+            mention = " — année choisie" if int(y) == choisie else ""
             if int(y) in partielles:
                 g = df[df.index.year == int(y)]
                 cards.append(KpiCard(
                     f"Année {int(y)} — partielle", milliers(int(v)),
                     f"kWh/kWc — du {g.index.min().strftime('%d/%m')} "
-                    f"au {g.index.max().strftime('%d/%m')} — hors moyenne",
-                    "neutral"))
+                    f"au {g.index.max().strftime('%d/%m')} — hors moyenne"
+                    f"{mention}",
+                    "warm" if mention else "neutral"))
             else:
                 cards.append(KpiCard(
-                    f"Année {int(y)}", milliers(int(v)), "kWh/kWc/an",
-                    "primary"))
+                    f"Année {int(y)}", milliers(int(v)),
+                    f"kWh/kWc/an{mention}",
+                    "warm" if mention else "primary"))
         # Toutes les tuiles de la meme largeur : les annees partielles, au
         # sous-titre plus long, prenaient plus de place et attiraient l'oeil
         # (01/10/2026). Leur sous-titre passe a la ligne.
@@ -198,8 +240,10 @@ class StatsView(BaseView):
         # Annee mise en avant : la plus recente qui a un mois complet (le
         # 5 janvier, la nouvelle annee n'en a pas encore).
         avec_mois = [col for col in pivot.columns if pivot[col].notna().any()]
+        origine = "l'année choisie en haut de la page"
         if annee not in pivot.columns:
             annee = max(avec_mois)
+            origine = "l'année la plus récente"
         # Annee choisie sans aucun mois complet (le 5 janvier) : pas de courbe
         # jaune vide sans un mot, ni une autre annee a sa place ; une phrase
         # le dit, et les autres annees restent tracees.
@@ -258,9 +302,24 @@ class StatsView(BaseView):
                   frameon=False, ncol=1)
         canvas.fig.tight_layout()
         v.addWidget(canvas)
+        if not autres.empty:
+            brancher_survol(canvas, ax, autres)
         if sans_mois_complet:
             note = QLabel(f"{int(annee)} n'a pas encore de mois complet : "
                           "seules les autres années sont tracées.")
+            note.setObjectName("SectionSub")
+            note.setWordWrap(True)
+            v.addWidget(note)
+        # Ce que montre le graphique, en mots (relecture du 16/10/2026).
+        phrases = []
+        if not sans_mois_complet:
+            phrases.append(f"En jaune : {int(annee)}, {origine}.")
+        if not autres.empty:
+            phrases.append("Moyenne et zone grise : les autres années, mois "
+                           "complets seulement. Survolez le graphique pour "
+                           "lire leurs chiffres.")
+        if phrases:
+            note = QLabel(" ".join(phrases))
             note.setObjectName("SectionSub")
             note.setWordWrap(True)
             v.addWidget(note)
