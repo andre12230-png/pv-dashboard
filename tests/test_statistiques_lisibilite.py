@@ -94,12 +94,27 @@ def test_la_page_dit_quelle_annee_est_en_jaune(vue):
     assert "En jaune : 2024, l'année choisie en haut de la page." in _textes(vue)
 
 
-def test_sans_annee_choisie_la_page_le_dit_autrement(vue):
-    """Toute la periode : la plus recente est en avant, personne ne l'a
-    choisie."""
-    vue.populate("all")
-    assert "En jaune : 2026, l'année la plus récente." in _textes(vue)
-    assert "année choisie" not in _textes(vue)
+@pytest.mark.parametrize("periode", ["all", "oa-1", "month-2026-05"])
+def test_la_page_suit_l_annee_que_montre_le_menu(vue, periode):
+    """Capture de l'auteur du 01/11/2026 : l'appli s'ouvre sur toute la
+    periode, le menu de Statistiques montrait 2026, mais la tuile 2026 n'etait
+    pas signalee et la phrase parlait de « l'année la plus récente »."""
+    vue.populate(periode)
+    assert "En jaune : 2026, l'année choisie en haut de la page." in _textes(vue)
+    tuile = _tuile(vue, 2026)
+    assert tuile.property("variant") == "warm"
+    assert "année choisie" in tuile.sub.text()
+
+
+def test_le_5_janvier_la_page_suit_aussi_le_menu(qapp):
+    """Le menu montre l'annee nouvelle, encore sans mois complet : la phrase
+    le dit, et le jaune ne passe pas en douce a l'annee d'avant."""
+    v = _vue("2025-01-01", "2026-01-05")
+    v.populate("all")
+    assert "2026 n'a pas encore de mois complet" in _textes(v)
+    assert "En jaune" not in _textes(v)
+    assert _tuile(v, 2026).property("variant") == "warm"
+    detruire(v)
 
 
 def test_la_page_dit_ce_que_compte_la_moyenne(vue):

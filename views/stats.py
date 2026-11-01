@@ -12,7 +12,12 @@ from gui_theme import CHART_COLORS as CC
 from gui_theme import mpl_style
 from gui_widgets import Card, KpiCard, MplCanvas, SectionTitle, grid_row
 from views._base import BaseView
-from views._helpers import MOIS_FR, annee_de_periode, chiffres_sur_barres
+from views._helpers import (
+    MOIS_FR,
+    annee_de_periode,
+    chiffres_sur_barres,
+    periode_annuelle,
+)
 
 
 def milliers(valeur: float) -> str:
@@ -87,12 +92,16 @@ class StatsView(BaseView):
             if debut > pd.Timestamp(int(y), 1, 1) or fin < pd.Timestamp(int(y), 12, 31)
         }
 
+        # L'annee que montre le selecteur, meme venu de « Toute la période » ou
+        # d'une annee OA : c'est celle que la page doit mettre en avant.
+        choisie = annee_de_periode(periode_annuelle(df, period))
+
         self.layout_inner.addWidget(SectionTitle("Comparaison annuelle"))
 
         graphs = QHBoxLayout()
         graphs.setSpacing(14)
         graphs.addWidget(self._yearly_bars(yearly, partielles))
-        graphs.addWidget(self._monthly_lines(df, annee_de_periode(period)))
+        graphs.addWidget(self._monthly_lines(df, choisie))
         self.layout_inner.addLayout(graphs)
 
         p_crete = self.data.cfg["installation"]["puissance_kwc"]
@@ -113,7 +122,6 @@ class StatsView(BaseView):
         cards = []
         # L'annee du selecteur ressort : trait orange ET mention ecrite, la
         # couleur ne portant jamais seule le sens (relecture du 16/10/2026).
-        choisie = annee_de_periode(period)
         # L'annee la plus recente en premier (10/10/2026), comme les tableaux.
         for y, v in reversed(list(rendement.items())):
             mention = " — année choisie" if int(y) == choisie else ""
@@ -240,10 +248,8 @@ class StatsView(BaseView):
         # Annee mise en avant : la plus recente qui a un mois complet (le
         # 5 janvier, la nouvelle annee n'en a pas encore).
         avec_mois = [col for col in pivot.columns if pivot[col].notna().any()]
-        origine = "l'année choisie en haut de la page"
         if annee not in pivot.columns:
             annee = max(avec_mois)
-            origine = "l'année la plus récente"
         # Annee choisie sans aucun mois complet (le 5 janvier) : pas de courbe
         # jaune vide sans un mot, ni une autre annee a sa place ; une phrase
         # le dit, et les autres annees restent tracees.
@@ -313,7 +319,8 @@ class StatsView(BaseView):
         # Ce que montre le graphique, en mots (relecture du 16/10/2026).
         phrases = []
         if not sans_mois_complet:
-            phrases.append(f"En jaune : {int(annee)}, {origine}.")
+            phrases.append(f"En jaune : {int(annee)}, l'année choisie en haut "
+                           "de la page.")
         if not autres.empty:
             phrases.append("Moyenne et zone grise : les autres années, mois "
                            "complets seulement. Survolez le graphique pour "
