@@ -175,7 +175,9 @@ def load_releves_pv(path: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     def _to_num(series: pd.Series) -> pd.Series:
         s = series.astype(str).str.strip().str.replace(",", ".", regex=False)
         s = s.replace({"": None, "nan": None, "NaN": None})
-        nombres = pd.to_numeric(s, errors="coerce")
+        # float : une colonne sans decimale serait lue en entiers, et le
+        # recalage sur facture ne pourrait plus y ecrire (01/11/2026).
+        nombres = pd.to_numeric(s, errors="coerce").astype(float)
         # Un compteur ne recule pas : une valeur negative d'un fichier ancien
         # (l'import et la saisie les refusent) est ecartee comme une case
         # vide. Elle reste signalee au tableau de bord (valeurs_negatives).
