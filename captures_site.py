@@ -73,8 +73,11 @@ def attendre(secondes: float = 1.5):
 
 attendre()
 annee_passee = f"year-{hier.year - 1}"
+# Le dernier mois complet : le mois en cours n'aurait parfois qu'un ou deux
+# jours, et la capture changerait de sens selon le jour ou on la refait.
+mois_complet = hier.replace(day=1) - timedelta(days=1)
 for nom, vue, periode in (
-        ("capture_1_tableau_de_bord", "dashboard", None),    # le mois en cours
+        ("capture_1_tableau_de_bord", "dashboard", f"month-{mois_complet:%Y-%m}"),
         ("capture_2_synthese", "accounts", "all"),
         ("capture_3_repartition", "categories", annee_passee),
         ("capture_4_statistiques", "stats", "all")):
