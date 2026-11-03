@@ -240,7 +240,7 @@ def _sans_part_hc(cfg):
 
 
 def test_sans_part_hc_declaree_les_calculs_prennent_zero(tmp_path, monkeypatch):
-    # Decision d'Andre : 0 partout. Le code prenait 20 %, le modele ecrit 0.
+    # Decision de l'auteur : 0 partout. Le code prenait 20 %, le modele ecrit 0.
     data = _donnees(tmp_path, monkeypatch, _sans_part_hc)
     assert data.octopus.part_hc_autoconso == 0.0
 

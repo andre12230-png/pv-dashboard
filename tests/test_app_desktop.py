@@ -68,7 +68,7 @@ def test_resolve_base_dir_remonte_de_deux_dossiers_en_exe(tmp_path, monkeypatch)
 
 def test_resolve_base_dir_dossier_d_usage(tmp_path, monkeypatch):
     """Le dossier d'usage, separe du projet : les donnees, et dedans le
-    programme, comme F:\\Gestion photovoltaique\\pv-dashboard\\.
+    programme, comme D:\\Photovoltaique\\pv-dashboard\\.
 
     Meme disposition que Recharges VE : les donnees un cran au-dessus de
     l'exe. Elle passe AVANT la regle des deux crans, sinon un dossier d'usage

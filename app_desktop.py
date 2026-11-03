@@ -98,7 +98,7 @@ from views._helpers import (
 #
 # En .exe, trois cas, dans cet ordre :
 #
-# - Le dossier d'usage, separe du projet (F:\Gestion photovoltaique) : les
+# - Le dossier d'usage, separe du projet (par exemple D:\Photovoltaique) : les
 #   donnees, et dedans le programme, dans pv-dashboard\. Les donnees sont
 #   donc un cran au-dessus de l'exe - la meme disposition que Recharges VE.
 # - L'exe construit dans le projet : PyInstaller (--onedir) le place dans

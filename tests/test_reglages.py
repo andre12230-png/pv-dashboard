@@ -304,7 +304,7 @@ sources:
     - { debut: "2024-01-01", fin: "2024-12-31", total_kwh: 3000,
         source: "autofacturation EDF OA" }
 
-  recharges_ve_json: "F:/Recharge VE/recharges.json"
+  recharges_ve_json: "D:/Recharges/recharges.json"
 """
 
 
@@ -331,7 +331,7 @@ def test_ajouter_une_periode_facturee():
     assert len(relu["sources"]["injection_facturee"]) == 2
     assert relu["sources"]["injection_facturee"][1]["total_kwh"] == 3210.5
     # Ce qui n'est pas un recalage n'est pas touche.
-    assert relu["sources"]["recharges_ve_json"] == "F:/Recharge VE/recharges.json"
+    assert relu["sources"]["recharges_ve_json"] == "D:/Recharges/recharges.json"
     assert "# Mon fichier local" in neuf
     assert "# Injection reellement payee par EDF OA" in neuf
 
@@ -703,7 +703,7 @@ def test_part_hc_est_lue_telle_qu_ecrite():
 
 
 def test_part_hc_absente_vaut_ce_que_l_application_utilise():
-    # Sans la ligne, les calculs prennent 0 % (decision d'Andre du
+    # Sans la ligne, les calculs prennent 0 % (decision de l'auteur du
     # 28/09/2026 : les heures creuses tombent le plus souvent la nuit, quand
     # les panneaux ne produisent rien ; c'etait 20 %, et 0 dans le modele).
     # La fenetre doit montrer ce qui est reellement applique.

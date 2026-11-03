@@ -1,5 +1,5 @@
 """Controle du francais du 26/10/2026 : le lot du Photovoltaique corrige le
-27/10/2026 (rapport : F:\\Projets\\livrables\\controle-francais-applis-26-10-2026.md).
+27/10/2026 (rapport prive, hors depot).
 
 Dans les textes montres a l'utilisateur :
 - « … » et non « ... » ; « — » et non « -- » entre deux mots ;

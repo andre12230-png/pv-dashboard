@@ -809,7 +809,6 @@ pv-dashboard/
 ├── Lancer.vbs            # Lanceur silencieux (recommandé)
 ├── Lancer.bat            # Lanceur de diagnostic (console visible)
 ├── Construire-Exe.bat    # Fabrique le dossier dist
-├── pv-dashboard.spec     # Recette PyInstaller de l'exe (Construire-Exe.bat n'en lit pas le contenu)
 ├── faire_installeur.py   # Fabrique distribution\pv-dashboard-Setup-X.Y.Z.exe
 ├── faire_archive.py      # Fabrique l'archive portable (.zip), sans installeur
 ├── installeur/
@@ -834,7 +833,7 @@ pv-dashboard/
 ├── erreurs.py            # Erreurs techniques dites en français (commun
 │                         #   aux trois applications de l'auteur)
 ├── sauvegarde_externe.py # Copie vérifiée sur clé USB ou disque (commun)
-├── mise_a_jour.py        # Existe-t-il une version plus récente ?
+├── mise_a_jour.py        # « Mise à jour » : ouvre la page des versions, sans accès réseau
 ├── avis.py               # « Votre avis » : le questionnaire en ligne
 ├── views/                # Une vue par fichier, une par section de l'app
 │   ├── _base.py          #   BaseView commune

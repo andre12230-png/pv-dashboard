@@ -1,7 +1,7 @@
 """Lisibilite des textes : chaque couleur d'ecriture du theme doit se
 detacher assez de son fond.
 
-Le 15/09/2026, Andre a trouve des ecritures "tres claires et difficiles a
+Le 15/09/2026, l'auteur a trouve des ecritures "tres claires et difficiles a
 lire" : le gris des petits textes (#94a3b8) n'avait qu'un contraste de 2,6
 pour 1 sur blanc, et l'orange du bandeau "Donnees incompletes" a peine 2 pour
 1 sur son fond jaune. Le minimum conseille pour lire un texte courant est de
@@ -83,7 +83,7 @@ def test_texte_lisible(texte, fond):
         f"{rapport:.2f} pour 1, moins que 4,5")
 
 
-# Les cadres (controle demande par Andre le 15/09/2026). Deux familles :
+# Les cadres (controle demande par l'auteur le 15/09/2026). Deux familles :
 # - ce qu'on clique doit se reperer : 3 pour 1 des deux cotes du contour
 #   (norme WCAG, contraste des elements d'interface) ;
 # - les cartes et tableaux sont decoratifs : pas de minimum officiel, mais
