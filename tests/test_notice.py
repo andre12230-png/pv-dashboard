@@ -89,3 +89,32 @@ def test_une_date_de_bascule_illisible_est_dite_en_francais():
     with pytest.raises(RuntimeError, match="Écrivez-la sous la forme"):
         calc.definir_bascule_hphc("pas une date")
     calc.definir_bascule_hphc(None)
+
+
+def test_la_notice_dit_vrai_sur_la_duree_du_contrat_de_vente():
+    """Audit du 03/11/2026 : la Notice disait « sans cette ligne, la vente ne
+    s'arrete pas ». Or le demarrage exige la ligne des qu'on vend : qui la
+    retirait sur la foi de la Notice voyait « La configuration est
+    incomplete », et l'application ne s'ouvrait plus. La Notice doit dire ce
+    que fait le code : 0 pour un contrat sans fin, et la ligne gardee."""
+    from pathlib import Path
+
+    import yaml
+
+    import app_desktop
+
+    # Ce que fait le code, sur le modele livre.
+    modele = Path(__file__).resolve().parent.parent / "config.yaml"
+    cfg = yaml.safe_load(modele.read_text(encoding="utf-8"))
+    del cfg["oa"]["duree_contrat_annees"]
+    with pytest.raises(RuntimeError, match="durée du contrat de vente"):
+        app_desktop.verifier_config(cfg)
+    cfg["oa"]["duree_contrat_annees"] = 0
+    app_desktop.verifier_config(cfg)
+
+    # Ce que dit la Notice, retours a la ligne et espaces insecables mis a
+    # plat (la phrase y est coupee sur plusieurs lignes).
+    texte = " ".join(NOTICE_HTML.replace("\xa0", " ").split())
+    assert "sans cette ligne, la vente ne s'arrête pas" not in texte
+    assert "mettez 0 si votre contrat n'a pas de fin" in texte
+    assert "l'application la demande dès que vous vendez" in texte

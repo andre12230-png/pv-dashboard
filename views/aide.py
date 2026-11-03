@@ -56,8 +56,9 @@ recharge seule à l'enregistrement. L'onglet <b>Paramètres</b> montre ensuite
 s'est pas trompé.<br>
 Les réglages plus rares (TVA, grille EDF de comparaison, prix d'un ancien
 contrat à prix unique, durée du contrat de vente — 20 ans dans le modèle
-livré ; au-delà, la vente compte pour 0\xa0€ ; sans cette ligne, la vente ne
-s'arrête pas) se font dans le fichier <code>config.yaml</code>,
+livré ; au-delà, la vente compte pour 0\xa0€ ; mettez 0 si votre contrat n'a
+pas de fin, mais gardez la ligne : l'application la demande dès que vous
+vendez) se font dans le fichier <code>config.yaml</code>,
 avec le Bloc-notes, dans le dossier de vos données : <code>{dossier}</code>
 (menu Démarrer, raccourci « Dossier des données », si l'application a été
 installée). Relancez alors l'application pour appliquer.<br>
