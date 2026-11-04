@@ -54,8 +54,8 @@ creuses, que le bouton <b>Reprendre</b> met dans la case). Deux plages d'heures
 creuses ne doivent pas se chevaucher : écrivez 22:00-08:00 plutôt que
 22:00-06:00 et 00:00-08:00. L'application se
 recharge seule à l'enregistrement. Si vous fermez la fenêtre après un
-changement sans avoir enregistré, elle vous demande quoi en faire. L'onglet <b>Paramètres</b> montre ensuite
-à tout moment ce qui est pris en compte : c'est là qu'on vérifie qu'on ne
+changement sans avoir enregistré, elle vous demande quoi en faire.
+L'onglet <b>Paramètres</b> montre ensuite à tout moment ce qui est pris en compte : c'est là qu'on vérifie qu'on ne
 s'est pas trompé.<br>
 Les réglages plus rares (TVA, grille EDF de comparaison, prix d'un ancien
 contrat à prix unique, durée du contrat de vente — 20 ans dans le modèle
