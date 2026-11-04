@@ -663,11 +663,18 @@ def controler(v: dict) -> None:
             "(prix unique), gardez celle du modèle et mettez le même prix en "
             "heures pleines et en heures creuses.")
     try:
-        calc.parse_plages_hc(list(v["plages_hc"]))
+        plages = calc.parse_plages_hc(list(v["plages_hc"]))
     except Exception as exc:
         raise ReglagesRefuses(
             "Heures creuses : écrivez chaque plage sous la forme "
             "22:00-06:00, et séparez-les par un point-virgule.") from exc
+    # Deux plages qui se chevauchent compteraient deux fois leurs heures
+    # communes dans les estimations (audit du 04-11-2026, D6).
+    if calc.plages_se_chevauchent(plages):
+        raise ReglagesRefuses(
+            "Heures creuses : deux plages se chevauchent. Chaque heure ne "
+            "doit apparaître que dans une seule plage ; par exemple "
+            "22:00-06:00 et 00:00-08:00 s'écrivent 22:00-08:00.")
     if (v["part_hc_autoconso"] is not None
             and not 0 <= float(v["part_hc_autoconso"]) <= 1):
         raise ReglagesRefuses(

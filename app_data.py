@@ -49,6 +49,9 @@ class AppData:
     # import, et nommees par le tableau de bord pour qu'on ne les croie pas
     # perdues (voir calculations.jours_en_attente).
     jours_en_attente: list = field(default_factory=list)
+    # Recalages sur facture suspendus au chargement, avec leur raison en
+    # clair (audit du 04-11-2026, D1 et D8) : annonces au demarrage.
+    recalages_suspendus: list = field(default_factory=list)
     # Dossier ou vivent config.yaml et les releves. Les vues Parametres et
     # Notice l'affichent : une fois l'application installee, il est cache
     # dans %LOCALAPPDATA% et l'utilisateur ne le trouverait pas seul.

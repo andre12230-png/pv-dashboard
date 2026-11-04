@@ -123,3 +123,46 @@ def test_le_demarrage_appelle_l_alerte():
     assert (source.index("win.show()")
             < source.index("app_desktop.annoncer_recalages_a_verifier(win)")
             < source.index("app.exec()"))
+
+
+# -----------------------------------------------------------------------------
+# Audit du 04-11-2026, D1 et D8 : recalages suspendus par le calcul
+# -----------------------------------------------------------------------------
+
+SUSPENDU = ("Consommation recalée sur facture du 01/01/2025 au 10/01/2025 : "
+            "8 jours n'ont pas de relevé, du 01/01/2025 au 08/01/2025. "
+            "Ce recalage est suspendu jusqu'à leur import.")
+
+
+def test_un_recalage_suspendu_est_annonce(qapp, boites):
+    fenetre = FenetreFactice(_cfg(SAINES))
+    fenetre.data.recalages_suspendus = [SUSPENDU]
+    app_desktop.annoncer_recalages_a_verifier(fenetre)
+    texte = boites.vues[0].text()
+    assert "01/01/2025 au 08/01/2025" in texte
+    assert "gardent les valeurs des relevés" in texte
+
+
+def test_au_plus_cinq_recalages_suspendus_detailles(qapp, boites):
+    fenetre = FenetreFactice(_cfg(SAINES))
+    fenetre.data.recalages_suspendus = [SUSPENDU] * 7
+    app_desktop.annoncer_recalages_a_verifier(fenetre)
+    texte = boites.vues[0].text()
+    assert texte.count("• Consommation") == 5
+    assert "et 2 autres" in texte
+
+
+def test_la_preparation_des_donnees_transmet_les_suspensions(tmp_path):
+    # Bout a bout : une facture qui commence avant le premier releve
+    # arrive jusqu'a AppData sans fausser les jours presents.
+    import pandas as pd
+
+    import calculations as calc
+    idx = pd.DatetimeIndex(["2025-01-09", "2025-01-10"])
+    df = pd.DataFrame({"soutirage_kwh": [10.0, 10.0],
+                       "autoconsommation_kwh": [0.0, 0.0]}, index=idx)
+    df["consommation_kwh"] = df["soutirage_kwh"]
+    alertes: list = []
+    calc.recale_sur_facture(df, [{"debut": "2025-01-01", "fin": "2025-01-10",
+                                  "total_kwh": 100.0}], alertes)
+    assert alertes == [SUSPENDU]

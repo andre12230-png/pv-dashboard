@@ -1003,3 +1003,27 @@ def test_les_montants_ont_l_espace_des_milliers(fenetre):
     import re
     case = fenetre(rg.recalages_vides()).cout
     assert re.fullmatch(r"15\s000 €", case.text()), case.text()
+
+
+# -----------------------------------------------------------------------------
+# Audit du 04-11-2026, D6 : plages d'heures creuses qui se chevauchent
+# -----------------------------------------------------------------------------
+
+@pytest.mark.parametrize("plages", [
+    ["22:00-06:00", "00:00-08:00"],     # chevauchement apres minuit
+    ["12:00-14:00", "12:00-14:00"],     # plage repetee
+    ["01:00-07:00", "06:30-08:00"],     # chevauchement d'une demi-heure
+])
+def test_des_heures_creuses_qui_se_chevauchent_sont_refusees(tmp_path, plages):
+    chemin = _fichier(tmp_path)
+    v = {**rg.lire_reglages(yaml.safe_load(ANCIEN)), "plages_hc": plages}
+    with pytest.raises(rg.ReglagesRefuses, match="chevauchent"):
+        rg.enregistrer_reglages(chemin, v, tmp_path / "backups")
+    assert chemin.read_text(encoding="utf-8") == ANCIEN
+
+
+def test_des_plages_bout_a_bout_restent_acceptees():
+    # 22:00-02:00 puis 02:00-06:00 se touchent sans se chevaucher.
+    v = {**rg.lire_reglages(yaml.safe_load(ANCIEN)),
+         "plages_hc": ["22:00-02:00", "02:00-06:00", "12:00-14:00"]}
+    rg.controler(v)

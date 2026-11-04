@@ -509,6 +509,10 @@ def build_dataset(cfg: dict) -> AppData:
     # partout ailleurs, mais une declaration fiscale doit reposer sur les
     # quantites reellement relevees.
     df_brut = df.copy()
+    # Recalages suspendus faute de releves complets ou parce que la facture
+    # contredit les jours fiables (audit du 04-11-2026, D1 et D8) : annonces
+    # au demarrage par annoncer_recalages_a_verifier.
+    recalages_suspendus: list[str] = []
     # Jours sans releve d'injection (avant-contrat OA, pannes Linky) :
     # injection estimee via les ratios mensuels observes, CSV intact.
     df = calc.estime_injection_manquante(df)
@@ -516,17 +520,19 @@ def build_dataset(cfg: dict) -> AppData:
     # l'index annuel du compteur de production fait foi, ce sont les
     # kWh reellement payes. CSV intact.
     df = calc.recale_injection_sur_facture(
-        df, cfg["sources"].get("injection_facturee"))
+        df, cfg["sources"].get("injection_facturee"), recalages_suspendus)
     # Jours sans releve de consommation reseau (plus anciens que les 36 mois
     # conserves par Enedis) : totaux lus sur les factures et repartis sur
     # la periode. CSV intact la aussi.
-    df = calc.repartit_conso_facturee(df, cfg["sources"].get("conso_reseau_facturee"))
+    df = calc.repartit_conso_facturee(
+        df, cfg["sources"].get("conso_reseau_facturee"), recalages_suspendus)
     # Jours dont la conso saisie n'est pas fiable (panne Linky interpolee) :
     # declares sans releve, ils seront reconstitues par le recalage.
     df = calc.marque_conso_douteuse(df, cfg["sources"].get("conso_reseau_douteuse"))
     # Consommations relevees mais arrondies a l'entier (2023-2025) : recalees
     # sur le total des factures EDF, CSV intact.
-    df = calc.recale_sur_facture(df, cfg["sources"].get("conso_reseau_recalee"))
+    df = calc.recale_sur_facture(
+        df, cfg["sources"].get("conso_reseau_recalee"), recalages_suspendus)
     # Part du soutirage qui part dans la voiture (fichier de l'app
     # recharges-ve, lu seulement). Colonne absente si la source n'est pas
     # configuree ou introuvable : les vues s'adaptent.
@@ -624,6 +630,7 @@ def build_dataset(cfg: dict) -> AppData:
                    valeurs_illisibles=dl.valeurs_illisibles(str(releves_path)),
                    valeurs_negatives=dl.valeurs_negatives(str(releves_path)),
                    jours_en_attente=[d.date() for d in attente],
+                   recalages_suspendus=recalages_suspendus,
                    dossier_donnees=str(BASE_DIR))
 
 
@@ -1618,15 +1625,30 @@ def annoncer_recalages_a_verifier(parent: MainWindow) -> None:
     demarrage tant qu'il n'est pas corrige : il fausse les chiffres sans que
     rien d'autre ne le montre. L'application reste ouverte."""
     defaut = reglages.defaut_des_recalages(parent.data.cfg)
-    if not defaut:
+    # Recalages que le calcul a mis de cote (releves incomplets, facture
+    # contredite par les jours fiables) : audit du 04-11-2026, D1 et D8.
+    suspendus = list(getattr(parent.data, "recalages_suspendus", None) or [])
+    if not defaut and not suspendus:
         return
+    parties = []
+    if defaut:
+        parties.append(
+            f"{defaut}\n\n"
+            "Tant que ce n'est pas corrigé, les chiffres de ces jours peuvent "
+            "être faux.")
+    if suspendus:
+        # Au plus cinq lignes : la boite doit rester lisible.
+        lignes = "\n".join(f"• {m}" for m in suspendus[:5])
+        if len(suspendus) > 5:
+            lignes += f"\n• … et {len(suspendus) - 5} autres."
+        parties.append(
+            f"{lignes}\n\n"
+            "Ces périodes gardent les valeurs des relevés, sans le total de "
+            "la facture.")
     boite = QMessageBox(parent)
     boite.setIcon(QMessageBox.Warning)
     boite.setWindowTitle("Recalages à vérifier")
-    boite.setText(
-        f"{defaut}\n\n"
-        "Tant que ce n'est pas corrigé, les chiffres de ces jours peuvent "
-        "être faux.")
+    boite.setText("\n\n".join(parties))
     corriger = boite.addButton("Corriger mes réglages", QMessageBox.AcceptRole)
     boite.addButton("Plus tard", QMessageBox.RejectRole)
     boite.exec()

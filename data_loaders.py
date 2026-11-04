@@ -203,11 +203,20 @@ def load_releves_pv(path: str) -> tuple[pd.DataFrame, pd.DataFrame]:
         out = out.reindex(pd.date_range(out.index.min(), out.index.max(),
                                         freq="D", name=out.index.name))
 
-    # Soutirage total : preference au champ direct ; sinon HC+HP.
+    # Detail HC/HP a moitie rempli (une case vide) : on l'ecarte. Sinon la
+    # case vide valait 0 et une seule case passait pour le total du jour,
+    # ou faisait « concorder » le detail avec un total egal a elle seule
+    # (audit du 04-11-2026, D2). Le jour suit alors le chemin des jours sans
+    # detail : total direct s'il existe, sinon consommation absente signalee.
+    # Le fichier n'est pas modifie : seule la lecture pour les calculs change.
+    detail_incomplet = (out["soutirage_hc_kwh"].isna()
+                        != out["soutirage_hp_kwh"].isna())
+    out.loc[detail_incomplet, ["soutirage_hc_kwh", "soutirage_hp_kwh"]] = float("nan")
+
+    # Soutirage total : preference au champ direct ; sinon HC+HP, seulement
+    # quand les deux cases sont connues.
     sout_direct = out["soutirage_jour_kwh"]
-    sout_hphc = out[["soutirage_hc_kwh", "soutirage_hp_kwh"]].sum(
-        axis=1, min_count=1,
-    )
+    sout_hphc = out["soutirage_hc_kwh"] + out["soutirage_hp_kwh"]
     soutirage = sout_direct.where(sout_direct.notna(), sout_hphc)
 
     production = pd.DataFrame(

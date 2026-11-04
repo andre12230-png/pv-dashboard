@@ -161,8 +161,48 @@ def estime_injection_manquante(df_daily: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def _date_fr(jour: pd.Timestamp) -> str:
+    return jour.strftime("%d/%m/%Y")
+
+
+def _kwh_fr(valeur: float) -> str:
+    return f"{valeur:.1f}".replace(".", ",")
+
+
+def _periode_tronquee(index: pd.DatetimeIndex, debut: pd.Timestamp,
+                      fin: pd.Timestamp, nom: str,
+                      alertes: list[str] | None) -> bool:
+    """Vrai si la periode d'une facture touche des releves sans les couvrir
+    tous : des jours de la facture manquent au fichier.
+
+    Repartir alors le total entier sur les seuls jours presents leur donnait
+    la consommation de toute la periode (audit du 04-11-2026, D1). Le
+    recalage est suspendu, et l'alerte nomme les jours qui manquent : il
+    reprendra seul quand ils seront importes. Une facture qui ne touche
+    aucun releve (plus ancienne que le fichier) n'est pas signalee : elle ne
+    change rien aux chiffres."""
+    attendus = pd.date_range(debut, fin, freq="D")
+    presents = attendus.isin(index.normalize())
+    if presents.all() or not presents.any():
+        return False
+    if alertes is not None:
+        manquants = attendus[~presents]
+        nb = len(manquants)
+        if nb == 1:
+            trou = f"le {_date_fr(manquants[0])} n'a pas de relevé"
+        else:
+            trou = (f"{nb} jours n'ont pas de relevé, du "
+                    f"{_date_fr(manquants[0])} au {_date_fr(manquants[-1])}")
+        alertes.append(
+            f"{nom} du {_date_fr(debut)} au {_date_fr(fin)} : {trou}. "
+            "Ce recalage est suspendu jusqu'à leur import.")
+    return True
+
+
 def recale_injection_sur_facture(df_daily: pd.DataFrame,
-                                 tranches: Iterable[dict] | None) -> pd.DataFrame:
+                                 tranches: Iterable[dict] | None,
+                                 alertes: list[str] | None = None,
+                                 ) -> pd.DataFrame:
     """
     Recale l'injection sur les totaux des factures EDF OA.
 
@@ -204,6 +244,9 @@ def recale_injection_sur_facture(df_daily: pd.DataFrame,
         dans = (out.index >= debut) & (out.index <= fin)
         if not dans.any():
             continue
+        if _periode_tronquee(out.index, debut, fin, "Injection facturée",
+                             alertes):
+            continue
 
         valeurs = out.loc[dans, "injection_kwh"].astype(float)
         plafond = out.loc[dans, "production_kwh"].astype(float)
@@ -234,7 +277,9 @@ def recale_injection_sur_facture(df_daily: pd.DataFrame,
 
 
 def repartit_conso_facturee(df_daily: pd.DataFrame,
-                            periodes: Iterable[dict] | None) -> pd.DataFrame:
+                            periodes: Iterable[dict] | None,
+                            alertes: list[str] | None = None,
+                            ) -> pd.DataFrame:
     """
     Comble les jours sans releve de consommation reseau a partir des totaux
     lus sur les factures EDF (config.yaml, sources.conso_reseau_facturee).
@@ -264,6 +309,9 @@ def repartit_conso_facturee(df_daily: pd.DataFrame,
         a_combler = dans_periode & (out["conso_absente"] > 0)
         nb = int(a_combler.sum())
         if nb == 0:
+            continue
+        if _periode_tronquee(out.index, debut, fin,
+                             "Consommation connue par la facture", alertes):
             continue
         # Jours de la periode deja releves : leur conso est deja comptee,
         # on ne partage que ce qui reste du total facture.
@@ -315,7 +363,8 @@ def marque_conso_douteuse(df_daily: pd.DataFrame,
 
 
 def recale_sur_facture(df_daily: pd.DataFrame,
-                       tranches: Iterable[dict] | None) -> pd.DataFrame:
+                       tranches: Iterable[dict] | None,
+                       alertes: list[str] | None = None) -> pd.DataFrame:
     """
     Recale les consommations deja relevees sur le total facture par EDF.
 
@@ -370,6 +419,9 @@ def recale_sur_facture(df_daily: pd.DataFrame,
         # (contre-audit du 13/10/2026).
         if nb == 0 and not a_reconstituer.any():
             continue
+        if _periode_tronquee(out.index, debut, fin,
+                             "Consommation recalée sur facture", alertes):
+            continue
 
         if a_reconstituer.any():
             # Les jours releves sont d'abord corriges de leur troncature,
@@ -377,10 +429,31 @@ def recale_sur_facture(df_daily: pd.DataFrame,
             # C'est la seule facon de leur donner une valeur : le CSV ne
             # contient qu'une interpolation. L'incertitude porte sur la
             # troncature moyenne, pas sur le total, qui reste exact.
-            releves = out.loc[dans, "soutirage_kwh"].astype(float) \
-                + TRONCATURE_MOYENNE_KWH
-            out.loc[dans, "soutirage_kwh"] = releves
+            fiables = out.loc[dans, "soutirage_kwh"].astype(float)
             deja = float(out.loc[deja_servis, "soutirage_kwh"].sum())
+            marge = total - float(fiables.sum()) - deja
+            if marge < -1e-6:
+                # La facture est plus basse que les seuls jours fiables :
+                # aucune repartition ne peut la respecter sans ecraser un
+                # releve fiable. Avant, on ajoutait quand meme la troncature
+                # et on marquait la periode recalee (audit du 04-11-2026,
+                # D8). On ne touche a rien, et on le dit.
+                if alertes is not None:
+                    alertes.append(
+                        f"Consommation recalée sur facture du "
+                        f"{_date_fr(debut)} au {_date_fr(fin)} : les jours "
+                        f"fiables comptent déjà "
+                        f"{_kwh_fr(float(fiables.sum()) + deja)}\xa0kWh, ce qui "
+                        f"dépasse le total de la facture "
+                        f"({_kwh_fr(total)}\xa0kWh). Vérifiez ce total ou les "
+                        "jours douteux. Ce recalage est suspendu.")
+                continue
+            # La troncature moyenne ne doit pas, a elle seule, faire
+            # depasser la facture : elle est ramenee si la marge est courte.
+            troncature = (min(TRONCATURE_MOYENNE_KWH, marge / nb)
+                          if nb else 0.0)
+            releves = fiables + troncature
+            out.loc[dans, "soutirage_kwh"] = releves
             solde = max(total - float(releves.sum()) - deja, 0.0)
             out.loc[a_reconstituer, "soutirage_kwh"] = (
                 solde / int(a_reconstituer.sum()))
@@ -623,6 +696,31 @@ def _parse_plage(plage: str) -> tuple[time, time]:
 
 def parse_plages_hc(plages: Iterable[str]) -> list[tuple[time, time]]:
     return [_parse_plage(p) for p in plages]
+
+
+def _minutes_des_plages(plages: Iterable[tuple[time, time]]) -> list[int]:
+    """Pour chaque minute de la journee (0 a 1439), le nombre de plages qui
+    la couvrent. Sert a mesurer la duree reelle et a voir les chevauchements."""
+    compte = [0] * (24 * 60)
+    for start, end in plages:
+        s = start.hour * 60 + start.minute
+        e = end.hour * 60 + end.minute
+        minutes = range(s, e) if s <= e else [*range(s, 24 * 60), *range(0, e)]
+        for m in minutes:
+            compte[m] += 1
+    return compte
+
+
+def duree_plages_hc_h(plages: Iterable[tuple[time, time]]) -> float:
+    """Duree des heures creuses en heures, chaque minute comptee une fois :
+    deux plages qui se chevauchent ne doublent pas leur partie commune
+    (audit du 04-11-2026, D6)."""
+    return sum(1 for n in _minutes_des_plages(plages) if n > 0) / 60.0
+
+
+def plages_se_chevauchent(plages: Iterable[tuple[time, time]]) -> bool:
+    """Vrai si au moins une minute appartient a deux plages."""
+    return any(n > 1 for n in _minutes_des_plages(plages))
 
 
 def _is_in_plage(t: time, plage: tuple[time, time]) -> bool:
@@ -875,7 +973,7 @@ def _ratio_hc_observe(df: pd.DataFrame, octopus: OctopusConfig) -> float:
     publie avec du retard). A defaut de jour detaille, on retombe sur la
     duree des plages HC rapportee a 24 h.
     """
-    defaut = sum(_duree_plage_h(p) for p in octopus.plages_hc) / 24.0
+    defaut = duree_plages_hc_h(octopus.plages_hc) / 24.0
     if "soutirage_hp_kwh" not in df.columns or "soutirage_hc_kwh" not in df.columns:
         return defaut
     apres = df[df.index >= CUTOFF_OCTOPUS]

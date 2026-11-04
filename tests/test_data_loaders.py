@@ -1731,3 +1731,50 @@ def test_recharges_ve_lieu_en_majuscule(tmp_path):
     ])
     assert dl.charger_recharges_ve(chemin)["recharge_ve_kwh"].sum() == \
         pytest.approx(10.0)
+
+
+# -----------------------------------------------------------------------------
+# Audit du 04-11-2026, D2 : une seule case HC ou HP ne fait pas un total
+# -----------------------------------------------------------------------------
+
+def test_hc_seule_ne_passe_pas_pour_le_total_du_reseau(tmp_path):
+    # Total vide, HC = 2, HP vide : l'achat reel est inconnu. Avant, l'appli
+    # affichait 2 kWh achetes et declarait la consommation presente.
+    p = tmp_path / "r.csv"
+    p.write_text(
+        "Date;Prod_Jour;Inj_Jour;Conso_réseau_Jour;Conso_HC;Conso_HP\n"
+        "01/05/2026;10,0;5,0;;2,0;\n"       # HC seule
+        "02/05/2026;10,0;5,0;;;3,0\n"       # HP seule
+        "03/05/2026;10,0;5,0;;1,0;1,5\n",   # les deux : total connu
+        encoding="utf-8",
+    )
+    _, reseau = dl.load_releves_pv(str(p))
+    for jour in ("2026-05-01", "2026-05-02"):
+        assert reseau.loc[pd.Timestamp(jour), "conso_absente"] == 1.0
+        assert reseau.loc[pd.Timestamp(jour), "soutirage_kwh"] == 0.0
+    jour3 = pd.Timestamp("2026-05-03")
+    assert reseau.loc[jour3, "conso_absente"] == 0.0
+    assert reseau.loc[jour3, "soutirage_kwh"] == pytest.approx(2.5)
+
+
+def test_detail_hphc_incomplet_jamais_pris_pour_un_detail_mesure(tmp_path):
+    # Total direct 2, HC = 2, HP vide : la moitie manquante comptee pour 0
+    # faisait « concorder » le detail avec le total (2 = 2), et tout le
+    # jour etait facture en heures creuses. Le detail incomplet doit etre
+    # ecarte : le cout passe alors par l'estimation, comme sans detail.
+    p = tmp_path / "r.csv"
+    p.write_text(
+        "Date;Prod_Jour;Inj_Jour;Conso_réseau_Jour;Conso_HC;Conso_HP\n"
+        "01/05/2026;10,0;5,0;2,0;2,0;\n"
+        "02/05/2026;10,0;5,0;2,0;0,5;1,5\n",
+        encoding="utf-8",
+    )
+    _, reseau = dl.load_releves_pv(str(p))
+    jour1 = pd.Timestamp("2026-05-01")
+    assert reseau.loc[jour1, "soutirage_kwh"] == pytest.approx(2.0)
+    assert pd.isna(reseau.loc[jour1, "soutirage_hc_kwh"])
+    assert pd.isna(reseau.loc[jour1, "soutirage_hp_kwh"])
+    # Un detail complet reste intact.
+    jour2 = pd.Timestamp("2026-05-02")
+    assert reseau.loc[jour2, "soutirage_hc_kwh"] == pytest.approx(0.5)
+    assert reseau.loc[jour2, "soutirage_hp_kwh"] == pytest.approx(1.5)

@@ -1400,3 +1400,127 @@ def test_recale_une_periode_entierement_douteuse():
         {"debut": "2024-02-01", "fin": "2024-02-02", "total_kwh": 40.0}])
     assert out["soutirage_kwh"].sum() == pytest.approx(40.0)
     assert list(out["conso_recalee"]) == [1.0, 1.0]
+
+
+# -----------------------------------------------------------------------------
+# Audit du 04-11-2026, D6 : chaque heure creuse comptee une seule fois
+# -----------------------------------------------------------------------------
+
+def test_duree_des_plages_hc_compte_une_heure_une_seule_fois():
+    from calculations import duree_plages_hc_h, parse_plages_hc
+    # 22:00-08:00 reunies = 10 h, et non 8 + 8 = 16 h.
+    assert duree_plages_hc_h(parse_plages_hc(
+        ["22:00-06:00", "00:00-08:00"])) == pytest.approx(10.0)
+    assert duree_plages_hc_h(parse_plages_hc(
+        ["22:00-06:00", "12:00-14:00"])) == pytest.approx(10.0)
+    assert duree_plages_hc_h(parse_plages_hc(
+        ["23:30-05:00"])) == pytest.approx(5.5)
+
+
+# -----------------------------------------------------------------------------
+# Audit du 04-11-2026, D1 : facture qui deborde des releves
+# -----------------------------------------------------------------------------
+# Facture du 1er au 10 janvier, releves les 9 et 10 seulement : tout le total
+# etait reporte sur ces deux jours (50 + 50 au lieu de 10 + 10). Le recalage
+# doit attendre que toute la periode soit relevee, et le dire.
+
+def _df_deux_jours() -> pd.DataFrame:
+    idx = pd.DatetimeIndex(["2025-01-09", "2025-01-10"])
+    df = pd.DataFrame({
+        "production_kwh": [100.0, 100.0],
+        "injection_kwh": [5.0, 5.0],
+        "soutirage_kwh": [10.0, 10.0],
+        "conso_absente": [0.0, 1.0],
+    }, index=idx)
+    df["autoconsommation_kwh"] = df["production_kwh"] - df["injection_kwh"]
+    df["consommation_kwh"] = df["autoconsommation_kwh"] + df["soutirage_kwh"]
+    return df
+
+
+FACTURE_DEBORDANTE = [{"debut": "2025-01-01", "fin": "2025-01-10",
+                       "total_kwh": 100.0}]
+
+
+def test_injection_non_recalee_sur_une_periode_tronquee():
+    alertes: list[str] = []
+    out = calc.recale_injection_sur_facture(
+        _df_deux_jours(), FACTURE_DEBORDANTE, alertes=alertes)
+    assert list(out["injection_kwh"]) == [5.0, 5.0]
+    assert out["injection_recalee"].sum() == 0
+    assert len(alertes) == 1
+    assert "01/01/2025" in alertes[0] and "08/01/2025" in alertes[0]
+
+
+def test_conso_recalee_suspendue_sur_une_periode_tronquee():
+    df = _df_deux_jours()
+    df["conso_absente"] = 0.0
+    alertes: list[str] = []
+    out = calc.recale_sur_facture(df, FACTURE_DEBORDANTE, alertes=alertes)
+    assert list(out["soutirage_kwh"]) == [10.0, 10.0]
+    assert out["conso_recalee"].sum() == 0
+    assert len(alertes) == 1 and "8 jours" in alertes[0]
+
+
+def test_conso_facturee_non_repartie_sur_une_periode_tronquee():
+    alertes: list[str] = []
+    out = calc.repartit_conso_facturee(
+        _df_deux_jours(), FACTURE_DEBORDANTE, alertes=alertes)
+    # Le jour sans releve garde sa valeur : rien n'est reparti.
+    assert list(out["soutirage_kwh"]) == [10.0, 10.0]
+    assert len(alertes) == 1
+
+
+def test_periode_entierement_relevee_toujours_recalee():
+    # Non-regression : une facture couverte jour par jour reste appliquee,
+    # sans alerte.
+    alertes: list[str] = []
+    out = calc.recale_sur_facture(_df_arrondi(), [
+        {"debut": "2024-03-01", "fin": "2024-03-04", "total_kwh": 104.0}],
+        alertes=alertes)
+    assert out["soutirage_kwh"].sum() == pytest.approx(104.0)
+    assert alertes == []
+
+
+def test_facture_hors_de_tous_les_releves_ignoree_sans_alerte():
+    # Une facture plus ancienne que le fichier ne touche aucun jour : rien a
+    # suspendre, rien a signaler (comme avant).
+    alertes: list[str] = []
+    calc.recale_sur_facture(_df_arrondi(), [
+        {"debut": "2020-01-01", "fin": "2020-12-31", "total_kwh": 500.0}],
+        alertes=alertes)
+    assert alertes == []
+
+
+# -----------------------------------------------------------------------------
+# Audit du 04-11-2026, D8 : facture plus basse que les jours fiables
+# -----------------------------------------------------------------------------
+
+def test_facture_incompatible_avec_les_jours_fiables_suspend_le_recalage():
+    # Un jour fiable a 10 kWh, un jour douteux a 10 kWh, facture de 5 kWh :
+    # impossible a respecter sans ecraser le jour fiable. Avant : 10,5 + 0,
+    # facture non respectee et recalage dit effectue.
+    idx = pd.DatetimeIndex(["2024-03-01", "2024-03-02"])
+    df = pd.DataFrame({"soutirage_kwh": [10.0, 10.0],
+                       "autoconsommation_kwh": [0.0, 0.0]}, index=idx)
+    df["consommation_kwh"] = df["soutirage_kwh"]
+    df = calc.marque_conso_douteuse(df, [{"debut": "2024-03-02",
+                                          "fin": "2024-03-02"}])
+    alertes: list[str] = []
+    out = calc.recale_sur_facture(df, [
+        {"debut": "2024-03-01", "fin": "2024-03-02", "total_kwh": 5.0}],
+        alertes=alertes)
+    assert list(out["soutirage_kwh"]) == [10.0, 10.0]
+    assert out["conso_recalee"].sum() == 0
+    assert len(alertes) == 1 and "dépasse" in alertes[0]
+
+
+def test_jours_douteux_troncature_ramenee_pour_respecter_la_facture():
+    # Facture a peine au-dessus des jours fiables (10 + 40 = 50, facture
+    # 50,4) : la troncature de 0,5 par jour ferait deja depasser le total.
+    # Elle est ramenee pour que la facture reste exacte.
+    df = calc.marque_conso_douteuse(_df_arrondi(), [
+        {"debut": "2024-03-02", "fin": "2024-03-03"}])
+    out = calc.recale_sur_facture(df, [
+        {"debut": "2024-03-01", "fin": "2024-03-04", "total_kwh": 50.4}])
+    assert out["soutirage_kwh"].sum() == pytest.approx(50.4)
+    assert (out["soutirage_kwh"] >= 0).all()
