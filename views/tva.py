@@ -401,7 +401,7 @@ class TvaView(BaseView):
                        if ligne["jours_sans_injection"]]
         if incompletes:
             detail = ", ".join(
-                f"{ligne['annee']} ({ligne['jours_sans_injection']} j)"
+                f"{ligne['annee']} ({pluriel(ligne['jours_sans_injection'], 'jour')})"
                 for ligne in incompletes)
             textes.append(
                 "Attention : certaines années comptent des jours sans relevé "

@@ -162,7 +162,7 @@ réponse si vous le souhaitez. L'application, elle, n'envoie rien.</p>
 
 <h3 style="color:#1F3A6B">Vos données sont-elles à jour ?</h3>
 <p>Un bandeau en haut du <b>Tableau de bord</b> indique l'âge de chaque
-grandeur : <i>Production il y a 2 jours · Injection il y a 2 jours…</i>. Elles
+grandeur : <i>Production il y a 2 jours · Injection il y a 2 jours…</i> Elles
 n'avancent pas ensemble — la production vient de l'onduleur (disponible le
 jour même), l'injection et la consommation du gestionnaire de réseau (deux
 jours de retard environ), le détail heures creuses / pleines du fournisseur,
@@ -442,9 +442,9 @@ navigateur.</p>
 """
 
 GLOSSAIRE_HTML = """
-<p><b>kWh (kilowattheure)</b> — unité d'énergie. 1\xa0kWh correspond à 1000 watts
+<p><b>kWh (kilowattheure)</b> — unité d'énergie. 1\xa0kWh correspond à 1\xa0000 watts
 utilisés pendant une heure.</p>
-<p><b>MWh (mégawattheure)</b> — 1000\xa0kWh.</p>
+<p><b>MWh (mégawattheure)</b> — 1\xa0000\xa0kWh.</p>
 <p><b>kWc (kilowatt-crête)</b> — puissance maximale des panneaux dans des
 conditions idéales. Votre installation fait {puissance}.</p>
 <p><b>Production</b> — énergie produite par les panneaux solaires.</p>
@@ -493,7 +493,7 @@ moins cher pendant les heures creuses. {phrase_hphc}</p>
 <p><b>Compteur Linky</b> — compteur communicant qui mesure l'énergie injectée
 et soutirée.</p>
 <p><b>Rendement spécifique</b> — production annuelle rapportée à la puissance
-installée (kWh/kWc/an). Référence en France : 900 à 1200.</p>
+installée (kWh/kWc/an). Référence en France : 900 à 1\xa0200.</p>
 <p><b>Économie d'autoconsommation</b> — argent économisé en consommant sa
 propre production au lieu de l'acheter au réseau.</p>
 <p><b>Bilan électricité</b> — vente + économies − achat au réseau (électricité

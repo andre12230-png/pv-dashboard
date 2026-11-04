@@ -152,7 +152,7 @@ def main() -> int:
     verrou = prendre_le_verrou()
     if verrou is None:
         QMessageBox.warning(
-            None, "Gestion Photovoltaïque",
+            None, "Application déjà ouverte",
             "Gestion Photovoltaïque est déjà ouvert.\n\n"
             "Deux fenêtres ouvertes en même temps se réécrivent le même "
             "fichier de relevés : la dernière enregistrée effacerait les "
@@ -190,7 +190,7 @@ def main() -> int:
         detail = erreur_en_clair(exc)
         QMessageBox.critical(
             None,
-            "Gestion Photovoltaïque",
+            "Démarrage impossible",
             "Impossible de démarrer l'application.\n\n"
             f"{detail}\n\n"
             f"Trace complète dans {LOG_PATH}.",

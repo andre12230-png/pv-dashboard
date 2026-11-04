@@ -576,6 +576,7 @@ class FenetreReglages(QDialog):
             if self._enregistrer_recalages is not None:
                 self._enregistrer_recalages(self.recalages())
         except (ReglagesRefuses, OSError) as exc:
-            QMessageBox.warning(self, TITRE, erreur_en_clair(exc))
+            QMessageBox.warning(self, "Réglages non enregistrés",
+                                erreur_en_clair(exc))
             return
         self.accept()

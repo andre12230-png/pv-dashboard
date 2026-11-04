@@ -738,7 +738,7 @@ class MainWindow(QMainWindow):
         if saisie is None or not saisie.a_des_saisies_en_cours():
             return True
         reponse = demander_enregistrement(
-            self, NOM_AFFICHE,
+            self, "Saisie non enregistrée",
             "Des valeurs tapées dans la Saisie quotidienne ne sont pas "
             f"encore enregistrées.\n\nLes enregistrer {avant} ?")
         if reponse == QMessageBox.Cancel:
@@ -1045,7 +1045,7 @@ class MainWindow(QMainWindow):
             data = build_dataset(load_config())
         except Exception as exc:  # frontiere : l'utilisateur doit le savoir
             QMessageBox.warning(
-                self, NOM_AFFICHE,
+                self, "Réglages non relus",
                 "Réglages enregistrés, mais l'application n'a pas pu les "
                 f"relire :\n\n{erreur_en_clair(exc)}\n\nRelancez-la.")
             return
@@ -1223,7 +1223,7 @@ class MainWindow(QMainWindow):
         # s'appliquera (audit du 13/10/2026).
         if self.settings.status() != QSettings.Status.NoError:
             QMessageBox.warning(
-                self, "Apparence",
+                self, "Thème non enregistré",
                 f"Le thème {nom} n'a pas pu être enregistré : les "
                 "préférences de l'application ne sont pas modifiables pour "
                 "le moment.\n\nFermez l'application, rouvrez-la, puis "
@@ -1536,7 +1536,7 @@ class MainWindow(QMainWindow):
             # echoue (config.yaml retouche au Bloc-notes, appli ouverte...).
             # On garde l'affichage precedent plutot que d'echouer sans un mot.
             QMessageBox.warning(
-                self, NOM_AFFICHE,
+                self, "Relevés non relus",
                 "Vos relevés sont enregistrés, mais l'application n'a pas pu "
                 f"les relire :\n\n{erreur_en_clair(exc)}\n\n"
                 "Corrigez config.yaml si vous l'avez modifié, puis relancez "

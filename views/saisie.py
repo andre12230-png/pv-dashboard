@@ -690,7 +690,7 @@ class SaisieView(BaseView):
         if callable(self.reload_callback):
             self.reload_callback()
         self._set_status(
-            f"{titre} OK : {pluriel(total_nouveaux, 'ajout')}, "
+            f"Import terminé : {pluriel(total_nouveaux, 'ajout')}, "
             f"{pluriel(total_remplaces, 'remplacement')}.", ok=True)
 
     def a_des_saisies_en_cours(self) -> bool:
@@ -974,11 +974,10 @@ class SaisieView(BaseView):
         # le message serait efface aussitot par la reconstruction.
         if callable(self.reload_callback):
             self.reload_callback()
-        message = (f"OK : {pluriel(nb_ajout, 'ajout')}, "
+        # « Enregistré : », pas « OK : » (controle des textes du 04-11-2026).
+        message = (f"Enregistré : {pluriel(nb_ajout, 'ajout')}, "
                    f"{pluriel(nb_modif, 'modification')}")
         if videes:
             message += f", {pluriel(len(videes), 'effacement')}"
-        total = nb_ajout + nb_modif + len(videes)
-        self._set_status(message + (" enregistrés." if total > 1
-                                    else " enregistré."), ok=True)
+        self._set_status(message + ".", ok=True)
         return True

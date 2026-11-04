@@ -543,7 +543,7 @@ def normalise_date_saisie(texte: str, aujourdhui: _date | None = None) -> str:
     jour = _parse_date_any(texte)
     if jour is None:
         raise ValueError(
-            f"date '{texte}' incomplète ou mal formée "
+            f"date « {texte} » incomplète ou mal formée "
             "(attendu JJ/MM/AAAA, par exemple 30/07/2026)")
 
     # Une date dans le futur n'est pas un releve : c'est une faute de frappe
@@ -554,7 +554,7 @@ def normalise_date_saisie(texte: str, aujourdhui: _date | None = None) -> str:
     reference = aujourdhui or _date.today()
     if _date(y, m, d) > reference:
         raise ValueError(
-            f"date '{jour}' dans le futur : nous sommes le "
+            f"date « {jour} » dans le futur : nous sommes le "
             f"{reference:%d/%m/%Y}, un relevé ne peut pas la porter")
     return jour
 
@@ -599,16 +599,16 @@ def normalise_nombre_saisie(texte: str, colonne: str = "",
         nombre = float(valeur)
     except ValueError:
         raise ValueError(
-            f"valeur '{texte}'{ou} : attendu un nombre, par exemple 24,8"
+            f"valeur « {texte} »{ou} : attendu un nombre, par exemple 24,8"
         ) from None
     if nombre != nombre or nombre in (float("inf"), float("-inf")):
-        raise ValueError(f"valeur '{texte}'{ou} : nombre non exploitable")
+        raise ValueError(f"valeur « {texte} »{ou} : nombre non exploitable")
     if nombre < 0:
         raise ValueError(
-            f"valeur '{texte}'{ou} : un relevé en kWh ne peut pas être négatif")
+            f"valeur « {texte} »{ou} : un relevé en kWh ne peut pas être négatif")
     if nombre > plafond:
         raise ValueError(
-            f"valeur '{texte}'{ou} : {_fmt_kwh_fr(nombre)}\xa0kWh dépasse le "
+            f"valeur « {texte} »{ou} : {_fmt_kwh_fr(nombre)}\xa0kWh dépasse le "
             f"maximum plausible de {_fmt_kwh_fr(plafond)}\xa0kWh pour une "
             "journée (virgule oubliée ?)")
     # On rend la valeur NORMALISEE, pas le texte tape. Avant, '22, 1' etait

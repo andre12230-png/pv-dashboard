@@ -1034,7 +1034,7 @@ def _lire_archive(path: str, notes: list | None) -> dict[str, str]:
         taille_totale = sum(info.file_size for info in infos)
         if taille_totale > TAILLE_MAX_CSV_ZIP_OCTETS:
             raise ValueError(
-                "L’archive contient trop de données décompressées pour être "
+                "L'archive contient trop de données décompressées pour être "
                 "importée. Réduisez-la ou séparez ses fichiers, puis "
                 "réessayez.")
         noms = [info.filename for info in infos]

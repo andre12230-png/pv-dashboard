@@ -106,7 +106,7 @@ class SettingsView(BaseView):
         # La periode la plus recente en haut (10/10/2026), quel que soit
         # l'ordre du fichier.
         bleu_abo_rows = [(f"Abonnement {du_au(t['debut'], t['fin'])}",
-                          f"{fmt_eur(t['montant'])} / mois")
+                          f"{fmt_eur(t['montant'])}/mois")
                          for t in _recentes_d_abord(
                              bleu.get("abonnement_par_periode"))]
         bleu_rows = [(f"Prix du kWh {du_au(t['debut'], t['fin'])}",
