@@ -152,3 +152,30 @@ def test_pas_de_point_apres_les_points_de_suspension_dans_la_notice():
 
 def test_abonnement_ecrit_euros_par_mois_sans_espaces():
     assert not [t for t in _textes("views/settings.py") if " / mois" in t]
+
+
+# --- D1 : titres des boîtes d'import (choix d'André du 04-11-2026) --------
+
+@pytest.mark.parametrize("titre", ["Import du relevé réseau",
+                                   "Import de la production"])
+def test_titres_des_boites_d_import(titre):
+    # Le titre se forme « Import » + la source : on cherche les deux sources.
+    source = _source("views/saisie.py")
+    assert 'titre = f"Import {source}"' in source
+    assert f'source="{titre.removeprefix("Import ")}"' in source
+
+
+# --- D2 : une page se nomme en entier dans un renvoi -----------------------
+
+def test_le_glossaire_nomme_les_pages_en_entier():
+    from views.aide import GLOSSAIRE_HTML
+    texte = " ".join(GLOSSAIRE_HTML.split())
+    for page in ("Répartition énergie", "Comparer à l'an passé",
+                 "Relevés journaliers"):
+        assert page in texte, page
+
+
+# --- D3 : le fichier de sauvegarde se nomme, pas « le .bak » ---------------
+
+def test_la_confirmation_de_suppression_nomme_le_fichier_bak():
+    assert "dans le .bak" not in _source("views/saisie.py")

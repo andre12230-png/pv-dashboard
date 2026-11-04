@@ -497,8 +497,8 @@ installée (kWh/kWc/an). Référence en France : 900 à 1\xa0200.</p>
 <p><b>Économie d'autoconsommation</b> — argent économisé en consommant sa
 propre production au lieu de l'acheter au réseau.</p>
 <p><b>Bilan électricité</b> — vente + économies − achat au réseau (électricité
-consommée + abonnement). C'est le même partout : tableau de bord, Répartition,
-Comparer, Relevés et {annees_oa} (la prime y garde sa colonne). Autrement
+consommée + abonnement). C'est le même partout : Tableau de bord, Répartition énergie,
+Comparer à l'an passé, Relevés journaliers et {annees_oa} (la prime y garde sa colonne). Autrement
 dit : <b>ce que l'électricité vous coûte encore</b>, une fois compté tout
 ce que le solaire vous rapporte ou vous évite. Il passe au vert le jour où
 elle ne vous coûte plus rien.<br>

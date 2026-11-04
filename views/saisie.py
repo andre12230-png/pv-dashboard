@@ -486,7 +486,9 @@ class SaisieView(BaseView):
         c'est l'espace client Octopus qui le fournit, avec les euros.
         Enedis ne connait pas les prix."""
         self._importer_fichier(
-            source="achat au réseau / injection",
+            # Titre des boites : « Import du relevé réseau » (choix D1 du
+            # controle des textes, 04-11-2026 ; le bouton garde son nom).
+            source="du relevé réseau",
             libelle_dialogue="Importer un relevé de consommation ou d'injection",
             filtre="Relevés réseau (*.xlsx *.csv);;Tous les fichiers (*)",
             parser=dl.parse_enedis_fichier,
@@ -507,7 +509,7 @@ class SaisieView(BaseView):
         qui fait foi (18/09/2026, un utilisateur sans donnees Enedis avant
         sa mise en service)."""
         self._importer_fichier(
-            source="production",
+            source="de la production",
             libelle_dialogue="Importer un relevé de production",
             filtre="Relevés de production (*.csv *.zip *.txt *.xlsx);;"
                    "Tous les fichiers (*)",
@@ -783,7 +785,9 @@ class SaisieView(BaseView):
                 "interrompue, fichier verrouillé) : enregistrer maintenant "
                 "effacerait pour de bon ce qui n'a pas été lu.\n\n"
                 "Dans le doute, cliquez sur Annuler, puis sur Recharger.\n\n")
-        message += "L'ancienne version restera dans le .bak."
+        # Le fichier se nomme, pas « le .bak » (choix D3, 04-11-2026).
+        nom = os.path.basename(self.data.releves_path or "Releves-pv.csv")
+        message += f"L'ancienne version restera dans le fichier {nom}.bak."
 
         return confirmer(self, "Suppression de données", message,
                          "Enregistrer quand même", avertissement=True)
