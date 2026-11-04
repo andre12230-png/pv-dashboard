@@ -50,7 +50,9 @@ surplus, toute votre production, ou rien), dates de votre contrat, prix
 de rachat, fournisseur et prix de votre électricité, et la part de votre
 autoconsommation qui tomberait en heures creuses (0\xa0% si elles sont toutes la
 nuit ; la fenêtre en propose une estimation d'après vos plages d'heures
-creuses, que le bouton <b>Reprendre</b> met dans la case). L'application se
+creuses, que le bouton <b>Reprendre</b> met dans la case). Deux plages d'heures
+creuses ne doivent pas se chevaucher : écrivez 22:00-08:00 plutôt que
+22:00-06:00 et 00:00-08:00. L'application se
 recharge seule à l'enregistrement. L'onglet <b>Paramètres</b> montre ensuite
 à tout moment ce qui est pris en compte : c'est là qu'on vérifie qu'on ne
 s'est pas trompé.<br>
@@ -76,7 +78,11 @@ plus justes que la somme des relevés quotidiens. Ils se déclarent dans
 choisissez ce que vous recalez, la période, le total en kWh, et d'où il
 vient. L'écart est réparti sur les jours de la période. Deux périodes de même
 sorte ne doivent pas se chevaucher : si cela arrive dans un fichier modifié à
-la main, un message le signale à l'ouverture de l'application.</p>
+la main, un message le signale à l'ouverture de l'application.<br>
+Un recalage attend que <b>toute</b> sa période soit relevée : tant qu'il manque
+des jours, ou si le total de la facture est plus bas que les jours jugés
+fiables, il n'est pas appliqué, et un message à l'ouverture nomme la période
+et les jours en cause.</p>
 <p>Le cas le plus utile pour un producteur : <b>Injection payée par {acheteur}</b>.
 {acheteur} paie sur l'index du compteur, qui diffère un peu de ce qu'annonce
 l'onduleur — donner le total en kWh de votre autofacturation (pas le montant
@@ -293,7 +299,9 @@ consommation totale est facultative :</p>
 et n'importe rien, plutôt que de laisser ces kWh grossir l'achat au réseau
 sans prévenir. Et pour quelques jours seulement, les colonnes <b>Heures creuses</b>
 et <b>Heures pleines</b> se remplissent aussi à la main dans le tableau de l'onglet
-Saisie quotidienne.</p>
+Saisie quotidienne. Remplissez-les toujours <b>ensemble</b> : un jour qui n'en a
+qu'une, sans total de consommation, compte comme un jour sans relevé de
+consommation, et il est signalé comme tel.</p>
 <p>L'import ne crée <b>jamais de doublon</b> : les jours nouveaux sont ajoutés,
 les dates déjà présentes sont mises à jour (seule la colonne concernée est
 remplacée — votre production n'est jamais touchée). Un récapitulatif
