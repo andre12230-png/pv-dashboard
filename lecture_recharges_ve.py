@@ -17,6 +17,18 @@ import pandas as pd
 # Recharges du vehicule electrique (application "recharges-ve")
 # ----------------------------------------------------------------------
 
+def _heure_locale(moment):
+    """Heure locale du PC, sans fuseau : la convention de recharges.json.
+
+    Une date ecrite avec un fuseau (« +01:00 », « Z ») est convertie a
+    l'heure locale. Sans cela, la comparer a minuit (sans fuseau) levait
+    une erreur et arretait le chargement (audit du 04-11-2026, D11). Une
+    date sans fuseau, le cas normal, est rendue telle quelle."""
+    if moment.tzinfo is None:
+        return moment
+    return moment.astimezone().replace(tzinfo=None)
+
+
 def charger_recharges_ve(path: str) -> pd.DataFrame:
     """
     Lit le fichier `recharges.json` de l'application recharges-ve et rend,
@@ -70,8 +82,8 @@ def charger_recharges_ve(path: str) -> pd.DataFrame:
             continue
         try:
             kwh = float(r["kwh"])
-            debut = datetime.fromisoformat(r["date"])
-            fin = datetime.fromisoformat(r["fin"])
+            debut = _heure_locale(datetime.fromisoformat(r["date"]))
+            fin = _heure_locale(datetime.fromisoformat(r["fin"]))
         except (KeyError, TypeError, ValueError):
             continue  # ligne incomplete : on l'ignore plutot que de tout perdre
         try:

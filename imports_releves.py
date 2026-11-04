@@ -16,6 +16,7 @@ from __future__ import annotations
 import re
 import statistics
 from datetime import date as _date
+from datetime import datetime as _datetime
 
 from accords import accorde, pluriel
 
@@ -30,6 +31,25 @@ _RE_DATE_ISO = re.compile(r"^(\d{4})-(\d{2})-(\d{2})")
 _RE_DATE_FR = re.compile(r"^(\d{1,2})/(\d{1,2})/(\d{4})$")
 # Une heure accolee a la date (« 2026-09-01T00:30 », « ... 00:30:00 »).
 _RE_HEURE = re.compile(r"\d{1,2}:\d{2}")
+
+# Plusieurs valeurs le même jour, sur des lignes qui portent une heure : une
+# courbe de charge. La dernière valeur écrasait les autres en silence ; les
+# additionner serait faux aussi, une courbe Enedis donnant souvent une
+# puissance (W) et non une énergie. Refusée par le lecteur CSV (audit du
+# 04/10/2026) et par celui des classeurs (audit du 04-11-2026, D5).
+_MESSAGE_COURBE = (
+    "Ce fichier donne plusieurs valeurs par jour (heure par heure ou à la "
+    "demi-heure) : c'est une courbe de charge, pas un relevé quotidien. "
+    "Téléchargez plutôt la consommation (ou l'injection) quotidienne, en "
+    "kWh, une valeur par jour.")
+
+
+def _cellule_horodatee(c) -> bool:
+    """Une cellule de date qui porte aussi une heure (autre que minuit pour
+    une vraie date Excel, qui vaut minuit quand elle n'a pas d'heure)."""
+    if isinstance(c, _datetime):
+        return c.time() != _datetime.min.time()
+    return isinstance(c, str) and bool(_RE_HEURE.search(c))
 _RE_NOMBRE = re.compile(r"^-?\d+(\.\d+)?$")
 
 
@@ -245,12 +265,7 @@ def parse_enedis_csv_texte(texte: str, notes: list | None = None
                                                          strict=True)
                  if _RE_HEURE.search(ligne_date)]
     if len(horodates) != len(set(horodates)):
-        raise ValueError(
-            "Ce fichier donne plusieurs valeurs par jour (heure par heure ou "
-            "à la demi-heure) : c'est une courbe de charge, pas un relevé "
-            "quotidien. Téléchargez plutôt la consommation (ou l'injection) "
-            "quotidienne, en kWh, une valeur par jour."
-        )
+        raise ValueError(_MESSAGE_COURBE)
 
     if unite_kwh is None:
         unite_kwh = statistics.median(v for _, v in brutes) < 200
@@ -537,6 +552,22 @@ def _index_d_une_feuille(ws, production: bool = False
              for cible, valeurs in index.items()}, premier, dernier)
 
 
+def _feuille_index_de_production(nom: str) -> bool | None:
+    """Le nom d'une feuille d'index dit sa grandeur : True pour la
+    production (l'injection au réseau), False pour la consommation, None
+    s'il ne le dit pas, ou dit les deux.
+
+    Noms réels d'Enedis : « Index_Prod » et « Index_Cons_Calendriers_1 ».
+    Avant, seul « prod » était cherché : « Injection » passait pour de la
+    consommation (audit du 04-11-2026, D10)."""
+    bas = nom.lower()
+    production = "prod" in bas or "inj" in bas
+    consommation = "cons" in bas or "sout" in bas
+    if production == consommation:
+        return None          # ni l'un ni l'autre, ou les deux : ambigu
+    return production
+
+
 def parse_enedis_index_xlsx(path: str, notes: list | None = None
                             ) -> dict[str, dict[str, str]] | None:
     """
@@ -560,10 +591,22 @@ def parse_enedis_index_xlsx(path: str, notes: list | None = None
         # deux, chacune dans sa colonne.
         derniers = []
         for nom in wb.sheetnames:
+            production = _feuille_index_de_production(nom)
             trouve, _premier, dernier = _index_d_une_feuille(
-                wb[nom], "prod" in nom.lower())
+                wb[nom], bool(production))
             if trouve is None:
                 continue  # feuille de garde, ou autre chose
+            if production is None:
+                # Une feuille d'index dont le nom ne dit pas la grandeur :
+                # la ranger en consommation par défaut mettait de
+                # l'injection dans les achats au réseau (audit du
+                # 04-11-2026, D10). On refuse plutôt que de deviner.
+                raise ValueError(
+                    f"La feuille « {nom} » contient des index Enedis, mais "
+                    "son nom ne dit pas s'il s'agit de consommation ou "
+                    "d'injection : renommez-la « Consommation » ou "
+                    "« Production », puis relancez l'import. Rien n'a été "
+                    "importé.")
             reconnu = True
             resultat.update(trouve)
             if dernier:
@@ -643,14 +686,20 @@ def parse_enedis_xlsx(path: str, notes: list | None = None
             brutes: list[tuple[str, float]] = []
             textes: list[str] = []
             ecartees: list[str] = []
+            horodates: list[str] = []      # jours des lignes avec une heure
             for row in wb[nom].iter_rows(values_only=True):
                 cellules = [c for c in row if c is not None]
                 textes.extend(c for c in cellules if isinstance(c, str))
                 if len(cellules) < 2:
                     continue
-                jour = _cellule_date(cellules[0])
+                # Date seule, ou suivie d'une heure : comme le lecteur CSV.
+                jour = (_parse_jour_any(cellules[0].strip())
+                        if isinstance(cellules[0], str)
+                        else _cellule_date(cellules[0]))
                 if jour is None:
                     continue  # metadonnees ('Date de debut : ', ...)
+                if _cellule_horodatee(cellules[0]):
+                    horodates.append(jour)
                 valeur = next(
                     (v for v in (_cellule_nombre(c) for c in cellules[1:])
                      if v is not None), None)
@@ -660,6 +709,8 @@ def parse_enedis_xlsx(path: str, notes: list | None = None
                     ecartees.append(jour)   # 'NA' : donnee indisponible
             if not brutes:
                 continue
+            if len(horodates) != len(set(horodates)):
+                raise ValueError(_MESSAGE_COURBE)
             bas = " ".join(textes).lower()
             en_kwh = _unite_annoncee(bas)
             if en_kwh is None:

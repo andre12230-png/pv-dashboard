@@ -683,7 +683,7 @@ class SaisieView(BaseView):
             return
 
         try:
-            dl.write_releves_raw(path, lignes)
+            manques = dl.write_releves_raw(path, lignes)
         except (OSError, dl.ReductionRefusee) as exc:
             # Un import n'enleve jamais rien : s'il reduit le fichier, c'est
             # que la lecture du CSV etait incomplete. On ne l'ecrit pas.
@@ -694,6 +694,7 @@ class SaisieView(BaseView):
         self._set_status(
             f"Import terminé : {pluriel(total_nouveaux, 'ajout')}, "
             f"{pluriel(total_remplaces, 'remplacement')}.", ok=True)
+        self._signaler_copie_manquee(manques)
 
     def a_des_saisies_en_cours(self) -> bool:
         return self._saisies_non_enregistrees()
@@ -763,6 +764,22 @@ class SaisieView(BaseView):
             "réessayez : vos saisies sont toujours dans le tableau.")
         self._set_status("Enregistrement impossible (voir le message).",
                          ok=False)
+
+    def _signaler_copie_manquee(self, manques: list[str]) -> None:
+        """Enregistré, mais sans filet : on le dit (audit du 04-11-2026,
+        S01). Avant, l'échec d'une copie de secours ne laissait qu'une ligne
+        dans la console et l'écran affichait « Enregistré » sans réserve."""
+        if not manques:
+            return
+        QMessageBox.warning(
+            self, "Copie de secours non faite",
+            "Vos relevés sont bien enregistrés. Mais la copie de secours de "
+            "la version précédente n'a pas pu être faite : "
+            + " ; ".join(manques) + ".\n\n"
+            "Si l'enregistrement que vous venez de faire était une erreur, "
+            "il n'y a pas de retour arrière automatique cette fois-ci. Pour "
+            "garder un filet, faites une sauvegarde externe (💾 Sauvegarde "
+            "externe, dans le bandeau de gauche).")
 
     def _confirmer_suppression(self, pertes: str, videes: list[str]) -> bool:
         """Demande confirmation avant toute perte de donnees. Non par defaut.
@@ -944,7 +961,8 @@ class SaisieView(BaseView):
             autoriser_reduction = True
 
         try:
-            dl.write_releves_raw(path, lignes_finales, autoriser_reduction)
+            manques = dl.write_releves_raw(path, lignes_finales,
+                                           autoriser_reduction)
         except (OSError, dl.ReductionRefusee) as exc:
             self._signaler_echec_ecriture(exc)
             return False
@@ -984,4 +1002,5 @@ class SaisieView(BaseView):
         if videes:
             message += f", {pluriel(len(videes), 'effacement')}"
         self._set_status(message + ".", ok=True)
+        self._signaler_copie_manquee(manques)
         return True

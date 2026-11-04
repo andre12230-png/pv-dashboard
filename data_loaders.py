@@ -39,6 +39,7 @@ from typing import Iterable
 import pandas as pd
 
 from accords import accorde, pluriel
+from erreurs import erreur_en_clair
 
 # Porte d'entree : tout ce qui a ete detache le 28/09/2026 reste
 # accessible ici (dl.parse_enedis_fichier, dl._parse_nombre...).
@@ -891,7 +892,7 @@ def pertes_a_l_ecriture(path: str,
 
 
 def write_releves_raw(path: str, rows: list[dict[str, str]],
-                      autoriser_reduction: bool = False) -> None:
+                      autoriser_reduction: bool = False) -> list[str]:
     """
     Reecrit le CSV consolide en preservant le format FR :
     - separateur ";"
@@ -914,7 +915,15 @@ def write_releves_raw(path: str, rows: list[dict[str, str]],
     lignes ou le nombre de valeurs d'une colonne baisse, ReductionRefusee est
     levee. `autoriser_reduction=True` passe outre -- l'appelant doit alors
     avoir fait confirmer la perte, que pertes_a_l_ecriture sait decrire.
+
+    Retourne la liste des copies de secours de l'ancienne version qui n'ont
+    pas pu etre faites (vide si tout va bien). L'enregistrement reussit
+    quand meme -- les nouvelles saisies passent avant -- mais l'appelant doit
+    le dire : avant, ces echecs ne laissaient qu'une ligne dans la console,
+    et l'ecran affichait « Enregistre » sans reserve (audit du 04-11-2026,
+    S01).
     """
+    manques: list[str] = []
     if not autoriser_reduction:
         pertes = pertes_a_l_ecriture(path, rows)
         if pertes is not None:
@@ -945,6 +954,8 @@ def write_releves_raw(path: str, rows: list[dict[str, str]],
                 # empecher d'enregistrer les nouvelles donnees.
                 print(f"[warn] instantane de {path} impossible : {exc}",
                       file=sys.stderr)
+                manques.append("la copie de la version précédente ("
+                               f"{erreur_en_clair(exc)})")
 
         with open(tmp_path, "w", encoding="utf-8", newline="") as fh:
             # csv.writer met d'office entre guillemets toute valeur contenant
@@ -976,13 +987,16 @@ def write_releves_raw(path: str, rows: list[dict[str, str]],
 
         # A partir d'ici seulement, l'ancienne version est promue.
         if instantane is not None:
-            archiver_sauvegarde(path, source=instantane)
+            if archiver_sauvegarde(path, source=instantane) is None:
+                manques.append("la copie datée dans le dossier « backups »")
             try:
                 os.replace(instantane, path + ".bak")
                 instantane = None   # devenu le .bak : plus rien a nettoyer
             except OSError as exc:
                 print(f"[warn] sauvegarde {path}.bak impossible : {exc}",
                       file=sys.stderr)
+                manques.append(f"le fichier « {os.path.basename(path)}.bak » "
+                               f"({erreur_en_clair(exc)})")
     finally:
         for reste in (tmp_path, prev_path):
             if os.path.exists(reste):
@@ -990,6 +1004,7 @@ def write_releves_raw(path: str, rows: list[dict[str, str]],
                     os.remove(reste)
                 except OSError:
                     pass  # un fichier verrouille sera repris au prochain passage
+    return manques
 
 
 # Rotation des sauvegardes, sur le modele de l'application recharges-ve :

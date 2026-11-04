@@ -391,7 +391,14 @@ def _charger_recharges_ve(cfg: dict):
     if not p.exists():
         print(f"[warn] recharges VE introuvables : {p}", file=sys.stderr)
         return None
-    return dl.charger_recharges_ve(str(p))
+    # Source facultative : une erreur imprévue dans sa lecture est signalée
+    # et la source ignorée, au lieu d'empêcher l'ouverture de l'application
+    # (audit du 04-11-2026, D11).
+    try:
+        return dl.charger_recharges_ve(str(p))
+    except (KeyError, TypeError, ValueError, OSError) as exc:
+        print(f"[warn] recharges VE ignorees ({p}) : {exc}", file=sys.stderr)
+        return None
 
 
 # Ce que la configuration doit contenir, et le libelle a montrer quand il

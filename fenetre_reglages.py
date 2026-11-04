@@ -28,7 +28,7 @@ from PySide6.QtWidgets import (
 import calculations as calc
 from erreurs import erreur_en_clair
 from gui_theme import calendrier_lisible, theme_actif
-from gui_widgets import Card
+from gui_widgets import Card, demander_enregistrement
 from reglages import (
     SORTES_RECALAGE,
     ReglagesRefuses,
@@ -357,6 +357,36 @@ class FenetreReglages(QDialog):
         tout = QVBoxLayout(self)
         tout.addWidget(defilement, stretch=1)
         tout.addLayout(boutons)
+
+        # Ce que montrait la fenêtre à l'ouverture : la fermer après un
+        # changement pose la question (voir reject).
+        self._etat_initial = self._etat()
+
+    def _etat(self) -> tuple:
+        """Tout ce que la fenêtre enregistrerait : réglages et recalages."""
+        recalages = (self.recalages()
+                     if self._enregistrer_recalages is not None else None)
+        return self.valeurs(), recalages
+
+    def reject(self) -> None:
+        """Échap, la croix ou « Annuler ». Les modifications partaient sans
+        un mot, plusieurs tarifs ou recalages tapés compris (audit du
+        04-11-2026, U02). Comme la Saisie : Enregistrer, Ne pas enregistrer
+        ou Annuler, ce dernier par défaut (charte). Rien n'est demandé si
+        rien n'a changé."""
+        if self._etat() != self._etat_initial:
+            reponse = demander_enregistrement(
+                self, "Réglages non enregistrés",
+                "Des réglages ont été modifiés et ne sont pas encore "
+                "enregistrés.\n\nLes enregistrer avant de fermer ?")
+            if reponse == QMessageBox.Cancel:
+                return                 # la fenêtre reste ouverte, intacte
+            if reponse == QMessageBox.Save:
+                # Ferme la fenêtre si l'enregistrement réussit ; sinon elle
+                # reste ouverte et dit pourquoi.
+                self._on_enregistrer()
+                return
+        super().reject()
 
     def _groupe_recalages(self, recalages: dict) -> Card:
         """Le tableau des recalages : une ligne par periode, plus un bouton."""
