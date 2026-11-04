@@ -53,7 +53,8 @@ nuit ; la fenêtre en propose une estimation d'après vos plages d'heures
 creuses, que le bouton <b>Reprendre</b> met dans la case). Deux plages d'heures
 creuses ne doivent pas se chevaucher : écrivez 22:00-08:00 plutôt que
 22:00-06:00 et 00:00-08:00. L'application se
-recharge seule à l'enregistrement. L'onglet <b>Paramètres</b> montre ensuite
+recharge seule à l'enregistrement. Si vous fermez la fenêtre après un
+changement sans avoir enregistré, elle vous demande quoi en faire. L'onglet <b>Paramètres</b> montre ensuite
 à tout moment ce qui est pris en compte : c'est là qu'on vérifie qu'on ne
 s'est pas trompé.<br>
 Les réglages plus rares (TVA, grille EDF de comparaison, prix d'un ancien
@@ -235,7 +236,9 @@ journée qui manque entre deux lignes du fichier compte, elle aussi, comme une
 journée aux cases vides.</p>
 <p>Pour <b>effacer une journée</b>, videz toutes ses cases et enregistrez :
 l'application demande confirmation, puis retire la ligne du fichier. L'ancienne
-version reste dans le <code>.bak</code>.</p>
+version reste dans le <code>.bak</code>. Si cette copie de secours ne peut pas
+être faite (disque plein, dossier protégé), l'application vous le dit après
+l'enregistrement : faites alors une sauvegarde externe.</p>
 
 <h3 style="color:#1F3A6B">Importer achat au réseau et injection</h3>
 <p>Le bouton <b>Importer achat au réseau / injection…</b> (onglet Saisie quotidienne)
@@ -278,7 +281,10 @@ téléchargement remplit alors quatre colonnes — consommation réseau, heures
 creuses, heures pleines et injection. Pour l'obtenir : espace client Enedis,
 <b>Ma consommation ▸ Suivre ma consommation</b>, choisir <b>Mixte</b> dans le
 menu du milieu (sans quoi la production manque) et <b>Index (kWh)</b> dans
-celui de droite, puis <b>Télécharger le .xlsx</b>.</p>
+celui de droite, puis <b>Télécharger le .xlsx</b>. Chaque feuille est reconnue
+à son nom : si vous en renommez une, gardez « Consommation » ou
+« Production » dans le nom, sinon l'import est refusé plutôt que de ranger des
+chiffres au mauvais endroit.</p>
 <p><b>Le dernier jour de l'export n'apparaîtra pas encore</b> dans vos
 relevés, et c'est normal : la consommation d'un jour est l'index du lendemain
 moins celui du jour, et Enedis publie l'index du lendemain un jour plus tard.
